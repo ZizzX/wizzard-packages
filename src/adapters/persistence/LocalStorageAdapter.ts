@@ -1,4 +1,4 @@
-import { IPersistenceAdapter } from '../../types';
+import type { IPersistenceAdapter } from '../../types';
 
 export class LocalStorageAdapter implements IPersistenceAdapter {
     private prefix: string;

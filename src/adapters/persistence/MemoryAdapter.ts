@@ -1,4 +1,4 @@
-import { IPersistenceAdapter } from '../../types';
+import type { IPersistenceAdapter } from '../../types';
 
 export class MemoryAdapter implements IPersistenceAdapter {
     private storage: Record<string, any> = {};

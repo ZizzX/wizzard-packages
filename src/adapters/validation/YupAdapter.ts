@@ -1,8 +1,12 @@
+import type { IValidatorAdapter, ValidationResult } from '../../types';
 import { Schema, ValidationError } from 'yup';
-import { IValidatorAdapter, ValidationResult } from '../../types';
 
 export class YupAdapter<T> implements IValidatorAdapter<T> {
-    constructor(private schema: Schema<T>) { }
+    private schema: Schema<T>;
+
+    constructor(schema: Schema<T>) {
+        this.schema = schema;
+    }
 
     async validate(data: T): Promise<ValidationResult> {
         try {

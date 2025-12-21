@@ -8,5 +8,5 @@ export default defineConfig({
     sourcemap: true,
     clean: true,
     minify: false, // Better for debugging, user can minify in their app
-    external: ['react', 'react-dom'],
+    external: ['react', 'react-dom', 'zod', 'yup'],
 });

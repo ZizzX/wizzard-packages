@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
-import {
+import type {
   IWizardConfig,
   IWizardContext,
   PersistenceMode,

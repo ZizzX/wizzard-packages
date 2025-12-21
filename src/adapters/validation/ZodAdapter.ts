@@ -1,8 +1,12 @@
+import type { IValidatorAdapter, ValidationResult } from '../../types';
 import { ZodType } from 'zod';
-import { IValidatorAdapter, ValidationResult } from '../../types';
 
 export class ZodAdapter<T> implements IValidatorAdapter<T> {
-    constructor(private schema: ZodType<T>) { }
+    private schema: ZodType<T>;
+
+    constructor(schema: ZodType<T>) {
+        this.schema = schema;
+    }
 
     async validate(data: T): Promise<ValidationResult> {
         const result = await this.schema.safeParseAsync(data);
