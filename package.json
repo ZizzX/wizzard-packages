@@ -1,16 +1,8 @@
 {
-  "devDependencies": {
-    "@types/node": "^25.0.3",
-    "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3",
-    "eslint": "^9.39.2",
-    "prettier": "^3.7.4",
-    "tsup": "^8.5.1",
-    "typescript": "^5.9.3",
-    "vitest": "^4.0.16",
-    "yup": "^1.7.1",
-    "zod": "^4.2.1"
-  },
+  "name": "wizzard-stepper-react",
+  "version": "1.0.0",
+  "description": "A flexible, headless, and strictly typed multi-step wizard library for React.",
+  "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -32,8 +24,28 @@
   ],
   "author": "ZizzX",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ZizzX/wizzard-stepper-react.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ZizzX/wizzard-stepper-react/issues"
+  },
+  "homepage": "https://github.com/ZizzX/wizzard-stepper-react#readme",
   "peerDependencies": {
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.2",
+    "prettier": "^3.7.4",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.16",
+    "yup": "^1.7.1",
+    "zod": "^4.2.1"
   }
 }

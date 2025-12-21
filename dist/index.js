@@ -1,4 +1,3 @@
-"use strict";
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -8,10 +7,6 @@ var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
-};
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
 };
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
@@ -29,12 +24,11 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 
 // node_modules/property-expr/index.js
 var require_property_expr = __commonJS({
-  "node_modules/property-expr/index.js"(exports2, module2) {
+  "node_modules/property-expr/index.js"(exports, module) {
     "use strict";
     function Cache(maxSize) {
       this._maxSize = maxSize;
@@ -61,7 +55,7 @@ var require_property_expr = __commonJS({
     var pathCache = new Cache(MAX_CACHE_SIZE);
     var setCache = new Cache(MAX_CACHE_SIZE);
     var getCache = new Cache(MAX_CACHE_SIZE);
-    module2.exports = {
+    module.exports = {
       Cache,
       split: split2,
       normalizePath: normalizePath2,
@@ -143,7 +137,7 @@ var require_property_expr = __commonJS({
 
 // node_modules/tiny-case/index.js
 var require_tiny_case = __commonJS({
-  "node_modules/tiny-case/index.js"(exports2, module2) {
+  "node_modules/tiny-case/index.js"(exports, module) {
     "use strict";
     var reWords = /[A-Z\xc0-\xd6\xd8-\xde]?[a-z\xdf-\xf6\xf8-\xff]+(?:['’](?:d|ll|m|re|s|t|ve))?(?=[\xac\xb1\xd7\xf7\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\xbf\u2000-\u206f \t\x0b\f\xa0\ufeff\n\r\u2028\u2029\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000]|[A-Z\xc0-\xd6\xd8-\xde]|$)|(?:[A-Z\xc0-\xd6\xd8-\xde]|[^\ud800-\udfff\xac\xb1\xd7\xf7\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\xbf\u2000-\u206f \t\x0b\f\xa0\ufeff\n\r\u2028\u2029\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000\d+\u2700-\u27bfa-z\xdf-\xf6\xf8-\xffA-Z\xc0-\xd6\xd8-\xde])+(?:['’](?:D|LL|M|RE|S|T|VE))?(?=[\xac\xb1\xd7\xf7\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\xbf\u2000-\u206f \t\x0b\f\xa0\ufeff\n\r\u2028\u2029\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000]|[A-Z\xc0-\xd6\xd8-\xde](?:[a-z\xdf-\xf6\xf8-\xff]|[^\ud800-\udfff\xac\xb1\xd7\xf7\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\xbf\u2000-\u206f \t\x0b\f\xa0\ufeff\n\r\u2028\u2029\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000\d+\u2700-\u27bfa-z\xdf-\xf6\xf8-\xffA-Z\xc0-\xd6\xd8-\xde])|$)|[A-Z\xc0-\xd6\xd8-\xde]?(?:[a-z\xdf-\xf6\xf8-\xff]|[^\ud800-\udfff\xac\xb1\xd7\xf7\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\xbf\u2000-\u206f \t\x0b\f\xa0\ufeff\n\r\u2028\u2029\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000\d+\u2700-\u27bfa-z\xdf-\xf6\xf8-\xffA-Z\xc0-\xd6\xd8-\xde])+(?:['’](?:d|ll|m|re|s|t|ve))?|[A-Z\xc0-\xd6\xd8-\xde]+(?:['’](?:D|LL|M|RE|S|T|VE))?|\d*(?:1ST|2ND|3RD|(?![123])\dTH)(?=\b|[a-z_])|\d*(?:1st|2nd|3rd|(?![123])\dth)(?=\b|[A-Z_])|\d+|(?:[\u2700-\u27bf]|(?:\ud83c[\udde6-\uddff]){2}|[\ud800-\udbff][\udc00-\udfff])[\ufe0e\ufe0f]?(?:[\u0300-\u036f\ufe20-\ufe2f\u20d0-\u20ff]|\ud83c[\udffb-\udfff])?(?:\u200d(?:[^\ud800-\udfff]|(?:\ud83c[\udde6-\uddff]){2}|[\ud800-\udbff][\udc00-\udfff])[\ufe0e\ufe0f]?(?:[\u0300-\u036f\ufe20-\ufe2f\u20d0-\u20ff]|\ud83c[\udffb-\udfff])?)*/g;
     var words = (str) => str.match(reWords) || [];
@@ -158,7 +152,7 @@ var require_tiny_case = __commonJS({
     var kebabCase = (str) => join2(str, "-");
     var sentenceCase = (str) => upperFirst(join2(str, " "));
     var titleCase = (str) => words(str).map(upperFirst).join(" ");
-    module2.exports = {
+    module.exports = {
       words,
       upperFirst,
       camelCase: camelCase2,
@@ -173,12 +167,12 @@ var require_tiny_case = __commonJS({
 
 // node_modules/toposort/index.js
 var require_toposort = __commonJS({
-  "node_modules/toposort/index.js"(exports2, module2) {
+  "node_modules/toposort/index.js"(exports, module) {
     "use strict";
-    module2.exports = function(edges) {
+    module.exports = function(edges) {
       return toposort2(uniqueNodes(edges), edges);
     };
-    module2.exports.array = toposort2;
+    module.exports.array = toposort2;
     function toposort2(nodes, edges) {
       var cursor = nodes.length, sorted = new Array(cursor), visited = {}, i = cursor, outgoingEdges = makeOutgoingEdges(edges), nodesHash = makeNodesHash(nodes);
       edges.forEach(function(edge) {
@@ -247,21 +241,8 @@ var require_toposort = __commonJS({
   }
 });
 
-// src/index.ts
-var index_exports = {};
-__export(index_exports, {
-  LocalStorageAdapter: () => LocalStorageAdapter,
-  MemoryAdapter: () => MemoryAdapter,
-  WizardProvider: () => WizardProvider,
-  YupAdapter: () => YupAdapter,
-  ZodAdapter: () => ZodAdapter,
-  useWizard: () => useWizard,
-  useWizardContext: () => useWizardContext
-});
-module.exports = __toCommonJS(index_exports);
-
 // src/context/WizardContext.tsx
-var import_react = require("react");
+import { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react";
 
 // src/adapters/persistence/MemoryAdapter.ts
 var MemoryAdapter = class {
@@ -280,25 +261,25 @@ var MemoryAdapter = class {
 };
 
 // src/context/WizardContext.tsx
-var import_jsx_runtime = require("react/jsx-runtime");
-var WizardContext = (0, import_react.createContext)(void 0);
+import { jsx } from "react/jsx-runtime";
+var WizardContext = createContext(void 0);
 function WizardProvider({
   config,
   initialData,
   children
 }) {
-  const [currentStepId, setCurrentStepId] = (0, import_react.useState)("");
-  const [wizardData, setWizardData] = (0, import_react.useState)(initialData || {});
-  const [visitedSteps, setVisitedSteps] = (0, import_react.useState)(/* @__PURE__ */ new Set());
-  const [completedSteps, setCompletedSteps] = (0, import_react.useState)(/* @__PURE__ */ new Set());
-  const [errorSteps, setErrorSteps] = (0, import_react.useState)(/* @__PURE__ */ new Set());
-  const [allErrors, setAllErrors] = (0, import_react.useState)({});
-  const [isLoading, setIsLoading] = (0, import_react.useState)(true);
-  const persistenceAdapter = (0, import_react.useMemo)(() => {
+  const [currentStepId, setCurrentStepId] = useState("");
+  const [wizardData, setWizardData] = useState(initialData || {});
+  const [visitedSteps, setVisitedSteps] = useState(/* @__PURE__ */ new Set());
+  const [completedSteps, setCompletedSteps] = useState(/* @__PURE__ */ new Set());
+  const [errorSteps, setErrorSteps] = useState(/* @__PURE__ */ new Set());
+  const [allErrors, setAllErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+  const persistenceAdapter = useMemo(() => {
     return config.persistence?.adapter || new MemoryAdapter();
   }, [config.persistence?.adapter]);
   const persistenceMode = config.persistence?.mode || "onStepChange";
-  const activeSteps = (0, import_react.useMemo)(() => {
+  const activeSteps = useMemo(() => {
     return config.steps.filter((step) => {
       if (step.condition) {
         return step.condition(wizardData);
@@ -306,18 +287,18 @@ function WizardProvider({
       return true;
     });
   }, [config.steps, wizardData]);
-  (0, import_react.useEffect)(() => {
+  useEffect(() => {
     if (!currentStepId && activeSteps.length > 0) {
       setCurrentStepId(activeSteps[0].id);
       setIsLoading(false);
     }
   }, [activeSteps, currentStepId]);
-  const currentStep = (0, import_react.useMemo)(() => activeSteps.find((s) => s.id === currentStepId) || null, [activeSteps, currentStepId]);
-  const currentStepIndex = (0, import_react.useMemo)(() => activeSteps.findIndex((s) => s.id === currentStepId), [activeSteps, currentStepId]);
+  const currentStep = useMemo(() => activeSteps.find((s) => s.id === currentStepId) || null, [activeSteps, currentStepId]);
+  const currentStepIndex = useMemo(() => activeSteps.findIndex((s) => s.id === currentStepId), [activeSteps, currentStepId]);
   const isFirstStep = currentStepIndex === 0;
   const isLastStep = currentStepIndex === activeSteps.length - 1;
   const META_KEY = "__wizzard_meta__";
-  const hydrate = (0, import_react.useCallback)(() => {
+  const hydrate = useCallback(() => {
     setIsLoading(true);
     const metaFn = persistenceAdapter.getStep(META_KEY);
     if (metaFn) {
@@ -337,15 +318,15 @@ function WizardProvider({
     }
     setIsLoading(false);
   }, [config.steps, persistenceAdapter]);
-  (0, import_react.useEffect)(() => {
+  useEffect(() => {
     hydrate();
   }, [hydrate]);
-  const saveData = (0, import_react.useCallback)((mode, stepId, data) => {
+  const saveData = useCallback((mode, stepId, data) => {
     if (mode === persistenceMode || mode === "manual") {
       persistenceAdapter.saveStep(stepId, data);
     }
   }, [persistenceAdapter, persistenceMode]);
-  const setStepData = (0, import_react.useCallback)((stepId, data) => {
+  const setStepData = useCallback((stepId, data) => {
     setWizardData((prev) => {
       const newData = { ...prev, ...data };
       if (persistenceMode === "onChange") {
@@ -354,11 +335,11 @@ function WizardProvider({
       return newData;
     });
   }, [persistenceMode, saveData]);
-  const handleStepChange = (0, import_react.useCallback)((field, value2) => {
+  const handleStepChange = useCallback((field, value2) => {
     if (!currentStepId) return;
     setStepData(currentStepId, { [field]: value2 });
   }, [currentStepId, setStepData]);
-  const validateStep = (0, import_react.useCallback)(async (stepId) => {
+  const validateStep = useCallback(async (stepId) => {
     const step = config.steps.find((s) => s.id === stepId);
     if (!step) return true;
     if (!step.validationAdapter) return true;
@@ -384,7 +365,7 @@ function WizardProvider({
       return true;
     }
   }, [config.steps, wizardData]);
-  const validateAll = (0, import_react.useCallback)(async () => {
+  const validateAll = useCallback(async () => {
     let isValid = true;
     for (const step of activeSteps) {
       const stepValid = await validateStep(step.id);
@@ -392,7 +373,7 @@ function WizardProvider({
     }
     return isValid;
   }, [activeSteps, validateStep]);
-  const goToStep = (0, import_react.useCallback)(async (stepId) => {
+  const goToStep = useCallback(async (stepId) => {
     const targetIndex = activeSteps.findIndex((s) => s.id === stepId);
     if (targetIndex === -1) return;
     if (targetIndex > currentStepIndex) {
@@ -417,7 +398,7 @@ function WizardProvider({
     }
     window.scrollTo(0, 0);
   }, [activeSteps, currentStepId, currentStep, currentStepIndex, config.autoValidate, persistenceMode, saveData, wizardData, validateStep, visitedSteps, completedSteps, persistenceAdapter]);
-  const goToNextStep = (0, import_react.useCallback)(async () => {
+  const goToNextStep = useCallback(async () => {
     if (isLastStep) return;
     const nextStep = activeSteps[currentStepIndex + 1];
     if (nextStep) {
@@ -433,7 +414,7 @@ function WizardProvider({
       }
     }
   }, [activeSteps, currentStepIndex, isLastStep, currentStepId, goToStep, visitedSteps, completedSteps, persistenceMode, persistenceAdapter]);
-  const goToPrevStep = (0, import_react.useCallback)(() => {
+  const goToPrevStep = useCallback(() => {
     if (isFirstStep) return;
     const prevStep = activeSteps[currentStepIndex - 1];
     if (prevStep) {
@@ -462,10 +443,10 @@ function WizardProvider({
     save: () => saveData("manual", currentStepId, wizardData),
     clearStorage: () => persistenceAdapter.clear()
   };
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(WizardContext.Provider, { value, children });
+  return /* @__PURE__ */ jsx(WizardContext.Provider, { value, children });
 }
 function useWizardContext() {
-  const context = (0, import_react.useContext)(WizardContext);
+  const context = useContext(WizardContext);
   if (!context) {
     throw new Error("useWizardContext must be used within a WizardProvider");
   }
@@ -2852,8 +2833,7 @@ var YupAdapter = class {
     }
   }
 };
-// Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
+export {
   LocalStorageAdapter,
   MemoryAdapter,
   WizardProvider,
@@ -2861,5 +2841,5 @@ var YupAdapter = class {
   ZodAdapter,
   useWizard,
   useWizardContext
-});
+};
 //# sourceMappingURL=index.js.map
