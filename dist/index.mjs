@@ -297,8 +297,15 @@ function WizardProvider({
   const currentStepIndex = useMemo(() => activeSteps.findIndex((s) => s.id === currentStepId), [activeSteps, currentStepId]);
   const isFirstStep = currentStepIndex === 0;
   const isLastStep = currentStepIndex === activeSteps.length - 1;
+  const META_KEY = "__wizzard_meta__";
   const hydrate = useCallback(() => {
     setIsLoading(true);
+    const metaFn = persistenceAdapter.getStep(META_KEY);
+    if (metaFn) {
+      if (metaFn.currentStepId) setCurrentStepId(metaFn.currentStepId);
+      if (metaFn.visited) setVisitedSteps(new Set(metaFn.visited));
+      if (metaFn.completed) setCompletedSteps(new Set(metaFn.completed));
+    }
     const loadedData = {};
     config.steps.forEach((step) => {
       const stepData = persistenceAdapter.getStep(step.id);
@@ -323,7 +330,7 @@ function WizardProvider({
     setWizardData((prev) => {
       const newData = { ...prev, ...data };
       if (persistenceMode === "onChange") {
-        saveData("onChange", stepId, data);
+        saveData("onChange", stepId, newData);
       }
       return newData;
     });
@@ -379,18 +386,34 @@ function WizardProvider({
     if (persistenceMode === "onStepChange" && currentStep) {
       saveData("onStepChange", currentStepId, wizardData);
     }
-    setVisitedSteps((prev) => new Set(prev).add(currentStepId));
+    const nextVisited = new Set(visitedSteps).add(currentStepId);
+    setVisitedSteps(nextVisited);
     setCurrentStepId(stepId);
+    if (persistenceMode !== "manual") {
+      persistenceAdapter.saveStep(META_KEY, {
+        currentStepId: stepId,
+        visited: Array.from(nextVisited),
+        completed: Array.from(completedSteps)
+      });
+    }
     window.scrollTo(0, 0);
-  }, [activeSteps, currentStepId, currentStep, currentStepIndex, config.autoValidate, persistenceMode, saveData, wizardData, validateStep]);
+  }, [activeSteps, currentStepId, currentStep, currentStepIndex, config.autoValidate, persistenceMode, saveData, wizardData, validateStep, visitedSteps, completedSteps, persistenceAdapter]);
   const goToNextStep = useCallback(async () => {
     if (isLastStep) return;
     const nextStep = activeSteps[currentStepIndex + 1];
     if (nextStep) {
+      const nextCompleted = new Set(completedSteps).add(currentStepId);
+      setCompletedSteps(nextCompleted);
       await goToStep(nextStep.id);
-      setCompletedSteps((prev) => new Set(prev).add(currentStepId));
+      if (persistenceMode !== "manual") {
+        persistenceAdapter.saveStep(META_KEY, {
+          currentStepId: nextStep.id,
+          visited: Array.from(new Set(visitedSteps).add(currentStepId)),
+          completed: Array.from(nextCompleted)
+        });
+      }
     }
-  }, [activeSteps, currentStepIndex, isLastStep, currentStepId, goToStep]);
+  }, [activeSteps, currentStepIndex, isLastStep, currentStepId, goToStep, visitedSteps, completedSteps, persistenceMode, persistenceAdapter]);
   const goToPrevStep = useCallback(() => {
     if (isFirstStep) return;
     const prevStep = activeSteps[currentStepIndex - 1];
