@@ -30,9 +30,7 @@ jobs:
         run: npm run build
 
       - name: Install Demo Dependencies
-        run: |
-          cd examples/demo
-          npm ci
+        run: npm ci
 
       - name: Build Demo
         run: |
