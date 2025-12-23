@@ -38,7 +38,7 @@ jobs:
       # Build the demo app (bypass tsc to avoid resolution issues with local package)
       - name: Build Demo
         working-directory: examples/demo
-        run: npm run build --no-verify
+        run: npx vite build
 
       # Upload the demo build artifact
       - name: Upload artifact
