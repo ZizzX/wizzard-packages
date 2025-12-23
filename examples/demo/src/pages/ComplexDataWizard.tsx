@@ -1,4 +1,5 @@
 import { WizardProvider, useWizard, type IWizardConfig, ZodAdapter } from 'wizzard-stepper-react';
+import { useEffect } from 'react';
 import { z } from 'zod';
 import { StepperControls } from '../components/StepperControls';
 import { Input } from '../components/ui/Input';
@@ -134,7 +135,14 @@ const wizardConfig: IWizardConfig<FormData> = {
 
 // 4. Wizard Wrapper with Global Form
 const WizardInner = () => {
-  const { currentStep, goToNextStep, isLastStep } = useWizard<FormData>();
+  const { currentStep, goToNextStep, isLastStep, clearStorage } = useWizard<FormData>();
+
+  useEffect(() => {
+    return () => {
+      // Clear storage when leaving the demo page
+      clearStorage();
+    };
+  }, [clearStorage]);
 
   if (!currentStep) return null;
 

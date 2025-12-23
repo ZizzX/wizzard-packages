@@ -10,9 +10,17 @@ export const StepperControls = () => {
     goToPrevStep,
     activeSteps,
     isLoading,
+    clearStorage,
   } = useWizard();
 
   if (isLoading) return null;
+
+  const handleNext = async () => {
+    if (isLastStep) {
+      clearStorage();
+    }
+    await goToNextStep();
+  };
 
   return (
     <div className="mt-8 pt-5 border-t border-gray-100 flex items-center justify-between">
@@ -32,7 +40,7 @@ export const StepperControls = () => {
       <Button
         type="button"
         variant="primary"
-        onClick={goToNextStep}
+        onClick={handleNext}
       >
         {isLastStep ? 'Complete' : 'Next'}
       </Button>

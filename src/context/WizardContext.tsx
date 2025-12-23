@@ -283,8 +283,8 @@ export function WizardProvider<T extends Record<string, any>>({
     handleStepChange,
     validateStep,
     validateAll,
-    save: () => saveData('manual', currentStepId, wizardData),
-    clearStorage: () => persistenceAdapter.clear(),
+    save: useCallback(() => saveData('manual', currentStepId, wizardData), [saveData, currentStepId, wizardData]),
+    clearStorage: useCallback(() => persistenceAdapter.clear(), [persistenceAdapter]),
     setData,
     getData,
   };
