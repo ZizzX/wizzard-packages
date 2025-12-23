@@ -31,8 +31,8 @@ The demo includes four primary implementation patterns:
 
 1. Clone the repository (if you haven't):
    ```bash
-   git clone https://github.com/ZizzX/wizzard-stepper-react-demo.git
-   cd wizzard-stepper-react-demo
+   git clone https://github.com/ZizzX/wizzard-stepper-react.git
+   cd wizzard-stepper-react/examples/demo
    ```
 
 2. Install dependencies:
