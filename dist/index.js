@@ -136,12 +136,12 @@ function WizardProvider({
   }, [activeSteps, validateStep]);
   const goToStep = useCallback(async (stepId) => {
     const targetIndex = activeSteps.findIndex((s) => s.id === stepId);
-    if (targetIndex === -1) return;
+    if (targetIndex === -1) return false;
     if (targetIndex > currentStepIndex) {
       const shouldValidate = currentStep?.autoValidate ?? config.autoValidate ?? true;
       if (shouldValidate) {
         const isValid = await validateStep(currentStepId);
-        if (!isValid) return;
+        if (!isValid) return false;
       }
     }
     if (persistenceMode === "onStepChange" && currentStep) {
@@ -158,20 +158,24 @@ function WizardProvider({
       });
     }
     window.scrollTo(0, 0);
+    return true;
   }, [activeSteps, currentStepId, currentStep, currentStepIndex, config.autoValidate, persistenceMode, saveData, wizardData, validateStep, visitedSteps, completedSteps, persistenceAdapter]);
   const goToNextStep = useCallback(async () => {
     if (isLastStep) return;
     const nextStep = activeSteps[currentStepIndex + 1];
     if (nextStep) {
-      const nextCompleted = new Set(completedSteps).add(currentStepId);
-      setCompletedSteps(nextCompleted);
-      await goToStep(nextStep.id);
-      if (persistenceMode !== "manual") {
-        persistenceAdapter.saveStep(META_KEY, {
-          currentStepId: nextStep.id,
-          visited: Array.from(new Set(visitedSteps).add(currentStepId)),
-          completed: Array.from(nextCompleted)
-        });
+      const success = await goToStep(nextStep.id);
+      if (success) {
+        const nextCompleted = new Set(completedSteps).add(currentStepId);
+        setCompletedSteps(nextCompleted);
+        if (persistenceMode !== "manual") {
+          persistenceAdapter.saveStep(META_KEY, {
+            currentStepId: nextStep.id,
+            visited: Array.from(new Set(visitedSteps).add(currentStepId)),
+            completed: Array.from(nextCompleted)
+            // Updated completed steps
+          });
+        }
       }
     }
   }, [activeSteps, currentStepIndex, isLastStep, currentStepId, goToStep, visitedSteps, completedSteps, persistenceMode, persistenceAdapter]);
