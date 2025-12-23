@@ -26,16 +26,25 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install Dependencies
+      # Install root dependencies (needed for workspace/linting context)
+      - name: Install Root Dependencies
         run: npm ci
 
-      - name: Build Library
+      # Install demo dependencies
+      - name: Install Demo Dependencies
+        working-directory: examples/demo
+        run: npm install
+
+      # Build the demo app
+      - name: Build Demo
+        working-directory: examples/demo
         run: npm run build
 
+      # Upload the demo build artifact
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: dist
+          path: examples/demo/dist
 
       - name: Deploy to GitHub Pages
         id: deployment
