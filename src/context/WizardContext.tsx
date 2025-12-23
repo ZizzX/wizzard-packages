@@ -175,16 +175,16 @@ export function WizardProvider<T extends Record<string, any>>({
   }, [activeSteps, validateStep]);
 
   // Navigation
-  const goToStep = useCallback(async (stepId: string) => {
+  const goToStep = useCallback(async (stepId: string): Promise<boolean> => {
     const targetIndex = activeSteps.findIndex(s => s.id === stepId);
-    if (targetIndex === -1) return;
+    if (targetIndex === -1) return false;
 
     // If moving forward, validate current
     if (targetIndex > currentStepIndex) {
        const shouldValidate = currentStep?.autoValidate ?? config.autoValidate ?? true;
        if (shouldValidate) {
          const isValid = await validateStep(currentStepId);
-         if (!isValid) return; // Block
+         if (!isValid) return false; // Block
        }
     }
     
@@ -209,36 +209,31 @@ export function WizardProvider<T extends Record<string, any>>({
     }
 
     window.scrollTo(0, 0);
+    return true;
   }, [activeSteps, currentStepId, currentStep, currentStepIndex, config.autoValidate, persistenceMode, saveData, wizardData, validateStep, visitedSteps, completedSteps, persistenceAdapter]);
 
   const goToNextStep = useCallback(async () => {
      if (isLastStep) return;
      const nextStep = activeSteps[currentStepIndex + 1];
      if (nextStep) {
-        // Mark completed logic
-        const nextCompleted = new Set(completedSteps).add(currentStepId);
-        setCompletedSteps(nextCompleted);
+        // Validation happens inside goToStep. If it fails, we shouldn't mark as completed.
+        const success = await goToStep(nextStep.id);
         
-        // Pass updated completed set to goToStep if we could, but goToStep uses state.
-        // We really should update metadata *after* state updates or pass explicit values.
-        // For simplicity, let's allow goToStep to handle transition, but we need to ensure 'completed' is saved.
-        // Let's update state, then call goToStep.
-        
-        await goToStep(nextStep.id);
-        
-        // Since goToStep saves metadata using *current* (stale) completedSteps state, 
-        // we might miss the 'completed' update in storage until next move.
-        // FIX: Let's explicitly save metadata here with new values if needed, 
-        // OR better: Just rely on React state consistency? No, inside async function state is stale.
-        
-        // Workaround: We'll save metadata again here with correct values.
-         if (persistenceMode !== 'manual') {
-             persistenceAdapter.saveStep(META_KEY, {
-                 currentStepId: nextStep.id,
-                 visited: Array.from(new Set(visitedSteps).add(currentStepId)),
-                 completed: Array.from(nextCompleted)
-             });
-         }
+        if (success) {
+            // Mark completed logic ONLY on success
+            const nextCompleted = new Set(completedSteps).add(currentStepId);
+            setCompletedSteps(nextCompleted);
+            
+            // We need to update metadata again to include the new 'completed' status.
+            // The previous save in goToStep didn't know about this new completion.
+             if (persistenceMode !== 'manual') {
+                 persistenceAdapter.saveStep(META_KEY, {
+                     currentStepId: nextStep.id,
+                     visited: Array.from(new Set(visitedSteps).add(currentStepId)),
+                     completed: Array.from(nextCompleted) // Updated completed steps
+                 });
+             }
+        }
      }
   }, [activeSteps, currentStepIndex, isLastStep, currentStepId, goToStep, visitedSteps, completedSteps, persistenceMode, persistenceAdapter]);
 
