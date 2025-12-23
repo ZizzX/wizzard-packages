@@ -1,6 +1,6 @@
 {
   "name": "wizzard-stepper-react",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A flexible, headless, and strictly typed multi-step wizard library for React.",
   "type": "module",
   "main": "dist/index.js",
@@ -29,7 +29,8 @@
     "url": "git+https://github.com/ZizzX/wizzard-stepper-react.git"
   },
   "bugs": {
-    "url": "https://github.com/ZizzX/wizzard-stepper-react/issues"
+    "url": "https://github.com/ZizzX/wizzard-stepper-react/issues",
+    "email": "zizzxiii@gmail.com"
   },
   "homepage": "https://zizzx.github.io/wizzard-stepper-react-demo/",
   "peerDependencies": {
