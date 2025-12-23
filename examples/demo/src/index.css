@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    /* bg-gray-50 is a standard Tailwind v4 class */
+    @apply bg-gray-50 text-gray-900 antialiased;
+  }
+}

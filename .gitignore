@@ -2,7 +2,7 @@ node_modules
 .DS_Store
 *.tsbuildinfo
 coverage
-examples
+# examples
 .vscode
 .idea
 *.log
