@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - 'examples/**'
+      - '.github/workflows/deploy-demo.yml'
 
 jobs:
   publish:
