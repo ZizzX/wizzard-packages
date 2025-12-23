@@ -31,7 +31,7 @@
   "bugs": {
     "url": "https://github.com/ZizzX/wizzard-stepper-react/issues"
   },
-  "homepage": "https://github.com/ZizzX/wizzard-stepper-react#readme",
+  "homepage": "https://zizzx.github.io/wizzard-stepper-react-demo/",
   "peerDependencies": {
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0",
