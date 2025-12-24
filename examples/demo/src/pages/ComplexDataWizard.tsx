@@ -1,13 +1,8 @@
 import React, { useEffect, useCallback } from "react";
 import {
-  WizardProvider,
-  useWizard,
-  useWizardValue,
-  useWizardSelector,
-  useWizardError,
-  useWizardActions,
   type IWizardConfig,
   ZodAdapter,
+  createWizardFactory,
 } from "wizzard-stepper-react";
 import { z } from "zod";
 import { StepperControls } from "../components/StepperControls";
@@ -32,11 +27,25 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 type Child = FormData["children"][0];
 
-// 2. Define Steps
+// 2. Create Typed Wizard Factory
+// This gives us hooks strictly typed to FormData
+const {
+  WizardProvider,
+  useWizard,
+  useWizardValue,
+  useWizardActions,
+  useWizardError,
+  useWizardSelector,
+} = createWizardFactory<FormData>();
+
+// 3. Define Steps using Typed Hooks
 const Step1 = React.memo(() => {
   const { setData } = useWizardActions();
-  const parentName = useWizardValue<string>("parentName");
-  const { allErrors } = useWizard<FormData>();
+  // "parentName" is autocompleted and return type is string
+  const parentName = useWizardValue("parentName");
+
+  // Access typed errors
+  const { allErrors } = useWizard();
   const errors = allErrors["parent"] || {};
 
   return (
@@ -69,8 +78,12 @@ const ChildRow = React.memo(
     onRemove: (id: string) => void;
   }) => {
     const { setData } = useWizardActions();
-    const name = useWizardValue<string>(`children[${index}].name`);
-    const age = useWizardValue<number>(`children[${index}].age`);
+
+    // Dot notation paths are autocompleted!
+    // "children.0.name"
+    const name = useWizardValue(`children.${index}.name`);
+    const age = useWizardValue(`children.${index}.age`);
+
     const nameError = useWizardError(`children.${index}.name`);
     const ageError = useWizardError(`children.${index}.age`);
 
@@ -89,7 +102,7 @@ const ChildRow = React.memo(
             label={`Child #${index + 1} Name`}
             value={name || ""}
             onChange={(e) =>
-              setData(`children[${index}].name`, e.target.value, {
+              setData(`children.${index}.name`, e.target.value, {
                 debounceValidation: 300,
               })
             }
@@ -100,7 +113,7 @@ const ChildRow = React.memo(
             type="number"
             value={age || 0}
             onChange={(e) =>
-              setData(`children[${index}].age`, e.target.value, {
+              setData(`children.${index}.age`, Number(e.target.value), {
                 debounceValidation: 300,
               })
             }
@@ -114,12 +127,15 @@ const ChildRow = React.memo(
 
 const Step2 = React.memo(() => {
   const { setData, getData } = useWizardActions();
-  const childIds = useWizardSelector((state: FormData) =>
+
+  // Typed selector: state is correctly inferred as FormData
+  const childIds = useWizardSelector((state) =>
     (state.children || []).map((c) => c.id)
   );
   const childrenError = useWizardError("children");
 
   const addChild = useCallback(() => {
+    // getData is also typed!
     const currentChildren = getData("children") || [];
     const newChildren = [
       ...currentChildren,
@@ -145,7 +161,7 @@ const Step2 = React.memo(() => {
       </div>
 
       <div className="space-y-4">
-        {childIds.map((id: string, index: number) => (
+        {childIds.map((id, index) => (
           <ChildRow
             key={id}
             childId={id}
@@ -170,7 +186,7 @@ const Step2 = React.memo(() => {
 });
 
 const Step3 = React.memo(() => {
-  const { wizardData } = useWizard<FormData>();
+  const { wizardData } = useWizard();
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -186,7 +202,7 @@ const Step3 = React.memo(() => {
   );
 });
 
-// 3. Define Config
+// 4. Config matches FormData
 const wizardConfig: IWizardConfig<FormData> = {
   steps: [
     {
@@ -203,14 +219,11 @@ const wizardConfig: IWizardConfig<FormData> = {
   ],
 };
 
-// 4. Wizard Wrapper with Global Form
 const WizardInner = () => {
-  const { currentStep, goToNextStep, isLastStep, clearStorage } =
-    useWizard<FormData>();
+  const { currentStep, goToNextStep, isLastStep, clearStorage } = useWizard();
 
   useEffect(() => {
     return () => {
-      // Clear storage when leaving the demo page
       clearStorage();
     };
   }, [clearStorage]);

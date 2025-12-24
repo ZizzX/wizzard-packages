@@ -62,7 +62,7 @@ export interface IWizardConfig<T = unknown> {
     /**
      * Array of step configurations
      */
-    steps: IStepConfig<any, T>[];
+    steps: IStepConfig<unknown, T>[];
     /**
      * Global auto-validation setting (default: true)
      */
@@ -84,7 +84,7 @@ export interface IWizardConfig<T = unknown> {
  * Core Wizard Context State
  */
 export interface IWizardContext<T = unknown> {
-    currentStep: IStepConfig<any, T> | null;
+    currentStep: IStepConfig<unknown, T> | null;
     currentStepIndex: number;
     isFirstStep: boolean;
     isLastStep: boolean;
@@ -93,7 +93,7 @@ export interface IWizardContext<T = unknown> {
     /**
      * Active steps (those meeting conditions)
      */
-    activeSteps: IStepConfig<any, T>[];
+    activeSteps: IStepConfig<unknown, T>[];
 
     /**
      * Unified Wizard Data
@@ -122,18 +122,18 @@ export interface IWizardContext<T = unknown> {
     /**
      * Data Actions
      */
-    setStepData: (stepId: string, data: any) => void; // Internal use usually
-    handleStepChange: (field: string, value: any) => void; // Helper for simple forms
+    setStepData: (stepId: string, data: unknown) => void; // Internal use usually
+    handleStepChange: (field: string, value: unknown) => void; // Helper for simple forms
 
     /**
      * Set data by path (supports dot notation and arrays, e.g., 'user.name' or 'items[0].value')
      */
-    setData: (path: string, value: any) => void;
+    setData: (path: string, value: unknown) => void;
 
     /**
      * Get data by path
      */
-    getData: (path: string, defaultValue?: any) => any;
+    getData: (path: string, defaultValue?: unknown) => unknown;
 
     /**
      * Validation & Persistence

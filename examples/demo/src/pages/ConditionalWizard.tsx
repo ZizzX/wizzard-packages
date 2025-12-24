@@ -1,8 +1,10 @@
+import { type IWizardConfig } from "wizzard-stepper-react";
 import {
-  WizardProvider,
   useWizard,
-  type IWizardConfig,
-} from "wizzard-stepper-react";
+  WizardProvider,
+  createStep,
+  type ConditionalWizardSchema,
+} from "../wizards/conditional-wizard";
 import { useEffect } from "react";
 import { StepperControls } from "../components/StepperControls";
 import { Input } from "../components/ui/Input";
@@ -93,15 +95,15 @@ const StepFinal = () => {
   );
 };
 
-const wizardConfig: IWizardConfig = {
+const wizardConfig: IWizardConfig<ConditionalWizardSchema> = {
   steps: [
-    { id: "start", label: "Flow Control" },
-    {
+    createStep({ id: "start", label: "Flow Control" }),
+    createStep({
       id: "co-applicant",
       label: "Co-Applicant",
-      condition: (data: any) => !!data.hasCoApplicant,
-    },
-    { id: "final", label: "Finalizing" },
+      condition: (data) => !!data.hasCoApplicant,
+    }),
+    createStep({ id: "final", label: "Finalizing" }),
   ],
 };
 
@@ -120,7 +122,7 @@ const WizardContent = () => {
     <div className="max-w-xl mx-auto py-8">
       <div className="mb-8 overflow-hidden rounded-2xl bg-white border border-gray-100 shadow-sm p-4">
         <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
-          {activeSteps.map((s: any, idx: number) => {
+          {activeSteps.map((s, idx) => {
             const isActive = s.id === currentStep.id;
             return (
               <div key={s.id} className="flex items-center shrink-0">

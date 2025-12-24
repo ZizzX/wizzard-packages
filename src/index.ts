@@ -1,5 +1,6 @@
 export * from './types';
 export * from './context/WizardContext';
+export * from './factory';
 export * from './hooks/useWizard';
 
 export * from './adapters/persistence/MemoryAdapter';

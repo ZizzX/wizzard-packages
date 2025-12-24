@@ -8,8 +8,8 @@ export class ZodAdapter<T> implements IValidatorAdapter<T> {
         this.schema = schema;
     }
 
-    async validate(data: T): Promise<ValidationResult> {
-        const result = await this.schema.safeParseAsync(data);
+    async validate(data: unknown): Promise<ValidationResult> {
+        const result = await this.schema.safeParseAsync(data as T);
         if (result.success) {
             return { isValid: true };
         }

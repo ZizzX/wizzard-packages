@@ -8,9 +8,9 @@ export class YupAdapter<T> implements IValidatorAdapter<T> {
         this.schema = schema;
     }
 
-    async validate(data: T): Promise<ValidationResult> {
+    async validate(data: unknown): Promise<ValidationResult> {
         try {
-            await this.schema.validate(data, { abortEarly: false });
+            await this.schema.validate(data as T, { abortEarly: false });
             return { isValid: true };
         } catch (err) {
             if (err && typeof err === 'object' && 'inner' in err) {
