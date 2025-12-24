@@ -122,6 +122,61 @@ setData('items[0].value', 'New Value');
 const name = getData('user.profile.name', 'Anonymous');
 ```
 
+## Performance & Optimization 🚀
+
+For large forms (e.g., 50+ array items), using `useWizard` context can cause performance issues because it triggers a re-render on every keystroke. To solve this, we provide **granular hooks** that allow components to subscribe only to the specific data they need.
+
+### 1. Use `useWizardValue` for Granular Updates
+
+Instead of reading the whole `wizardData`, subscribe to a single field. The component will only re-render when *that specific field* changes.
+
+```tsx
+// ✅ FAST: Only re-renders when "users[0].name" changes
+const NameInput = () => {
+  // Subscribe to specific path
+  const name = useWizardValue('users[0].name'); 
+  const { setData } = useWizardActions(); // Component actions don't trigger re-renders
+  
+  return <input value={name} onChange={e => setData('users[0].name', e.target.value)} />;
+}
+
+// ❌ SLOW: Re-renders on ANY change in the form
+const NameInputSlow = () => {
+  const { wizardData, setData } = useWizard();
+  return <input value={wizardData.users[0].name} ... />;
+}
+```
+
+### 2. Use `useWizardSelector` for Lists
+
+When rendering lists, avoid passing the whole `children` array to the parent component. Instead, select only IDs and let child components fetch their own data.
+
+```tsx
+const ChildrenList = () => {
+  // ✅ Only re-renders when the list LENGTH changes or IDs change
+  const childIds = useWizardSelector(state => state.children.map(c => c.id));
+  
+  return (
+    <div>
+      {childIds.map((id, index) => (
+         // Pass ID/Index, NOT the data object
+        <ChildRow key={id} index={index} />
+      ))}
+    </div>
+  );
+}
+```
+
+### 3. Debounced Validation
+
+For heavy validation schemas, you can debounce validation to keep the UI responsive.
+
+```tsx
+setData('field.path', value, { 
+  debounceValidation: 300 // Wait 300ms before running Zod/Yup validation
+});
+```
+
 ## Conditional Steps
 
 Steps can be dynamically included based on the wizard's state.
@@ -168,13 +223,31 @@ const config: IWizardConfig = {
 
 - `activeSteps`: Steps that match conditions.
 - `currentStep`: The currently active step object.
-- `wizardData`: The global state object.
-- `setData(path, value)`: Update state using dot notation (e.g., `user.name`).
+- `wizardData`: The global state object (subscribe cautiously!).
+- `setData(path, value, options?)`: Update state. Options: `{ debounceValidation: number }`.
 - `getData(path, defaultValue?)`: Retrieve nested data.
 - `handleStepChange(key, value)`: simple helper to update top-level state.
 - `goToNextStep()`: Validates and moves next.
 - `goToStep(id)`: Jumps to specific step.
-- `allErrors`: Map of validation errors (keyed by `stepId.path.to.field`).
+- `allErrors`: Map of validation errors.
+
+### New Performance Hooks
+
+#### `useWizardValue<T>(path: string)`
+
+Subscribes to a specific data path. Re-renders **only** when that value changes.
+
+#### `useWizardError(path: string)`
+
+Subscribes to validation errors for a specific path. Highly recommended for individual inputs.
+
+#### `useWizardSelector<T>(selector: (state: T) => any)`
+
+Create a custom subscription to the wizard state. Ideal for derived state or lists.
+
+#### `useWizardActions()`
+
+Returns object with actions (`setData`, `goToNextStep`, etc.) **without** subscribing to state changes. Use this in components that trigger updates but don't need to render data.
 
 ## Demos
 
