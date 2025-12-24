@@ -1,44 +1,106 @@
 /**
- * Retrieves a value from an object by path (dot notation or brackets)
+ * Cache for parsed path strings to avoid repetitive regex/split operations.
+ * Key: path string (e.g., "users[0].name")
+ * Value: array of keys (e.g., ["users", "0", "name"])
+ */
+const pathCache = new Map<string, string[]>();
+
+/**
+ * Parses a string path into an array of keys using a cache.
+ * Handles dot notation "a.b" and bracket notation "a[0].b".
+ */
+export function toPath(path: string): string[] {
+    if (!path) return [];
+    if (pathCache.has(path)) {
+        return pathCache.get(path)!;
+    }
+
+    // Optimization: Regex only if brackets exist, otherwise fast split
+    let keys: string[];
+    if (path.includes('[')) {
+        keys = path.replace(/\[(\d+)\]/g, '.$1').split('.').filter(Boolean);
+    } else {
+        keys = path.split('.').filter(Boolean);
+    }
+
+    pathCache.set(path, keys);
+    return keys;
+}
+
+/**
+ * Retrieves a value from an object by path using cached key parsing.
+ * Optimized for frequent access.
  */
 export function getByPath(obj: any, path: string, defaultValue?: unknown): unknown {
-    if (!path) return obj;
-    const keys = path.replace(/\[(\d+)\]/g, '.$1').split('.').filter(Boolean);
-    let result = obj;
-    for (const key of keys) {
-        if (result === undefined || result === null) return defaultValue;
-        result = result[key];
+    if (!path || obj === undefined || obj === null) return defaultValue ?? obj;
+
+    // Fast path for direct property access (no dots/brackets)
+    if (!path.includes('.') && !path.includes('[')) {
+        const val = obj[path];
+        return val !== undefined ? val : defaultValue;
     }
+
+    const keys = toPath(path);
+    let result = obj;
+
+    for (let i = 0; i < keys.length; i++) {
+        if (result === undefined || result === null) return defaultValue;
+        result = result[keys[i]];
+    }
+
     return result !== undefined ? result : defaultValue;
 }
 
 /**
- * Immutably sets a value in an object by path
+ * Immutably sets a value in an object by path.
+ * iterative implementation (stack-safe and usually faster).
  */
 export function setByPath<T extends object>(obj: T, path: string, value: unknown): T {
     if (!path) return value as unknown as T;
-    if (!path.includes('.') && !path.includes('[') && !path.includes(']')) {
+
+    // Fast path: simple property set
+    if (!path.includes('.') && !path.includes('[')) {
+        // Optimization: Shallow copy mostly sufficient for root
+        // If obj is Array, we must be careful, but typings say T extends object
+        if (Array.isArray(obj)) {
+            const copy = [...obj] as any;
+            copy[path] = value;
+            return copy;
+        }
         return { ...obj, [path]: value };
     }
-    const keys = path.replace(/\[(\d+)\]/g, '.$1').split('.').filter(Boolean);
 
-    const update = (current: any, index: number): any => {
-        if (index === keys.length) return value;
+    const keys = toPath(path);
+    if (keys.length === 0) return value as unknown as T;
 
-        const key = keys[index];
-        const isKeyNumeric = !isNaN(Number(key)) && key.trim() !== '';
+    // Shallow clone root
+    const root = Array.isArray(obj) ? [...obj] : { ...obj };
+    let current: any = root;
 
-        let nextLevel = current;
-        if (!nextLevel || typeof nextLevel !== 'object') {
-            nextLevel = isKeyNumeric ? [] : {};
+    for (let i = 0; i < keys.length - 1; i++) {
+        const key = keys[i];
+        const nextKey = keys[i + 1];
+
+        // Determine if next level should be array or object
+        // If key exists, we clone it. If not, we create based on nextKey type (numeric -> array)
+        const existing = current[key];
+        let nextLevel;
+
+        if (existing && typeof existing === 'object') {
+            nextLevel = Array.isArray(existing) ? [...existing] : { ...existing };
         } else {
-            nextLevel = Array.isArray(nextLevel) ? [...nextLevel] : { ...nextLevel };
+            // Predict type based on next key: is it an integer?
+            const isNumeric = /^\d+$/.test(nextKey);
+            nextLevel = isNumeric ? [] : {};
         }
 
-        const nextKey = isKeyNumeric ? Number(key) : key;
-        nextLevel[nextKey] = update(nextLevel[nextKey], index + 1);
-        return nextLevel;
-    };
+        current[key] = nextLevel;
+        current = nextLevel;
+    }
 
-    return update(obj, 0);
+    // Set final value
+    const lastKey = keys[keys.length - 1];
+    current[lastKey] = value;
+
+    return root as T;
 }

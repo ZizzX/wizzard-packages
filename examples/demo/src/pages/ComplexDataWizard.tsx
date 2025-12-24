@@ -71,6 +71,7 @@ const ChildRow = React.memo(
         <Button
           variant="ghost"
           size="sm"
+          type="button"
           className="absolute top-2 right-2 text-red-500 hover:text-red-700"
           onClick={() => onRemove(childId)}
         >
@@ -151,6 +152,7 @@ const Step2 = React.memo(() => {
 
         <Button
           variant="outline"
+          type="button"
           className="w-full border-dashed"
           onClick={addChild}
         >
@@ -194,6 +196,7 @@ const wizardConfig: IWizardConfig<ComplexFormData> = {
     {
       id: "children",
       label: "Children",
+      validationMode: "onStepChange",
       validationAdapter: new ZodAdapter(complexSchema.pick({ children: true })),
     },
     { id: "summary", label: "Summary" },

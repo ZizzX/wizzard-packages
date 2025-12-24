@@ -23,6 +23,14 @@ export interface IValidatorAdapter<TData = unknown> {
 export type PersistenceMode = 'onStepChange' | 'onChange' | 'manual';
 
 /**
+ * Validation Mode
+ * - 'onChange': Validate on every data change (debounced)
+ * - 'onStepChange': Validate only when moving to next step
+ * - 'manual': Validate only when manually triggered
+ */
+export type ValidationMode = 'onChange' | 'onStepChange' | 'manual';
+
+/**
  * Persistence Adapter Interface
  */
 export interface IPersistenceAdapter {
@@ -36,8 +44,8 @@ export interface IPersistenceAdapter {
  * TStepData: Type of data for this step
  * TGlobalContext: Type of the global wizard data
  */
-export interface IStepConfig<TStepData = unknown, TGlobalContext = unknown> {
-    id: string;
+export interface IStepConfig<TStepData = unknown, TGlobalContext = unknown, StepId extends string = string> {
+    id: StepId;
     label: string;
     /**
      * Predicate to determine if step should be included/visible.
@@ -50,8 +58,16 @@ export interface IStepConfig<TStepData = unknown, TGlobalContext = unknown> {
     validationAdapter?: IValidatorAdapter<TStepData>;
     /**
      * Override global auto-validation setting for this step
+     * @deprecated Use validationMode instead
      */
     autoValidate?: boolean;
+    /**
+     * Control when validation occurs for this step.
+     * - 'onChange': Validate on every keystroke (debounced)
+     * - 'onStepChange': Validate only when attempting to leave the step
+     * - 'manual': Only validate when explicitly triggered
+     */
+    validationMode?: ValidationMode;
     /**
      * Optional React Component to render for this step.
      * Used by the <WizardStepRenderer /> component.
@@ -67,15 +83,20 @@ export interface IStepConfig<TStepData = unknown, TGlobalContext = unknown> {
  * Wizard Configuration
  * T: Type of the Global Wizard Data
  */
-export interface IWizardConfig<T = unknown> {
+export interface IWizardConfig<T = unknown, StepId extends string = string> {
     /**
      * Array of step configurations
      */
-    steps: IStepConfig<unknown, T>[];
+    steps: IStepConfig<unknown, T, StepId>[];
     /**
      * Global auto-validation setting (default: true)
+     * @deprecated Use validationMode instead
      */
     autoValidate?: boolean;
+    /**
+     * Default validation mode for all steps (default: 'onChange')
+     */
+    validationMode?: ValidationMode;
     /**
      * Persistence configuration
      */
@@ -91,14 +112,14 @@ export interface IWizardConfig<T = unknown> {
      * Callback triggered when step changes.
      * Useful for routing integration or analytics.
      */
-    onStepChange?: (fromStep: string | null, toStep: string, data: T) => void;
+    onStepChange?: (fromStep: StepId | null, toStep: StepId, data: T) => void;
 }
 
 /**
  * Core Wizard Context State
  */
-export interface IWizardContext<T = unknown> {
-    currentStep: IStepConfig<unknown, T> | null;
+export interface IWizardContext<T = unknown, StepId extends string = string> {
+    currentStep: IStepConfig<unknown, T, StepId> | null;
     currentStepIndex: number;
     isFirstStep: boolean;
     isLastStep: boolean;
@@ -108,7 +129,7 @@ export interface IWizardContext<T = unknown> {
     /**
      * Active steps (those meeting conditions)
      */
-    activeSteps: IStepConfig<unknown, T>[];
+    activeSteps: IStepConfig<unknown, T, StepId>[];
 
     /**
      * Unified Wizard Data
@@ -123,21 +144,21 @@ export interface IWizardContext<T = unknown> {
     /**
      * Steps Status
      */
-    visitedSteps: Set<string>;
-    completedSteps: Set<string>;
-    errorSteps: Set<string>;
+    visitedSteps: Set<StepId>;
+    completedSteps: Set<StepId>;
+    errorSteps: Set<StepId>;
 
     /**
      * Navigation Actions
      */
     goToNextStep: () => Promise<void>;
     goToPrevStep: () => void;
-    goToStep: (stepId: string) => Promise<boolean>;
+    goToStep: (stepId: StepId) => Promise<boolean>;
 
     /**
      * Data Actions
      */
-    setStepData: (stepId: string, data: unknown) => void; // Internal use usually
+    setStepData: (stepId: StepId, data: unknown) => void; // Internal use usually
     handleStepChange: (field: string, value: unknown) => void; // Helper for simple forms
 
     /**
@@ -160,7 +181,7 @@ export interface IWizardContext<T = unknown> {
     /**
      * Validation & Persistence
      */
-    validateStep: (sid: string) => Promise<boolean>;
+    validateStep: (sid: StepId) => Promise<boolean>;
     validateAll: () => Promise<{ isValid: boolean; errors: Record<string, Record<string, string>> }>;
     save: () => void; // Manual persistence save
     clearStorage: () => void;

@@ -20,7 +20,7 @@ import type { Path, PathValue } from "./utils/types";
  *
  * @template TSchema The shape of your wizard's global data state
  */
-export function createWizardFactory<TSchema extends Record<string, any>>() {
+export function createWizardFactory<TSchema extends Record<string, any>, StepId extends string = string>() {
   /**
    * Typed Provider
    */
@@ -29,12 +29,12 @@ export function createWizardFactory<TSchema extends Record<string, any>>() {
     initialData,
     children,
   }: {
-    config: IWizardConfig<TSchema>;
+    config: IWizardConfig<TSchema, StepId>;
     initialData?: Partial<TSchema>;
     children: React.ReactNode;
   }) => {
     return (
-      <BaseWizardProvider<TSchema>
+      <BaseWizardProvider<TSchema, StepId>
         config={config}
         initialData={initialData as TSchema}
       >
@@ -47,8 +47,8 @@ export function createWizardFactory<TSchema extends Record<string, any>>() {
    * Typed useWizard
    * Returns the full context with TSchema typed data and methods
    */
-  const useWizard = (): IWizardContext<TSchema> => {
-    return useBaseWizard<TSchema>();
+  const useWizard = (): IWizardContext<TSchema, StepId> => {
+    return useBaseWizard<TSchema, StepId>();
   };
 
   /**
@@ -56,7 +56,7 @@ export function createWizardFactory<TSchema extends Record<string, any>>() {
    * similar to useWizard but explicit about strict context usage
    */
   const useWizardContext = () => {
-    return useBaseWizardContext<TSchema>();
+    return useBaseWizardContext<TSchema, StepId>();
   };
 
   /**
@@ -94,7 +94,7 @@ export function createWizardFactory<TSchema extends Record<string, any>>() {
    * No generic needed for actions usually, but we wrap it for consistency
    */
   const useWizardActions = () => {
-    return useBaseWizardActions();
+    return useBaseWizardActions<StepId>();
   };
 
   /**
@@ -102,7 +102,7 @@ export function createWizardFactory<TSchema extends Record<string, any>>() {
    * Access to raw internal state if needed (advanced)
    */
   const useWizardState = () => {
-    return useBaseWizardState();
+    return useBaseWizardState<TSchema, StepId>();
   };
 
   /**
@@ -110,7 +110,7 @@ export function createWizardFactory<TSchema extends Record<string, any>>() {
    * By using this helper, TypeScript can infer TStepData from the validationAdapter or other properties.
    */
   const createStep = <TStepData = unknown,>(
-    config: IStepConfig<TStepData, TSchema>
+    config: IStepConfig<TStepData, TSchema, StepId>
   ) => config;
 
   return {
