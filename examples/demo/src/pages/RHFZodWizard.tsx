@@ -120,13 +120,7 @@ const wizardConfig: IWizardConfig<RHFZodSchema> = {
 };
 
 const WizardContent = () => {
-  const { currentStep, wizardData, clearStorage } = useWizard();
-
-  useEffect(() => {
-    return () => {
-      clearStorage();
-    };
-  }, [clearStorage]);
+  const { currentStep, wizardData } = useWizard();
 
   if (!currentStep) return null;
 

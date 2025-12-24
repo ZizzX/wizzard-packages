@@ -108,13 +108,7 @@ const wizardConfig: IWizardConfig<ConditionalWizardSchema> = {
 };
 
 const WizardContent = () => {
-  const { currentStep, activeSteps, clearStorage } = useWizard();
-
-  useEffect(() => {
-    return () => {
-      clearStorage();
-    };
-  }, [clearStorage]);
+  const { currentStep, activeSteps } = useWizard();
 
   if (!currentStep) return null;
 

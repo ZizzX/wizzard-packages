@@ -65,22 +65,89 @@ const WizardActionsContext = createContext<IWizardActions<any> | undefined>(
 // Advanced: Store for granular subscriptions
 export class WizardStore<T> {
   private state: { data: T; errors: Record<string, Record<string, string>> };
-  private listeners: Set<() => void> = new Set();
+  private listeners = new Set<() => void>();
+  errorsMap = new Map<string, Map<string, string>>();
 
   constructor(initialData: T) {
-    this.state = { data: initialData, errors: {} };
+    this.state = {
+      data: initialData,
+      errors: {},
+    };
   }
 
-  getSnapshot = () => this.state;
+  getSnapshot() {
+    return this.state;
+  }
 
   update(newData: T) {
     this.state = { ...this.state, data: newData };
     this.notify();
   }
 
+  // Sync internal Map to external Object (for backward compat)
+  private syncErrors() {
+    const newErrorsObj: Record<string, Record<string, string>> = {};
+    for (const [stepId, fieldErrors] of this.errorsMap.entries()) {
+      if (fieldErrors.size > 0) {
+        newErrorsObj[stepId] = Object.fromEntries(fieldErrors);
+      }
+    }
+    this.state = { ...this.state, errors: newErrorsObj };
+    this.notify();
+  }
+
+  // Update from Object (Legacy/State setter)
   updateErrors(newErrors: Record<string, Record<string, string>>) {
+    // Re-build Map to stay in sync
+    this.errorsMap.clear();
+    for (const [stepId, fieldErrors] of Object.entries(newErrors)) {
+        const stepMap = new Map<string, string>();
+        for (const [field, msg] of Object.entries(fieldErrors)) {
+            stepMap.set(field, msg);
+        }
+        if (stepMap.size > 0) this.errorsMap.set(stepId, stepMap);
+    }
     this.state = { ...this.state, errors: newErrors };
     this.notify();
+  }
+
+  // Optimize: Update Step Errors directly (O(1) Map updated, then Sync)
+  setStepErrors(stepId: string, errors: Record<string, string> | undefined | null) {
+      if (!errors || Object.keys(errors).length === 0) {
+          if (this.errorsMap.has(stepId)) {
+              this.errorsMap.delete(stepId);
+              this.syncErrors();
+              return true; // changed
+          }
+          return false;
+      }
+
+      // Update Map
+      const stepMap = new Map<string, string>();
+      for (const [field, msg] of Object.entries(errors)) {
+          stepMap.set(field, msg);
+      }
+      this.errorsMap.set(stepId, stepMap);
+      
+      this.syncErrors();
+      return true;
+  }
+
+  // Fast Delete (O(1))
+  deleteError(stepId: string, path: string): boolean {
+    const stepErrors = this.errorsMap.get(stepId);
+    if (!stepErrors) return false;
+    
+    if (stepErrors.has(path)) {
+       stepErrors.delete(path);
+       if (stepErrors.size === 0) {
+           this.errorsMap.delete(stepId);
+       }
+       // Sync to object for public state
+       this.syncErrors();
+       return true;
+    }
+    return false;
   }
 
   private notify() {
@@ -288,30 +355,32 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
 
       const result = await step.validationAdapter.validate(data);
 
-      if (!result.isValid) {
-        const newAllErrors = {
-          ...storeRef.current.getSnapshot().errors,
-          [stepId]: result.errors || {},
-        };
-        storeRef.current.updateErrors(newAllErrors);
-        setAllErrorsState(newAllErrors);
+      if (result.isValid) {
+        // Clear errors for this step
+        // Optimized: Use Store Method
+        const changed = storeRef.current.setStepErrors(stepId, null);
+        
+        if (changed) {
+            setAllErrorsState(storeRef.current.getSnapshot().errors);
+            setErrorSteps((prev) => {
+              const next = new Set(prev);
+              next.delete(stepId);
+              return next;
+            });
+        }
+        return true;
+      } else {
+        // Set errors for this step
+        // Optimized: Use Store Method
+        storeRef.current.setStepErrors(stepId, result.errors || null);
+        setAllErrorsState(storeRef.current.getSnapshot().errors);
+        
         setErrorSteps((prev) => {
           const next = new Set(prev);
           next.add(stepId);
           return next;
         });
         return false;
-      } else {
-        const newAllErrors = { ...storeRef.current.getSnapshot().errors };
-        delete newAllErrors[stepId];
-        storeRef.current.updateErrors(newAllErrors);
-        setAllErrorsState(newAllErrors);
-        setErrorSteps((prev) => {
-          const next = new Set(prev);
-          next.delete(stepId);
-          return next;
-        });
-        return true;
       }
     },
     []
@@ -355,37 +424,24 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
       const activeStepId = stateRef.current.currentStepId;
       const { config } = stateRef.current;
 
-      // 4. Clear Error on Input (UX Improvement)
+      // 4. Clear Error on Input (UX Improvement + Optimization)
       // If there is an existing error for this specific path, clear it immediately
+      // Using O(1) Map lookup and delete logic internal to store
       if (activeStepId) {
-        const currentErrors = storeRef.current.getSnapshot().errors;
-        const stepErrors = currentErrors[activeStepId] as Record<string, string> | undefined;
-        
-        if (stepErrors && stepErrors[path]) {
-          const newStepErrors = { ...stepErrors };
-          delete newStepErrors[path];
-          
-          const newAllErrors = { 
-            ...currentErrors,
-            [activeStepId]: newStepErrors
-          };
-          
-          // If step has no more errors, we could verify if we should remove it from errorSteps
-          // But purely for UI feedback, clearing the specific field error is sufficient
-          
-          storeRef.current.updateErrors(newAllErrors);
-          setAllErrorsState(newAllErrors);
-          
-          // Optional: If step empty, remove from errorSteps? 
-          // Keeping it simple: Allow validateStep to handle full cleanup later
-          if (Object.keys(newStepErrors).length === 0) {
-             setErrorSteps(prev => {
-                const next = new Set(prev);
-                next.delete(activeStepId);
-                return next;
-             });
-          }
-        }
+         const wasDeleted = storeRef.current.deleteError(activeStepId, path);
+         if (wasDeleted) {
+             // State is already updated in store via syncErrors()
+             setAllErrorsState(storeRef.current.getSnapshot().errors);
+             
+             // Check if step is now clean to update errorSteps
+             if (!storeRef.current.errorsMap.has(activeStepId)) {
+                  setErrorSteps(prev => {
+                    const next = new Set(prev);
+                    next.delete(activeStepId);
+                    return next;
+                 });
+             }
+         }
       }
 
       // Determine Validation Mode

@@ -131,13 +131,8 @@ const wizardConfig: IWizardConfig<FormikYupSchema> = {
 };
 
 const WizardContent = () => {
-  const { currentStep, wizardData, clearStorage } = useWizard();
+  const { currentStep, wizardData } = useWizard();
 
-  useEffect(() => {
-    return () => {
-      clearStorage();
-    };
-  }, [clearStorage]);
 
   if (!currentStep) return null;
 

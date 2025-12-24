@@ -144,13 +144,7 @@ const wizardConfig: IWizardConfig<SimpleWizardSchema> = {
 
 // 4. Main Wrapper
 const WizardContent = () => {
-  const { currentStep, clearStorage } = useWizard();
-
-  useEffect(() => {
-    return () => {
-      clearStorage();
-    };
-  }, [clearStorage]);
+  const { currentStep } = useWizard();
 
   if (!currentStep) return null;
 

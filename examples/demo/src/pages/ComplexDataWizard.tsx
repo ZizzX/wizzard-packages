@@ -1,6 +1,6 @@
-import React, { useEffect, useCallback } from "react";
+import React, { useCallback } from "react";
 import type { IWizardConfig } from "wizzard-stepper-react";
-import { ZodAdapter } from "wizzard-stepper-react";
+import { ZodAdapter, LocalStorageAdapter } from "wizzard-stepper-react";
 import { StepperControls } from "../components/StepperControls";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
@@ -202,16 +202,14 @@ const wizardConfig: IWizardConfig<ComplexFormData> = {
     },
     { id: "summary", label: "Summary" },
   ],
+  persistence: {
+    adapter: new LocalStorageAdapter("complex-wizard-demo"),
+    mode: "onStepChange", // Persist on every step change
+  },
 };
 
 const WizardInner = () => {
   const { currentStep, goToNextStep, isLastStep, clearStorage } = useWizard();
-
-  useEffect(() => {
-    return () => {
-      clearStorage();
-    };
-  }, [clearStorage]);
 
   if (!currentStep) return null;
 
