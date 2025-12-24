@@ -14,13 +14,13 @@ function App() {
     <Routes>
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
-        <Route path="/simple-wizard" element={<SimpleWizard />} />
-        <Route path="/legacy-wizard" element={<LegacyWizard />} />
-        <Route path="/rhf-zod-wizard" element={<RHFZodWizard />} />
+        <Route path="simple" element={<SimpleWizard />} />
+        <Route path="legacy" element={<LegacyWizard />} />
+        <Route path="rhf-zod" element={<RHFZodWizard />} />
         <Route path="formik-yup" element={<FormikYupWizard />} />
         <Route path="conditional" element={<ConditionalWizard />} />
         <Route path="complex" element={<ComplexDataWizard />} />
-        <Route path="/advanced" element={<AdvancedDemo />} />
+        <Route path="advanced" element={<AdvancedDemo />} />
       </Route>
     </Routes>
   );

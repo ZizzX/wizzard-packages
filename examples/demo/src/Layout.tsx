@@ -7,6 +7,7 @@ export default function Layout() {
 
   const navItems = [
     { path: '/', label: 'Overview' },
+    { path: '/legacy', label: 'Legacy' },
     { path: '/simple', label: 'Simple JS' },
     { path: '/rhf-zod', label: 'RHF + Zod' },
     { path: '/formik-yup', label: 'Formik + Yup' },
@@ -63,7 +64,7 @@ export default function Layout() {
                  </svg>
                </a>
                <Button size="sm" variant="outline" onClick={() => window.open('https://www.npmjs.com/package/wizzard-stepper-react', '_blank')}>
-                  v0.0.0
+                  v1.5.2
                </Button>
             </div>
           </div>

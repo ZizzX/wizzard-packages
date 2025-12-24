@@ -18,6 +18,14 @@ export default function Home() {
       color: "bg-blue-50 text-blue-600",
     },
     {
+      title: "Legacy Wizard",
+      description:
+        "The easiest way to get started with no external form libraries.",
+      path: "/legacy",
+      icon: "✨",
+      color: "bg-blue-50 text-blue-600",
+    },
+    {
       title: "RHF + Zod",
       description:
         "Full-featured forms with React Hook Form and Zod validation.",
