@@ -1,4 +1,9 @@
+import { useState } from 'react';
+import { cn } from '../../lib/utils';
+
 export default function Installation() {
+  const [activeManager, setActiveManager] = useState(0);
+  
   const installCommands = [
     { label: "npm", command: "npm install wizzard-stepper-react" },
     { label: "pnpm", command: "pnpm add wizzard-stepper-react" },
@@ -18,8 +23,8 @@ export default function Installation() {
       </div>
 
       <div className="space-y-4">
-        <div className="bg-gray-950 rounded-2xl overflow-hidden shadow-xl">
-          <div className="flex bg-gray-900 px-4 py-2 border-b border-gray-800">
+        <div className="bg-gray-950 rounded-2xl overflow-hidden shadow-xl border border-gray-800">
+          <div className="flex items-center justify-between bg-gray-900 px-4 py-2 border-b border-gray-800">
              <div className="flex space-x-2">
                 <div className="w-3 h-3 rounded-full bg-red-500/20" />
                 <div className="w-3 h-3 rounded-full bg-amber-500/20" />
@@ -27,14 +32,23 @@ export default function Installation() {
              </div>
           </div>
           <div className="p-6">
-            <pre className="text-indigo-300 font-mono text-sm leading-relaxed">
-              {installCommands[0].command}
+            <pre className="text-indigo-300 font-mono text-sm leading-relaxed whitespace-pre-wrap break-all">
+              {installCommands[activeManager].command}
             </pre>
           </div>
         </div>
-        <div className="flex gap-3">
-          {installCommands.map((item) => (
-            <button key={item.label} className="text-xs font-mono px-3 py-1.5 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors">
+        <div className="flex gap-2 p-1 bg-gray-100 rounded-lg w-fit">
+          {installCommands.map((item, index) => (
+            <button 
+              key={item.label} 
+              onClick={() => setActiveManager(index)}
+              className={cn(
+                "text-xs font-medium px-4 py-1.5 rounded-md transition-all duration-200 cursor-pointer",
+                activeManager === index 
+                  ? "bg-white text-indigo-600 shadow-sm" 
+                  : "text-gray-500 hover:text-gray-900 hover:bg-gray-200/50"
+              )}
+            >
               {item.label}
             </button>
           ))}
