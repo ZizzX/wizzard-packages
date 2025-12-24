@@ -1,5 +1,17 @@
 # Changelog
 
+# [1.4.0](https://github.com/ZizzX/wizzard-stepper-react/compare/v1.3.0...v1.4.0) (2025-12-24)
+
+
+### Features
+
+* implement granular state subscriptions, new selector hooks ([3203949](https://github.com/ZizzX/wizzard-stepper-react/commit/3203949906841c4041a4ba30b48a5910552ec71f))
+* introduce granular state hooks and refactor wizard state management with a store ([e9f9047](https://github.com/ZizzX/wizzard-stepper-react/commit/e9f90476963ab225afd78ba85b14ebb9897fd57e))
+* performance optimization with granular subscriptions and debounce ([03a3760](https://github.com/ZizzX/wizzard-stepper-react/commit/03a3760e33cf20343b593352251c6e3ee8d35b5f))
+* refactor validation adapters ([b136cdd](https://github.com/ZizzX/wizzard-stepper-react/commit/b136cdd6d409eda1d2b60dff48e20e379a0ab367))
+* добавить тест для установки значения с простым ключом в функции setByPath ([137480d](https://github.com/ZizzX/wizzard-stepper-react/commit/137480d65f98951aacbbd480bead5b376b48c9a0))
+* удалить комментарий о простом пути в функции setByPath ([03fcc27](https://github.com/ZizzX/wizzard-stepper-react/commit/03fcc27683e8bd512958d789724f9b6c985e454e))
+
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
 ## 1.3.1 (2025-12-24)
