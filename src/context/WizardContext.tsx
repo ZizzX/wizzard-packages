@@ -355,6 +355,39 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
       const activeStepId = stateRef.current.currentStepId;
       const { config } = stateRef.current;
 
+      // 4. Clear Error on Input (UX Improvement)
+      // If there is an existing error for this specific path, clear it immediately
+      if (activeStepId) {
+        const currentErrors = storeRef.current.getSnapshot().errors;
+        const stepErrors = currentErrors[activeStepId] as Record<string, string> | undefined;
+        
+        if (stepErrors && stepErrors[path]) {
+          const newStepErrors = { ...stepErrors };
+          delete newStepErrors[path];
+          
+          const newAllErrors = { 
+            ...currentErrors,
+            [activeStepId]: newStepErrors
+          };
+          
+          // If step has no more errors, we could verify if we should remove it from errorSteps
+          // But purely for UI feedback, clearing the specific field error is sufficient
+          
+          storeRef.current.updateErrors(newAllErrors);
+          setAllErrorsState(newAllErrors);
+          
+          // Optional: If step empty, remove from errorSteps? 
+          // Keeping it simple: Allow validateStep to handle full cleanup later
+          if (Object.keys(newStepErrors).length === 0) {
+             setErrorSteps(prev => {
+                const next = new Set(prev);
+                next.delete(activeStepId);
+                return next;
+             });
+          }
+        }
+      }
+
       // Determine Validation Mode
       // Priority: Step Config > Global Config > 'onChange' (default)
       const stepConfig = config.steps.find(s => s.id === activeStepId);
