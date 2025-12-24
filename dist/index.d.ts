@@ -1,7 +1,5 @@
 import * as react_jsx_runtime from 'react/jsx-runtime';
 import React from 'react';
-import { ZodType } from 'zod';
-import { Schema } from 'yup';
 
 /**
  * Validation Result Interface
@@ -140,9 +138,14 @@ interface WizardProviderProps<T> {
     children: React.ReactNode;
 }
 declare function WizardProvider<T extends Record<string, any>>({ config, initialData, children, }: WizardProviderProps<T>): react_jsx_runtime.JSX.Element;
-declare function useWizardContext<T = any>(): IWizardContext<T>;
+declare function useWizardState(): any;
+declare function useWizardValue<TValue = any>(path: string): TValue;
+declare function useWizardError(path: string): string | undefined;
+declare function useWizardSelector<TSelected = any>(selector: (state: any) => TSelected): TSelected;
+declare function useWizardActions(): any;
+declare function useWizardContext<T = any>(): any;
 
-declare const useWizard: <T = any>() => IWizardContext<T>;
+declare const useWizard: <T = any>() => any;
 
 declare class MemoryAdapter implements IPersistenceAdapter {
     private storage;
@@ -160,15 +163,39 @@ declare class LocalStorageAdapter implements IPersistenceAdapter {
     clear(): void;
 }
 
+/**
+ * Minimal structural interface for Zod-like schemas.
+ */
+interface ZodLikeSchema<T = any> {
+    safeParseAsync: (data: T) => Promise<{
+        success: boolean;
+        data?: T;
+        error?: {
+            issues: Array<{
+                path: any[];
+                message: string;
+            }>;
+        };
+    }>;
+}
+/**
+ * Minimal structural interface for Yup-like schemas.
+ */
+interface YupLikeSchema<T = any> {
+    validate: (data: T, options: {
+        abortEarly: boolean;
+    }) => Promise<any>;
+}
+
 declare class ZodAdapter<T> implements IValidatorAdapter<T> {
     private schema;
-    constructor(schema: ZodType<T>);
+    constructor(schema: ZodLikeSchema<T>);
     validate(data: T): Promise<ValidationResult>;
 }
 
 declare class YupAdapter<T> implements IValidatorAdapter<T> {
     private schema;
-    constructor(schema: Schema<T>);
+    constructor(schema: YupLikeSchema<T>);
     validate(data: T): Promise<ValidationResult>;
 }
 
@@ -181,4 +208,4 @@ declare function getByPath(obj: any, path: string, defaultValue?: any): any;
  */
 declare function setByPath<T extends object>(obj: T, path: string, value: any): T;
 
-export { type IPersistenceAdapter, type IStepConfig, type IValidatorAdapter, type IWizardConfig, type IWizardContext, LocalStorageAdapter, MemoryAdapter, type PersistenceMode, type ValidationResult, WizardProvider, YupAdapter, ZodAdapter, getByPath, setByPath, useWizard, useWizardContext };
+export { type IPersistenceAdapter, type IStepConfig, type IValidatorAdapter, type IWizardConfig, type IWizardContext, LocalStorageAdapter, MemoryAdapter, type PersistenceMode, type ValidationResult, WizardProvider, YupAdapter, ZodAdapter, getByPath, setByPath, useWizard, useWizardActions, useWizardContext, useWizardError, useWizardSelector, useWizardState, useWizardValue };

@@ -546,12 +546,12 @@ export function useWizardActions() {
   return context;
 }
 
-export function useWizardContext() {
+export function useWizardContext<T = any>() {
   const state = useWizardState();
   const actions = useWizardActions();
 
   // Backward compatibility: subscribe to everything
-  const wizardData = useWizardSelector((s) => s);
+  const wizardData = useWizardSelector<T>((s) => s as T);
   const fullState = state.store.getSnapshot();
 
   return useMemo(
