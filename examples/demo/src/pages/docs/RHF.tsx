@@ -1,0 +1,125 @@
+import DocsNavigation from "../../components/DocsNavigation";
+
+export default function RHFDocs() {
+  return (
+    <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+      {/* Header */}
+      <section className="space-y-4">
+        <h1 className="text-4xl font-extrabold tracking-tight text-gray-900">
+          React Hook Form
+        </h1>
+        <p className="text-xl text-gray-600 leading-relaxed max-w-4xl">
+          Integrate the industry standard for performant forms into your wizard steps 
+          with robust state orchestration.
+        </p>
+      </section>
+
+      {/* 1. Orchestration Pattern */}
+      <section className="space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-rose-600 rounded-xl flex items-center justify-center text-white font-bold text-sm">1</div>
+          <h2 className="text-2xl font-bold text-gray-900">The "Sync" Pattern</h2>
+        </div>
+        <p className="text-gray-600">
+          A common mistake is keeping the source of truth in two places. In a wizard, 
+          the step owns the <code className="text-rose-600 bg-rose-50 px-1 rounded font-bold italic">Draft</code> state, 
+          while the Wizard Provider owns the <code className="text-indigo-600 bg-indigo-50 px-1 rounded font-bold italic">Committed</code> state.
+        </p>
+
+        <div className="bg-gray-900 overflow-hidden rounded-3xl shadow-2xl ring-1 ring-white/10">
+          <div className="bg-gray-800/50 px-6 py-3 border-b border-white/5 flex items-center justify-between">
+            <span className="text-xs font-mono text-gray-400">StepComponent.tsx</span>
+            <div className="flex gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-red-500/20" />
+              <div className="w-2.5 h-2.5 rounded-full bg-amber-500/20" />
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/20" />
+            </div>
+          </div>
+          <div className="p-8 font-mono text-[13px] leading-relaxed">
+            <div className="space-y-1">
+              <div><span className="text-purple-400">function</span> <span className="text-blue-400">UserStep</span>() {"{"}</div>
+              <div className="pl-4 text-gray-500">// 1. Initialize RHF with Wizard data</div>
+              <div className="pl-4"><span className="text-purple-400">const</span> {"{ register, handleSubmit }"} <span className="text-emerald-400">=</span> <span className="text-blue-400">useForm</span>({"{"}</div>
+              <div className="pl-8">defaultValues: <span className="text-blue-400">useWizardValue</span>(<span className="text-emerald-400">'user'</span>)</div>
+              <div className="pl-4">{"});"}</div>
+              <div className="pt-2 pl-4"><span className="text-purple-400">const</span> {"{ setData }"} <span className="text-emerald-400">=</span> <span className="text-blue-400">useWizardActions</span>();</div>
+              <div className="pt-2 pl-4 text-gray-500">// 2. Committed to Global State on Nav</div>
+              <div className="pl-4"><span className="text-purple-400">const</span> <span className="text-blue-400">onSubmit</span> <span className="text-emerald-400">=</span> (data) <span className="text-purple-400">=&gt;</span> {"{"}</div>
+              <div className="pl-8"><span className="text-blue-400">setData</span>(<span className="text-emerald-400">'user'</span>, data);</div>
+              <div className="pl-8"><span className="text-blue-400">goToNextStep</span>();</div>
+              <div className="pl-4">{"};"}</div>
+              <div className="pt-2 text-purple-400">{"  return ("}</div>
+              <div className="pl-8 text-emerald-400">&lt;form <span className="text-indigo-400">onSubmit</span>={"{"}<span className="text-blue-400">handleSubmit</span>(onSubmit){"}"}&gt;</div>
+              <div className="pl-12 text-gray-300">...</div>
+              <div className="pl-8 text-emerald-400">&lt;/form&gt;</div>
+              <div className="text-purple-400">{"  );"}</div>
+              <div>{"}"}</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. Validation Mapping */}
+      <section className="space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-white font-bold text-sm">2</div>
+          <h2 className="text-2xl font-bold text-gray-900">Validation Interop</h2>
+        </div>
+        <p className="text-gray-600">
+          You can use RHF's local validation, but for complex wizards, we recommend 
+          mirroring errors to <code className="text-indigo-600 font-bold">useWizardError</code> 
+          to enable sidebar indicators and global validation checks.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 ring-1 ring-gray-100 p-8 rounded-2xl bg-gray-50/30">
+          <div className="space-y-4">
+            <h4 className="font-bold text-gray-800">Local Only</h4>
+            <p className="text-sm text-gray-500 leading-relaxed">
+              Fastest development. Ideal for simple, isolated steps where other 
+              steps don't need to know if this one is currently valid.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <h4 className="font-bold text-indigo-600">Global Sync</h4>
+            <div className="bg-indigo-900 rounded-xl p-4 font-mono text-[10px] text-indigo-100 shadow-lg">
+              <span className="text-indigo-300">// Sync RHF errors to Wizard</span><br/>
+              <span className="text-purple-400">useEffect</span>(() <span className="text-purple-400">=&gt;</span> {"{"}<br/>
+              &nbsp;&nbsp;<span className="text-blue-400">setErrorState</span>(stepId, rhfErrors);<br/>
+              {"}"}, [rhfErrors]);
+            </div>
+            <p className="text-xs text-gray-500">
+              Allows the Sidebar to show 🔴 red dots if a previously visited step 
+              becomes invalid due to data changes.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. Security Tip */}
+      <section className="relative overflow-hidden rounded-3xl bg-indigo-600 p-8 shadow-2xl text-white">
+        <div className="absolute top-0 right-0 p-8 opacity-20">
+          <svg className="w-24 h-24" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M2.166 4.9L10 1.55l7.834 3.35a1 1 0 01.666.927v4.44a10 10 0 01-5.11 8.745l-3.047 1.704a1 1 0 01-.73 0l-3.047-1.704A10 10 0 011.5 10.917V5.827a1 1 0 01.666-.927zm7.834 1.332L4.61 8.527v2.39a8 8 0 004.053 6.914l1.337.748 1.337-.748a8 8 0 004.053-6.914V8.527L10 6.232z" clipRule="evenodd" />
+          </svg>
+        </div>
+        <div className="relative space-y-4">
+          <h3 className="text-xl font-bold flex items-center gap-2">
+            Professional Security Note
+          </h3>
+          <p className="max-w-2xl text-indigo-100 leading-relaxed">
+            When integrating with RHF, always use <code className="bg-white/10 px-1 rounded">mode: 'onTouched'</code> 
+            or <code className="bg-white/10 px-1 rounded">mode: 'onBlur'</code> for validation. 
+            This prevents unnecessary re-renders in the Wizard Provider and keeps the 
+            persistence adapter from being flooded with temporary, invalid draft state.
+          </p>
+        </div>
+      </section>
+
+      {/* Navigation */}
+      <DocsNavigation 
+        prev={{ label: "Security & Integrity", href: "/docs/security" }}
+        next={{ label: "Formik", href: "/docs/formik" }}
+      />
+    </div>
+  );
+}

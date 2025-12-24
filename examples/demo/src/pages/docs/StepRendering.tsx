@@ -140,6 +140,7 @@ export default function StepRendering() {
       {/* Navigation */}
       <DocsNavigation 
         prev={{ label: "Routing & URL", href: "/docs/routing" }}
+        next={{ label: "Security & Integrity", href: "/docs/security" }}
       />
     </div>
   );

@@ -22,7 +22,14 @@ import Persistence from "./pages/docs/Persistence";
 import ConditionalLogic from "./pages/docs/ConditionalLogic";
 import RoutingDocs from "./pages/docs/RoutingDocs";
 import StepRendering from "./pages/docs/StepRendering";
+
 import ScrollToTop from "./components/ScrollToTop";
+import RHFDocs from "./pages/docs/RHF";
+import FormikDocs from "./pages/docs/Formik";
+import SecurityDocs from "./pages/docs/Security";
+import MantineDocs from "./pages/docs/MantineForm";
+import TanStackDocs from "./pages/docs/TanStackForm";
+import ValibotDocs from "./pages/docs/Valibot";
 
 function App() {
   return (
@@ -58,6 +65,13 @@ function App() {
             <Route path="conditional-logic" element={<ConditionalLogic />} />
             <Route path="routing" element={<RoutingDocs />} />
             <Route path="rendering" element={<StepRendering />} />
+            
+            <Route path="rhf" element={<RHFDocs />} />
+            <Route path="formik" element={<FormikDocs />} />
+            <Route path="security" element={<SecurityDocs />} />
+            <Route path="mantine" element={<MantineDocs />} />
+            <Route path="tanstack" element={<TanStackDocs />} />
+            <Route path="valibot" element={<ValibotDocs />} />
             
             <Route path="factory" element={<CoreConcepts />} />
             <Route path="steps" element={<CoreConcepts />} />

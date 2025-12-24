@@ -26,13 +26,17 @@ const sidebarItems = [
       { id: "conditional", label: "Conditional Flow", path: "/docs/conditional-logic" },
       { id: "routing", label: "Routing & URL", path: "/docs/routing" },
       { id: "rendering", label: "Step Rendering", path: "/docs/rendering" },
+      { id: "security", label: "Security & Integrity", path: "/docs/security" },
     ],
   },
   {
     title: "Integrations",
     items: [
-      { id: "react-hook-form", label: "React Hook Form", path: "/docs/rhf" },
+      { id: "rhf", label: "React Hook Form", path: "/docs/rhf" },
       { id: "formik", label: "Formik", path: "/docs/formik" },
+      { id: "mantine", label: "Mantine Form", path: "/docs/mantine" },
+      { id: "tanstack", label: "TanStack Form", path: "/docs/tanstack" },
+      { id: "valibot", label: "Valibot", path: "/docs/valibot" },
     ],
   },
 ];
