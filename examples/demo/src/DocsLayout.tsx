@@ -13,9 +13,8 @@ const sidebarItems = [
   {
     title: "Core Concepts",
     items: [
-      { id: "factory", label: "Factory & Provider", path: "/docs/factory" },
+      { id: "concepts", label: "Overview & Factory", path: "/docs/concepts" },
       { id: "hooks", label: "Hooks API", path: "/docs/hooks" },
-      { id: "steps", label: "Defining Steps", path: "/docs/steps" },
     ],
   },
   {

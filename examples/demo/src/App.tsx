@@ -15,6 +15,7 @@ import Introduction from "./pages/docs/Introduction";
 import Installation from "./pages/docs/Installation";
 import QuickStart from "./pages/docs/QuickStart";
 import CoreConcepts from "./pages/docs/CoreConcepts";
+import HooksApi from "./pages/docs/HooksApi";
 
 function App() {
   return (
@@ -39,8 +40,9 @@ function App() {
           <Route path="installation" element={<Installation />} />
           <Route path="quick-start" element={<QuickStart />} />
           
+          <Route path="concepts" element={<CoreConcepts />} />
+          <Route path="hooks" element={<HooksApi />} />
           <Route path="factory" element={<CoreConcepts />} />
-          <Route path="hooks" element={<CoreConcepts />} />
           <Route path="steps" element={<CoreConcepts />} />
           
           {/* Placeholders for other docs */}
