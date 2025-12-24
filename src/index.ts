@@ -1,6 +1,11 @@
 export * from './types';
 export * from './context/WizardContext';
-export * from './factory';
+
+// Components
+export { WizardStepRenderer } from "./components/WizardStepRenderer";
+
+// Utils
+export { createWizardFactory } from "./factory";
 export * from './hooks/useWizard';
 
 export * from './adapters/persistence/MemoryAdapter';

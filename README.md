@@ -221,6 +221,80 @@ const config: IWizardConfig = {
 }
 ```
 
+## Advanced Features 🌟
+
+### 1. Step Renderer (Declarative UI)
+
+Instead of manual switch statements with `currentStep.id`, trust the renderer!
+
+```typescript
+// Define component in config
+const steps = [
+  { id: 'step1', label: 'Start', component: Step1Component },
+  { id: 'step2', label: 'End', component: Step2Component },
+];
+
+// Render
+const App = () => (
+  <WizardProvider config={{ steps }}>
+    <WizardStepRenderer 
+       wrapper={({ children }) => (
+         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+           {children}
+         </motion.div>
+       )} 
+    />
+  </WizardProvider>
+);
+```
+
+### 2. Routing Integration
+
+Sync wizard state with URL using `onStepChange`.
+
+```tsx
+const navigate = useNavigate();
+
+const config: IWizardConfig = {
+  // 1. Sync State -> URL
+  onStepChange: (prev, next, data) => {
+    navigate(`/wizard/${next}`);
+    // Optional: Send event to Analytics
+    trackEvent('wizard_step', { step: next });
+  },
+  steps: [...]
+};
+
+// 2. Sync URL -> State (Initial Load)
+const { stepId } = useParams();
+
+return <WizardProvider config={config} initialStepId={stepId}>...</WizardProvider>;
+```
+
+### 3. Granular Persistence
+
+By default, the wizard uses `MemoryAdapter` (RAM only). You can enable `LocalStorage` globally, but override it for sensitive steps.
+
+```tsx
+const config: IWizardConfig = {
+  // Global: Persist everything to LocalStorage
+  persistence: { adapter: new LocalStorageAdapter('wizard_') },
+  steps: [
+    { 
+      id: 'public', 
+      label: 'Public Info',
+      // Inherits global adapter (LocalStorage)
+    },
+    { 
+      id: 'sensitive', 
+      label: 'Credit Card',
+      // Override: Store strictly in memory (cleared on refresh)
+      persistenceAdapter: new MemoryAdapter() 
+    }
+  ]
+};
+```
+
 ## API Reference
 
 ### `IWizardConfig<T>`

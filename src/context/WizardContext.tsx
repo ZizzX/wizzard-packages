@@ -92,12 +92,14 @@ export class WizardStore<T> {
 interface WizardProviderProps<T> {
   config: IWizardConfig<T>;
   initialData?: T;
+  initialStepId?: string; // New: Start from any step
   children: React.ReactNode;
 }
 
 export function WizardProvider<T extends Record<string, any>>({
   config,
   initialData,
+  initialStepId,
   children,
 }: WizardProviderProps<T>) {
   const [currentStepId, setCurrentStepId] = useState<string>("");
@@ -145,13 +147,24 @@ export function WizardProvider<T extends Record<string, any>>({
     }
   }, [config.steps, wizardData, activeSteps]);
 
-  // Set initial step if not set
+  // Set initial step if not set (with optional initialStepId)
   useEffect(() => {
     if (!currentStepId && activeSteps.length > 0) {
-      setCurrentStepId(activeSteps[0].id);
+      if (initialStepId) {
+        // Validation: verify initialStepId exists in active steps
+        const target = activeSteps.find((s) => s.id === initialStepId);
+        if (target) {
+          setCurrentStepId(target.id);
+        } else {
+          // Fallback if initial is invalid/hidden
+          setCurrentStepId(activeSteps[0].id);
+        }
+      } else {
+        setCurrentStepId(activeSteps[0].id);
+      }
       setIsLoading(false);
     }
-  }, [activeSteps, currentStepId]);
+  }, [activeSteps, currentStepId, initialStepId]);
 
   // Derived state
   const currentStep = useMemo(
@@ -209,11 +222,18 @@ export function WizardProvider<T extends Record<string, any>>({
   // Save logic stabilized
   const saveData = useCallback(
     (mode: PersistenceMode, stepId: string, data: any) => {
+      // Granular Check: Does the current step have a custom adapter?
+      const stepConfig = config.steps.find((s) => s.id === stepId);
+      const stepAdapter = stepConfig?.persistenceAdapter;
+
+      // Determine which adapter to use (Granular > Global > Default)
+      const adapterToUse = stepAdapter || persistenceAdapter;
+
       if (mode === persistenceMode || mode === "manual") {
-        persistenceAdapter.saveStep(stepId, data);
+        adapterToUse.saveStep(stepId, data);
       }
     },
-    [persistenceAdapter, persistenceMode]
+    [persistenceAdapter, persistenceMode, config.steps]
   );
 
   // Debounce timeout for validation
@@ -359,6 +379,11 @@ export function WizardProvider<T extends Record<string, any>>({
           visited: Array.from(nextVisited),
           completed: Array.from(completedSteps),
         });
+      }
+
+      // Lifecycle Callback
+      if (config.onStepChange) {
+        config.onStepChange(currentStepId, stepId, currentData); // Call hook
       }
 
       window.scrollTo(0, 0);

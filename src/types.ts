@@ -52,6 +52,15 @@ export interface IStepConfig<TStepData = unknown, TGlobalContext = unknown> {
      * Override global auto-validation setting for this step
      */
     autoValidate?: boolean;
+    /**
+     * Optional React Component to render for this step.
+     * Used by the <WizardStepRenderer /> component.
+     */
+    component?: React.ComponentType<any>;
+    /**
+     * Override global persistence adapter for this specific step.
+     */
+    persistenceAdapter?: IPersistenceAdapter;
 }
 
 /**
@@ -78,6 +87,11 @@ export interface IWizardConfig<T = unknown> {
          */
         storageKey?: string;
     };
+    /**
+     * Callback triggered when step changes.
+     * Useful for routing integration or analytics.
+     */
+    onStepChange?: (fromStep: string | null, toStep: string, data: T) => void;
 }
 
 /**
