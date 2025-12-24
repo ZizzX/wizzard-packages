@@ -53,7 +53,7 @@ export default function RoutingDocs() {
             <h4 className="font-bold text-gray-900">Deep Linking</h4>
             <p className="text-xs text-gray-600 leading-relaxed">
               Users can share links to specific steps. When the page reloads, 
-              initialize the wizard with <code className="text-indigo-500">initialStepId</code> 
+              initialize the wizard with <code className="text-indigo-500">initialStepId</code>{" "}
               from your URL params.
             </p>
           </div>
