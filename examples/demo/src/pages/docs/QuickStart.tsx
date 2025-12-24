@@ -193,36 +193,63 @@ export default function QuickStart() {
         <p className="text-gray-600">
           To get started, create a wizard context and wrap your application (or a part of it) in a provider.
         </p>
-        <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-2xl">
-          <pre className="text-indigo-300">
-{`import { createWizardFactory } from 'wizzard-stepper-react';
+        <div className="bg-gray-950 rounded-2xl p-8 font-mono text-xs overflow-x-auto shadow-2xl ring-1 ring-white/10">
+          <pre className="space-y-4">
+            <div>
+              <span className="text-purple-400">import</span> <span className="text-emerald-400">{"{ "}</span> <span className="text-blue-400">createWizardFactory</span> <span className="text-emerald-400">{" }"}</span> <span className="text-purple-400">from</span> <span className="text-amber-400">'wizzard-stepper-react'</span><span className="text-emerald-400">;</span>
+            </div>
 
-// 1. Create a schema for your data
-interface MyData { name: string; }
+            <div className="space-y-1">
+              <div className="text-gray-500">// 1. Create a schema for your data</div>
+              <div>
+                <span className="text-purple-400">interface</span> <span className="text-amber-400">MyData</span> <span className="text-emerald-400">{"{ "}</span> <span className="text-indigo-300">name</span><span className="text-emerald-400">:</span> <span className="text-rose-400">string</span><span className="text-emerald-400">; {"}"}</span>
+              </div>
+            </div>
 
-// 2. Create the factory
-const { WizardProvider, useWizard } = createWizardFactory<MyData>();
+            <div className="space-y-1">
+              <div className="text-gray-500">// 2. Create the factory</div>
+              <div>
+                <span className="text-purple-400">const</span> <span className="text-emerald-400">{"{ "}</span> <span className="text-indigo-400">WizardProvider</span><span className="text-emerald-400">,</span> <span className="text-indigo-400">useWizard</span> <span className="text-emerald-400">{" }"}</span> <span className="text-emerald-400">=</span> <span className="text-blue-400">createWizardFactory</span><span className="text-emerald-400">&lt;</span><span className="text-amber-400">MyData</span><span className="text-emerald-400">&gt;();</span>
+              </div>
+            </div>
 
-// 3. Use it in your components
-const MyWizard = () => {
-  const { wizardData, handleStepChange } = useWizard();
-  
-  return (
-    <input 
-      value={wizardData.name} 
-      onChange={e => handleStepChange('name', e.target.value)} 
-    />
-  );
-};
+            <div className="space-y-1">
+              <div className="text-gray-500">// 3. Use it in your components</div>
+              <div>
+                <span className="text-purple-400">const</span> <span className="text-amber-400">MyWizard</span> <span className="text-emerald-400">=</span> <span className="text-emerald-400">() =&gt; {"{"}</span>
+              </div>
+              <div className="pl-4">
+                <span className="text-purple-400">const</span> <span className="text-emerald-400">{"{ "}</span> <span className="text-indigo-300">wizardData</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">handleStepChange</span> <span className="text-emerald-400">{" }"}</span> <span className="text-emerald-400">=</span> <span className="text-blue-400">useWizard</span><span className="text-emerald-400">();</span>
+              </div>
+              <div className="pl-4 text-purple-400">return <span className="text-emerald-400">(</span></div>
+              <div className="pl-8 text-emerald-400">
+                &lt;<span className="text-amber-400">input</span> 
+              </div>
+              <div className="pl-12 text-gray-300">
+                <span className="text-indigo-400">value</span><span className="text-emerald-400">=</span><span className="text-emerald-400">{"{"}</span><span className="text-indigo-300">wizardData</span><span className="text-emerald-400">.</span><span className="text-indigo-300">name</span><span className="text-emerald-400">{"}"}</span> 
+              </div>
+              <div className="pl-12 text-gray-300">
+                <span className="text-indigo-400">onChange</span><span className="text-emerald-400">=</span><span className="text-emerald-400">{"{"}</span><span className="text-indigo-300">e</span> <span className="text-purple-400">=&gt;</span> <span className="text-blue-400">handleStepChange</span><span className="text-emerald-400">(</span><span className="text-amber-400">'name'</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">e</span><span className="text-emerald-400">.</span><span className="text-indigo-300">target</span><span className="text-emerald-400">.</span><span className="text-indigo-300">value</span><span className="text-emerald-400">)</span><span className="text-emerald-400">{"}"}</span> 
+              </div>
+              <div className="pl-8 text-emerald-400">/&gt;</div>
+              <div className="pl-4 text-purple-400"><span className="text-emerald-400">);</span></div>
+              <div className="text-emerald-400">{"};"}</div>
+            </div>
 
-// 4. Wrap with Provider
-export default function App() {
-  return (
-    <WizardProvider config={{ steps: [{ id: 'step1', label: 'Start' }] }}>
-       <MyWizard />
-    </WizardProvider>
-  );
-}`}
+            <div className="space-y-1">
+              <div className="text-gray-500">// 4. Wrap with Provider</div>
+              <div>
+                <span className="text-purple-400">export default function</span> <span className="text-amber-400">App</span><span className="text-emerald-400">() {"{"}</span>
+              </div>
+              <div className="pl-4 text-purple-400">return <span className="text-emerald-400">(</span></div>
+              <div className="pl-8 text-emerald-400">
+                &lt;<span className="text-amber-400">WizardProvider</span> <span className="text-indigo-400">config</span><span className="text-emerald-400">=</span><span className="text-emerald-400">{"{"}</span><span className="text-emerald-400">{"{ "}</span><span className="text-indigo-300">steps</span><span className="text-emerald-400">: [</span><span className="text-emerald-400">{"{ "}</span><span className="text-indigo-300">id</span><span className="text-emerald-400">:</span> <span className="text-amber-400">'step1'</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">label</span><span className="text-emerald-400">:</span> <span className="text-amber-400">'Start'</span><span className="text-emerald-400"> {"} ] }"}</span><span className="text-emerald-400">{"}"}</span>&gt;
+              </div>
+              <div className="pl-12 text-gray-300">&lt;<span className="text-amber-400">MyWizard</span> /&gt;</div>
+              <div className="pl-8 text-emerald-400">&lt;/<span className="text-amber-400">WizardProvider</span>&gt;</div>
+              <div className="pl-4 text-purple-400"><span className="text-emerald-400">);</span></div>
+              <div className="text-emerald-400">{"}"}</div>
+            </div>
           </pre>
         </div>
       </section>

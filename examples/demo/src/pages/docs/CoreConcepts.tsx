@@ -27,24 +27,30 @@ export default function CoreConcepts() {
         </div>
         <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
           <pre className="space-y-1">
-            <div className="text-purple-400">import <span className="text-gray-400">{"{ "}</span> <span className="text-indigo-400">createWizardFactory</span> <span className="text-gray-400">{" }"}</span> <span className="text-purple-400">from</span> <span className="text-amber-400">'wizzard-stepper-react'</span>;</div>
-            <div className="mt-4 text-purple-400">interface <span className="text-amber-400">UserSchema</span> <span className="text-gray-400">{"{"}</span></div>
+            <div className="text-purple-400">import <span className="text-emerald-400">{"{ "}</span> <span className="text-blue-400">createWizardFactory</span> <span className="text-emerald-400">{" }"}</span> <span className="text-purple-400">from</span> <span className="text-amber-400">'wizzard-stepper-react'</span><span className="text-emerald-400">;</span></div>
+            <div className="mt-4 text-purple-400">interface <span className="text-amber-400">UserSchema</span> <span className="text-emerald-400">{"{"}</span></div>
             <div className="pl-4 text-gray-300">
-              <span className="text-indigo-400">personal</span><span className="text-gray-400">:</span> <span className="text-gray-400">{"{ "}</span> <span className="text-indigo-400">name</span><span className="text-gray-400">:</span> <span className="text-rose-400">string</span>; <span className="text-indigo-400">age</span><span className="text-gray-400">:</span> <span className="text-rose-400">number</span> <span className="text-gray-400">{" };"}</span>
+              <span className="text-indigo-400">personal</span><span className="text-emerald-400">:</span> <span className="text-emerald-400">{"{ "}</span> <span className="text-indigo-300">name</span><span className="text-emerald-400">:</span> <span className="text-rose-400">string</span><span className="text-emerald-400">;</span> <span className="text-indigo-300">age</span><span className="text-emerald-400">:</span> <span className="text-rose-400">number</span> <span className="text-emerald-400">{" };"}</span>
             </div>
             <div className="pl-4 text-gray-300">
-              <span className="text-indigo-400">account</span><span className="text-gray-400">:</span> <span className="text-gray-400">{"{ "}</span> <span className="text-indigo-400">email</span><span className="text-gray-400">:</span> <span className="text-rose-400">string</span> <span className="text-gray-400">{" };"}</span>
+              <span className="text-indigo-400">account</span><span className="text-emerald-400">:</span> <span className="text-emerald-400">{"{ "}</span> <span className="text-indigo-300">email</span><span className="text-emerald-400">:</span> <span className="text-rose-400">string</span> <span className="text-emerald-400">{" };"}</span>
             </div>
-            <div className="text-gray-400">{"}"}</div>
+            <div className="text-emerald-400">{"}"}</div>
             <div className="mt-4 text-gray-500">// Generates typed hooks and Provider</div>
-            <div className="text-purple-400">export const <span className="text-gray-400">{"{ "}</span></div>
+            <div className="text-purple-400">export const <span className="text-emerald-400">{"{ "}</span></div>
             <div className="pl-4 text-indigo-400">
-              WizardProvider, 
-              useWizard, 
-              useWizardValue,
-              createStep 
+              WizardProvider<span className="text-emerald-400">,</span> 
             </div>
-            <div className="text-purple-400"><span className="text-gray-400">{"}"}</span> = <span className="text-indigo-400">createWizardFactory</span>&lt;<span className="text-amber-400">UserSchema</span>&gt;();</div>
+            <div className="pl-4 text-indigo-400">
+              useWizard<span className="text-emerald-400">,</span> 
+            </div>
+            <div className="pl-4 text-indigo-400">
+              useWizardValue<span className="text-emerald-400">,</span>
+            </div>
+            <div className="pl-4 text-indigo-400">
+              createStep
+            </div>
+            <div className="text-purple-400"><span className="text-emerald-400">{"}"}</span> <span className="text-emerald-400">=</span> <span className="text-blue-400">createWizardFactory</span><span className="text-emerald-400">&lt;</span><span className="text-amber-400">UserSchema</span><span className="text-emerald-400">&gt;()</span><span className="text-emerald-400">;</span></div>
           </pre>
         </div>
       </section>
@@ -62,21 +68,21 @@ export default function CoreConcepts() {
         </div>
         <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
           <pre className="space-y-1">
-            <div className="text-purple-400">const <span className="text-indigo-400">config</span> = <span className="text-gray-400">{"{"}</span></div>
-            <div className="pl-4 text-indigo-400">steps<span className="text-gray-400">: [</span></div>
-            <div className="pl-8 text-gray-300"><span className="text-gray-400">{"{ "}</span> <span className="text-indigo-400">id</span><span className="text-gray-400">:</span> <span className="text-amber-400">"intro"</span><span className="text-gray-400">,</span> <span className="text-indigo-400">label</span><span className="text-gray-400">:</span> <span className="text-amber-400">"Welcome"</span> <span className="text-gray-400">{" },"}</span></div>
-            <div className="pl-8 text-gray-400">{"{"}</div>
-            <div className="pl-12 text-gray-300"><span className="text-indigo-400">id</span><span className="text-gray-400">:</span> <span className="text-amber-400">"payment"</span><span className="text-gray-400">,</span></div>
-            <div className="pl-12 text-gray-300"><span className="text-indigo-400">label</span><span className="text-gray-400">:</span> <span className="text-amber-400">"Payment"</span><span className="text-gray-400">,</span></div>
+            <div className="text-purple-400">const <span className="text-indigo-400">config</span> <span className="text-emerald-400">=</span> <span className="text-emerald-400">{"{"}</span></div>
+            <div className="pl-4 text-indigo-400">steps<span className="text-emerald-400">: [</span></div>
+            <div className="pl-8 text-gray-300"><span className="text-emerald-400">{"{ "}</span> <span className="text-indigo-400">id</span><span className="text-emerald-400">:</span> <span className="text-amber-400">"intro"</span><span className="text-emerald-400">,</span> <span className="text-indigo-400">label</span><span className="text-emerald-400">:</span> <span className="text-amber-400">"Welcome"</span> <span className="text-emerald-400">{" }"}</span><span className="text-emerald-400">,</span></div>
+            <div className="pl-8 text-emerald-400">{"{"}</div>
+            <div className="pl-12 text-gray-300"><span className="text-indigo-400">id</span><span className="text-emerald-400">:</span> <span className="text-amber-400">"payment"</span><span className="text-emerald-400">,</span></div>
+            <div className="pl-12 text-gray-300"><span className="text-indigo-300">label</span><span className="text-emerald-400">:</span> <span className="text-amber-400">"Payment"</span><span className="text-emerald-400">,</span></div>
             <div className="pl-12 text-gray-500">// Automagically skipped if condition is false</div>
-            <div className="pl-12 text-indigo-400"><span className="text-indigo-400">condition</span><span className="text-gray-400">: (</span>data<span className="text-gray-400">) =&gt;</span> data.plan <span className="text-purple-400">!==</span> <span className="text-amber-400">'free'</span><span className="text-gray-400">,</span></div>
-            <div className="pl-12 text-gray-300"><span className="text-indigo-400">validationAdapter</span><span className="text-gray-400">:</span> <span className="text-purple-400">new</span> <span className="text-amber-400">ZodAdapter</span><span className="text-gray-400">(</span>paymentSchema<span className="text-gray-400">),</span></div>
-            <div className="pl-8 text-gray-400">{"}"}</div>
-            <div className="pl-4 text-gray-400">]<span className="text-gray-400">,</span></div>
+            <div className="pl-12 text-indigo-400"><span className="text-indigo-300">condition</span><span className="text-emerald-400">: (</span><span className="text-indigo-300">data</span><span className="text-emerald-400">) =&gt;</span> <span className="text-indigo-300">data</span><span className="text-emerald-400">.</span><span className="text-indigo-300">plan</span> <span className="text-purple-400">!==</span> <span className="text-amber-400">'free'</span><span className="text-emerald-400">,</span></div>
+            <div className="pl-12 text-gray-300"><span className="text-indigo-300">validationAdapter</span><span className="text-emerald-400">:</span> <span className="text-purple-400">new</span> <span className="text-amber-400">ZodAdapter</span><span className="text-emerald-400">(</span>paymentSchema<span className="text-emerald-400">)</span><span className="text-emerald-400">,</span></div>
+            <div className="pl-8 text-emerald-400">{"}"}</div>
+            <div className="pl-4 text-emerald-400">]<span className="text-emerald-400">,</span></div>
             <div className="pl-4 text-gray-500">// Global config</div>
-            <div className="pl-4 text-gray-300"><span className="text-indigo-400">autoValidate</span><span className="text-gray-400">:</span> <span className="text-rose-400">true</span><span className="text-gray-400">,</span></div>
-            <div className="pl-4 text-gray-300"><span className="text-indigo-400">onStepChange</span><span className="text-gray-400">: (</span><span className="text-indigo-300">from</span><span className="text-gray-400">,</span> <span className="text-indigo-300">to</span><span className="text-gray-400">) =&gt;</span> <span className="text-indigo-400">console</span>.<span className="text-indigo-400">log</span><span className="text-gray-400">(</span><span className="text-amber-400">"Moved from "</span> <span className="text-purple-400">+</span> <span className="text-indigo-300">from</span> <span className="text-purple-400">+</span> <span className="text-amber-400">" to "</span> <span className="text-purple-400">+</span> <span className="text-indigo-300">to</span><span className="text-gray-400">)</span></div>
-            <div className="text-gray-400">{"};"}</div>
+            <div className="pl-4 text-gray-300"><span className="text-indigo-300">autoValidate</span><span className="text-emerald-400">:</span> <span className="text-rose-400">true</span><span className="text-emerald-400">,</span></div>
+            <div className="pl-4 text-gray-300"><span className="text-indigo-300">onStepChange</span><span className="text-emerald-400">: (</span><span className="text-indigo-300">from</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">to</span><span className="text-emerald-400">) =&gt;</span> <span className="text-blue-400">console</span>.<span className="text-blue-400">log</span><span className="text-emerald-400">(</span><span className="text-amber-400">"Moved from "</span> <span className="text-purple-400">+</span> <span className="text-indigo-300">from</span> <span className="text-purple-400">+</span> <span className="text-amber-400">" to "</span> <span className="text-purple-400">+</span> <span className="text-indigo-300">to</span><span className="text-emerald-400">)</span></div>
+            <div className="text-emerald-400">{"}"}</div><span className="text-emerald-400">;</span>
           </pre>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
@@ -176,23 +182,25 @@ export default function CoreConcepts() {
               </li>
             </ul>
           </div>
-          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm font-mono text-xs">
-            <div className="text-gray-400 mb-2">// Atomic Updates</div>
-            <div className="text-emerald-600">{"{"}</div>
-            <div className="pl-4">
-              <span className="text-indigo-600">"personal"</span>: {"{ "}{" "}
-              <span className="text-rose-600">"name"</span>:{" "}
-              <span className="text-amber-600">"John"</span>
-              {" },"}
-            </div>
-            <div className="pl-4">
-              <span className="text-indigo-600">"plan"</span>:{" "}
-              <span className="text-amber-600">"premium"</span>,
-            </div>
-            <div className="pl-4">
-              <span className="text-indigo-600">"payment"</span>: {"{ ... }"}
-            </div>
-            <div className="text-emerald-600">{"}"}</div>
+          <div className="bg-gray-950 p-8 rounded-3xl font-mono text-xs shadow-2xl ring-1 ring-white/10 overflow-x-auto">
+            <div className="text-gray-500 mb-4">// Atomic Updates & Deep Merging</div>
+            <pre className="space-y-1">
+              <div><span className="text-emerald-400">{"{"}</span></div>
+              <div className="pl-4">
+                <span className="text-indigo-400">"personal"</span><span className="text-emerald-400">:</span> <span className="text-emerald-400">{"{ "}</span> 
+                <span className="text-indigo-300">"name"</span><span className="text-emerald-400">:</span> <span className="text-amber-400">"John"</span> 
+                <span className="text-emerald-400">{" },"}</span>
+              </div>
+              <div className="pl-4">
+                <span className="text-indigo-400">"plan"</span><span className="text-emerald-400">:</span> <span className="text-amber-400">"premium"</span><span className="text-emerald-400">,</span>
+              </div>
+              <div className="pl-4">
+                <span className="text-indigo-400">"payment"</span><span className="text-emerald-400">:</span> <span className="text-emerald-400">{"{ "}</span>
+                <span className="text-indigo-300">"status"</span><span className="text-emerald-400">:</span> <span className="text-rose-400">true</span>
+                <span className="text-emerald-400">{" }"}</span>
+              </div>
+              <div><span className="text-emerald-400">{"}"}</span></div>
+            </pre>
           </div>
         </div>
       </section>
@@ -215,20 +223,20 @@ export default function CoreConcepts() {
         <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
           <div className="text-gray-500 mb-2">// The mandatory interface for all adapters</div>
           <pre className="space-y-1">
-            <div className="text-purple-400">interface <span className="text-amber-400">IValidatorAdapter</span><span className="text-gray-400">&lt;</span><span className="text-indigo-300">TData</span><span className="text-gray-400">&gt;</span> <span className="text-gray-400">{"{"}</span></div>
+            <div className="text-purple-400">interface <span className="text-amber-400">IValidatorAdapter</span><span className="text-emerald-400">&lt;</span><span className="text-indigo-300">TData</span><span className="text-emerald-400">&gt;</span> <span className="text-emerald-400">{"{"}</span></div>
             <div className="pl-4 text-gray-300">
-               <span className="text-indigo-400">validate</span><span className="text-gray-400">: (</span>data<span className="text-gray-400">:</span> <span className="text-indigo-300">TData</span><span className="text-gray-400">) =&gt;</span> <span className="text-rose-400">Promise</span><span className="text-gray-400">&lt;</span><span className="text-amber-400">ValidationResult</span><span className="text-gray-400">&gt;</span> <span className="text-gray-400">|</span> <span className="text-amber-400">ValidationResult</span><span className="text-gray-400">;</span>
+               <span className="text-indigo-400">validate</span><span className="text-emerald-400">: (</span>data<span className="text-emerald-400">:</span> <span className="text-indigo-300">TData</span><span className="text-emerald-400">) =&gt;</span> <span className="text-rose-400">Promise</span><span className="text-emerald-400">&lt;</span><span className="text-amber-400">ValidationResult</span><span className="text-emerald-400">&gt;</span> <span className="text-emerald-400">|</span> <span className="text-amber-400">ValidationResult</span><span className="text-emerald-400">;</span>
             </div>
-            <div className="text-gray-400">{"}"}</div>
+            <div className="text-emerald-400">{"}"}</div>
             
-            <div className="mt-4 text-purple-400">type <span className="text-amber-400">ValidationResult</span> = <span className="text-gray-400">{"{"}</span></div>
+            <div className="mt-4 text-purple-400">type <span className="text-amber-400">ValidationResult</span> <span className="text-emerald-400">=</span> <span className="text-emerald-400">{"{"}</span></div>
             <div className="pl-4 text-gray-300">
-               <span className="text-indigo-400">isValid</span><span className="text-gray-400">:</span> <span className="text-rose-400">boolean</span><span className="text-gray-400">;</span>
+               <span className="text-indigo-400">isValid</span><span className="text-emerald-400">:</span> <span className="text-rose-400">boolean</span><span className="text-emerald-400">;</span>
             </div>
             <div className="pl-4 text-gray-300">
-               <span className="text-indigo-400">errors</span><span className="text-gray-400">?:</span> <span className="text-rose-400">Record</span><span className="text-gray-400">&lt;</span><span className="text-rose-400">string</span><span className="text-gray-400">,</span> <span className="text-rose-400">string</span><span className="text-gray-400">&gt;;</span> <span className="text-gray-500">// {"{ \"field.path\": \"Message\" }"}</span>
+               <span className="text-indigo-400">errors</span><span className="text-emerald-400">?:</span> <span className="text-rose-400">Record</span><span className="text-emerald-400">&lt;</span><span className="text-rose-400">string</span><span className="text-emerald-400">,</span> <span className="text-rose-400">string</span><span className="text-emerald-400">&gt;;</span> <span className="text-gray-500">// {"{ \"field.path\": \"Message\" }"}</span>
             </div>
-            <div className="text-gray-400">{"}"}</div>
+            <div className="text-emerald-400">{"}"}</div>
           </pre>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -260,30 +268,30 @@ export default function CoreConcepts() {
             <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
               <pre className="space-y-1">
                 <div className="text-purple-400">
-                  const <span className="text-indigo-400">myAdapter</span>: <span className="text-amber-400">IValidatorAdapter</span>&lt;<span className="text-indigo-300">MyData</span>&gt; = <span className="text-gray-400">{"{"}</span>
+                  const <span className="text-indigo-400">myAdapter</span><span className="text-emerald-400">:</span> <span className="text-amber-400">IValidatorAdapter</span><span className="text-emerald-400">&lt;</span><span className="text-indigo-300">MyData</span><span className="text-emerald-400">&gt;</span> <span className="text-emerald-400">=</span> <span className="text-emerald-400">{"{"}</span>
                 </div>
                 <div className="pl-4">
-                  <span className="text-indigo-400">validate</span><span className="text-gray-400">:</span> <span className="text-gray-400">(</span><span className="text-indigo-300">data</span><span className="text-gray-400">)</span> <span className="text-purple-400">=&gt;</span> <span className="text-gray-400">{"{"}</span>
+                  <span className="text-indigo-400">validate</span><span className="text-emerald-400">: (</span><span className="text-indigo-300">data</span><span className="text-emerald-400">)</span> <span className="text-purple-400">=&gt;</span> <span className="text-emerald-400">{"{"}</span>
                 </div>
                 <div className="pl-8 text-gray-300">
-                  <span className="text-purple-400">if</span> <span className="text-gray-400">(</span><span className="text-gray-400">!</span>data.email?.<span className="text-indigo-400">includes</span><span className="text-gray-400">(</span><span className="text-amber-400">'@'</span><span className="text-gray-400">)</span><span className="text-gray-400">)</span> <span className="text-gray-400">{"{"}</span>
+                  <span className="text-purple-400">if</span> <span className="text-emerald-400">(</span><span className="text-emerald-400">!</span><span className="text-indigo-300">data</span><span className="text-emerald-400">.</span><span className="text-indigo-300">email</span><span className="text-emerald-400">?.</span><span className="text-indigo-400">includes</span><span className="text-emerald-400">(</span><span className="text-amber-400">'@'</span><span className="text-emerald-400">)</span><span className="text-emerald-400">)</span> <span className="text-emerald-400">{"{"}</span>
                 </div>
                 <div className="pl-12">
-                  <span className="text-purple-400">return</span> <span className="text-gray-400">{"{"}</span>
+                  <span className="text-purple-400">return</span> <span className="text-emerald-400">{"{"}</span>
                 </div>
                 <div className="pl-16 text-gray-300">
-                  <span className="text-indigo-400">isValid</span><span className="text-gray-400">:</span> <span className="text-rose-400">false</span><span className="text-gray-400">,</span>
+                  <span className="text-indigo-400">isValid</span><span className="text-emerald-400">:</span> <span className="text-rose-400">false</span><span className="text-emerald-400">,</span>
                 </div>
                 <div className="pl-16 text-gray-300">
-                  <span className="text-indigo-400">errors</span><span className="text-gray-400">:</span> <span className="text-gray-400">{"{"}</span> <span className="text-indigo-400">email</span><span className="text-gray-400">:</span> <span className="text-amber-400">"Invalid email"</span> <span className="text-gray-400">{"}"}</span>
+                  <span className="text-indigo-400">errors</span><span className="text-emerald-400">:</span> <span className="text-emerald-400">{"{"}</span> <span className="text-indigo-300">email</span><span className="text-emerald-400">:</span> <span className="text-amber-400">"Invalid email"</span> <span className="text-emerald-400">{"}"}</span>
                 </div>
-                <div className="pl-12 text-gray-400">{"};"}</div>
-                <div className="pl-8 text-gray-400">{"}"}</div>
+                <div className="pl-12 text-emerald-400">{"};"}</div>
+                <div className="pl-8 text-emerald-400">{"}"}</div>
                 <div className="pl-8">
-                  <span className="text-purple-400">return</span> <span className="text-gray-400">{"{"}</span> <span className="text-indigo-400">isValid</span><span className="text-gray-400">:</span> <span className="text-rose-400">true</span> <span className="text-gray-400">{"}"}</span><span className="text-gray-400">;</span>
+                  <span className="text-purple-400">return</span> <span className="text-emerald-400">{"{"}</span> <span className="text-indigo-400">isValid</span><span className="text-emerald-400">:</span> <span className="text-rose-400">true</span> <span className="text-emerald-400">{"}"}</span><span className="text-emerald-400">;</span>
                 </div>
-                <div className="pl-4 text-gray-400">{"}"}</div>
-                <div className="text-gray-400">{"};"}</div>
+                <div className="pl-4 text-emerald-400">{"}"}</div>
+                <div className="text-emerald-400">{"};"}</div>
               </pre>
             </div>
           </div>
@@ -351,32 +359,32 @@ export default function CoreConcepts() {
           </p>
           <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
             <pre className="space-y-1">
-              <div className="text-purple-400">interface <span className="text-amber-400">IPersistenceAdapter</span> <span className="text-gray-400">{"{"}</span></div>
+              <div className="text-purple-400">interface <span className="text-amber-400">IPersistenceAdapter</span> <span className="text-emerald-400">{"{"}</span></div>
               <div className="pl-4 text-gray-300">
-                <span className="text-indigo-400">saveStep</span><span className="text-gray-400">: &lt;</span><span className="text-indigo-300">T</span><span className="text-gray-400">&gt;(</span>stepId<span className="text-gray-400">:</span> <span className="text-rose-400">string</span><span className="text-gray-400">,</span> data<span className="text-gray-400">:</span> <span className="text-indigo-300">T</span><span className="text-gray-400">) =&gt;</span> <span className="text-rose-400">void</span><span className="text-gray-400">;</span>
+                <span className="text-indigo-400">saveStep</span><span className="text-emerald-400">: &lt;</span><span className="text-indigo-300">T</span><span className="text-emerald-400">&gt;(</span><span className="text-indigo-300">stepId</span><span className="text-emerald-400">:</span> <span className="text-rose-400">string</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">data</span><span className="text-emerald-400">:</span> <span className="text-indigo-300">T</span><span className="text-emerald-400">) =&gt;</span> <span className="text-rose-400">void</span><span className="text-emerald-400">;</span>
               </div>
               <div className="pl-4 text-gray-300">
-                <span className="text-indigo-400">getStep</span><span className="text-gray-400">: &lt;</span><span className="text-indigo-300">T</span><span className="text-gray-400">&gt;(</span>stepId<span className="text-gray-400">:</span> <span className="text-rose-400">string</span><span className="text-gray-400">) =&gt;</span> <span className="text-indigo-300">T</span> <span className="text-gray-400">|</span> <span className="text-rose-400">undefined</span><span className="text-gray-400">;</span>
+                <span className="text-indigo-400">getStep</span><span className="text-emerald-400">: &lt;</span><span className="text-indigo-300">T</span><span className="text-emerald-400">&gt;(</span><span className="text-indigo-300">stepId</span><span className="text-emerald-400">:</span> <span className="text-rose-400">string</span><span className="text-emerald-400">) =&gt;</span> <span className="text-indigo-300">T</span> <span className="text-emerald-400">|</span> <span className="text-rose-400">undefined</span><span className="text-emerald-400">;</span>
               </div>
               <div className="pl-4 text-gray-300">
-                <span className="text-indigo-400">clear</span><span className="text-gray-400">: () =&gt;</span> <span className="text-rose-400">void</span><span className="text-gray-400">;</span>
+                <span className="text-indigo-400">clear</span><span className="text-emerald-400">: () =&gt;</span> <span className="text-rose-400">void</span><span className="text-emerald-400">;</span>
               </div>
-              <div className="text-gray-400">{"}"}</div>
+              <div className="text-emerald-400">{"}"}</div>
 
-              <div className="mt-6 text-purple-400">class <span className="text-amber-400">CloudAdapter</span> <span className="text-purple-400">implements</span> <span className="text-amber-400">IPersistenceAdapter</span> <span className="text-gray-400">{"{"}</span></div>
-              <div className="pl-4">
-                <span className="text-indigo-400">saveStep</span><span className="text-gray-400">(</span><span className="text-indigo-300">stepId</span><span className="text-gray-400">,</span> <span className="text-indigo-300">data</span><span className="text-gray-400">) {"{"}</span>
+              <div className="mt-6 text-purple-400">class <span className="text-amber-400">CloudAdapter</span> <span className="text-purple-400">implements</span> <span className="text-amber-400">IPersistenceAdapter</span> <span className="text-emerald-400">{"{"}</span></div>
+              <div className="pl-4 text-gray-300">
+                <span className="text-indigo-400">saveStep</span><span className="text-emerald-400">(</span><span className="text-indigo-300">stepId</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">data</span><span className="text-emerald-400">) {"{"}</span>
               </div>
               <div className="pl-8 text-gray-500">// Sync with cloud database</div>
-              <div className="pl-8 text-gray-300"><span className="text-indigo-400">api</span>.<span className="text-indigo-300">post</span><span className="text-gray-400">(</span><span className="text-amber-400">"/steps/" + </span><span className="text-indigo-300">stepId</span><span className="text-gray-400">,</span> <span className="text-indigo-300">data</span><span className="text-gray-400">);</span></div>
-              <div className="pl-4 text-gray-400">{"}"}</div>
-              <div className="pl-4">
-                <span className="text-indigo-400">getStep</span><span className="text-gray-400">(</span><span className="text-indigo-300">stepId</span><span className="text-gray-400">) {"{"} /* ... */ {"}"}</span>
+              <div className="pl-8 text-gray-300"><span className="text-blue-400">api</span><span className="text-emerald-400">.</span><span className="text-blue-400">post</span><span className="text-emerald-400">(</span><span className="text-amber-400">"/steps/"</span> <span className="text-purple-400">+</span> <span className="text-indigo-300">stepId</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">data</span><span className="text-emerald-400">);</span></div>
+              <div className="pl-4 text-emerald-400">{"}"}</div>
+              <div className="pl-4 text-gray-300">
+                <span className="text-indigo-400">getStep</span><span className="text-emerald-400">(</span><span className="text-indigo-300">stepId</span><span className="text-emerald-400">) {"{"}</span> <span className="text-gray-500">/* ... */</span> <span className="text-emerald-400">{"}"}</span>
               </div>
               <div className="pl-4 text-gray-300">
-                <span className="text-indigo-400">clear</span><span className="text-gray-400">() {"{"} /* ... */ {"}"}</span>
+                <span className="text-indigo-400">clear</span><span className="text-emerald-400">() {"{"}</span> <span className="text-gray-500">/* ... */</span> <span className="text-emerald-400">{"}"}</span>
               </div>
-              <div className="text-gray-400">{"}"}</div>
+              <div className="text-emerald-400">{"}"}</div>
             </pre>
           </div>
         </div>
@@ -393,15 +401,26 @@ export default function CoreConcepts() {
             You can seed the wizard with data from your API or start users at a specific step. This is essential for "Edit" flows or "Save & Resume" features.
           </p>
         </div>
-        <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
+        <div className="bg-gray-950 rounded-2xl p-8 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
           <pre className="space-y-1">
-            <div className="text-gray-300">&lt;<span className="text-amber-400">WizardProvider</span></div>
-            <div className="pl-4 text-gray-300"><span className="text-indigo-400">config</span>={"{"}<span className="text-indigo-300">config</span>{"}"}</div>
-            <div className="pl-4 text-gray-300"><span className="text-indigo-400">initialData</span>={"{ { "}<span className="text-indigo-400">name</span>: <span className="text-amber-400">"Aziz"</span>, <span className="text-indigo-400">email</span>: <span className="text-amber-400">"..."</span> {" } }"} <span className="text-gray-500">// Prefill from API</span></div>
-            <div className="pl-4 text-gray-300"><span className="text-indigo-400">initialStepId</span>=<span className="text-amber-400">"payment"</span> <span className="text-gray-500">// Deep-link</span></div>
-            <div className="text-gray-300">&gt;</div>
+            <div className="text-emerald-400">&lt;<span className="text-amber-400">WizardProvider</span></div>
+            <div className="pl-4">
+              <span className="text-indigo-400">config</span><span className="text-emerald-400">=</span><span className="text-emerald-400">{"{"}</span><span className="text-indigo-300">config</span><span className="text-emerald-400">{"}"}</span>
+            </div>
+            <div className="pl-4">
+              <span className="text-indigo-400">initialData</span><span className="text-emerald-400">=</span><span className="text-emerald-400">{"{ { "}</span>
+              <span className="text-indigo-300">name</span><span className="text-emerald-400">:</span> <span className="text-amber-400">"Aziz"</span><span className="text-emerald-400">,</span> 
+              <span className="text-indigo-300">email</span><span className="text-emerald-400">:</span> <span className="text-amber-400">"hi@aziz.com"</span> 
+              <span className="text-emerald-400">{" } }"}</span> 
+              <span className="text-gray-500 ml-4">// Prefill from API</span>
+            </div>
+            <div className="pl-4">
+              <span className="text-indigo-400">initialStepId</span><span className="text-emerald-400">=</span><span className="text-amber-400">"payment"</span> 
+              <span className="text-gray-500 ml-4">// Deep-link directly</span>
+            </div>
+            <div className="text-emerald-400">&gt;</div>
             <div className="pl-4 text-gray-300">&lt;<span className="text-amber-400">MyWizard</span> /&gt;</div>
-            <div className="text-gray-300">&lt;/<span className="text-amber-400">WizardProvider</span>&gt;</div>
+            <div className="text-emerald-400">&lt;/<span className="text-amber-400">WizardProvider</span>&gt;</div>
           </pre>
         </div>
         <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100 flex gap-4">
