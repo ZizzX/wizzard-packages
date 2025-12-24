@@ -58,25 +58,40 @@ export default function StepRendering() {
           allows you to wrap every step in a shared layout or animation container.
         </p>
 
-        <div className="bg-indigo-600 rounded-3xl p-8 text-white space-y-4 shadow-xl shadow-indigo-100">
-          <h4 className="font-bold flex items-center gap-2">
-             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-            </svg>
-            Animated Transitions
-          </h4>
-          <div className="bg-indigo-700/50 rounded-xl p-6 font-mono text-[10px] text-indigo-100">
-            <span className="text-indigo-300">&lt;WizardStepRenderer</span><br/>
-            <span className="pl-4">wrapper<span className="text-emerald-400">={"{"}</span><span className="text-emerald-400">({ "{" } children { "}" })</span> <span className="text-emerald-400">=&gt;</span> (</span><br/>
-            <span className="pl-8 text-indigo-300">&lt;motion.div</span><br/>
-            <span className="pl-12">initial<span className="text-emerald-400">={"{{ opacity: 0, x: 20 }}"}</span></span><br/>
-            <span className="pl-12">animate<span className="text-emerald-400">={"{{ opacity: 1, x: 0 }}"}</span></span><br/>
-            <span className="pl-12">exit<span className="text-emerald-400">={"{{ opacity: 0, x: -20 }}"}</span></span><br/>
-            <span className="pl-8 text-indigo-300">&gt;</span><br/>
-            <span className="pl-12 text-white">{"{ children }"}</span><br/>
-            <span className="pl-8 text-indigo-300">&lt;/motion.div&gt;</span><br/>
-            <span className="pl-4 text-emerald-400">{" )}"}</span><br/>
-            <span className="text-indigo-300">/&gt;</span>
+        <div className="relative overflow-hidden rounded-3xl bg-gray-900 p-8 shadow-2xl ring-1 ring-white/10">
+          {/* Decorative glow */}
+          <div className="absolute -right-20 -top-20 h-64 w-64 bg-indigo-500/10 blur-3xl" />
+          
+          <div className="relative space-y-6">
+            <h4 className="flex items-center gap-3 text-lg font-bold text-white">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/20 text-indigo-400">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+              </div>
+              Animated Transitions
+            </h4>
+            
+            <div className="rounded-2xl bg-black/60 p-8 font-mono text-[14px] leading-relaxed ring-1 ring-white/10 shadow-inner">
+              <div className="space-y-2">
+                <div><span className="text-emerald-400">&lt;</span><span className="text-blue-400">WizardStepRenderer</span></div>
+                <div className="pl-4"><span className="text-indigo-400">wrapper</span><span className="text-emerald-400">={"{"}</span><span className="text-emerald-400">({ "{" } children { "}" })</span> <span className="text-purple-400">=&gt;</span> <span className="text-emerald-400">(</span></div>
+                <div className="pl-8"><span className="text-emerald-400">&lt;</span><span className="text-blue-400">motion.div</span></div>
+                <div className="pl-12"><span className="text-indigo-400">initial</span><span className="text-emerald-400">={"{"}</span><span className="text-emerald-400">{"{ opacity: 0, x: 20 }"}</span><span className="text-emerald-400">{"}"}</span></div>
+                <div className="pl-12"><span className="text-indigo-400">animate</span><span className="text-emerald-400">={"{"}</span><span className="text-emerald-400">{"{ opacity: 1, x: 0 }"}</span><span className="text-emerald-400">{"}"}</span></div>
+                <div className="pl-12"><span className="text-indigo-400">exit</span><span className="text-emerald-400">={"{"}</span><span className="text-emerald-400">{"{ opacity: 0, x: -20 }"}</span><span className="text-emerald-400">{"}"}</span></div>
+                <div className="pl-8"><span className="text-emerald-400">&gt;</span></div>
+                <div className="pl-12 text-gray-300">{"{ children }"}</div>
+                <div className="pl-8"><span className="text-emerald-400">&lt;/</span><span className="text-blue-400">motion.div</span><span className="text-emerald-400">&gt;</span></div>
+                <div className="pl-4"><span className="text-emerald-400">{" )}"}</span><span className="text-emerald-400">{"}"}</span></div>
+                <div><span className="text-emerald-400">/&gt;</span></div>
+              </div>
+            </div>
+
+            <p className="text-sm text-gray-400 italic">
+              Use <code className="text-indigo-300">framer-motion</code> to add seamless transitions 
+              between steps with just a few lines of code.
+            </p>
           </div>
         </div>
       </section>
@@ -88,8 +103,8 @@ export default function StepRendering() {
           <h2 className="text-2xl font-bold text-gray-900">Custom Layouts</h2>
         </div>
         <p className="text-gray-600 text-sm leading-relaxed">
-          The <code className="text-indigo-600 font-mono">WizardStepRenderer</code> 
-          only renders the *active* component. You should still keep your global 
+          The <code className="text-indigo-600 font-mono">WizardStepRenderer</code>{" "}
+          only renders the <strong>active</strong> component. You should still keep your global 
           controls (Back/Next buttons) outside of it to prevent them from 
           re-mounting on every step.
         </p>
