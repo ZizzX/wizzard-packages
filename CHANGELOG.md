@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## 1.3.1 (2025-12-24)
+
+### Features
+
+* **validation:** optimize adapters to use structural typing (duck typing). Removed direct hard dependencies on `zod` and `yup` types, making the library truly headless and smaller in bundle size.
+* **data:** add support for nested objects and arrays in `setData` and `getData` using dot notation (e.g., `user.profile.name` or `items[0].value`).
+* **context:** add `setData` and `getData` to `useWizard` hook for complex form handling.
+
 ## 1.2.0 (2025-12-23)
 
 

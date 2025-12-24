@@ -1,10 +1,10 @@
 import type { IValidatorAdapter, ValidationResult } from '../../types';
-import { Schema, ValidationError } from 'yup';
+import type { YupLikeSchema, YupLikeError } from './internal-types';
 
 export class YupAdapter<T> implements IValidatorAdapter<T> {
-    private schema: Schema<T>;
+    private schema: YupLikeSchema<T>;
 
-    constructor(schema: Schema<T>) {
+    constructor(schema: YupLikeSchema<T>) {
         this.schema = schema;
     }
 
@@ -13,9 +13,10 @@ export class YupAdapter<T> implements IValidatorAdapter<T> {
             await this.schema.validate(data, { abortEarly: false });
             return { isValid: true };
         } catch (err) {
-            if (err instanceof ValidationError) {
+            if (err && typeof err === 'object' && 'inner' in err) {
+                const yupError = err as YupLikeError;
                 const errors: Record<string, string> = {};
-                err.inner.forEach((error) => {
+                yupError.inner.forEach((error) => {
                     if (error.path) {
                         errors[error.path] = error.message;
                     }
