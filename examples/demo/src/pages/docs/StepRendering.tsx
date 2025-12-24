@@ -9,7 +9,7 @@ export default function StepRendering() {
           Step Rendering
         </h1>
         <p className="text-xl text-gray-600 leading-relaxed max-w-4xl">
-          Clean up your component code by moving from manual <code className="text-indigo-600 font-bold">switch</code> 
+          Clean up your component code by moving from manual <code className="text-indigo-600 font-bold">switch</code>{" "}
           statements to a declarative step renderer.
         </p>
       </section>
