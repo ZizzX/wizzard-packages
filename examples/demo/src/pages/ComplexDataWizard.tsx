@@ -19,7 +19,7 @@ import {
 
 // 3. Define Steps using Typed Hooks
 const Step1 = React.memo(() => {
-  const { setData } = useWizardActions();
+  const { handleStepChange } = useWizardActions();
   // "parentName" is autocompleted and return type is string
   const parentName = useWizardValue("parentName");
 
@@ -39,7 +39,7 @@ const Step1 = React.memo(() => {
         label="Your Name"
         placeholder="Jane Doe"
         value={parentName || ""}
-        onChange={(e) => setData("parentName", e.target.value)}
+        onChange={(e) => handleStepChange("parentName", e.target.value)}
         error={errors["parentName"]}
       />
     </div>
@@ -81,8 +81,9 @@ const ChildRow = React.memo(
             label={`Child #${index + 1} Name`}
             value={name || ""}
             onChange={(e) => {
-              // Fix: ensure sync update to prevent potential timeout/closure issues in prod
-              setData(`children.${index}.name`, e.target.value);
+              setData(`children.${index}.name`, e.target.value, {
+                debounceValidation: 200,
+              });
             }}
             error={nameError}
           />
@@ -91,7 +92,9 @@ const ChildRow = React.memo(
             type="number"
             value={age || 0}
             onChange={(e) => {
-              setData(`children.${index}.age`, Number(e.target.value));
+              setData(`children.${index}.age`, Number(e.target.value), {
+                debounceValidation: 200,
+              });
             }}
             error={ageError}
           />
