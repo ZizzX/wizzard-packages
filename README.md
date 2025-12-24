@@ -11,6 +11,7 @@ A flexible, headless, and strictly typed multi-step wizard library for React. Bu
 - 🔀 **Conditional Steps**: Dynamic pipelines where steps can be skipped based on data.
 - 💾 **Persistence**: Auto-save progress to LocalStorage or custom stores.
 - ⚡ **Auto Validation**: Block navigation until the step is valid.
+- 📖 **Premium Docs**: Full portal with interactive guides and [Type Reference](https://ZizzX.github.io/wizzard-stepper-react/docs/types).
 
 ## Installation
 
@@ -346,6 +347,7 @@ Returns object with actions (`setData`, `goToNextStep`, etc.) **without** subscr
 
 Check out the [Live Demo](https://ZizzX.github.io/wizzard-stepper-react/), [NPM](https://www.npmjs.com/package/wizzard-stepper-react) or the [source code](https://github.com/ZizzX/wizzard-stepper-react-demo) for a complete implementation featuring:
 
+- **Premium Documentation**: [Interactive Guides](https://ZizzX.github.io/wizzard-stepper-react/docs/introduction) and a dedicated [Type Reference](https://ZizzX.github.io/wizzard-stepper-react/docs/types).
 - **Tailwind CSS v4** UI overhaul.
 - **React Hook Form + Zod** integration.
 - **Formik + Yup** integration.

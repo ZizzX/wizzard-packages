@@ -6,6 +6,7 @@ This is the official demonstration application for the [wizzard-stepper-react](h
 
 ## 🎨 Features & Tech Stack
 
+- **Interactive Documentation**: Dedicated portal with Core Concepts, Hooks API, and Type Reference.
 - **Modern UI**: Full UI/UX overhaul using **Tailwind CSS v4**.
 - **Responsive Design**: Mobile-friendly, card-based layouts.
 - **Reusable Core Components**: Custom built `Button`, `Input`, and `Card` components for consistency.
