@@ -8,7 +8,6 @@ import {
 } from "../wizards/rhf-zod-wizard";
 import type { IWizardConfig } from "wizzard-stepper-react";
 import { ZodAdapter, LocalStorageAdapter } from "wizzard-stepper-react";
-import { useEffect } from "react";
 import { StepperControls } from "../components/StepperControls";
 import { Input } from "../components/ui/Input";
 import { Card, CardContent, CardFooter } from "../components/ui/Card";

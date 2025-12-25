@@ -5,7 +5,6 @@ import type {
   ValidationResult,
 } from "wizzard-stepper-react";
 import { LocalStorageAdapter } from "wizzard-stepper-react";
-import { useEffect } from "react";
 import { StepperControls } from "../components/StepperControls";
 import { Input } from "../components/ui/Input";
 import { Card, CardContent, CardFooter } from "../components/ui/Card";
