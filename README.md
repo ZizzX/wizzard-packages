@@ -5,13 +5,12 @@ A flexible, headless, and strictly typed multi-step wizard library for React. Bu
 ## Features
 
 - 🧠 **Headless Architecture**: Full control over UI. You bring the components, we provide the logic.
-- 🔌 **Adapter Pattern**: Zero-dependency adapters for **Zod**, **Yup** validation. No hard dependencies on these libraries in the core.
+- 🔌 **Adapter Pattern**: Zero-dependency adapters for **Zod**, **Yup** validation.
 - 🏗️ **Complex Data**: Built-in support for nested objects and arrays using dot notation (`users[0].name`).
 - 🛡️ **Strictly Typed**: Built with TypeScript generics for type safety across steps.
-- 🔀 **Conditional Steps**: Dynamic pipelines where steps can be skipped based on data.
-- 💾 **Persistence**: Auto-save progress to LocalStorage or custom stores.
-- ⚡ **Auto Validation**: Block navigation until the step is valid.
-- 📖 **Premium Docs**: Full portal with interactive guides and [Type Reference](https://ZizzX.github.io/wizzard-stepper-react/docs/types).
+- 💾 **Advanced Persistence**: Auto-save progress to LocalStorage, custom stores, or **Hybrid Step-Level persistence**.
+- � **Comprehensive Guides**: Detailed documentation portal with interactive guides, pro-tips, and type references.
+- ⚡ **High Performance Engine**: Path caching, Hash-Map lookups, and Stateless Provider architecture.
 
 ## Installation
 
