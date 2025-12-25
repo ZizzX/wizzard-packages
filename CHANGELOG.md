@@ -1,5 +1,43 @@
 # Changelog
 
+# [1.7.0](https://github.com/ZizzX/wizzard-stepper-react/compare/v1.5.0...v1.7.0) (2025-12-25)
+
+
+### Features
+
+*  document new `setData` optimizations and granular validation modes ([68fb537](https://github.com/ZizzX/wizzard-stepper-react/commit/68fb5374261b4b86318eb2b3f797fb8cd6ecba3f))
+*  fix page links ([a33317a](https://github.com/ZizzX/wizzard-stepper-react/commit/a33317ab4e3f5381be1108594535ee7632f80e93))
+* add  documentation section to the demo application with dedicated layout and navigation ([7107651](https://github.com/ZizzX/wizzard-stepper-react/commit/7107651c466d77fe5c2922dcdf0753da7bad2bb4))
+* add complex wizard example demonstrating nested data, dynamic forms, and typed hooks ([70dea93](https://github.com/ZizzX/wizzard-stepper-react/commit/70dea93c88b818aeea832b6e1810b4212df7811c))
+* add comprehensive documentation ([b53b0d0](https://github.com/ZizzX/wizzard-stepper-react/commit/b53b0d0d754f4dec672647d66d84cc32629f610d))
+* add demo application routing with examples, documentation, and scroll-to-top functionality ([cb2c10c](https://github.com/ZizzX/wizzard-stepper-react/commit/cb2c10c89ce3909ba573a28f39207efda514fb34))
+* add documentation and examples for various form libraries and wizard features ([938f9f1](https://github.com/ZizzX/wizzard-stepper-react/commit/938f9f1389bf90ec319d70dd9bf880d0fc4d9a75))
+* add documentation layout and Hooks API page with detailed explanations for wizard hooks ([4552327](https://github.com/ZizzX/wizzard-stepper-react/commit/45523270390c4aa6c9af83915d5258f700f6991a))
+* add documentation page for conditional logic in the wizard stepper ([856e5de](https://github.com/ZizzX/wizzard-stepper-react/commit/856e5de31289e86b4152cfe56a1e128ce516dbaa))
+* add documentation page for routing and URL synchronization ([fdf7bdd](https://github.com/ZizzX/wizzard-stepper-react/commit/fdf7bdd27f9002f944f67d9bb5278112eabe1b69))
+* add documentation pages and layout for core concepts and hooks API ([33374de](https://github.com/ZizzX/wizzard-stepper-react/commit/33374debce64a3277d261c6e772954b164fa5154))
+* add documentation pages for TanStack Form, Valibot, Formik, Mantine Form, RHF, and Security ([405c8bb](https://github.com/ZizzX/wizzard-stepper-react/commit/405c8bbb0e02eceb07d8043becf21c6b9f9f2a78))
+* add documentation pages integration ([3b1378f](https://github.com/ZizzX/wizzard-stepper-react/commit/3b1378f9becb4d740d2fe020390917f3dc62c187))
+* add Hooks API documentation page ([4da1a9d](https://github.com/ZizzX/wizzard-stepper-react/commit/4da1a9d6538b486fe58f91df5c04b1b670f33efd))
+* add Hooks API documentation page to the demo site ([77627aa](https://github.com/ZizzX/wizzard-stepper-react/commit/77627aafdd14ee7226d9819064ffd2f0e4be013e))
+* add installation documentation page with package manager commands and dependency information ([4c27b45](https://github.com/ZizzX/wizzard-stepper-react/commit/4c27b45946b1ab15688b90dfd5236cc6ea68173d))
+* add new demo application with routing, main layout, and comprehensive documentation pages ([aac2c98](https://github.com/ZizzX/wizzard-stepper-react/commit/aac2c98f46302d3bc2ead11dd1e2cd27d6c0de68))
+* add new wizard examples for conditional logic, form libraries, and complex data ([3fcfed5](https://github.com/ZizzX/wizzard-stepper-react/commit/3fcfed50b17d8d9223da85f63752be32b32eac0c))
+* add package configuration for new demo project ([8438983](https://github.com/ZizzX/wizzard-stepper-react/commit/843898331e8bda3c8025b767d41af50171cdf832))
+* add performance documentation, DeferredList component, and complex data wizard example ([81e2e3b](https://github.com/ZizzX/wizzard-stepper-react/commit/81e2e3b8395a8cf1a44c73561bb5fc4b6af8bcf1))
+* add React Context-based wizard state management API with dedicated hooks and documentation ([39905d3](https://github.com/ZizzX/wizzard-stepper-react/commit/39905d367ea562e404498ac935b2e475d45d3f1f))
+* add tutorial page with interactive wizard demo and reusable StepperControls component ([d53655c](https://github.com/ZizzX/wizzard-stepper-react/commit/d53655c094148f4a6718c5164bbaee2d59112814))
+* add Vite configuration for the demo and update package exports for improved module resolution ([c352879](https://github.com/ZizzX/wizzard-stepper-react/commit/c3528790bfd179766ac223c1d765094d99580232))
+* create initial demo application structure including routing, layout, and home page ([124432d](https://github.com/ZizzX/wizzard-stepper-react/commit/124432d83e8bb0b10bac24b2cbbb8365d0b0d247))
+* implement a new React wizard stepper component with context, hooks, and a complex data example ([d4176de](https://github.com/ZizzX/wizzard-stepper-react/commit/d4176dee1881729a64619faa780ccb95541aff0e))
+* implement demo application with main layout ([f9df6e9](https://github.com/ZizzX/wizzard-stepper-react/commit/f9df6e9a80892082f928f9811e8b3e4da20f7845))
+* introduce a new React wizard stepper implementation with factory API ([e35a23f](https://github.com/ZizzX/wizzard-stepper-react/commit/e35a23f25b043b34a2ac2730ec9c9e403b061499))
+* introduce core WizardContext and Provider for React stepper functionality ([91c5bd4](https://github.com/ZizzX/wizzard-stepper-react/commit/91c5bd4860491104cad18ada722ea67b00557dd7))
+* introduce documentation layout and pages for performance ([bf8fb0a](https://github.com/ZizzX/wizzard-stepper-react/commit/bf8fb0adcf456779241285aab4e1098a163bd21f))
+* introduce new demo pages, migrate to pnpm, and establish CI/CD workflows ([176d37a](https://github.com/ZizzX/wizzard-stepper-react/commit/176d37ad6ceb9ce7cbf541a5bb4bf93eff482ac9))
+* introduce new documentation pages examples, and update the README ([91a6626](https://github.com/ZizzX/wizzard-stepper-react/commit/91a662661365d3dd48d34edd5535b81433a7d287))
+* ref initial demo homepage ([1efc6f7](https://github.com/ZizzX/wizzard-stepper-react/commit/1efc6f7b45ecaeea8885ac5f43139ce72311ec0b))
+
 # [1.5.0](https://github.com/ZizzX/wizzard-stepper-react/compare/v1.4.0...v1.5.0) (2025-12-24)
 
 
