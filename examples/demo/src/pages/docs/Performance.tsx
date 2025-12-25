@@ -49,10 +49,31 @@ export default function PerformanceDocs() {
         </div>
       </section>
 
-      {/* 3. Handling Large Lists */}
+      {/* 3. Mutation Performance */}
+      <section className="space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-rose-600 rounded-xl flex items-center justify-center text-white font-bold">3</div>
+          <h2 className="text-2xl font-bold text-gray-900">Mutation Strategies</h2>
+        </div>
+        <div className="prose prose-indigo max-w-none text-gray-600">
+          <p>
+            The library provides two ways to update data. Choosing the right one is critical for performance:
+          </p>
+          <ul>
+            <li>
+              <strong>setData (Path-aware)</strong>: Triggers automatic validation logic (if <code>onChange</code> is enabled). Perfect for individual field inputs.
+            </li>
+            <li>
+              <strong>updateData (Shallow Merge)</strong>: A "silent" bulk update that skips auto-validation. Use this in <code>onSubmit</code> handlers before calling <code>goToNextStep</code> to avoid redundant validation cycles.
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      {/* 4. Handling Large Lists */}
       <section className="space-y-10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-white font-bold">3</div>
+          <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-white font-bold">4</div>
           <h2 className="text-2xl font-bold text-gray-900">Large Dataset Strategies</h2>
         </div>
         

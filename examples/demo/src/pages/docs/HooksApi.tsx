@@ -151,6 +151,42 @@ export default function HooksApi() {
             <div className="text-purple-400"><span className="text-emerald-400">{"}"}</span> <span className="text-emerald-400">=</span> <span className="text-blue-400">useWizardActions</span><span className="text-emerald-400">();</span></div>
           </pre>
         </div>
+
+        {/* Mutation Strategy Comparison */}
+        <div className="space-y-4">
+            <h3 className="text-[10px] font-black uppercase text-gray-500 tracking-widest flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                Mutation Strategy
+            </h3>
+            <div className="overflow-hidden rounded-xl border border-gray-100 shadow-sm bg-white">
+                <table className="w-full text-left text-[11px]">
+                    <thead className="bg-gray-50 text-[9px] font-bold text-gray-400 uppercase border-b border-gray-200">
+                        <tr>
+                            <th className="px-4 py-2">Feature</th>
+                            <th className="px-4 py-2">setData</th>
+                            <th className="px-4 py-2">updateData</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        <tr>
+                            <td className="px-4 py-3 font-bold text-gray-900 bg-gray-50/30 w-1/4">Path Support</td>
+                            <td className="px-4 py-3 text-emerald-600 font-medium">Deep (e.g. 'user.email')</td>
+                            <td className="px-4 py-3 text-amber-600 font-medium whitespace-nowrap">Shallow Merge (Root only)</td>
+                        </tr>
+                        <tr>
+                            <td className="px-4 py-3 font-bold text-gray-900 bg-gray-50/30">Validation</td>
+                            <td className="px-4 py-3 font-medium text-gray-600">Triggers <code className="text-rose-500">onChange</code></td>
+                            <td className="px-4 py-3 font-medium text-gray-400 italic">Silent (Skip logic)</td>
+                        </tr>
+                        <tr>
+                            <td className="px-4 py-3 font-bold text-gray-900 bg-gray-50/30">Ideal For</td>
+                            <td className="px-4 py-3 text-indigo-600 font-medium">Field-level sync / UX bits</td>
+                            <td className="px-4 py-3 text-indigo-600 font-medium">Form Submit / Bulk Load</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
       </section>
 
       {/* 5. Metadata Hooks: useWizardState & useWizardError */}
