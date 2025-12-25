@@ -209,7 +209,7 @@ export default function HooksApi() {
           <p className="text-gray-500 uppercase tracking-widest text-[10px] font-bold">Optimization Strategies for Large Apps</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* A: Hook Selection Guide */}
           <div className="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm space-y-4">
             <h3 className="font-bold text-gray-900 flex items-center gap-2">
@@ -242,7 +242,7 @@ export default function HooksApi() {
           </div>
 
           {/* B: Decision Matrix */}
-          <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 shadow-inner space-y-4">
+          <div className="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm space-y-4">
             <h3 className="font-bold text-gray-900 flex items-center gap-2">
               <span className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs">B</span>
               Quick Decision Matrix
@@ -259,12 +259,12 @@ export default function HooksApi() {
                     <tbody className="divide-y divide-gray-100">
                         <tr>
                             <td className="px-3 py-2 text-gray-600 font-medium">Single Field</td>
-                            <td className="px-3 py-2 text-indigo-600 font-bold">Value</td>
+                            <td className="px-3 py-2 text-indigo-600 font-bold">useWizardValue / Selector</td>
                             <td className="px-3 py-2 text-center text-emerald-600 font-bold">Atomic</td>
                         </tr>
                         <tr>
                             <td className="px-3 py-2 text-gray-600 font-medium">Nav Buttons</td>
-                            <td className="px-3 py-2 text-indigo-600 font-bold">Actions</td>
+                            <td className="px-3 py-2 text-indigo-600 font-bold">useWizardActions</td>
                             <td className="px-3 py-2 text-center text-blue-600 font-bold">Zero</td>
                         </tr>
                         <tr>
@@ -274,7 +274,7 @@ export default function HooksApi() {
                         </tr>
                         <tr>
                             <td className="px-3 py-2 text-gray-600 font-medium">Metadata</td>
-                            <td className="px-3 py-2 text-indigo-600 font-bold">State</td>
+                            <td className="px-3 py-2 text-indigo-600 font-bold">useWizardState</td>
                             <td className="px-3 py-2 text-center text-amber-500 font-bold">Minimal</td>
                         </tr>
                     </tbody>
