@@ -63,7 +63,7 @@ export default function Layout() {
                  </svg>
                </a>
                <Button size="sm" variant="outline" onClick={() => window.open('https://www.npmjs.com/package/wizzard-stepper-react', '_blank')}>
-                  v1.6.0
+                  v1.7.0
                </Button>
             </div>
           </div>
