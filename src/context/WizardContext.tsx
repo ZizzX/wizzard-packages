@@ -44,14 +44,14 @@ export interface IWizardActions<StepId extends string = string> {
     isValid: boolean;
     errors: Record<string, Record<string, string>>;
   }>;
-  save: () => void;
+  save: (stepIds?: StepId | StepId[] | boolean) => void;
   clearStorage: () => void;
   setData: (
     path: string,
     value: unknown,
     options?: { debounceValidation?: number }
   ) => void;
-  updateData: (data: Partial<any>, options?: { replace?: boolean }) => void;
+  updateData: (data: Partial<any>, options?: { replace?: boolean; persist?: boolean }) => void;
   getData: (path: string, defaultValue?: unknown) => unknown;
 }
 
@@ -339,12 +339,12 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
     hydrate();
   }, [hydrate]);
 
-  // Save logic stabilized
+
   // Save logic stabilized
   const saveData = useCallback(
-    (mode: PersistenceMode, stepId: string, data: any) => {
+    (mode: PersistenceMode, stepId: StepId, data: any) => {
       const { stepsMap, persistenceAdapter, persistenceMode: globalMode } = stateRef.current;
-      const stepConfig = stepsMap.get(stepId as StepId);
+      const stepConfig = stepsMap.get(stepId);
       const stepAdapter = stepConfig?.persistenceAdapter;
       const stepMode = stepConfig?.persistenceMode;
       const adapterToUse = stepAdapter || persistenceAdapter;
@@ -365,7 +365,7 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
   const validateStep = useCallback(
     async (stepId: StepId, data: T): Promise<boolean> => {
       const { stepsMap } = stateRef.current;
-      const step = stepsMap.get(stepId as StepId);
+      const step = stepsMap.get(stepId);
       if (!step || !step.validationAdapter) {
         return true;
       }
@@ -494,16 +494,18 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
   );
 
   const updateData = useCallback(
-    (data: Partial<T>, options?: { replace?: boolean }) => {
+    (data: Partial<T>, options?: { replace?: boolean; persist?: boolean }) => {
       const { config } = stateRef.current;
       const prevData = storeRef.current.getSnapshot().data;
       const newData = options?.replace ? (data as T) : { ...prevData, ...data };
 
       storeRef.current.update(newData);
 
-      config.steps.forEach((step) => {
-        saveData("manual", step.id, newData);
-      });
+      if (options?.persist) {
+        config.steps.forEach((step) => {
+          saveData("manual", step.id, newData);
+        });
+      }
     },
     [saveData]
   );
@@ -561,7 +563,7 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
 
       if (targetIndex > currentStepIndex) {
         const shouldValidate =
-          currentStep?.autoValidate ?? config.autoValidate ?? true;
+          currentStep?.autoValidate ?? config.autoValidate ?? false;
         if (shouldValidate && currentStepId) {
           const isValid = await validateStep(currentStepId as StepId, currentData);
           if (!isValid) return false;
@@ -639,8 +641,29 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
   }, []);
 
   const save = useCallback(
-    () =>
-      saveData("manual", stateRef.current.currentStepId as StepId, storeRef.current.getSnapshot().data),
+    (stepIds?: StepId | StepId[] | boolean) => {
+      const { config, currentStepId } = stateRef.current;
+      const data = storeRef.current.getSnapshot().data;
+
+      if (stepIds === true) {
+        config.steps.forEach((step) => {
+          saveData("manual", step.id, data);
+        });
+        return;
+      }
+
+      if (!stepIds) {
+        if (currentStepId) {
+          saveData("manual", currentStepId as StepId, data);
+        }
+        return;
+      }
+
+      const ids = Array.isArray(stepIds) ? stepIds : [stepIds];
+      ids.forEach((id) => {
+        saveData("manual", id, data);
+      });
+    },
     [saveData]
   );
 

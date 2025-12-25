@@ -137,13 +137,13 @@ export default function HooksApi() {
               setData<span className="text-emerald-400">,</span> <span className="text-gray-500">// Set value by dot-notation path</span>
             </div>
             <div className="pl-4 text-indigo-300">
-              updateData<span className="text-emerald-400">,</span> <span className="text-gray-500">// Bulk merge partial data object</span>
+              updateData<span className="text-emerald-400">,</span> <span className="text-gray-500">// Bulk merge (options: {"{ replace: boolean, persist: boolean }"})</span>
             </div>
             <div className="pl-4 text-indigo-300">
               validateStep<span className="text-emerald-400">,</span> <span className="text-gray-500">// Manually trigger step validation</span>
             </div>
             <div className="pl-4 text-indigo-300">
-              save<span className="text-emerald-400">,</span> <span className="text-gray-500">// Force trigger persistence adapter</span>
+              save<span className="text-emerald-400">,</span> <span className="text-gray-500">// Sync to storage (params: stepId | stepId[] | true)</span>
             </div>
             <div className="pl-4 text-indigo-300">
               clearStorage <span className="text-gray-500">// Wipe data from persistence</span>

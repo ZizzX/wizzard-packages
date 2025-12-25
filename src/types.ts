@@ -190,6 +190,6 @@ export interface IWizardContext<T = unknown, StepId extends string = string> {
      */
     validateStep: (sid: StepId) => Promise<boolean>;
     validateAll: () => Promise<{ isValid: boolean; errors: Record<string, Record<string, string>> }>;
-    save: () => void; // Manual persistence save
+    save: (stepIds?: StepId | StepId[] | boolean) => void; // Manual persistence save
     clearStorage: () => void;
 }
