@@ -1,6 +1,6 @@
 {
   "name": "wizzard-stepper-react",
-  "version": "1.7.1",
+  "version": "1.7.2",
   "description": "A flexible, headless, and strictly typed multi-step wizard library for React.",
   "type": "module",
   "main": "./dist/index.cjs",

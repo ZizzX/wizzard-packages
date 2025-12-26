@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.2](https://github.com/ZizzX/wizzard-stepper-react/compare/v1.7.1...v1.7.2) (2025-12-26)
+
+
+### Bug Fixes
+
+* update `removeChild` useCallback dependencies and improve code formatting ([490172e](https://github.com/ZizzX/wizzard-stepper-react/commit/490172e2847e3e12959604c2b5420e1320edf4a8))
+
 ## [1.7.1](https://github.com/ZizzX/wizzard-stepper-react/compare/v1.7.0...v1.7.1) (2025-12-25)
 
 
