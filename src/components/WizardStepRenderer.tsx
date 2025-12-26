@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, Suspense } from "react";
 import { useWizardContext } from "../context/WizardContext";
 
 interface WizardStepRendererProps {
@@ -7,6 +7,10 @@ interface WizardStepRendererProps {
    * Useful for adding animations (e.g., Framer Motion).
    */
   wrapper?: React.ComponentType<{ children: React.ReactNode; key: string }>;
+  /**
+   * Optional fallback to show while lazy-loading a step component.
+   */
+  fallback?: React.ReactNode;
 }
 
 /**
@@ -15,6 +19,7 @@ interface WizardStepRendererProps {
  */
 export const WizardStepRenderer: React.FC<WizardStepRendererProps> = ({
   wrapper: Wrapper,
+  fallback = null,
 }) => {
   const { currentStep } = useWizardContext();
 
@@ -27,7 +32,11 @@ export const WizardStepRenderer: React.FC<WizardStepRendererProps> = ({
     return null;
   }
 
-  const content = <StepComponent />;
+  const content = (
+    <Suspense fallback={fallback}>
+      <StepComponent />
+    </Suspense>
+  );
 
   if (Wrapper) {
     return <Wrapper key={currentStep.id}>{content}</Wrapper>;

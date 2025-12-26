@@ -30,6 +30,7 @@ export interface IWizardState<T = unknown, StepId extends string = string> {
   visitedSteps: Set<StepId>;
   completedSteps: Set<StepId>;
   errorSteps: Set<StepId>;
+  history: StepId[];
   progress: number;
   activeStepsCount: number;
   store: WizardStore<T>;
@@ -48,6 +49,7 @@ export interface IWizardActions<StepId extends string = string> {
   }>;
   save: (stepIds?: StepId | StepId[] | boolean) => void;
   clearStorage: () => void;
+  reset: () => void;
   setData: (
     path: string,
     value: unknown,
@@ -199,6 +201,14 @@ export function WizardProvider<
   >({});
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isPending, startTransition] = useTransition();
+  const [history, setHistory] = useState<StepId[]>([]);
+
+  // Initialize history with the first step
+  useEffect(() => {
+    if (currentStepId && history.length === 0) {
+      setHistory([currentStepId]);
+    }
+  }, [currentStepId]);
 
   // Store for granular data and errors
   const storeRef = useRef(new WizardStore<T>((initialData || {}) as T));
@@ -320,6 +330,7 @@ export function WizardProvider<
     persistenceMode,
     persistenceAdapter,
     currentStepId,
+    history,
   });
 
   // Update ref on every render - this is fast
@@ -333,6 +344,7 @@ export function WizardProvider<
     persistenceMode,
     persistenceAdapter,
     currentStepId,
+    history,
   };
 
   // Derived state
@@ -359,6 +371,7 @@ export function WizardProvider<
       currentStepId: string;
       visited: string[];
       completed: string[];
+      history: string[];
     }>(META_KEY);
 
     if (metaFn) {
@@ -367,6 +380,7 @@ export function WizardProvider<
       if (metaFn.visited) setVisitedSteps(new Set(metaFn.visited as StepId[]));
       if (metaFn.completed)
         setCompletedSteps(new Set(metaFn.completed as StepId[]));
+      if (metaFn.history) setHistory(metaFn.history as StepId[]);
     }
 
     const loadedData: Partial<T> = {};
@@ -690,12 +704,14 @@ export function WizardProvider<
 
       setVisitedSteps(nextVisited);
       setCurrentStepId(stepId);
+      setHistory((prev) => [...prev, stepId]);
 
       if (persistenceMode !== "manual") {
         persistenceAdapter.saveStep(META_KEY, {
           currentStepId: stepId,
           visited: Array.from(nextVisited),
           completed: Array.from(completedSteps),
+          history: [...history, stepId],
         });
       }
 
@@ -762,6 +778,28 @@ export function WizardProvider<
     stateRef.current.persistenceAdapter.clear();
   }, []);
 
+  const reset = useCallback(() => {
+    const { config, persistenceAdapter } = stateRef.current;
+
+    // Clear Store
+    storeRef.current.update((initialData || {}) as T);
+    storeRef.current.updateErrors({});
+
+    // Clear Local State
+    setVisitedSteps(new Set());
+    setCompletedSteps(new Set());
+    setErrorSteps(new Set());
+    setHistory([]);
+
+    // Reset to first step
+    if (config.steps.length > 0) {
+      setCurrentStepId(config.steps[0].id);
+    }
+
+    // Clear Storage
+    persistenceAdapter.clear();
+  }, [config.steps, initialData]);
+
   const save = useCallback(
     (stepIds?: StepId | StepId[] | boolean) => {
       const { config, currentStepId } = stateRef.current;
@@ -802,6 +840,7 @@ export function WizardProvider<
       visitedSteps,
       completedSteps,
       errorSteps,
+      history,
       progress:
         activeSteps.length > 0
           ? Math.round(((currentStepIndex + 1) / activeSteps.length) * 100)
@@ -820,6 +859,7 @@ export function WizardProvider<
       visitedSteps,
       completedSteps,
       errorSteps,
+      history,
     ]
   );
 
@@ -835,6 +875,7 @@ export function WizardProvider<
       validateAll,
       save,
       clearStorage,
+      reset,
       setData,
       updateData,
       getData,
@@ -849,6 +890,7 @@ export function WizardProvider<
       validateAll,
       save,
       clearStorage,
+      reset,
       setData,
       updateData,
       getData,

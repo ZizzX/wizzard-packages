@@ -11,6 +11,7 @@ A flexible, headless, and strictly typed multi-step wizard library for React. Bu
 - 💾 **Advanced Persistence**: Auto-save progress to LocalStorage, custom stores, or **Hybrid Step-Level persistence**.
 - � **Comprehensive Guides**: Detailed documentation portal with interactive guides, pro-tips, and type references.
 - ⚡ **High Performance Engine**: Path caching, Hash-Map lookups, and Stateless Provider architecture.
+- 🚀 **Pro Package Components**: Asynchronous conditions, step guards (`beforeLeave`), navigation history, and auto-calculated progress.
 
 ## Installation
 
@@ -242,11 +243,37 @@ const config: IWizardConfig = {
     { 
       id: 'bonus', 
       label: 'Bonus Step', 
-      // Only show if 'wantBonus' is true
+      // Synchronous condition
       condition: (data) => !!data.wantBonus 
+    },
+    {
+      id: 'verification',
+      label: 'Server Check',
+      // 🆕 Asynchronous condition (e.g., API check)
+      condition: async (data) => {
+        const res = await checkEligibility(data.userId);
+        return res.isEligible;
+      }
     }
   ]
 }
+```
+
+## Step Guards (`beforeLeave`) 🛡️
+
+Prevent navigation if certain conditions aren't met (e.g., unsaved changes or async validation).
+
+```typescript
+const step = {
+  id: 'profile',
+  beforeLeave: async (data, direction) => {
+    if (direction === 'next') {
+      const confirmed = await showConfirmDialog("Are you sure?");
+      return confirmed;
+    }
+    return true; // Always allow going back
+  }
+};
 ```
 
 ## 💾 Persistence
@@ -368,7 +395,10 @@ const config: IWizardConfig = {
 - `handleStepChange(key, value)`: simple helper to update top-level state.
 - `goToNextStep()`: Validates and moves next.
 - `goToStep(id)`: Jumps to specific step.
+- `reset()`: 🆕 Wipes all data, history, and storage (returns to initial step).
 - `allErrors`: Map of validation errors.
+- `progress`: 🆕 Auto-calculated progress (0-100%).
+- `history`: 🆕 Array of visited step IDs (navigation path).
 
 ### New Performance Hooks
 

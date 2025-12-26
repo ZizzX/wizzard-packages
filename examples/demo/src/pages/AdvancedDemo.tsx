@@ -18,8 +18,7 @@ import { motion, AnimatePresence } from "framer-motion";
 // --- Components ---
 
 const DataToolbar = () => {
-  const { updateData, clearStorage, validateAll, goToStep } =
-    useWizardActions();
+  const { updateData, validateAll, goToStep, reset } = useWizardActions();
   const { currentStep, allErrors } = useWizard();
 
   const handleAutofill = async () => {
@@ -40,11 +39,6 @@ const DataToolbar = () => {
       console.log("errors", errors);
       goToStep(Object.keys(errors)[0]);
     }
-  };
-
-  const handleClear = () => {
-    clearStorage();
-    window.location.reload();
   };
 
   const hasErrors = Object.keys(allErrors).length > 0;
@@ -69,11 +63,24 @@ const DataToolbar = () => {
             size="sm"
             variant="ghost"
             className="text-red-300 hover:text-red-100"
-            onClick={handleClear}
+            onClick={() => reset()}
           >
-            🗑️ Clear
+            🧹 Reset
           </Button>
         </div>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden mb-2">
+        <motion.div
+          className="bg-indigo-600 h-full"
+          initial={{ width: 0 }}
+          animate={{ width: `${useWizard().progress}%` }}
+        />
+      </div>
+      <div className="flex justify-between text-[10px] text-gray-400 font-bold uppercase mb-6 px-1">
+        <span>Progress</span>
+        <span>{useWizard().progress}%</span>
       </div>
 
       {/* Validation Debug Widget */}
@@ -261,7 +268,26 @@ const AdvancedWizardInner = () => {
     <div className="max-w-xl mx-auto py-8">
       <DataToolbar />
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 relative">
+          {/* Transition Overlay for Async Loading */}
+          <AnimatePresence>
+            {useWizard().isPending && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center rounded-t-xl"
+              >
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">
+                    Checking conditions...
+                  </span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Declarative Rendering! */}
           <WizardStepRenderer wrapper={StepWrapper} />
         </CardContent>
@@ -269,6 +295,27 @@ const AdvancedWizardInner = () => {
           <StepperControls />
         </div>
       </Card>
+
+      {/* History Debug Feed */}
+      <div className="mt-10 pt-10 border-t border-gray-100">
+        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">
+          Navigation History (Live)
+        </h4>
+        <div className="flex flex-wrap gap-2">
+          <AnimatePresence>
+            {useWizard().history.map((stepId, idx) => (
+              <motion.div
+                key={`${stepId}-${idx}`}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="px-2 py-1 bg-gray-50 border border-gray-100 rounded text-[11px] font-mono text-gray-500"
+              >
+                {stepId}
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      </div>
     </div>
   );
 };

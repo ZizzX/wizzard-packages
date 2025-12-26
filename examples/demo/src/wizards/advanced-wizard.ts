@@ -48,20 +48,30 @@ export const advancedConfig = {
   },
   onStepChange: (from: string | null, to: string, data: DemoData) => {
     console.log(`[Routing] Navigating from ${from} to ${to}`, data);
-    // Simulation of history.pushState
-    // window.history.pushState({}, '', `?step=${to}`);
   },
   steps: [
     {
       id: "personal",
       label: "Identity",
       validationAdapter: personalAdapter,
+      beforeLeave: async (_data: DemoData, direction: string) => {
+        if (direction === "next") {
+          console.log("[Guard] Checking before leaving Personal step...");
+          await new Promise((r) => setTimeout(r, 800)); // Simulate async check
+        }
+        return true;
+      },
     },
     {
       id: "security",
       label: "Security (RAM)",
       validationAdapter: securityAdapter,
       persistenceAdapter: memoryStore, // Override: Keep secrets in RAM only!
+      condition: async (data: DemoData) => {
+        // Simulate async permission check
+        await new Promise((r) => setTimeout(r, 1000));
+        return data.personal.email.includes("@"); // Only show security if email is valid-ish
+      },
     },
     {
       id: "preferences",

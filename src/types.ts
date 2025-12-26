@@ -159,6 +159,11 @@ export interface IWizardContext<T = unknown, StepId extends string = string> {
     activeSteps: IStepConfig<unknown, T, StepId>[];
 
     /**
+     * Navigation History
+     */
+    history: StepId[];
+
+    /**
      * Unified Wizard Data
      */
     wizardData: T;
@@ -212,4 +217,5 @@ export interface IWizardContext<T = unknown, StepId extends string = string> {
     validateAll: () => Promise<{ isValid: boolean; errors: Record<string, Record<string, string>> }>;
     save: (stepIds?: StepId | StepId[] | boolean) => void; // Manual persistence save
     clearStorage: () => void;
+    reset: () => void;
 }

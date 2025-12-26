@@ -11,47 +11,94 @@ export default function CoreConcepts() {
         </h1>
         <p className="text-xl text-gray-600 leading-relaxed max-w-3xl">
           Everything you need to know about the architecture and building blocks
-          of <code className="text-indigo-600 bg-indigo-50 px-1 rounded">wizzard-stepper-react</code>.
+          of{" "}
+          <code className="text-indigo-600 bg-indigo-50 px-1 rounded">
+            wizzard-stepper-react
+          </code>
+          .
         </p>
       </div>
 
       {/* 1. The Factory Pattern */}
       <section className="space-y-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold">1</div>
-          <h2 className="text-2xl font-bold text-gray-900">The Factory Pattern</h2>
+          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold">
+            1
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900">
+            The Factory Pattern
+          </h2>
         </div>
         <div className="prose prose-indigo max-w-none text-gray-600">
           <p>
-            The library uses a <strong>Factory Pattern</strong> to provide 100% type safety. Instead of using generic hooks that require manual casting, you create a dedicated "Wizard Kit" for your specific data schema.
+            The library uses a <strong>Factory Pattern</strong> to provide 100%
+            type safety. Instead of using generic hooks that require manual
+            casting, you create a dedicated "Wizard Kit" for your specific data
+            schema.
           </p>
         </div>
         <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
           <pre className="space-y-1">
-            <div className="text-purple-400">import <span className="text-emerald-400">{"{ "}</span> <span className="text-blue-400">createWizardFactory</span> <span className="text-emerald-400">{" }"}</span> <span className="text-purple-400">from</span> <span className="text-amber-400">'wizzard-stepper-react'</span><span className="text-emerald-400">;</span></div>
-            <div className="mt-4 text-purple-400">interface <span className="text-amber-400">UserSchema</span> <span className="text-emerald-400">{"{"}</span></div>
-            <div className="pl-4 text-gray-300">
-              <span className="text-indigo-400">personal</span><span className="text-emerald-400">:</span> <span className="text-emerald-400">{"{ "}</span> <span className="text-indigo-300">name</span><span className="text-emerald-400">:</span> <span className="text-rose-400">string</span><span className="text-emerald-400">;</span> <span className="text-indigo-300">age</span><span className="text-emerald-400">:</span> <span className="text-rose-400">number</span> <span className="text-emerald-400">{" };"}</span>
+            <div className="text-purple-400">
+              import <span className="text-emerald-400">{"{ "}</span>{" "}
+              <span className="text-blue-400">createWizardFactory</span>{" "}
+              <span className="text-emerald-400">{" }"}</span>{" "}
+              <span className="text-purple-400">from</span>{" "}
+              <span className="text-amber-400">'wizzard-stepper-react'</span>
+              <span className="text-emerald-400">;</span>
+            </div>
+            <div className="mt-4 text-purple-400">
+              interface <span className="text-amber-400">UserSchema</span>{" "}
+              <span className="text-emerald-400">{"{"}</span>
             </div>
             <div className="pl-4 text-gray-300">
-              <span className="text-indigo-400">account</span><span className="text-emerald-400">:</span> <span className="text-emerald-400">{"{ "}</span> <span className="text-indigo-300">email</span><span className="text-emerald-400">:</span> <span className="text-rose-400">string</span> <span className="text-emerald-400">{" };"}</span>
+              <span className="text-indigo-400">personal</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-emerald-400">{"{ "}</span>{" "}
+              <span className="text-indigo-300">name</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-rose-400">string</span>
+              <span className="text-emerald-400">;</span>{" "}
+              <span className="text-indigo-300">age</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-rose-400">number</span>{" "}
+              <span className="text-emerald-400">{" };"}</span>
+            </div>
+            <div className="pl-4 text-gray-300">
+              <span className="text-indigo-400">account</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-emerald-400">{"{ "}</span>{" "}
+              <span className="text-indigo-300">email</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-rose-400">string</span>{" "}
+              <span className="text-emerald-400">{" };"}</span>
             </div>
             <div className="text-emerald-400">{"}"}</div>
-            <div className="mt-4 text-gray-500">// Generates typed hooks and Provider</div>
-            <div className="text-purple-400">export const <span className="text-emerald-400">{"{ "}</span></div>
-            <div className="pl-4 text-indigo-400">
-              WizardProvider<span className="text-emerald-400">,</span> 
+            <div className="mt-4 text-gray-500">
+              // Generates typed hooks and Provider
+            </div>
+            <div className="text-purple-400">
+              export const <span className="text-emerald-400">{"{ "}</span>
             </div>
             <div className="pl-4 text-indigo-400">
-              useWizard<span className="text-emerald-400">,</span> 
+              WizardProvider<span className="text-emerald-400">,</span>
+            </div>
+            <div className="pl-4 text-indigo-400">
+              useWizard<span className="text-emerald-400">,</span>
             </div>
             <div className="pl-4 text-indigo-400">
               useWizardValue<span className="text-emerald-400">,</span>
             </div>
-            <div className="pl-4 text-indigo-400">
-              createStep
+            <div className="pl-4 text-indigo-400">createStep</div>
+            <div className="text-purple-400">
+              <span className="text-emerald-400">{"}"}</span>{" "}
+              <span className="text-emerald-400">=</span>{" "}
+              <span className="text-blue-400">createWizardFactory</span>
+              <span className="text-emerald-400">&lt;</span>
+              <span className="text-amber-400">UserSchema</span>
+              <span className="text-emerald-400">&gt;()</span>
+              <span className="text-emerald-400">;</span>
             </div>
-            <div className="text-purple-400"><span className="text-emerald-400">{"}"}</span> <span className="text-emerald-400">=</span> <span className="text-blue-400">createWizardFactory</span><span className="text-emerald-400">&lt;</span><span className="text-amber-400">UserSchema</span><span className="text-emerald-400">&gt;()</span><span className="text-emerald-400">;</span></div>
           </pre>
         </div>
       </section>
@@ -59,55 +106,152 @@ export default function CoreConcepts() {
       {/* 2. Step Configuration */}
       <section className="space-y-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-bold">2</div>
-          <h2 className="text-2xl font-bold text-gray-900">Advanced Step Logic</h2>
+          <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-bold">
+            2
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Advanced Step Logic
+          </h2>
         </div>
         <div className="prose prose-indigo max-w-none text-gray-600">
           <p>
-            Steps are more than just a list. They support <strong>conditional branching</strong>, <strong>custom validation</strong>, and <strong>component mapping</strong>.
+            Steps are more than just a list. They support{" "}
+            <strong>conditional branching</strong>,{" "}
+            <strong>custom validation</strong>, and{" "}
+            <strong>component mapping</strong>.
           </p>
         </div>
         <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
           <pre className="space-y-1">
-            <div className="text-purple-400">const <span className="text-indigo-400">config</span> <span className="text-emerald-400">=</span> <span className="text-emerald-400">{"{"}</span></div>
-            <div className="pl-4 text-indigo-400">steps<span className="text-emerald-400">: [</span></div>
-            <div className="pl-8 text-gray-300"><span className="text-emerald-400">{"{ "}</span> <span className="text-indigo-400">id</span><span className="text-emerald-400">:</span> <span className="text-amber-400">"intro"</span><span className="text-emerald-400">,</span> <span className="text-indigo-400">label</span><span className="text-emerald-400">:</span> <span className="text-amber-400">"Welcome"</span> <span className="text-emerald-400">{" }"}</span><span className="text-emerald-400">,</span></div>
+            <div className="text-purple-400">
+              const <span className="text-indigo-400">config</span>{" "}
+              <span className="text-emerald-400">=</span>{" "}
+              <span className="text-emerald-400">{"{"}</span>
+            </div>
+            <div className="pl-4 text-indigo-400">
+              steps<span className="text-emerald-400">: [</span>
+            </div>
+            <div className="pl-8 text-gray-300">
+              <span className="text-emerald-400">{"{ "}</span>{" "}
+              <span className="text-indigo-400">id</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-amber-400">"intro"</span>
+              <span className="text-emerald-400">,</span>{" "}
+              <span className="text-indigo-400">label</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-amber-400">"Welcome"</span>{" "}
+              <span className="text-emerald-400">{" }"}</span>
+              <span className="text-emerald-400">,</span>
+            </div>
             <div className="pl-8 text-emerald-400">{"{"}</div>
-            <div className="pl-12 text-gray-300"><span className="text-indigo-400">id</span><span className="text-emerald-400">:</span> <span className="text-amber-400">"payment"</span><span className="text-emerald-400">,</span></div>
-            <div className="pl-12 text-gray-300"><span className="text-indigo-300">label</span><span className="text-emerald-400">:</span> <span className="text-amber-400">"Payment"</span><span className="text-emerald-400">,</span></div>
-            <div className="pl-12 text-gray-500">// Automagically skipped if condition is false</div>
-            <div className="pl-12 text-indigo-400"><span className="text-indigo-300">condition</span><span className="text-emerald-400">: (</span><span className="text-indigo-300">data</span><span className="text-emerald-400">) =&gt;</span> <span className="text-indigo-300">data</span><span className="text-emerald-400">.</span><span className="text-indigo-300">plan</span> <span className="text-purple-400">!==</span> <span className="text-amber-400">'free'</span><span className="text-emerald-400">,</span></div>
-            <div className="pl-12 text-gray-300"><span className="text-indigo-300">validationAdapter</span><span className="text-emerald-400">:</span> <span className="text-purple-400">new</span> <span className="text-amber-400">ZodAdapter</span><span className="text-emerald-400">(</span>paymentSchema<span className="text-emerald-400">)</span><span className="text-emerald-400">,</span></div>
+            <div className="pl-12 text-gray-300">
+              <span className="text-indigo-400">id</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-amber-400">"payment"</span>
+              <span className="text-emerald-400">,</span>
+            </div>
+            <div className="pl-12 text-gray-300">
+              <span className="text-indigo-300">label</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-amber-400">"Payment"</span>
+              <span className="text-emerald-400">,</span>
+            </div>
+            <div className="pl-12 text-gray-500">
+              // Can be synchronous or ASYNC
+            </div>
+            <div className="pl-12 text-indigo-400">
+              <span className="text-indigo-300">condition</span>
+              <span className="text-emerald-400">: async (</span>
+              <span className="text-indigo-300">data</span>
+              <span className="text-emerald-400">) =&gt;</span>{" "}
+              <span className="text-purple-400">await</span> checkPermission
+              <span className="text-emerald-400">(</span>
+              <span className="text-indigo-300">data</span>
+              <span className="text-emerald-400">),</span>
+            </div>
+            <div className="pl-12 text-gray-500">
+              // Guard: prevent leaving if validation fails
+            </div>
+            <div className="pl-12 text-indigo-400">
+              <span className="text-indigo-300">beforeLeave</span>
+              <span className="text-emerald-400">: async (</span>
+              <span className="text-indigo-300">data</span>
+              <span className="text-emerald-400">,</span>{" "}
+              <span className="text-indigo-300">dir</span>
+              <span className="text-emerald-400">) =&gt;</span>{" "}
+              <span className="text-indigo-300">dir</span>{" "}
+              <span className="text-purple-400">===</span>{" "}
+              <span className="text-amber-400">'next'</span>{" "}
+              <span className="text-purple-400">?</span>{" "}
+              <span className="text-purple-400">await</span> confirm
+              <span className="text-emerald-400">() :</span>{" "}
+              <span className="text-rose-400">true</span>
+              <span className="text-emerald-400">,</span>
+            </div>
+            <div className="pl-12 text-gray-300">
+              <span className="text-indigo-300">validationAdapter</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-purple-400">new</span>{" "}
+              <span className="text-amber-400">ZodAdapter</span>
+              <span className="text-emerald-400">(</span>paymentSchema
+              <span className="text-emerald-400">)</span>
+              <span className="text-emerald-400">,</span>
+            </div>
             <div className="pl-8 text-emerald-400">{"}"}</div>
-            <div className="pl-4 text-emerald-400">]<span className="text-emerald-400">,</span></div>
+            <div className="pl-4 text-emerald-400">
+              ]<span className="text-emerald-400">,</span>
+            </div>
             <div className="pl-4 text-gray-500">// Global config</div>
-            <div className="pl-4 text-gray-300"><span className="text-indigo-300">validationMode</span><span className="text-emerald-400">:</span> <span className="text-amber-400">'onChange'</span><span className="text-emerald-400">,</span></div>
-            <div className="pl-4 text-gray-300"><span className="text-indigo-300">onStepChange</span><span className="text-emerald-400">: (</span><span className="text-indigo-300">from</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">to</span><span className="text-emerald-400">) =&gt;</span> <span className="text-blue-400">console</span>.<span className="text-blue-400">log</span><span className="text-emerald-400">(</span><span className="text-amber-400">"Moved from "</span> <span className="text-purple-400">+</span> <span className="text-indigo-300">from</span> <span className="text-purple-400">+</span> <span className="text-amber-400">" to "</span> <span className="text-purple-400">+</span> <span className="text-indigo-300">to</span><span className="text-emerald-400">)</span></div>
-            <div className="text-emerald-400">{"}"}</div><span className="text-emerald-400">;</span>
+            <div className="pl-4 text-gray-300">
+              <span className="text-indigo-300">validationMode</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-amber-400">'onChange'</span>
+              <span className="text-emerald-400">,</span>
+            </div>
+            <div className="pl-4 text-gray-300">
+              <span className="text-indigo-300">onStepChange</span>
+              <span className="text-emerald-400">: (</span>
+              <span className="text-indigo-300">from</span>
+              <span className="text-emerald-400">,</span>{" "}
+              <span className="text-indigo-300">to</span>
+              <span className="text-emerald-400">) =&gt;</span>{" "}
+              <span className="text-blue-400">console</span>.
+              <span className="text-blue-400">log</span>
+              <span className="text-emerald-400">(</span>
+              <span className="text-amber-400">"Moved from "</span>{" "}
+              <span className="text-purple-400">+</span>{" "}
+              <span className="text-indigo-300">from</span>{" "}
+              <span className="text-purple-400">+</span>{" "}
+              <span className="text-amber-400">" to "</span>{" "}
+              <span className="text-purple-400">+</span>{" "}
+              <span className="text-indigo-300">to</span>
+              <span className="text-emerald-400">)</span>
+            </div>
+            <div className="text-emerald-400">{"}"}</div>
+            <span className="text-emerald-400">;</span>
           </pre>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-          <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
-            <h4 className="font-bold text-gray-900 mb-2">Conditions</h4>
-            <p className="text-sm text-gray-500 line-clamp-3">
-              Dynamic routing based on accumulated wizard data. Steps
-              disappear/appear in real-time.
-            </p>
-          </div>
-          <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
-            <h4 className="font-bold text-gray-900 mb-2">Validation</h4>
-            <p className="text-sm text-gray-500 line-clamp-4">
-              Attach Zod/Yup adapters and control <strong>when</strong> validation runs 
-              using <code className="text-xs">validationMode</code> (onChange, onStepChange, etc.)
-            </p>
-          </div>
-          <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
-            <h4 className="font-bold text-gray-900 mb-2">Lifecycle</h4>
-            <p className="text-sm text-gray-500 line-clamp-3">
-              Use <code className="text-xs">onStepChange</code> for analytics,
-              routing, or triggering side effects.
-            </p>
-          </div>
+        <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <h4 className="font-bold text-gray-900 mb-2">Conditions</h4>
+          <p className="text-sm text-gray-500 line-clamp-3">
+            Dynamic routing based on data. Supports <strong>Async</strong>{" "}
+            checks for server-side permissions or feature flags.
+          </p>
+        </div>
+        <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <h4 className="font-bold text-gray-900 mb-2">Guards</h4>
+          <p className="text-sm text-gray-500 line-clamp-4">
+            Use <code className="text-xs">beforeLeave</code> to prevent
+            navigation. Ideal for unsaved changes warnings or async final
+            validations.
+          </p>
+        </div>
+        <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <h4 className="font-bold text-gray-900 mb-2">Lifecycle</h4>
+          <p className="text-sm text-gray-500 line-clamp-3">
+            Use <code className="text-xs">onStepChange</code> for analytics,
+            routing, or triggering side effects.
+          </p>
         </div>
       </section>
 
@@ -117,7 +261,9 @@ export default function CoreConcepts() {
           <div className="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center text-white font-bold">
             3
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">Tracking Progress</h2>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Tracking Progress
+          </h2>
         </div>
         <p className="text-gray-600">
           The wizard automatically tracks the status of every step in the flow.
@@ -159,7 +305,9 @@ export default function CoreConcepts() {
           <div className="w-10 h-10 bg-rose-600 rounded-xl flex items-center justify-center text-white font-bold">
             4
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">Data Architecture</h2>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Data Architecture
+          </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
           <div className="space-y-4">
@@ -179,28 +327,48 @@ export default function CoreConcepts() {
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-600">
                 <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                Dot-notation updates: <code className="text-xs">setData('user.profile.bio', '...')</code>
+                Dot-notation updates:{" "}
+                <code className="text-xs">
+                  setData('user.profile.bio', '...')
+                </code>
               </li>
             </ul>
           </div>
           <div className="bg-gray-950 p-8 rounded-3xl font-mono text-xs shadow-2xl ring-1 ring-white/10 overflow-x-auto">
-            <div className="text-gray-500 mb-4">// Atomic Updates & Deep Merging</div>
+            <div className="text-gray-500 mb-4">
+              // Atomic Updates & Deep Merging
+            </div>
             <pre className="space-y-1">
-              <div><span className="text-emerald-400">{"{"}</span></div>
+              <div>
+                <span className="text-emerald-400">{"{"}</span>
+              </div>
               <div className="pl-4">
-                <span className="text-indigo-400">"personal"</span><span className="text-emerald-400">:</span> <span className="text-emerald-400">{"{ "}</span> 
-                <span className="text-indigo-300">"name"</span><span className="text-emerald-400">:</span> <span className="text-amber-400">"John"</span> 
+                <span className="text-indigo-400">"personal"</span>
+                <span className="text-emerald-400">:</span>{" "}
+                <span className="text-emerald-400">{"{ "}</span>
+                <span className="text-indigo-300">"name"</span>
+                <span className="text-emerald-400">:</span>{" "}
+                <span className="text-amber-400">"John"</span>
                 <span className="text-emerald-400">{" },"}</span>
               </div>
               <div className="pl-4">
-                <span className="text-indigo-400">"plan"</span><span className="text-emerald-400">:</span> <span className="text-amber-400">"premium"</span><span className="text-emerald-400">,</span>
+                <span className="text-indigo-400">"plan"</span>
+                <span className="text-emerald-400">:</span>{" "}
+                <span className="text-amber-400">"premium"</span>
+                <span className="text-emerald-400">,</span>
               </div>
               <div className="pl-4">
-                <span className="text-indigo-400">"payment"</span><span className="text-emerald-400">:</span> <span className="text-emerald-400">{"{ "}</span>
-                <span className="text-indigo-300">"status"</span><span className="text-emerald-400">:</span> <span className="text-rose-400">true</span>
+                <span className="text-indigo-400">"payment"</span>
+                <span className="text-emerald-400">:</span>{" "}
+                <span className="text-emerald-400">{"{ "}</span>
+                <span className="text-indigo-300">"status"</span>
+                <span className="text-emerald-400">:</span>{" "}
+                <span className="text-rose-400">true</span>
                 <span className="text-emerald-400">{" }"}</span>
               </div>
-              <div><span className="text-emerald-400">{"}"}</span></div>
+              <div>
+                <span className="text-emerald-400">{"}"}</span>
+              </div>
             </pre>
           </div>
         </div>
@@ -218,24 +386,66 @@ export default function CoreConcepts() {
         </div>
         <div className="prose prose-indigo max-w-none text-gray-600">
           <p>
-            We are library-agnostic when it comes to validation. Whether you use <strong>Zod</strong>, <strong>Yup</strong>, or <strong>plain functions</strong>, it just works as long as it satisfies the <code className="text-indigo-600">IValidatorAdapter</code> interface.
+            We are library-agnostic when it comes to validation. Whether you use{" "}
+            <strong>Zod</strong>, <strong>Yup</strong>, or{" "}
+            <strong>plain functions</strong>, it just works as long as it
+            satisfies the{" "}
+            <code className="text-indigo-600">IValidatorAdapter</code>{" "}
+            interface.
           </p>
         </div>
         <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
-          <div className="text-gray-500 mb-2">// The mandatory interface for all adapters</div>
+          <div className="text-gray-500 mb-2">
+            // The mandatory interface for all adapters
+          </div>
           <pre className="space-y-1">
-            <div className="text-purple-400">interface <span className="text-amber-400">IValidatorAdapter</span><span className="text-emerald-400">&lt;</span><span className="text-indigo-300">TData</span><span className="text-emerald-400">&gt;</span> <span className="text-emerald-400">{"{"}</span></div>
+            <div className="text-purple-400">
+              interface{" "}
+              <span className="text-amber-400">IValidatorAdapter</span>
+              <span className="text-emerald-400">&lt;</span>
+              <span className="text-indigo-300">TData</span>
+              <span className="text-emerald-400">&gt;</span>{" "}
+              <span className="text-emerald-400">{"{"}</span>
+            </div>
             <div className="pl-4 text-gray-300">
-               <span className="text-indigo-400">validate</span><span className="text-emerald-400">: (</span>data<span className="text-emerald-400">:</span> <span className="text-indigo-300">TData</span><span className="text-emerald-400">) =&gt;</span> <span className="text-rose-400">Promise</span><span className="text-emerald-400">&lt;</span><span className="text-amber-400">ValidationResult</span><span className="text-emerald-400">&gt;</span> <span className="text-emerald-400">|</span> <span className="text-amber-400">ValidationResult</span><span className="text-emerald-400">;</span>
+              <span className="text-indigo-400">validate</span>
+              <span className="text-emerald-400">: (</span>data
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-indigo-300">TData</span>
+              <span className="text-emerald-400">) =&gt;</span>{" "}
+              <span className="text-rose-400">Promise</span>
+              <span className="text-emerald-400">&lt;</span>
+              <span className="text-amber-400">ValidationResult</span>
+              <span className="text-emerald-400">&gt;</span>{" "}
+              <span className="text-emerald-400">|</span>{" "}
+              <span className="text-amber-400">ValidationResult</span>
+              <span className="text-emerald-400">;</span>
             </div>
             <div className="text-emerald-400">{"}"}</div>
-            
-            <div className="mt-4 text-purple-400">type <span className="text-amber-400">ValidationResult</span> <span className="text-emerald-400">=</span> <span className="text-emerald-400">{"{"}</span></div>
-            <div className="pl-4 text-gray-300">
-               <span className="text-indigo-400">isValid</span><span className="text-emerald-400">:</span> <span className="text-rose-400">boolean</span><span className="text-emerald-400">;</span>
+
+            <div className="mt-4 text-purple-400">
+              type <span className="text-amber-400">ValidationResult</span>{" "}
+              <span className="text-emerald-400">=</span>{" "}
+              <span className="text-emerald-400">{"{"}</span>
             </div>
             <div className="pl-4 text-gray-300">
-               <span className="text-indigo-400">errors</span><span className="text-emerald-400">?:</span> <span className="text-rose-400">Record</span><span className="text-emerald-400">&lt;</span><span className="text-rose-400">string</span><span className="text-emerald-400">,</span> <span className="text-rose-400">string</span><span className="text-emerald-400">&gt;;</span> <span className="text-gray-500">// {"{ \"field.path\": \"Message\" }"}</span>
+              <span className="text-indigo-400">isValid</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-rose-400">boolean</span>
+              <span className="text-emerald-400">;</span>
+            </div>
+            <div className="pl-4 text-gray-300">
+              <span className="text-indigo-400">errors</span>
+              <span className="text-emerald-400">?:</span>{" "}
+              <span className="text-rose-400">Record</span>
+              <span className="text-emerald-400">&lt;</span>
+              <span className="text-rose-400">string</span>
+              <span className="text-emerald-400">,</span>{" "}
+              <span className="text-rose-400">string</span>
+              <span className="text-emerald-400">&gt;;</span>{" "}
+              <span className="text-gray-500">
+                // {'{ "field.path": "Message" }'}
+              </span>
             </div>
             <div className="text-emerald-400">{"}"}</div>
           </pre>
@@ -251,10 +461,16 @@ export default function CoreConcepts() {
             <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
               <pre className="space-y-3">
                 <div className="text-gray-300">
-                  <span className="text-purple-400">new</span> <span className="text-amber-400">ZodAdapter</span><span className="text-gray-400">(</span>schema<span className="text-gray-400">)</span>
+                  <span className="text-purple-400">new</span>{" "}
+                  <span className="text-amber-400">ZodAdapter</span>
+                  <span className="text-gray-400">(</span>schema
+                  <span className="text-gray-400">)</span>
                 </div>
                 <div className="text-gray-300">
-                  <span className="text-purple-400">new</span> <span className="text-amber-400">YupAdapter</span><span className="text-gray-400">(</span>schema<span className="text-gray-400">)</span>
+                  <span className="text-purple-400">new</span>{" "}
+                  <span className="text-amber-400">YupAdapter</span>
+                  <span className="text-gray-400">(</span>schema
+                  <span className="text-gray-400">)</span>
                 </div>
               </pre>
             </div>
@@ -269,27 +485,67 @@ export default function CoreConcepts() {
             <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
               <pre className="space-y-1">
                 <div className="text-purple-400">
-                  const <span className="text-indigo-400">myAdapter</span><span className="text-emerald-400">:</span> <span className="text-amber-400">IValidatorAdapter</span><span className="text-emerald-400">&lt;</span><span className="text-indigo-300">MyData</span><span className="text-emerald-400">&gt;</span> <span className="text-emerald-400">=</span> <span className="text-emerald-400">{"{"}</span>
+                  const <span className="text-indigo-400">myAdapter</span>
+                  <span className="text-emerald-400">:</span>{" "}
+                  <span className="text-amber-400">IValidatorAdapter</span>
+                  <span className="text-emerald-400">&lt;</span>
+                  <span className="text-indigo-300">MyData</span>
+                  <span className="text-emerald-400">&gt;</span>{" "}
+                  <span className="text-emerald-400">=</span>{" "}
+                  <span className="text-emerald-400">{"{"}</span>
                 </div>
                 <div className="pl-4">
-                  <span className="text-indigo-400">validate</span><span className="text-emerald-400">: (</span><span className="text-indigo-300">data</span><span className="text-emerald-400">)</span> <span className="text-purple-400">=&gt;</span> <span className="text-emerald-400">{"{"}</span>
+                  <span className="text-indigo-400">validate</span>
+                  <span className="text-emerald-400">: (</span>
+                  <span className="text-indigo-300">data</span>
+                  <span className="text-emerald-400">)</span>{" "}
+                  <span className="text-purple-400">=&gt;</span>{" "}
+                  <span className="text-emerald-400">{"{"}</span>
                 </div>
                 <div className="pl-8 text-gray-300">
-                  <span className="text-purple-400">if</span> <span className="text-emerald-400">(</span><span className="text-emerald-400">!</span><span className="text-indigo-300">data</span><span className="text-emerald-400">.</span><span className="text-indigo-300">email</span><span className="text-emerald-400">?.</span><span className="text-indigo-400">includes</span><span className="text-emerald-400">(</span><span className="text-amber-400">'@'</span><span className="text-emerald-400">)</span><span className="text-emerald-400">)</span> <span className="text-emerald-400">{"{"}</span>
+                  <span className="text-purple-400">if</span>{" "}
+                  <span className="text-emerald-400">(</span>
+                  <span className="text-emerald-400">!</span>
+                  <span className="text-indigo-300">data</span>
+                  <span className="text-emerald-400">.</span>
+                  <span className="text-indigo-300">email</span>
+                  <span className="text-emerald-400">?.</span>
+                  <span className="text-indigo-400">includes</span>
+                  <span className="text-emerald-400">(</span>
+                  <span className="text-amber-400">'@'</span>
+                  <span className="text-emerald-400">)</span>
+                  <span className="text-emerald-400">)</span>{" "}
+                  <span className="text-emerald-400">{"{"}</span>
                 </div>
                 <div className="pl-12">
-                  <span className="text-purple-400">return</span> <span className="text-emerald-400">{"{"}</span>
+                  <span className="text-purple-400">return</span>{" "}
+                  <span className="text-emerald-400">{"{"}</span>
                 </div>
                 <div className="pl-16 text-gray-300">
-                  <span className="text-indigo-400">isValid</span><span className="text-emerald-400">:</span> <span className="text-rose-400">false</span><span className="text-emerald-400">,</span>
+                  <span className="text-indigo-400">isValid</span>
+                  <span className="text-emerald-400">:</span>{" "}
+                  <span className="text-rose-400">false</span>
+                  <span className="text-emerald-400">,</span>
                 </div>
                 <div className="pl-16 text-gray-300">
-                  <span className="text-indigo-400">errors</span><span className="text-emerald-400">:</span> <span className="text-emerald-400">{"{"}</span> <span className="text-indigo-300">email</span><span className="text-emerald-400">:</span> <span className="text-amber-400">"Invalid email"</span> <span className="text-emerald-400">{"}"}</span>
+                  <span className="text-indigo-400">errors</span>
+                  <span className="text-emerald-400">:</span>{" "}
+                  <span className="text-emerald-400">{"{"}</span>{" "}
+                  <span className="text-indigo-300">email</span>
+                  <span className="text-emerald-400">:</span>{" "}
+                  <span className="text-amber-400">"Invalid email"</span>{" "}
+                  <span className="text-emerald-400">{"}"}</span>
                 </div>
                 <div className="pl-12 text-emerald-400">{"};"}</div>
                 <div className="pl-8 text-emerald-400">{"}"}</div>
                 <div className="pl-8">
-                  <span className="text-purple-400">return</span> <span className="text-emerald-400">{"{"}</span> <span className="text-indigo-400">isValid</span><span className="text-emerald-400">:</span> <span className="text-rose-400">true</span> <span className="text-emerald-400">{"}"}</span><span className="text-emerald-400">;</span>
+                  <span className="text-purple-400">return</span>{" "}
+                  <span className="text-emerald-400">{"{"}</span>{" "}
+                  <span className="text-indigo-400">isValid</span>
+                  <span className="text-emerald-400">:</span>{" "}
+                  <span className="text-rose-400">true</span>{" "}
+                  <span className="text-emerald-400">{"}"}</span>
+                  <span className="text-emerald-400">;</span>
                 </div>
                 <div className="pl-4 text-emerald-400">{"}"}</div>
                 <div className="text-emerald-400">{"};"}</div>
@@ -305,11 +561,15 @@ export default function CoreConcepts() {
           <div className="w-10 h-10 bg-amber-600 rounded-xl flex items-center justify-center text-white font-bold">
             6
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">State Persistence</h2>
+          <h2 className="text-2xl font-bold text-gray-900">
+            State Persistence
+          </h2>
         </div>
         <div className="prose prose-indigo max-w-none text-gray-600">
           <p>
-            Choose when and where to save your data. You can even mix-and-match adapters (e.g., save most steps to Memory but the "Payment" step to LocalStorage).
+            Choose when and where to save your data. You can even mix-and-match
+            adapters (e.g., save most steps to Memory but the "Payment" step to
+            LocalStorage).
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -334,16 +594,17 @@ export default function CoreConcepts() {
             <h4 className="font-bold text-gray-900">Adapters</h4>
             <div className="space-y-2 text-sm text-gray-500">
               <div className="flex items-center gap-2">
-                 <div className="w-1 h-1 rounded-full bg-amber-500" />
-                 <strong>LocalStorageAdapter</strong>: Persistent between sessions.
+                <div className="w-1 h-1 rounded-full bg-amber-500" />
+                <strong>LocalStorageAdapter</strong>: Persistent between
+                sessions.
               </div>
               <div className="flex items-center gap-2">
-                 <div className="w-1 h-1 rounded-full bg-amber-500" />
-                 <strong>MemoryAdapter</strong>: Volatile, great for testing.
+                <div className="w-1 h-1 rounded-full bg-amber-500" />
+                <strong>MemoryAdapter</strong>: Volatile, great for testing.
               </div>
               <div className="flex items-center gap-2">
-                 <div className="w-1 h-1 rounded-full bg-amber-500" />
-                 <strong>CustomAdapter</strong>: Hook into APIs or DBs.
+                <div className="w-1 h-1 rounded-full bg-amber-500" />
+                <strong>CustomAdapter</strong>: Hook into APIs or DBs.
               </div>
             </div>
           </div>
@@ -352,38 +613,104 @@ export default function CoreConcepts() {
         {/* Custom Persistence Adapter Implementation */}
         <div className="space-y-4 pt-4">
           <h4 className="font-bold text-gray-900 flex items-center gap-2">
-            <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-xs">Custom</span>
+            <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-xs">
+              Custom
+            </span>
             Building a Persistence Adapter
           </h4>
           <p className="text-sm text-gray-600">
-            To build a custom adapter (e.g., for Firebase or Redis), implement the <code className="text-indigo-600">IPersistenceAdapter</code> interface.
+            To build a custom adapter (e.g., for Firebase or Redis), implement
+            the <code className="text-indigo-600">IPersistenceAdapter</code>{" "}
+            interface.
           </p>
           <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
             <pre className="space-y-1">
-              <div className="text-purple-400">interface <span className="text-amber-400">IPersistenceAdapter</span> <span className="text-emerald-400">{"{"}</span></div>
-              <div className="pl-4 text-gray-300">
-                <span className="text-indigo-400">saveStep</span><span className="text-emerald-400">: &lt;</span><span className="text-indigo-300">T</span><span className="text-emerald-400">&gt;(</span><span className="text-indigo-300">stepId</span><span className="text-emerald-400">:</span> <span className="text-rose-400">string</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">data</span><span className="text-emerald-400">:</span> <span className="text-indigo-300">T</span><span className="text-emerald-400">) =&gt;</span> <span className="text-rose-400">void</span><span className="text-emerald-400">;</span>
+              <div className="text-purple-400">
+                interface{" "}
+                <span className="text-amber-400">IPersistenceAdapter</span>{" "}
+                <span className="text-emerald-400">{"{"}</span>
               </div>
               <div className="pl-4 text-gray-300">
-                <span className="text-indigo-400">getStep</span><span className="text-emerald-400">: &lt;</span><span className="text-indigo-300">T</span><span className="text-emerald-400">&gt;(</span><span className="text-indigo-300">stepId</span><span className="text-emerald-400">:</span> <span className="text-rose-400">string</span><span className="text-emerald-400">) =&gt;</span> <span className="text-indigo-300">T</span> <span className="text-emerald-400">|</span> <span className="text-rose-400">undefined</span><span className="text-emerald-400">;</span>
+                <span className="text-indigo-400">saveStep</span>
+                <span className="text-emerald-400">: &lt;</span>
+                <span className="text-indigo-300">T</span>
+                <span className="text-emerald-400">&gt;(</span>
+                <span className="text-indigo-300">stepId</span>
+                <span className="text-emerald-400">:</span>{" "}
+                <span className="text-rose-400">string</span>
+                <span className="text-emerald-400">,</span>{" "}
+                <span className="text-indigo-300">data</span>
+                <span className="text-emerald-400">:</span>{" "}
+                <span className="text-indigo-300">T</span>
+                <span className="text-emerald-400">) =&gt;</span>{" "}
+                <span className="text-rose-400">void</span>
+                <span className="text-emerald-400">;</span>
               </div>
               <div className="pl-4 text-gray-300">
-                <span className="text-indigo-400">clear</span><span className="text-emerald-400">: () =&gt;</span> <span className="text-rose-400">void</span><span className="text-emerald-400">;</span>
+                <span className="text-indigo-400">getStep</span>
+                <span className="text-emerald-400">: &lt;</span>
+                <span className="text-indigo-300">T</span>
+                <span className="text-emerald-400">&gt;(</span>
+                <span className="text-indigo-300">stepId</span>
+                <span className="text-emerald-400">:</span>{" "}
+                <span className="text-rose-400">string</span>
+                <span className="text-emerald-400">) =&gt;</span>{" "}
+                <span className="text-indigo-300">T</span>{" "}
+                <span className="text-emerald-400">|</span>{" "}
+                <span className="text-rose-400">undefined</span>
+                <span className="text-emerald-400">;</span>
+              </div>
+              <div className="pl-4 text-gray-300">
+                <span className="text-indigo-400">clear</span>
+                <span className="text-emerald-400">: () =&gt;</span>{" "}
+                <span className="text-rose-400">void</span>
+                <span className="text-emerald-400">;</span>
               </div>
               <div className="text-emerald-400">{"}"}</div>
 
-              <div className="mt-6 text-purple-400">class <span className="text-amber-400">CloudAdapter</span> <span className="text-purple-400">implements</span> <span className="text-amber-400">IPersistenceAdapter</span> <span className="text-emerald-400">{"{"}</span></div>
-              <div className="pl-4 text-gray-300">
-                <span className="text-indigo-400">saveStep</span><span className="text-emerald-400">(</span><span className="text-indigo-300">stepId</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">data</span><span className="text-emerald-400">) {"{"}</span>
+              <div className="mt-6 text-purple-400">
+                class <span className="text-amber-400">CloudAdapter</span>{" "}
+                <span className="text-purple-400">implements</span>{" "}
+                <span className="text-amber-400">IPersistenceAdapter</span>{" "}
+                <span className="text-emerald-400">{"{"}</span>
               </div>
-              <div className="pl-8 text-gray-500">// Sync with cloud database</div>
-              <div className="pl-8 text-gray-300"><span className="text-blue-400">api</span><span className="text-emerald-400">.</span><span className="text-blue-400">post</span><span className="text-emerald-400">(</span><span className="text-amber-400">"/steps/"</span> <span className="text-purple-400">+</span> <span className="text-indigo-300">stepId</span><span className="text-emerald-400">,</span> <span className="text-indigo-300">data</span><span className="text-emerald-400">);</span></div>
+              <div className="pl-4 text-gray-300">
+                <span className="text-indigo-400">saveStep</span>
+                <span className="text-emerald-400">(</span>
+                <span className="text-indigo-300">stepId</span>
+                <span className="text-emerald-400">,</span>{" "}
+                <span className="text-indigo-300">data</span>
+                <span className="text-emerald-400">) {"{"}</span>
+              </div>
+              <div className="pl-8 text-gray-500">
+                // Sync with cloud database
+              </div>
+              <div className="pl-8 text-gray-300">
+                <span className="text-blue-400">api</span>
+                <span className="text-emerald-400">.</span>
+                <span className="text-blue-400">post</span>
+                <span className="text-emerald-400">(</span>
+                <span className="text-amber-400">"/steps/"</span>{" "}
+                <span className="text-purple-400">+</span>{" "}
+                <span className="text-indigo-300">stepId</span>
+                <span className="text-emerald-400">,</span>{" "}
+                <span className="text-indigo-300">data</span>
+                <span className="text-emerald-400">);</span>
+              </div>
               <div className="pl-4 text-emerald-400">{"}"}</div>
               <div className="pl-4 text-gray-300">
-                <span className="text-indigo-400">getStep</span><span className="text-emerald-400">(</span><span className="text-indigo-300">stepId</span><span className="text-emerald-400">) {"{"}</span> <span className="text-gray-500">/* ... */</span> <span className="text-emerald-400">{"}"}</span>
+                <span className="text-indigo-400">getStep</span>
+                <span className="text-emerald-400">(</span>
+                <span className="text-indigo-300">stepId</span>
+                <span className="text-emerald-400">) {"{"}</span>{" "}
+                <span className="text-gray-500">/* ... */</span>{" "}
+                <span className="text-emerald-400">{"}"}</span>
               </div>
               <div className="pl-4 text-gray-300">
-                <span className="text-indigo-400">clear</span><span className="text-emerald-400">() {"{"}</span> <span className="text-gray-500">/* ... */</span> <span className="text-emerald-400">{"}"}</span>
+                <span className="text-indigo-400">clear</span>
+                <span className="text-emerald-400">() {"{"}</span>{" "}
+                <span className="text-gray-500">/* ... */</span>{" "}
+                <span className="text-emerald-400">{"}"}</span>
               </div>
               <div className="text-emerald-400">{"}"}</div>
             </pre>
@@ -394,45 +721,72 @@ export default function CoreConcepts() {
       {/* 7. Hydration & Entry Points */}
       <section className="space-y-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center text-white font-bold">7</div>
-          <h2 className="text-2xl font-bold text-gray-900">Hydration & Entry Points</h2>
+          <div className="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center text-white font-bold">
+            7
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Hydration & Entry Points
+          </h2>
         </div>
         <div className="prose prose-indigo max-w-none text-gray-600">
           <p>
-            You can seed the wizard with data from your API or start users at a specific step. This is essential for "Edit" flows or "Save & Resume" features.
+            You can seed the wizard with data from your API or start users at a
+            specific step. This is essential for "Edit" flows or "Save & Resume"
+            features.
           </p>
         </div>
         <div className="bg-gray-950 rounded-2xl p-8 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
           <pre className="space-y-1">
-            <div className="text-emerald-400">&lt;<span className="text-amber-400">WizardProvider</span></div>
-            <div className="pl-4">
-              <span className="text-indigo-400">config</span><span className="text-emerald-400">=</span><span className="text-emerald-400">{"{"}</span><span className="text-indigo-300">config</span><span className="text-emerald-400">{"}"}</span>
+            <div className="text-emerald-400">
+              &lt;<span className="text-amber-400">WizardProvider</span>
             </div>
             <div className="pl-4">
-              <span className="text-indigo-400">initialData</span><span className="text-emerald-400">=</span><span className="text-emerald-400">{"{ { "}</span>
-              <span className="text-indigo-300">name</span><span className="text-emerald-400">:</span> <span className="text-amber-400">"Aziz"</span><span className="text-emerald-400">,</span> 
-              <span className="text-indigo-300">email</span><span className="text-emerald-400">:</span> <span className="text-amber-400">"hi@aziz.com"</span> 
-              <span className="text-emerald-400">{" } }"}</span> 
+              <span className="text-indigo-400">config</span>
+              <span className="text-emerald-400">=</span>
+              <span className="text-emerald-400">{"{"}</span>
+              <span className="text-indigo-300">config</span>
+              <span className="text-emerald-400">{"}"}</span>
+            </div>
+            <div className="pl-4">
+              <span className="text-indigo-400">initialData</span>
+              <span className="text-emerald-400">=</span>
+              <span className="text-emerald-400">{"{ { "}</span>
+              <span className="text-indigo-300">name</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-amber-400">"Aziz"</span>
+              <span className="text-emerald-400">,</span>
+              <span className="text-indigo-300">email</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-amber-400">"hi@aziz.com"</span>
+              <span className="text-emerald-400">{" } }"}</span>
               <span className="text-gray-500 ml-4">// Prefill from API</span>
             </div>
             <div className="pl-4">
-              <span className="text-indigo-400">initialStepId</span><span className="text-emerald-400">=</span><span className="text-amber-400">"payment"</span> 
+              <span className="text-indigo-400">initialStepId</span>
+              <span className="text-emerald-400">=</span>
+              <span className="text-amber-400">"payment"</span>
               <span className="text-gray-500 ml-4">// Deep-link directly</span>
             </div>
             <div className="text-emerald-400">&gt;</div>
-            <div className="pl-4 text-gray-300">&lt;<span className="text-amber-400">MyWizard</span> /&gt;</div>
-            <div className="text-emerald-400">&lt;/<span className="text-amber-400">WizardProvider</span>&gt;</div>
+            <div className="pl-4 text-gray-300">
+              &lt;<span className="text-amber-400">MyWizard</span> /&gt;
+            </div>
+            <div className="text-emerald-400">
+              &lt;/<span className="text-amber-400">WizardProvider</span>&gt;
+            </div>
           </pre>
         </div>
         <ProTip>
-          When using <code className="text-xs">initialStepId</code>, the wizard is smart enough to still run conditions for previous steps to ensure the state remains consistent.
+          When using <code className="text-xs">initialStepId</code>, the wizard
+          is smart enough to still run conditions for previous steps to ensure
+          the state remains consistent.
         </ProTip>
       </section>
 
       {/* Navigation */}
-      <DocsNavigation 
+      <DocsNavigation
         prev={{ label: "Quick Start", href: "/docs/quickstart" }}
-        next={{ label: "Hooks API", href: "/docs/hooks" }} 
+        next={{ label: "Hooks API", href: "/docs/hooks" }}
       />
     </div>
   );
