@@ -40,6 +40,11 @@ export interface IPersistenceAdapter {
 }
 
 /**
+ * Step Navigation Direction
+ */
+export type StepDirection = 'next' | 'prev';
+
+/**
  * Step Configuration
  * TStepData: Type of data for this step
  * TGlobalContext: Type of the global wizard data
@@ -49,9 +54,14 @@ export interface IStepConfig<TStepData = unknown, TGlobalContext = unknown, Step
     label: string;
     /**
      * Predicate to determine if step should be included/visible.
-     * If returns false, step is strictly skipped.
+     * Supports both synchronous and asynchronous predicates.
      */
-    condition?: (context: TGlobalContext) => boolean;
+    condition?: (context: TGlobalContext) => boolean | Promise<boolean>;
+    /**
+     * Guard function called before leaving the step.
+     * Return false or throw to prevent navigation.
+     */
+    beforeLeave?: (context: TGlobalContext, direction: StepDirection) => boolean | Promise<boolean>;
     /**
      * Adapter for validation logic
      */
@@ -114,6 +124,10 @@ export interface IWizardConfig<T = unknown, StepId extends string = string> {
          * Storage key prefix (default: 'wizard_')
          */
         storageKey?: string;
+        /**
+         * Debounce time in ms for 'onChange' persistence (default: 0)
+         */
+        debounceTime?: number;
     };
     /**
      * Callback triggered when step changes.
@@ -132,6 +146,12 @@ export interface IWizardContext<T = unknown, StepId extends string = string> {
     isLastStep: boolean;
     isLoading: boolean;
     isPending?: boolean;
+
+    /**
+     * Progress and Stats
+     */
+    progress: number;
+    activeStepsCount: number;
 
     /**
      * Active steps (those meeting conditions)

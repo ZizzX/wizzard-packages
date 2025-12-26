@@ -30,6 +30,8 @@ export interface IWizardState<T = unknown, StepId extends string = string> {
   visitedSteps: Set<StepId>;
   completedSteps: Set<StepId>;
   errorSteps: Set<StepId>;
+  progress: number;
+  activeStepsCount: number;
   store: WizardStore<T>;
 }
 
@@ -218,34 +220,64 @@ export function WizardProvider<
   }, [config.steps]);
 
   // We use a ref to track the last calculated steps to ensure referential strictness
-  const lastActiveStepsRef = useRef<IStepConfig<any, T, StepId>[]>([]);
 
   // Optimized: Calculate Active Steps reactively from the store
-  const activeSteps = useSyncExternalStore(
+  const [asyncActiveSteps, setAsyncActiveSteps] = useState<
+    IStepConfig<any, T, StepId>[]
+  >(() => {
+    // Initial sync filter to avoid empty steps flash during hydration/initial render
+    return config.steps.filter((step) => {
+      if (!step.condition) return true;
+      try {
+        const res = step.condition((initialData || {}) as T);
+        return res === true; // Only include if explicitly true (synchronously)
+      } catch {
+        return false;
+      }
+    }) as IStepConfig<any, T, StepId>[];
+  });
+
+  const currentSnapshotData = useSyncExternalStore(
     storeRef.current.subscribe,
-    useCallback(() => {
-      const currentData = storeRef.current.getSnapshot().data;
-      const nextActiveSteps = config.steps.filter(
-        (step: IStepConfig<any, T, StepId>) => {
-          if (step.condition) {
-            return step.condition(currentData);
+    () => storeRef.current.getSnapshot().data
+  );
+
+  useEffect(() => {
+    let active = true;
+
+    const resolveActiveSteps = async () => {
+      const results = await Promise.all(
+        config.steps.map(async (step) => {
+          if (!step.condition) return { step, ok: true };
+          try {
+            const ok = await step.condition(currentSnapshotData);
+            return { step, ok };
+          } catch (e) {
+            console.error(`[Wizard] Condition failed for step ${step.id}:`, e);
+            return { step, ok: false };
           }
-          return true;
-        }
+        })
       );
 
-      // Check if structure changed (ids match) - shallow check optimized for step stability
-      const prevIds = lastActiveStepsRef.current.map((s) => s.id).join(".");
-      const nextIds = nextActiveSteps.map((s) => s.id).join(".");
+      const filtered = results.filter((r) => r.ok).map((r) => r.step);
 
-      if (prevIds === nextIds && lastActiveStepsRef.current.length > 0) {
-        return lastActiveStepsRef.current;
+      if (active) {
+        // Stability check
+        const nextIds = filtered.map((s) => s.id).join(".");
+        const prevIds = asyncActiveSteps.map((s) => s.id).join(".");
+        if (nextIds !== prevIds) {
+          setAsyncActiveSteps(filtered as IStepConfig<any, T, StepId>[]);
+        }
       }
+    };
 
-      lastActiveStepsRef.current = nextActiveSteps;
-      return nextActiveSteps;
-    }, [config.steps])
-  );
+    resolveActiveSteps();
+    return () => {
+      active = false;
+    };
+  }, [config.steps, currentSnapshotData]); // Removed asyncActiveSteps from deps to avoid loop
+
+  const activeSteps = asyncActiveSteps;
 
   const activeStepsIndexMap = useMemo(() => {
     const map = new Map<StepId, number>();
@@ -319,7 +351,6 @@ export function WizardProvider<
   const META_KEY = "__wizzard_meta__";
 
   // Hydration Helper
-  // Hydration Helper
   const hydrate = useCallback(() => {
     setIsLoading(true);
     const { persistenceAdapter, config } = stateRef.current;
@@ -356,6 +387,12 @@ export function WizardProvider<
 
   useEffect(() => {
     hydrate();
+    return () => {
+      if (validationTimeoutRef.current)
+        clearTimeout(validationTimeoutRef.current);
+      if (persistenceTimeoutRef.current)
+        clearTimeout(persistenceTimeoutRef.current);
+    };
   }, [hydrate]);
 
   // Save logic stabilized
@@ -379,8 +416,11 @@ export function WizardProvider<
     []
   );
 
-  // Debounce timeout for validation
+  // Debounce timeout for validation and persistence
   const validationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+  const persistenceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
 
@@ -511,7 +551,17 @@ export function WizardProvider<
       const effectivePersistenceMode =
         stepConfig?.persistenceMode ?? persistenceMode;
       if (effectivePersistenceMode === "onChange" && activeStepId) {
-        saveData("onChange", activeStepId as StepId, newData);
+        const debounceTime = config.persistence?.debounceTime ?? 0;
+
+        if (debounceTime > 0) {
+          if (persistenceTimeoutRef.current)
+            clearTimeout(persistenceTimeoutRef.current);
+          persistenceTimeoutRef.current = setTimeout(() => {
+            saveData("onChange", activeStepId as StepId, newData);
+          }, debounceTime);
+        } else {
+          saveData("onChange", activeStepId as StepId, newData);
+        }
       }
     },
     [saveData, validateStep]
@@ -602,6 +652,28 @@ export function WizardProvider<
             currentData
           );
           if (!isValid) return false;
+        }
+
+        // --- Guard: beforeLeave ('next') ---
+        if (currentStep?.beforeLeave) {
+          try {
+            const canLeave = await currentStep.beforeLeave(currentData, "next");
+            if (canLeave === false) return false;
+          } catch (e) {
+            console.error("[Wizard] beforeLeave guard failed:", e);
+            return false;
+          }
+        }
+      } else if (targetIndex < currentStepIndex) {
+        // --- Guard: beforeLeave ('prev') ---
+        if (currentStep?.beforeLeave) {
+          try {
+            const canLeave = await currentStep.beforeLeave(currentData, "prev");
+            if (canLeave === false) return false;
+          } catch (e) {
+            console.error("[Wizard] beforeLeave guard failed:", e);
+            return false;
+          }
         }
       }
 
@@ -730,6 +802,11 @@ export function WizardProvider<
       visitedSteps,
       completedSteps,
       errorSteps,
+      progress:
+        activeSteps.length > 0
+          ? Math.round(((currentStepIndex + 1) / activeSteps.length) * 100)
+          : 0,
+      activeStepsCount: activeSteps.length,
       store: storeRef.current,
     }),
     [
