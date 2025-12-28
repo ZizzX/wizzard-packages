@@ -64,7 +64,10 @@ interface MySchema {
   age: number;
 }
 
-export const { WizardProvider, useWizard } = createWizardFactory<MySchema>();
+// Optional: Define Step IDs for strict navigation
+type MySteps = 'personal' | 'details' | 'confirm';
+
+export const { WizardProvider, useWizard, useWizardActions } = createWizardFactory<MySchema, MySteps>();
 ```
 
 **`components/MyForm.tsx`**

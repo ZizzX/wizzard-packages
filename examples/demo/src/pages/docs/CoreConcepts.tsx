@@ -74,6 +74,19 @@ export default function CoreConcepts() {
               <span className="text-emerald-400">{" };"}</span>
             </div>
             <div className="text-emerald-400">{"}"}</div>
+
+            <div className="mt-4 text-gray-500">
+              // Optional: Define Step IDs for strict navigation
+            </div>
+            <div className="text-purple-400">
+              type <span className="text-amber-400">MySteps</span>{" "}
+              <span className="text-emerald-400">=</span>{" "}
+              <span className="text-amber-400">'personal'</span>{" "}
+              <span className="text-emerald-400">|</span>{" "}
+              <span className="text-amber-400">'account'</span>
+              <span className="text-emerald-400">;</span>
+            </div>
+
             <div className="mt-4 text-gray-500">
               // Generates typed hooks and Provider
             </div>
@@ -96,6 +109,8 @@ export default function CoreConcepts() {
               <span className="text-blue-400">createWizardFactory</span>
               <span className="text-emerald-400">&lt;</span>
               <span className="text-amber-400">UserSchema</span>
+              <span className="text-emerald-400">,</span>{" "}
+              <span className="text-amber-400">MySteps</span>
               <span className="text-emerald-400">&gt;()</span>
               <span className="text-emerald-400">;</span>
             </div>
