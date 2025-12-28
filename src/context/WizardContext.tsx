@@ -7,7 +7,6 @@ import React, {
   useCallback,
   useSyncExternalStore,
   useRef,
-  useTransition,
 } from "react";
 import type {
   IWizardConfig,
@@ -15,6 +14,8 @@ import type {
   IPersistenceAdapter,
   IStepConfig,
   IWizardContext,
+  IBreadcrumb,
+  BreadcrumbStatus,
 } from "../types";
 import { MemoryAdapter } from "../adapters/persistence/MemoryAdapter";
 import { getByPath, setByPath } from "../utils/data";
@@ -36,6 +37,9 @@ export interface IWizardState<T = unknown, StepId extends string = string> {
   progress: number;
   activeStepsCount: number;
   isBusy: boolean;
+  isDirty: boolean;
+  dirtyFields: Set<string>;
+  breadcrumbs: IBreadcrumb<StepId>[];
   allErrors: Record<string, Record<string, string>>;
   store: WizardStore<T>;
 }
@@ -75,14 +79,24 @@ const WizardActionsContext = createContext<IWizardActions<any> | undefined>(
 
 // Advanced: Store for granular subscriptions
 export class WizardStore<T> {
-  private state: { data: T; errors: Record<string, Record<string, string>> };
+  private initialData: T;
+  private dirtyFields = new Set<string>();
+  private state: {
+    data: T;
+    errors: Record<string, Record<string, string>>;
+    isDirty: boolean;
+    dirtyFields: Set<string>;
+  };
   private listeners = new Set<() => void>();
   errorsMap = new Map<string, Map<string, string>>();
 
   constructor(initialData: T) {
+    this.initialData = JSON.parse(JSON.stringify(initialData)); // Deep copy
     this.state = {
       data: initialData,
       errors: {},
+      isDirty: false,
+      dirtyFields: this.dirtyFields,
     };
   }
 
@@ -90,8 +104,37 @@ export class WizardStore<T> {
     return this.state;
   }
 
-  update(newData: T) {
-    this.state = { ...this.state, data: newData };
+  update(newData: T, changedPath?: string) {
+    if (changedPath) {
+      const initialValue = getByPath(this.initialData, changedPath);
+      const newValue = getByPath(newData, changedPath);
+
+      if (JSON.stringify(initialValue) !== JSON.stringify(newValue)) {
+        this.dirtyFields.add(changedPath);
+      } else {
+        this.dirtyFields.delete(changedPath);
+      }
+    }
+
+    this.state = {
+      ...this.state,
+      data: newData,
+      isDirty: this.dirtyFields.size > 0,
+      dirtyFields: new Set(this.dirtyFields),
+    };
+    this.notify();
+  }
+
+  // Set initial data (e.g. after hydration or successful save)
+  setInitialData(data: T) {
+    this.initialData = JSON.parse(JSON.stringify(data));
+    this.dirtyFields.clear();
+    this.state = {
+      ...this.state,
+      data,
+      isDirty: false,
+      dirtyFields: new Set(),
+    };
     this.notify();
   }
 
@@ -190,6 +233,8 @@ export function WizardProvider<
   initialStepId,
   children,
 }: WizardProviderProps<T, StepId>) {
+  const [localConfig, setLocalConfig] =
+    useState<IWizardConfig<T, StepId>>(config);
   const [currentStepId, setCurrentStepId] = useState<StepId | "">("");
   // Optimize: Keep ref to currentStepId to avoid recreating setData on every step change
   const currentStepIdRef = useRef<StepId | "">(currentStepId);
@@ -210,7 +255,17 @@ export function WizardProvider<
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isBusy, setIsBusy] = useState<boolean>(false);
   const [busySteps, setBusySteps] = useState<Set<StepId>>(new Set());
-  const [isPending, startTransition] = useTransition();
+
+  const isDirty = useSyncExternalStore(
+    storeRef.current.subscribe,
+    () => storeRef.current.getSnapshot().isDirty
+  );
+
+  const dirtyFields = useSyncExternalStore(
+    storeRef.current.subscribe,
+    () => storeRef.current.getSnapshot().dirtyFields
+  );
+
   const [history, setHistory] = useState<StepId[]>([]);
 
   // Initialize history with the first step
@@ -222,19 +277,19 @@ export function WizardProvider<
 
   // Persistence Setup
   const persistenceAdapter = useMemo<IPersistenceAdapter>(() => {
-    return config.persistence?.adapter || new MemoryAdapter();
-  }, [config.persistence?.adapter]);
+    return localConfig.persistence?.adapter || new MemoryAdapter();
+  }, [localConfig.persistence?.adapter]);
 
-  const persistenceMode = config.persistence?.mode || "onStepChange";
+  const persistenceMode = localConfig.persistence?.mode || "onStepChange";
 
   // --- Optimization: Static Step Map ---
   const stepsMap = useMemo(() => {
     const map = new Map<StepId, IStepConfig<any, T, StepId>>();
-    config.steps.forEach((step: IStepConfig<any, T, StepId>) =>
+    localConfig.steps.forEach((step: IStepConfig<any, T, StepId>) =>
       map.set(step.id, step)
     );
     return map;
-  }, [config.steps]);
+  }, [localConfig.steps]);
 
   // We use a ref to track the last calculated steps to ensure referential strictness
 
@@ -243,7 +298,7 @@ export function WizardProvider<
     IStepConfig<any, T, StepId>[]
   >(() => {
     // Initial sync filter to avoid empty steps flash during hydration/initial render
-    return config.steps.filter((step) => {
+    return localConfig.steps.filter((step) => {
       if (!step.condition) return true;
       try {
         const res = step.condition((initialData || {}) as T);
@@ -265,7 +320,7 @@ export function WizardProvider<
       setIsBusy(true);
       try {
         const results = await Promise.all(
-          config.steps.map(async (step) => {
+          localConfig.steps.map(async (step) => {
             if (!step.condition) return { step, ok: true, pending: false };
 
             // Mark as busy for granular tracking
@@ -303,22 +358,16 @@ export function WizardProvider<
           })
         );
 
-        return results
-          .filter((r) => {
-            // Include if condition met OR (pending AND showWhilePending)
-            if (r.ok) return true;
-            // Note: with current Promise.all implementation, we only return after resolution.
-            // To support actual "show while pending", we'd need a more complex reactive system or
-            // separate effects for each step's condition.
-            // For now, let's stick to strict "hide by default until resolved".
-            return false;
-          })
-          .map((r) => r.step) as IStepConfig<any, T, StepId>[];
+        return results.filter((r) => r.ok).map((r) => r.step) as IStepConfig<
+          any,
+          T,
+          StepId
+        >[];
       } finally {
         setIsBusy(false);
       }
     },
-    [config.steps]
+    [localConfig.steps]
   );
 
   useEffect(() => {
@@ -377,7 +426,7 @@ export function WizardProvider<
   // --- Optimization: Stable State Reference ---
   // We hold all "changing" values in a ref so actions can remain stable
   const stateRef = useRef({
-    config,
+    config: localConfig,
     stepsMap,
     activeSteps,
     activeStepsIndexMap,
@@ -391,7 +440,7 @@ export function WizardProvider<
 
   // Update ref on every render - this is fast
   stateRef.current = {
-    config,
+    config: localConfig,
     stepsMap,
     activeSteps,
     activeStepsIndexMap,
@@ -415,13 +464,36 @@ export function WizardProvider<
   const isFirstStep = currentStepIndex === 0;
   const isLastStep = currentStepIndex === activeSteps.length - 1;
 
+  // Breadcrumbs
+  const breadcrumbs = useMemo<IBreadcrumb<StepId>[]>(() => {
+    return activeSteps.map((step) => {
+      let status: BreadcrumbStatus = "future";
+      if (step.id === currentStepId) {
+        status = "current";
+      } else if (completedSteps.has(step.id)) {
+        status = "visited";
+      } else if (visitedSteps.has(step.id)) {
+        status = "visited";
+      }
+      return { id: step.id, label: step.label, status };
+    });
+  }, [activeSteps, currentStepId, visitedSteps, completedSteps]);
+
+  // Analytics helper
+  const trackEvent = useCallback(
+    (name: string, payload: any) => {
+      localConfig.analytics?.onEvent(name, payload);
+    },
+    [localConfig.analytics]
+  );
+
   // Constants
   const META_KEY = "__wizzard_meta__";
 
   // Hydration Helper
   const hydrate = useCallback(() => {
     setIsLoading(true);
-    const { persistenceAdapter, config } = stateRef.current;
+    const { persistenceAdapter } = stateRef.current;
 
     const metaFn = persistenceAdapter.getStep<{
       currentStepId: string;
@@ -440,7 +512,7 @@ export function WizardProvider<
     }
 
     const loadedData: Partial<T> = {};
-    config.steps.forEach((step) => {
+    localConfig.steps.forEach((step) => {
       const stepData = persistenceAdapter.getStep(step.id);
       if (stepData) {
         Object.assign(loadedData, stepData);
@@ -448,12 +520,24 @@ export function WizardProvider<
     });
 
     if (Object.keys(loadedData).length > 0) {
-      const currentData = storeRef.current.getSnapshot().data;
-      const newData = { ...currentData, ...loadedData };
-      storeRef.current.update(newData);
+      const { onConflict } = localConfig;
+      const initial = (initialData || {}) as T;
+
+      let finalData: T;
+      if (onConflict === "replace") {
+        finalData = initial;
+      } else if (onConflict === "keep-local") {
+        finalData = { ...initial, ...loadedData } as T;
+      } else {
+        // Default: merge
+        finalData = { ...initial, ...loadedData } as T;
+      }
+
+      storeRef.current.setInitialData(initial);
+      storeRef.current.update(finalData);
     }
     setIsLoading(false);
-  }, []); // Empty dependency array!
+  }, [localConfig, initialData]);
 
   useEffect(() => {
     hydrate();
@@ -570,7 +654,30 @@ export function WizardProvider<
       const newData = setByPath(prevData, path, value);
 
       // --- Batching Strategy: Update Store First ---
-      storeRef.current.update(newData);
+      storeRef.current.update(newData, path);
+
+      // Auto-Invalidation Logic
+      localConfig.steps.forEach((step) => {
+        if (
+          step.dependsOn?.some(
+            (depPath) => path === depPath || path.startsWith(depPath + ".")
+          )
+        ) {
+          // Clear step data and visited/completed status
+          setCompletedSteps((prev) => {
+            const next = new Set(prev);
+            next.delete(step.id as StepId);
+            return next;
+          });
+          setVisitedSteps((prev) => {
+            const next = new Set(prev);
+            next.delete(step.id as StepId);
+            return next;
+          });
+          // Note: Full data reset for step might be risky, but usually dependsOn implies the step data is invalid.
+          // For now, we only reset statuses to force re-entry/re-validation.
+        }
+      });
 
       const activeStepId = stateRef.current.currentStepId;
       const stepConfig = stepsMap.get(activeStepId as StepId);
@@ -921,9 +1028,10 @@ export function WizardProvider<
   }, []);
 
   const reset = useCallback(() => {
-    const { config, persistenceAdapter } = stateRef.current;
+    const { persistenceAdapter } = stateRef.current;
 
     // Clear Store
+    storeRef.current.setInitialData(initialData || ({} as T));
     storeRef.current.update((initialData || {}) as T);
     storeRef.current.updateErrors({});
 
@@ -934,13 +1042,22 @@ export function WizardProvider<
     setHistory([]);
 
     // Reset to first step
-    if (config.steps.length > 0) {
-      setCurrentStepId(config.steps[0].id);
+    if (activeSteps.length > 0) {
+      setCurrentStepId(activeSteps[0].id);
     }
 
     // Clear Storage
     persistenceAdapter.clear();
-  }, [config.steps, initialData]);
+
+    trackEvent("wizard_reset", { data: initialData });
+  }, [activeSteps, initialData, trackEvent]);
+
+  const updateConfig = useCallback(
+    (newConfig: Partial<IWizardConfig<T, StepId>>) => {
+      setLocalConfig((prev) => ({ ...prev, ...newConfig }));
+    },
+    []
+  );
 
   const save = useCallback(
     (stepIds?: StepId | StepId[] | boolean) => {
@@ -972,13 +1089,13 @@ export function WizardProvider<
   // Split values
   const stateValue = useMemo<IWizardState<T, StepId>>(
     () => ({
-      config,
+      config: localConfig,
       currentStep,
       currentStepIndex,
       isFirstStep,
       isLastStep,
       isLoading,
-      isPending,
+      isPending: false, // isPending removed
       activeSteps,
       visitedSteps,
       completedSteps,
@@ -987,6 +1104,9 @@ export function WizardProvider<
       busySteps,
       isBusy,
       allErrors,
+      isDirty,
+      dirtyFields,
+      breadcrumbs,
       progress:
         activeSteps.length > 0
           ? Math.round(((currentStepIndex + 1) / activeSteps.length) * 100)
@@ -1000,7 +1120,6 @@ export function WizardProvider<
       isFirstStep,
       isLastStep,
       isLoading,
-      isPending,
       activeSteps,
       visitedSteps,
       completedSteps,
@@ -1008,8 +1127,11 @@ export function WizardProvider<
       history,
       busySteps,
       isBusy,
-      config,
+      localConfig,
       allErrors,
+      isDirty,
+      dirtyFields,
+      breadcrumbs,
     ]
   );
 
@@ -1029,6 +1151,7 @@ export function WizardProvider<
       setData,
       updateData,
       getData,
+      updateConfig,
     }),
     [
       goToNextStep,
@@ -1044,6 +1167,7 @@ export function WizardProvider<
       setData,
       updateData,
       getData,
+      updateConfig,
     ]
   );
 
@@ -1215,5 +1339,5 @@ export function useWizardContext<
       allErrors,
     }),
     [state, actions, wizardData, allErrors]
-  );
+  ) as IWizardContext<T, StepId> & { store: WizardStore<T> };
 }

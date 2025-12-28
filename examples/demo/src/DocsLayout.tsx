@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { cn } from "./lib/utils";
 
@@ -36,6 +36,11 @@ const sidebarItems = [
         label: "Deferred Rendering",
         path: "/docs/deferred-rendering",
       },
+      {
+        id: "enterprise",
+        label: "Enterprise Guide",
+        path: "/docs/enterprise",
+      },
       { id: "performance", label: "Performance", path: "/docs/performance" },
       { id: "security", label: "Security & Integrity", path: "/docs/security" },
     ],
@@ -57,9 +62,13 @@ export default function DocsLayout() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
 
   // Close sidebar when route changes on mobile
-  useEffect(() => {
+  // Close sidebar when route changes on mobile
+  // Uses state-during-render pattern to safely handle navigation resets
+  const [prevPath, setPrevPath] = useState(location.pathname);
+  if (prevPath !== location.pathname) {
+    setPrevPath(location.pathname);
     setSidebarOpen(false);
-  }, [location.pathname]);
+  }
 
   // Find current item for mobile title
   const currentItem = sidebarItems

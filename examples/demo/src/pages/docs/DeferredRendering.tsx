@@ -296,7 +296,7 @@ export default function DeferredRendering() {
       {/* Navigation */}
       <DocsNavigation
         prev={{ label: "Step Rendering", href: "/docs/rendering" }}
-        next={{ label: "Performance", href: "/docs/performance" }}
+        next={{ label: "Enterprise Guide", href: "/docs/enterprise" }}
       />
     </div>
   );

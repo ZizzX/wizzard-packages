@@ -20,7 +20,10 @@ import type { Path, PathValue } from "./utils/types";
  *
  * @template TSchema The shape of your wizard's global data state
  */
-export function createWizardFactory<TSchema extends Record<string, any>, StepId extends string = string>() {
+export function createWizardFactory<
+  TSchema extends Record<string, any>,
+  StepId extends string = string,
+>() {
   /**
    * Typed Provider
    */
@@ -65,7 +68,9 @@ export function createWizardFactory<TSchema extends Record<string, any>, StepId 
    */
   const useWizardValue = <P extends Path<TSchema>>(
     path: P,
-    options?: { isEqual?: (a: PathValue<TSchema, P>, b: PathValue<TSchema, P>) => boolean }
+    options?: {
+      isEqual?: (a: PathValue<TSchema, P>, b: PathValue<TSchema, P>) => boolean;
+    }
   ): PathValue<TSchema, P> => {
     return useBaseWizardValue<PathValue<TSchema, P>>(path, options);
   };
@@ -108,6 +113,13 @@ export function createWizardFactory<TSchema extends Record<string, any>, StepId 
   };
 
   /**
+   * Typed useBreadcrumbs
+   */
+  const useBreadcrumbs = () => {
+    return useBaseWizardState<TSchema, StepId>().breadcrumbs;
+  };
+
+  /**
    * Helper to create a typed step configuration.
    * By using this helper, TypeScript can infer TStepData from the validationAdapter or other properties.
    */
@@ -124,6 +136,7 @@ export function createWizardFactory<TSchema extends Record<string, any>, StepId 
     useWizardError,
     useWizardActions,
     useWizardState,
+    useBreadcrumbs,
     createStep,
   };
 }

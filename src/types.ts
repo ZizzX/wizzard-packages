@@ -99,6 +99,10 @@ export interface IStepConfig<TStepData = unknown, TGlobalContext = unknown, Step
      * - 'manual': Save only when manually triggered
      */
     persistenceMode?: PersistenceMode;
+    /**
+     * Dependency Tracking: Reset this step's data/status when these paths change.
+     */
+    dependsOn?: string[];
 }
 
 /**
@@ -135,6 +139,19 @@ export interface IWizardConfig<T = unknown, StepId extends string = string> {
         debounceTime?: number;
     };
     /**
+     * Conflict resolution strategy for persistence hydration.
+     * - 'merge': Shallow merge local and initial/server data (default)
+     * - 'replace': Overwrite local with initial/server data
+     * - 'keep-local': Ignore initial/server data if local exists
+     */
+    onConflict?: 'merge' | 'replace' | 'keep-local';
+    /**
+     * Analytics integration.
+     */
+    analytics?: {
+        onEvent: (name: string, payload: any) => void;
+    };
+    /**
      * Callback triggered when step changes.
      * Useful for routing integration or analytics.
      */
@@ -153,6 +170,12 @@ export interface IWizardContext<T = unknown, StepId extends string = string> {
     isLoading: boolean;
     isPending?: boolean;
     isBusy: boolean;
+
+    /**
+     * Dirty State Tracking
+     */
+    isDirty: boolean;
+    dirtyFields: Set<string>;
 
     /**
      * Progress and Stats
@@ -193,6 +216,11 @@ export interface IWizardContext<T = unknown, StepId extends string = string> {
     errorSteps: Set<StepId>;
 
     /**
+     * Breadcrumbs
+     */
+    breadcrumbs: IBreadcrumb<StepId>[];
+
+    /**
      * Navigation Actions
      */
     goToNextStep: () => Promise<void>;
@@ -230,4 +258,23 @@ export interface IWizardContext<T = unknown, StepId extends string = string> {
     save: (stepIds?: StepId | StepId[] | boolean) => void; // Manual persistence save
     clearStorage: () => void;
     reset: () => void;
+    
+    /**
+     * Dynamic Configuration
+     */
+    updateConfig: (config: Partial<IWizardConfig<T, StepId>>) => void;
+}
+
+/**
+ * Breadcrumb Status
+ */
+export type BreadcrumbStatus = 'visited' | 'current' | 'future' | 'hidden';
+
+/**
+ * Breadcrumb Interface
+ */
+export interface IBreadcrumb<StepId extends string = string> {
+    id: StepId;
+    label: string;
+    status: BreadcrumbStatus;
 }
