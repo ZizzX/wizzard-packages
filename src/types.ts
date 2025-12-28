@@ -58,6 +58,11 @@ export interface IStepConfig<TStepData = unknown, TGlobalContext = unknown, Step
      */
     condition?: (context: TGlobalContext) => boolean | Promise<boolean>;
     /**
+     * If true, the step will be visible while its condition is being resolved.
+     * Default: false (step is hidden until condition is resolved)
+     */
+    showWhilePending?: boolean;
+    /**
      * Guard function called before leaving the step.
      * Return false or throw to prevent navigation.
      */
@@ -140,12 +145,14 @@ export interface IWizardConfig<T = unknown, StepId extends string = string> {
  * Core Wizard Context State
  */
 export interface IWizardContext<T = unknown, StepId extends string = string> {
+    config: IWizardConfig<T, StepId>;
     currentStep: IStepConfig<unknown, T, StepId> | null;
     currentStepIndex: number;
     isFirstStep: boolean;
     isLastStep: boolean;
     isLoading: boolean;
     isPending?: boolean;
+    isBusy: boolean;
 
     /**
      * Progress and Stats
@@ -162,6 +169,11 @@ export interface IWizardContext<T = unknown, StepId extends string = string> {
      * Navigation History
      */
     history: StepId[];
+
+    /**
+     * Steps that are currently performing async actions (conditions, validation, guards)
+     */
+    busySteps: Set<StepId>;
 
     /**
      * Unified Wizard Data

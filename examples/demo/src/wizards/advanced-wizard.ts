@@ -76,6 +76,11 @@ export const advancedConfig = {
     {
       id: "preferences",
       label: "Preferences",
+      condition: async (data: DemoData) => {
+        // Simulate API call
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        return !!data.personal?.email;
+      },
       // No validation
     },
     {

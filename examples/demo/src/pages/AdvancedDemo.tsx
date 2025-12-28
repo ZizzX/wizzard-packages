@@ -19,24 +19,32 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const DataToolbar = () => {
   const { updateData, validateAll, goToStep, reset } = useWizardActions();
-  const { currentStep, allErrors } = useWizard();
+  const { currentStep, allErrors, isBusy } = useWizard();
 
   const handleAutofill = async () => {
-    updateData({
-      personal: {
-        firstName: "Auto",
-        lastName: "Bot",
-        email: "autobot@example.com",
+    updateData(
+      {
+        personal: {
+          firstName: "Auto",
+          lastName: "Bot",
+          email: "autobot@example.com",
+        },
+        preferences: {
+          theme: "dark",
+          newsletter: true,
+        },
+        security: {
+          password: "",
+          confirmPassword: "",
+        },
       },
-      preferences: {
-        theme: "dark",
-        newsletter: true,
-      },
-    });
+      {
+        replace: true,
+      }
+    );
     const { isValid, errors } = await validateAll();
 
     if (!isValid) {
-      console.log("errors", errors);
       goToStep(Object.keys(errors)[0]);
     }
   };
@@ -49,6 +57,15 @@ const DataToolbar = () => {
         <div className="text-sm">
           <span className="font-bold text-yellow-400">Current Step:</span>{" "}
           {currentStep?.id}
+          {isBusy && (
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="ml-2 inline-block animate-spin"
+            >
+              ⏳
+            </motion.span>
+          )}
         </div>
         <div className="space-x-2">
           <Button
@@ -263,10 +280,79 @@ const StepWrapper = ({ children }: { children: React.ReactNode }) => (
   </AnimatePresence>
 );
 
+const StepProgressList = () => {
+  const {
+    config,
+    activeSteps,
+    visitedSteps,
+    busySteps,
+    currentStep,
+    goToStep,
+  } = useWizard();
+
+  return (
+    <div className="flex flex-col space-y-2 mb-8 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+      <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+        Wizard Steps Status
+      </h3>
+      <div className="flex flex-wrap gap-2">
+        {config.steps.map((step) => {
+          const isActive = activeSteps.find((s) => s.id === step.id);
+          const isVisited = visitedSteps.has(step.id);
+          const isCurrent = currentStep?.id === step.id;
+          const isStepBusy = busySteps.has(step.id);
+
+          return (
+            <motion.button
+              key={step.id}
+              onClick={() => isActive && goToStep(step.id)}
+              className={`
+                px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center space-x-2
+                ${
+                  isCurrent
+                    ? "bg-indigo-600 text-white shadow-md ring-2 ring-indigo-100"
+                    : isActive
+                      ? "bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+                      : "bg-gray-50 text-gray-400 cursor-not-allowed opacity-50"
+                }
+              `}
+              whileHover={isActive ? { scale: 1.02 } : {}}
+              whileTap={isActive ? { scale: 0.98 } : {}}
+            >
+              <span className="flex items-center">
+                {isVisited && !isCurrent && !isStepBusy && "✅ "}
+                {isCurrent && !isStepBusy && "🎯 "}
+                {isStepBusy && (
+                  <motion.span
+                    animate={{ rotate: 360 }}
+                    transition={{
+                      repeat: Infinity,
+                      duration: 1,
+                      ease: "linear",
+                    }}
+                    className="inline-block mr-1"
+                  >
+                    ⏳
+                  </motion.span>
+                )}
+                {step.label}
+              </span>
+              {!isActive && !isStepBusy && (
+                <span className="text-[10px] opacity-70">(Hidden)</span>
+              )}
+            </motion.button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const AdvancedWizardInner = () => {
   return (
     <div className="max-w-xl mx-auto py-8">
       <DataToolbar />
+      <StepProgressList />
       <Card>
         <CardContent className="pt-6 relative">
           {/* Transition Overlay for Async Loading */}

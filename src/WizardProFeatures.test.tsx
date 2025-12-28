@@ -1,12 +1,19 @@
 import { describe, it, expect } from "vitest";
-import { render, screen, act, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  act,
+  waitFor,
+  renderHook,
+} from "@testing-library/react";
 import {
   WizardProvider,
   useWizardActions,
   useWizardState,
+  useWizardError,
 } from "./context/WizardContext";
 import { WizardStepRenderer } from "./components/WizardStepRenderer";
-import { IStepConfig } from "./types";
+import { IStepConfig, IWizardConfig } from "./types";
 
 // Helper component to interact with wizard in tests
 const WizardConsumer = () => {
@@ -188,5 +195,238 @@ describe("Wizard Pro Features", () => {
       expect(screen.getByTestId("current-step")).toHaveTextContent("step1");
       expect(screen.getByTestId("history")).toHaveTextContent("step1");
     });
+  });
+
+  it("should validate all active steps even after immediate data update", async () => {
+    const config: IWizardConfig<any> = {
+      steps: [
+        { id: "step1", label: "Step 1" },
+        {
+          id: "step2",
+          label: "Step 2",
+          condition: (data: any) => data.showStep2 === true,
+          validationAdapter: {
+            validate: (data: any) =>
+              ({
+                isValid: !!data.step2Data,
+                errors: !data.step2Data ? { someField: "Required" } : {},
+              }) as any,
+          },
+        },
+      ],
+    };
+
+    const { result } = renderHook(() => useWizardActions(), {
+      wrapper: ({ children }) => (
+        <WizardProvider config={config}>{children}</WizardProvider>
+      ),
+    });
+
+    // 1. Initially only step1 is active.
+    // 2. Update data to show step2 AND call validateAll immediately
+    let validationResult: any;
+    await act(async () => {
+      result.current.updateData({ showStep2: true });
+      validationResult = await result.current.validateAll();
+    });
+
+    // This should be FALSE because step2 is now active but step2Data is missing
+    expect(validationResult.isValid).toBe(false);
+    expect(validationResult.errors.step2).toBeDefined();
+  });
+
+  it("should record history when using goToStep directly", async () => {
+    const config: IWizardConfig<any> = {
+      steps: [
+        { id: "step1", label: "Step 1" },
+        { id: "step2", label: "Step 2" },
+        { id: "step3", label: "Step 3" },
+      ],
+    };
+
+    const { result } = renderHook(
+      () => {
+        const state = useWizardState();
+        const actions = useWizardActions();
+        return { state, actions };
+      },
+      {
+        wrapper: ({ children }) => (
+          <WizardProvider config={config}>{children}</WizardProvider>
+        ),
+      }
+    );
+
+    await act(async () => {
+      await result.current.actions.goToStep("step2");
+    });
+    expect(result.current.state.history).toEqual(["step1", "step2"]);
+
+    await act(async () => {
+      await result.current.actions.goToStep("step3");
+    });
+    expect(result.current.state.history).toEqual(["step1", "step2", "step3"]);
+  });
+
+  it("should toggle isBusy during async conditions", async () => {
+    let resolveCondition: (val: boolean) => void = () => {};
+    const config: IWizardConfig<any> = {
+      steps: [
+        { id: "step1", label: "Step 1" },
+        {
+          id: "step2",
+          label: "Step 2",
+          condition: () =>
+            new Promise((resolve) => {
+              resolveCondition = resolve;
+            }),
+        },
+      ],
+    };
+
+    const { result } = renderHook(() => useWizardState(), {
+      wrapper: ({ children }) => (
+        <WizardProvider config={config}>{children}</WizardProvider>
+      ),
+    });
+
+    // During async check it should be busy
+    await waitFor(() => expect(result.current.isBusy).toBe(true));
+
+    await act(async () => {
+      resolveCondition(true);
+    });
+
+    await waitFor(() => expect(result.current.isBusy).toBe(false));
+  });
+
+  it("should hide steps with conditions by default until resolved", async () => {
+    let resolveCondition: (val: boolean) => void = () => {};
+    const config: IWizardConfig<any> = {
+      steps: [
+        { id: "step1", label: "Step 1" },
+        {
+          id: "step2",
+          label: "Step 2",
+          condition: () =>
+            new Promise((resolve) => {
+              resolveCondition = resolve;
+            }),
+        },
+      ],
+    };
+
+    const { result } = renderHook(() => useWizardState(), {
+      wrapper: ({ children }) => (
+        <WizardProvider config={config}>{children}</WizardProvider>
+      ),
+    });
+
+    // Step 2 should NOT be in activeSteps during pending condition
+    expect(result.current.activeSteps.length).toBe(1);
+    expect(
+      result.current.activeSteps.find((s) => s.id === "step2")
+    ).toBeUndefined();
+    expect(result.current.busySteps.has("step2")).toBe(true);
+
+    await act(async () => {
+      resolveCondition(true);
+    });
+
+    // After resolution it should appear
+    await waitFor(() => expect(result.current.activeSteps.length).toBe(2));
+    expect(
+      result.current.activeSteps.find((s) => s.id === "step2")
+    ).toBeDefined();
+    expect(result.current.busySteps.has("step2")).toBe(false);
+  });
+
+  it("should validate current step before resolving conditions for next steps", async () => {
+    const log: string[] = [];
+    const config: IWizardConfig<any> = {
+      autoValidate: true,
+      steps: [
+        {
+          id: "step1",
+          label: "Step 1",
+          validationAdapter: {
+            validate: async () => {
+              log.push("validate step1");
+              return { isValid: false, errors: { field: "error" } };
+            },
+          },
+        },
+        {
+          id: "step2",
+          label: "Step 2",
+          condition: async () => {
+            log.push("condition step2");
+            return true;
+          },
+        },
+      ],
+    };
+
+    const { result } = renderHook(
+      () => ({
+        state: useWizardState(),
+        actions: useWizardActions(),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <WizardProvider config={config}>{children}</WizardProvider>
+        ),
+      }
+    );
+
+    // Wait for initial resolveActiveSteps to finish and clear log
+    await waitFor(() =>
+      expect(result.current.state.activeSteps.length).toBe(1)
+    );
+    log.length = 0;
+
+    await act(async () => {
+      await result.current.actions.goToNextStep();
+    });
+
+    // Should have validated step1 and stopped because it's invalid
+    expect(log).toEqual(["validate step1"]);
+    expect(log).not.toContain("condition step2");
+    expect(result.current.state.currentStep?.id).toBe("step1");
+  });
+
+  it("should correctly find errors using useWizardError with prefixed paths", async () => {
+    const config: IWizardConfig<any> = {
+      steps: [
+        {
+          id: "security",
+          label: "Security",
+          validationAdapter: {
+            validate: async () => ({
+              isValid: false,
+              errors: { "security.password": "min length 6" },
+            }),
+          },
+        },
+      ],
+    };
+
+    const { result } = renderHook(
+      () => ({
+        error: useWizardError("security.password"),
+        actions: useWizardActions(),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <WizardProvider config={config}>{children}</WizardProvider>
+        ),
+      }
+    );
+
+    await act(async () => {
+      await result.current.actions.validateStep("security");
+    });
+
+    expect(result.current.error).toBe("min length 6");
   });
 });

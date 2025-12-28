@@ -31,8 +31,12 @@ export interface IWizardState<T = unknown, StepId extends string = string> {
   completedSteps: Set<StepId>;
   errorSteps: Set<StepId>;
   history: StepId[];
+  busySteps: Set<StepId>;
+  config: IWizardConfig<T, StepId>;
   progress: number;
   activeStepsCount: number;
+  isBusy: boolean;
+  allErrors: Record<string, Record<string, string>>;
   store: WizardStore<T>;
 }
 
@@ -193,13 +197,19 @@ export function WizardProvider<
     currentStepIdRef.current = currentStepId;
   }, [currentStepId]);
 
+  // Store for granular data and errors
+  const storeRef = useRef(new WizardStore<T>((initialData || {}) as T));
+
   const [visitedSteps, setVisitedSteps] = useState<Set<StepId>>(new Set());
   const [completedSteps, setCompletedSteps] = useState<Set<StepId>>(new Set());
   const [errorSteps, setErrorSteps] = useState<Set<StepId>>(new Set());
-  const [, setAllErrorsState] = useState<
-    Record<string, Record<string, string>>
-  >({});
+  const allErrors = useSyncExternalStore(
+    storeRef.current.subscribe,
+    () => storeRef.current.getSnapshot().errors
+  );
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isBusy, setIsBusy] = useState<boolean>(false);
+  const [busySteps, setBusySteps] = useState<Set<StepId>>(new Set());
   const [isPending, startTransition] = useTransition();
   const [history, setHistory] = useState<StepId[]>([]);
 
@@ -208,10 +218,7 @@ export function WizardProvider<
     if (currentStepId && history.length === 0) {
       setHistory([currentStepId]);
     }
-  }, [currentStepId]);
-
-  // Store for granular data and errors
-  const storeRef = useRef(new WizardStore<T>((initialData || {}) as T));
+  }, [currentStepId, history.length]);
 
   // Persistence Setup
   const persistenceAdapter = useMemo<IPersistenceAdapter>(() => {
@@ -252,31 +259,80 @@ export function WizardProvider<
     () => storeRef.current.getSnapshot().data
   );
 
+  // Helper for actual active steps calculation (used in effects and actions)
+  const resolveActiveStepsHelper = useCallback(
+    async (data: T): Promise<IStepConfig<any, T, StepId>[]> => {
+      setIsBusy(true);
+      try {
+        const results = await Promise.all(
+          config.steps.map(async (step) => {
+            if (!step.condition) return { step, ok: true, pending: false };
+
+            // Mark as busy for granular tracking
+            setBusySteps((prev) => new Set(prev).add(step.id as StepId));
+
+            try {
+              const conditionResult = step.condition(data);
+
+              if (conditionResult instanceof Promise) {
+                // If it's a promise and showWhilePending is true, we might want to return it as visible but pending
+                if (step.showWhilePending) {
+                  const ok = await conditionResult;
+                  return { step, ok, pending: false };
+                } else {
+                  // Default: hide while pending
+                  const ok = await conditionResult;
+                  return { step, ok, pending: false };
+                }
+              }
+
+              return { step, ok: conditionResult, pending: false };
+            } catch (e) {
+              console.error(
+                `[Wizard] Condition failed for step ${step.id}:`,
+                e
+              );
+              return { step, ok: false, pending: false };
+            } finally {
+              setBusySteps((prev) => {
+                const next = new Set(prev);
+                next.delete(step.id as StepId);
+                return next;
+              });
+            }
+          })
+        );
+
+        return results
+          .filter((r) => {
+            // Include if condition met OR (pending AND showWhilePending)
+            if (r.ok) return true;
+            // Note: with current Promise.all implementation, we only return after resolution.
+            // To support actual "show while pending", we'd need a more complex reactive system or
+            // separate effects for each step's condition.
+            // For now, let's stick to strict "hide by default until resolved".
+            return false;
+          })
+          .map((r) => r.step) as IStepConfig<any, T, StepId>[];
+      } finally {
+        setIsBusy(false);
+      }
+    },
+    [config.steps]
+  );
+
   useEffect(() => {
     let active = true;
 
     const resolveActiveSteps = async () => {
-      const results = await Promise.all(
-        config.steps.map(async (step) => {
-          if (!step.condition) return { step, ok: true };
-          try {
-            const ok = await step.condition(currentSnapshotData);
-            return { step, ok };
-          } catch (e) {
-            console.error(`[Wizard] Condition failed for step ${step.id}:`, e);
-            return { step, ok: false };
-          }
-        })
-      );
-
-      const filtered = results.filter((r) => r.ok).map((r) => r.step);
+      const filtered = await resolveActiveStepsHelper(currentSnapshotData);
 
       if (active) {
         // Stability check
         const nextIds = filtered.map((s) => s.id).join(".");
         const prevIds = asyncActiveSteps.map((s) => s.id).join(".");
         if (nextIds !== prevIds) {
-          setAsyncActiveSteps(filtered as IStepConfig<any, T, StepId>[]);
+          setAsyncActiveSteps(filtered);
         }
       }
     };
@@ -285,7 +341,7 @@ export function WizardProvider<
     return () => {
       active = false;
     };
-  }, [config.steps, currentSnapshotData]); // Removed asyncActiveSteps from deps to avoid loop
+  }, [resolveActiveStepsHelper, currentSnapshotData]); // Removed asyncActiveSteps from deps to avoid loop
 
   const activeSteps = asyncActiveSteps;
 
@@ -446,37 +502,42 @@ export function WizardProvider<
         return true;
       }
 
-      const result = await step.validationAdapter.validate(data);
+      setBusySteps((prev) => new Set(prev).add(stepId));
+      try {
+        const result = await step.validationAdapter.validate(data);
 
-      if (result.isValid) {
-        // Clear errors for this step
-        // Optimized: Use Store Method
-        const changed = storeRef.current.setStepErrors(stepId, null);
+        if (result.isValid) {
+          // Clear errors for this step
+          const changed = storeRef.current.setStepErrors(stepId, null);
 
-        if (changed) {
-          setAllErrorsState(storeRef.current.getSnapshot().errors);
+          if (changed) {
+            setErrorSteps((prev) => {
+              const next = new Set(prev);
+              next.delete(stepId);
+              return next;
+            });
+          }
+          return true;
+        } else {
+          // Set errors for this step
+          storeRef.current.setStepErrors(stepId, result.errors || null);
+
           setErrorSteps((prev) => {
             const next = new Set(prev);
-            next.delete(stepId);
+            next.add(stepId);
             return next;
           });
+          return false;
         }
-        return true;
-      } else {
-        // Set errors for this step
-        // Optimized: Use Store Method
-        storeRef.current.setStepErrors(stepId, result.errors || null);
-        setAllErrorsState(storeRef.current.getSnapshot().errors);
-
-        setErrorSteps((prev) => {
+      } finally {
+        setBusySteps((prev) => {
           const next = new Set(prev);
-          next.add(stepId);
+          next.delete(stepId);
           return next;
         });
-        return false;
       }
     },
-    []
+    [setErrorSteps, setBusySteps]
   );
 
   // Actions stabilized with useCallback
@@ -531,9 +592,7 @@ export function WizardProvider<
 
       // Sync React state last - only for errors to update errorSteps
       if (activeStepId && storeRef.current.getSnapshot().errors[activeStepId]) {
-        startTransition(() => {
-          setAllErrorsState(storeRef.current.getSnapshot().errors);
-        });
+        // Error case handled above via store.setStepErrors
       }
 
       // Determine Validation Mode
@@ -616,25 +675,34 @@ export function WizardProvider<
     isValid: boolean;
     errors: Record<string, Record<string, string>>;
   }> => {
-    const { activeSteps } = stateRef.current;
+    setIsBusy(true);
+    try {
+      // CRITICAL: We MUST resolve ACTUAL active steps here because stateRef might be stale
+      // if validateAll is called immediately after updateData/setData
+      const currentData = storeRef.current.getSnapshot().data;
+      const actualActiveSteps = await resolveActiveStepsHelper(currentData);
 
-    // Optimization: Parallel validation
-    const currentData = storeRef.current.getSnapshot().data;
-    const validationResults = await Promise.all(
-      activeSteps.map((step: IStepConfig<any, T, StepId>) =>
-        validateStep(step.id, currentData)
-      )
-    );
+      // Optimization: Parallel validation
+      const validationResults = await Promise.all(
+        actualActiveSteps.map((step: IStepConfig<any, T, StepId>) =>
+          validateStep(step.id, currentData)
+        )
+      );
 
-    const isValid = validationResults.every(Boolean);
-    const finalErrors = storeRef.current.getSnapshot().errors;
-    return { isValid, errors: finalErrors };
-  }, [validateStep]);
+      const isValid = validationResults.every(Boolean);
+      const finalErrors = storeRef.current.getSnapshot().errors;
+      return { isValid, errors: finalErrors };
+    } finally {
+      setIsBusy(false);
+    }
+  }, [resolveActiveStepsHelper, validateStep]);
 
   const goToStep = useCallback(
-    async (stepId: StepId): Promise<boolean> => {
+    async (
+      stepId: StepId,
+      providedActiveSteps?: IStepConfig<any, T, StepId>[]
+    ): Promise<boolean> => {
       const {
-        activeStepsIndexMap,
         currentStepId,
         config,
         persistenceMode,
@@ -644,15 +712,18 @@ export function WizardProvider<
         stepsMap,
       } = stateRef.current;
 
-      const targetIndex = activeStepsIndexMap.get(stepId) ?? -1;
-      if (targetIndex === -1) return false;
-
       const currentData = storeRef.current.getSnapshot().data;
-      const currentStepIndex =
-        activeStepsIndexMap.get(currentStepId as StepId) ?? -1;
-      const currentStep = stepsMap.get(currentStepId as StepId);
 
-      if (targetIndex > currentStepIndex) {
+      // 1. Determine direction and validate CURRENT step if going forward
+      const allSteps = config.steps;
+      const currentIndexInConfig = allSteps.findIndex(
+        (s) => s.id === currentStepId
+      );
+      const targetIndexInConfig = allSteps.findIndex((s) => s.id === stepId);
+      const isForward = targetIndexInConfig > currentIndexInConfig;
+
+      if (isForward && currentStepId) {
+        const currentStep = stepsMap.get(currentStepId as StepId);
         const shouldValidate =
           currentStep?.autoValidate ?? config.autoValidate ?? false;
         const mode =
@@ -667,82 +738,153 @@ export function WizardProvider<
           );
           if (!isValid) return false;
         }
-
-        // --- Guard: beforeLeave ('next') ---
-        if (currentStep?.beforeLeave) {
-          try {
-            const canLeave = await currentStep.beforeLeave(currentData, "next");
-            if (canLeave === false) return false;
-          } catch (e) {
-            console.error("[Wizard] beforeLeave guard failed:", e);
-            return false;
-          }
-        }
-      } else if (targetIndex < currentStepIndex) {
-        // --- Guard: beforeLeave ('prev') ---
-        if (currentStep?.beforeLeave) {
-          try {
-            const canLeave = await currentStep.beforeLeave(currentData, "prev");
-            if (canLeave === false) return false;
-          } catch (e) {
-            console.error("[Wizard] beforeLeave guard failed:", e);
-            return false;
-          }
-        }
       }
 
-      if (currentStep && currentStepId) {
-        const effectivePersistenceMode =
-          currentStep.persistenceMode ?? persistenceMode;
-        if (effectivePersistenceMode === "onStepChange") {
-          saveData("onStepChange", currentStepId as StepId, currentData);
+      setIsBusy(true);
+      try {
+        // CRITICAL: Resolve actual active steps if not provided
+        const actualActiveSteps =
+          providedActiveSteps || (await resolveActiveStepsHelper(currentData));
+
+        const targetIndex = actualActiveSteps.findIndex((s) => s.id === stepId);
+        if (targetIndex === -1) return false;
+
+        const currentStepIndex = actualActiveSteps.findIndex(
+          (s) => s.id === currentStepId
+        );
+        const currentStep = stepsMap.get(currentStepId as StepId);
+
+        if (targetIndex > currentStepIndex) {
+          // --- Guard: beforeLeave ('next') ---
+          if (currentStep?.beforeLeave) {
+            setBusySteps((prev) => new Set(prev).add(currentStepId as StepId));
+            try {
+              const canLeave = await currentStep.beforeLeave(
+                currentData,
+                "next"
+              );
+              if (canLeave === false) return false;
+            } catch (e) {
+              console.error("[Wizard] beforeLeave guard failed:", e);
+              return false;
+            } finally {
+              setBusySteps((prev) => {
+                const next = new Set(prev);
+                next.delete(currentStepId as StepId);
+                return next;
+              });
+            }
+          }
+        } else if (targetIndex < currentStepIndex) {
+          // --- Guard: beforeLeave ('prev') ---
+          if (currentStep?.beforeLeave) {
+            setBusySteps((prev) => new Set(prev).add(currentStepId as StepId));
+            try {
+              const canLeave = await currentStep.beforeLeave(
+                currentData,
+                "prev"
+              );
+              if (canLeave === false) return false;
+            } catch (e) {
+              console.error("[Wizard] beforeLeave guard failed:", e);
+              return false;
+            } finally {
+              setBusySteps((prev) => {
+                const next = new Set(prev);
+                next.delete(currentStepId as StepId);
+                return next;
+              });
+            }
+          }
         }
-      }
+        if (currentStep && currentStepId) {
+          const effectivePersistenceMode =
+            currentStep.persistenceMode ?? persistenceMode;
+          if (effectivePersistenceMode === "onStepChange") {
+            saveData("onStepChange", currentStepId as StepId, currentData);
+          }
+        }
 
-      const nextVisited = new Set(visitedSteps);
-      if (currentStepId) nextVisited.add(currentStepId as StepId);
+        const nextVisited = new Set(visitedSteps);
+        if (currentStepId) nextVisited.add(currentStepId as StepId);
 
-      setVisitedSteps(nextVisited);
-      setCurrentStepId(stepId);
-      setHistory((prev) => [...prev, stepId]);
+        setVisitedSteps(nextVisited);
+        setCurrentStepId(stepId);
 
-      if (persistenceMode !== "manual") {
-        persistenceAdapter.saveStep(META_KEY, {
-          currentStepId: stepId,
-          visited: Array.from(nextVisited),
-          completed: Array.from(completedSteps),
-          history: [...history, stepId],
+        // Use functional update for history to prevent race conditions
+        setHistory((prev) => {
+          const nextHistory = [...prev, stepId];
+
+          // Persistence move inside state update logic or use a separate effect?
+          // For history stability, we calculate it here.
+          if (persistenceMode !== "manual") {
+            persistenceAdapter.saveStep(META_KEY, {
+              currentStepId: stepId,
+              visited: Array.from(nextVisited),
+              completed: Array.from(completedSteps),
+              history: nextHistory,
+            });
+          }
+          return nextHistory;
         });
-      }
 
-      // Lifecycle Callback
-      if (config.onStepChange) {
-        config.onStepChange(currentStepId || null, stepId, currentData); // Call hook
-      }
+        // Lifecycle Callback
+        if (config.onStepChange) {
+          config.onStepChange(currentStepId || null, stepId, currentData); // Call hook
+        }
 
-      window.scrollTo(0, 0);
-      return true;
+        window.scrollTo(0, 0);
+        return true;
+      } finally {
+        setIsBusy(false);
+      }
     },
-    [saveData, validateStep]
+    [resolveActiveStepsHelper, saveData, validateStep]
   );
 
   const goToNextStep = useCallback(async () => {
     const {
-      activeSteps,
-      activeStepsIndexMap,
       currentStepId,
-      completedSteps,
+      config,
       persistenceMode,
+      visitedSteps,
+      completedSteps,
+      persistenceAdapter,
+      stepsMap,
     } = stateRef.current;
-    const currentStepIndex =
-      activeStepsIndexMap.get(currentStepId as StepId) ?? -1;
 
-    if (currentStepIndex === -1 || currentStepIndex === activeSteps.length - 1)
+    if (!currentStepId) return;
+
+    const currentData = storeRef.current.getSnapshot().data;
+    const currentStep = stepsMap.get(currentStepId as StepId);
+
+    // 1. Validate CURRENT step before doing anything else (async conditions etc)
+    const shouldValidate =
+      currentStep?.autoValidate ?? config.autoValidate ?? false;
+    const mode =
+      currentStep?.validationMode ?? config.validationMode ?? "onStepChange";
+
+    if ((shouldValidate || mode === "onStepChange") && currentStepId) {
+      const isValid = await validateStep(currentStepId as StepId, currentData);
+      if (!isValid) return; // Stop immediately if current step is invalid
+    }
+
+    // 2. Resolve actual active steps to handle immediate transitions
+    const actualActiveSteps = await resolveActiveStepsHelper(currentData);
+
+    const currentStepIndex = actualActiveSteps.findIndex(
+      (s) => s.id === currentStepId
+    );
+
+    if (
+      currentStepIndex === -1 ||
+      currentStepIndex === actualActiveSteps.length - 1
+    )
       return;
 
-    const nextStep = activeSteps[currentStepIndex + 1];
+    const nextStep = actualActiveSteps[currentStepIndex + 1];
     if (nextStep) {
-      const success = await goToStep(nextStep.id);
+      const success = await goToStep(nextStep.id, actualActiveSteps);
       if (success) {
         const nextCompleted = new Set(completedSteps).add(
           currentStepId as StepId
@@ -830,6 +972,7 @@ export function WizardProvider<
   // Split values
   const stateValue = useMemo<IWizardState<T, StepId>>(
     () => ({
+      config,
       currentStep,
       currentStepIndex,
       isFirstStep,
@@ -841,6 +984,9 @@ export function WizardProvider<
       completedSteps,
       errorSteps,
       history,
+      busySteps,
+      isBusy,
+      allErrors,
       progress:
         activeSteps.length > 0
           ? Math.round(((currentStepIndex + 1) / activeSteps.length) * 100)
@@ -860,6 +1006,10 @@ export function WizardProvider<
       completedSteps,
       errorSteps,
       history,
+      busySteps,
+      isBusy,
+      config,
+      allErrors,
     ]
   );
 
@@ -963,14 +1113,31 @@ export function useWizardError(path: string): string | undefined {
       return lastValueRef.current;
     }
 
-    // Flatten errors from all steps or use a specific step?
-    // Usually validation results are nested like { children: { "0.name": "error" } }
-    // but the adapter flattened them to "children.0.name"
+    // Fast lookup for the path in all steps
     let foundError: string | undefined;
-    Object.values(errors).forEach((stepErrors) => {
+
+    for (const [stepId, stepErrors] of Object.entries(errors)) {
       const typedStepErrors = stepErrors as Record<string, string>;
-      if (typedStepErrors[path]) foundError = typedStepErrors[path];
-    });
+
+      // 1. Exact match (e.g. "security.password")
+      if (typedStepErrors[path]) {
+        foundError = typedStepErrors[path];
+        break;
+      }
+
+      // 2. Structural match (e.g. "security.password" matches "security" error in "security" step)
+      if (path.startsWith(stepId + ".") && typedStepErrors[stepId]) {
+        foundError = typedStepErrors[stepId];
+        break;
+      }
+
+      // 3. Relative match (e.g. "password" matches "password" error in any step)
+      const lastPart = path.split(".").pop();
+      if (lastPart && typedStepErrors[lastPart]) {
+        foundError = typedStepErrors[lastPart];
+        break;
+      }
+    }
 
     lastStateRef.current = errors;
     lastValueRef.current = foundError;
