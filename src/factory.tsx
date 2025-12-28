@@ -80,7 +80,7 @@ export function createWizardFactory<
    * @param selector Function to select a slice of state
    */
   const useWizardSelector = <TSelected,>(
-    selector: (state: TSchema) => TSelected,
+    selector: (state: IWizardContext<TSchema, StepId>) => TSelected,
     options?: { isEqual?: (a: TSelected, b: TSelected) => boolean }
   ): TSelected => {
     return useBaseWizardSelector<TSelected>(selector, options);

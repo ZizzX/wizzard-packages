@@ -41,7 +41,7 @@ export interface IWizardState<T = unknown, StepId extends string = string> {
   dirtyFields: Set<string>;
   breadcrumbs: IBreadcrumb<StepId>[];
   allErrors: Record<string, Record<string, string>>;
-  store: WizardStore<T>;
+  store: WizardStore<T, StepId>;
 }
 
 export interface IWizardActions<StepId extends string = string> {
@@ -78,7 +78,7 @@ const WizardActionsContext = createContext<IWizardActions<any> | undefined>(
 );
 
 // Advanced: Store for granular subscriptions
-export class WizardStore<T> {
+export class WizardStore<T, StepId extends string = string> {
   private initialData: T;
   private dirtyFields = new Set<string>();
   private state: {
@@ -86,6 +86,10 @@ export class WizardStore<T> {
     errors: Record<string, Record<string, string>>;
     isDirty: boolean;
     dirtyFields: Set<string>;
+    meta: Partial<IWizardState<T, StepId>> & {
+      wizardData?: T;
+      allErrors?: any;
+    }; // Combined view support
   };
   private listeners = new Set<() => void>();
   errorsMap = new Map<string, Map<string, string>>();
@@ -97,6 +101,7 @@ export class WizardStore<T> {
       errors: {},
       isDirty: false,
       dirtyFields: this.dirtyFields,
+      meta: {},
     };
   }
 
@@ -121,8 +126,33 @@ export class WizardStore<T> {
       data: newData,
       isDirty: this.dirtyFields.size > 0,
       dirtyFields: new Set(this.dirtyFields),
+      meta: this.state.meta, // Preserve meta
     };
+    this.updateCombinedState();
     this.notify();
+  }
+
+  updateMeta(newMeta: Partial<IWizardState<T, StepId>>) {
+    this.state = {
+      ...this.state,
+      meta: { ...this.state.meta, ...newMeta },
+    };
+    this.updateCombinedState();
+    this.notify();
+  }
+
+  // Helper to ensure 'meta' contains everything for selectors
+  private updateCombinedState() {
+    // We inject data and errors into "meta" so it looks like IWizardContext
+    // This allows selectors to grab everything.
+    // We mutate the existing meta object or create new one?
+    // For Referencing stability, we create new reference for 'meta' only if needed.
+    Object.assign(this.state.meta, {
+      wizardData: this.state.data,
+      allErrors: this.state.errors,
+      isDirty: this.state.isDirty,
+      dirtyFields: this.state.dirtyFields,
+    });
   }
 
   // Set initial data (e.g. after hydration or successful save)
@@ -134,7 +164,9 @@ export class WizardStore<T> {
       data,
       isDirty: false,
       dirtyFields: new Set(),
+      meta: this.state.meta,
     };
+    this.updateCombinedState();
     this.notify();
   }
 
@@ -147,6 +179,7 @@ export class WizardStore<T> {
       }
     }
     this.state = { ...this.state, errors: newErrorsObj };
+    this.updateCombinedState();
     this.notify();
   }
 
@@ -162,6 +195,7 @@ export class WizardStore<T> {
       if (stepMap.size > 0) this.errorsMap.set(stepId, stepMap);
     }
     this.state = { ...this.state, errors: newErrors };
+    this.updateCombinedState();
     this.notify();
   }
 
@@ -243,7 +277,7 @@ export function WizardProvider<
   }, [currentStepId]);
 
   // Store for granular data and errors
-  const storeRef = useRef(new WizardStore<T>((initialData || {}) as T));
+  const storeRef = useRef(new WizardStore<T, StepId>((initialData || {}) as T));
 
   const [visitedSteps, setVisitedSteps] = useState<Set<StepId>>(new Set());
   const [completedSteps, setCompletedSteps] = useState<Set<StepId>>(new Set());
@@ -452,18 +486,6 @@ export function WizardProvider<
     history,
   };
 
-  // Derived state
-  const currentStep = useMemo(
-    () => stepsMap.get(currentStepId as StepId) || null,
-    [stepsMap, currentStepId]
-  );
-  const currentStepIndex = useMemo(
-    () => activeStepsIndexMap.get(currentStepId as StepId) ?? -1,
-    [activeStepsIndexMap, currentStepId]
-  );
-  const isFirstStep = currentStepIndex === 0;
-  const isLastStep = currentStepIndex === activeSteps.length - 1;
-
   // Breadcrumbs
   const breadcrumbs = useMemo<IBreadcrumb<StepId>[]>(() => {
     return activeSteps.map((step) => {
@@ -478,6 +500,56 @@ export function WizardProvider<
       return { id: step.id, label: step.label, status };
     });
   }, [activeSteps, currentStepId, visitedSteps, completedSteps]);
+
+  // --- Optimization: Sync UI State to Store for Selectors ---
+  useEffect(() => {
+    storeRef.current.updateMeta({
+      config: localConfig,
+      currentStep: stepsMap.get(currentStepId as StepId) || null,
+      currentStepIndex: activeStepsIndexMap.get(currentStepId as StepId) ?? -1,
+      isFirstStep: activeStepsIndexMap.get(currentStepId as StepId) === 0,
+      isLastStep:
+        activeStepsIndexMap.get(currentStepId as StepId) ===
+        activeSteps.length - 1,
+      isLoading,
+      isPending: false,
+      activeSteps,
+      visitedSteps,
+      completedSteps,
+      errorSteps,
+      history,
+      busySteps,
+      isBusy,
+      breadcrumbs, // Derived
+      activeStepsCount: activeSteps.length,
+    });
+  }, [
+    localConfig,
+    currentStepId,
+    isLoading,
+    activeSteps,
+    visitedSteps,
+    completedSteps,
+    errorSteps,
+    history,
+    busySteps,
+    isBusy,
+    stepsMap,
+    activeStepsIndexMap,
+    breadcrumbs,
+  ]);
+
+  // Derived state
+  const currentStep = useMemo(
+    () => stepsMap.get(currentStepId as StepId) || null,
+    [stepsMap, currentStepId]
+  );
+  const currentStepIndex = useMemo(
+    () => activeStepsIndexMap.get(currentStepId as StepId) ?? -1,
+    [activeStepsIndexMap, currentStepId]
+  );
+  const isFirstStep = currentStepIndex === 0;
+  const isLastStep = currentStepIndex === activeSteps.length - 1;
 
   // Analytics helper
   const trackEvent = useCallback(
@@ -838,7 +910,10 @@ export function WizardProvider<
           config.validationMode ??
           "onStepChange";
 
-        if ((shouldValidate || mode === "onStepChange") && currentStepId) {
+        if (
+          (shouldValidate || mode === "onStepChange" || mode === "onChange") &&
+          currentStepId
+        ) {
           const isValid = await validateStep(
             currentStepId as StepId,
             currentData
@@ -950,66 +1025,115 @@ export function WizardProvider<
   );
 
   const goToNextStep = useCallback(async () => {
-    const {
-      currentStepId,
-      config,
-      persistenceMode,
-      visitedSteps,
-      completedSteps,
-      persistenceAdapter,
-      stepsMap,
-    } = stateRef.current;
+    setIsBusy(true);
+    try {
+      const {
+        currentStepId,
+        config,
+        persistenceMode,
+        visitedSteps,
+        completedSteps,
+        persistenceAdapter,
+        stepsMap,
+      } = stateRef.current;
 
-    if (!currentStepId) return;
+      if (!currentStepId) return;
 
-    const currentData = storeRef.current.getSnapshot().data;
-    const currentStep = stepsMap.get(currentStepId as StepId);
+      const currentData = storeRef.current.getSnapshot().data;
+      const currentStep = stepsMap.get(currentStepId as StepId);
 
-    // 1. Validate CURRENT step before doing anything else (async conditions etc)
-    const shouldValidate =
-      currentStep?.autoValidate ?? config.autoValidate ?? false;
-    const mode =
-      currentStep?.validationMode ?? config.validationMode ?? "onStepChange";
+      // 1. Validate CURRENT step before doing anything else (async conditions etc)
+      const shouldValidate =
+        currentStep?.autoValidate ?? config.autoValidate ?? false;
+      const mode =
+        currentStep?.validationMode ?? config.validationMode ?? "onStepChange";
 
-    if ((shouldValidate || mode === "onStepChange") && currentStepId) {
-      const isValid = await validateStep(currentStepId as StepId, currentData);
-      if (!isValid) return; // Stop immediately if current step is invalid
-    }
+      if (
+        (shouldValidate || mode === "onStepChange" || mode === "onChange") &&
+        currentStepId
+      ) {
+        // validateStep handles its own isBusy internally, but we want to keep the outer isBusy true
+        // throughout the whole transition to prevent flickering.
+        // However, validateStep sets isBusy(false) at the end.
+        // This is tricky. If validateStep sets isBusy(false), it might hide our loader.
+        // BUT: since we set isBusy(true) here, if validateStep ALSO sets isBusy(true/false),
+        // we might have a conflict or flicker if validateStep finishes before we act.
 
-    // 2. Resolve actual active steps to handle immediate transitions
-    const actualActiveSteps = await resolveActiveStepsHelper(currentData);
+        // Actually, since we are in a single React render cycle context,
+        // if validateStep sets isBusy(false) inside its finally block, it WILL turn off the spinner
+        // momentarily.
 
-    const currentStepIndex = actualActiveSteps.findIndex(
-      (s) => s.id === currentStepId
-    );
+        // FIX: We should rely on a "global operation" lock or ensure validateStep doesn't turn off
+        // isBusy if we are performing a larger operation?
 
-    if (
-      currentStepIndex === -1 ||
-      currentStepIndex === actualActiveSteps.length - 1
-    )
-      return;
+        // Simpler approach: calls to setIsBusy trigger updates.
+        // If we call setIsBusy(true) here.
+        // Then await validateStep().
+        //   Inside validateStep: setIsBusy(true) (no-op if already true?), then finally setIsBusy(false).
+        // This setIsBusy(false) WILL turn off the spinner.
 
-    const nextStep = actualActiveSteps[currentStepIndex + 1];
-    if (nextStep) {
-      const success = await goToStep(nextStep.id, actualActiveSteps);
-      if (success) {
-        const nextCompleted = new Set(completedSteps).add(
-          currentStepId as StepId
+        // To fix this properly, we need to AVOID validateStep resetting the flag if we are in a transition.
+        // Or we just accept that validateStep is the validation part.
+
+        // Wait, validateStep implementation:
+        // const validateStep = useCallback(async ... { setIsBusy(true); try { ... } finally { setIsBusy(false); } })
+
+        // If we call it here, it will turn off busy.
+        // Then we proceed to resolvesActiveSteps.
+        // Then we call goToStep(next) -> which sets busy(true) again.
+
+        // The "freeze" happens between validateStep completion and goToStep start.
+
+        // Refactor: We need a way to validate WITHOUT touching isBusy, OR we re-assert isBusy(true) immediately.
+
+        const isValid = await validateStep(
+          currentStepId as StepId,
+          currentData
         );
-        setCompletedSteps(nextCompleted);
+        if (!isValid) return; // Returns, finally block executes setIsBusy(false)
 
-        if (persistenceMode !== "manual") {
-          persistenceAdapter.saveStep(META_KEY, {
-            currentStepId: nextStep.id,
-            visited: Array.from(
-              new Set(visitedSteps).add(currentStepId as StepId)
-            ),
-            completed: Array.from(nextCompleted),
-          });
+        // Re-assert busy in case validateStep turned it off
+        setIsBusy(true);
+      }
+
+      // 2. Resolve actual active steps to handle immediate transitions
+      const actualActiveSteps = await resolveActiveStepsHelper(currentData);
+
+      const currentStepIndex = actualActiveSteps.findIndex(
+        (s) => s.id === currentStepId
+      );
+
+      if (
+        currentStepIndex === -1 ||
+        currentStepIndex === actualActiveSteps.length - 1
+      )
+        return;
+
+      const nextStep = actualActiveSteps[currentStepIndex + 1];
+      if (nextStep) {
+        // goToStep also manages isBusy.
+        const success = await goToStep(nextStep.id, actualActiveSteps);
+        if (success) {
+          const nextCompleted = new Set(completedSteps).add(
+            currentStepId as StepId
+          );
+          setCompletedSteps(nextCompleted);
+
+          if (persistenceMode !== "manual") {
+            persistenceAdapter.saveStep(META_KEY, {
+              currentStepId: nextStep.id,
+              visited: Array.from(
+                new Set(visitedSteps).add(currentStepId as StepId)
+              ),
+              completed: Array.from(nextCompleted),
+            });
+          }
         }
       }
+    } finally {
+      setIsBusy(false);
     }
-  }, [goToStep]); // Only depends on goToStep (which is stable)
+  }, [goToStep, validateStep, resolveActiveStepsHelper]);
 
   const goToPrevStep = useCallback(() => {
     const { activeSteps, activeStepsIndexMap, currentStepId } =
@@ -1286,7 +1410,10 @@ export function useWizardSelector<TSelected = any>(
       return lastResultRef.current;
     }
 
-    const result = selector(fullState.data);
+    // Pass the 'meta' which acts as the Combined State (matches IWizardContext shape minus actions)
+    // We cast it to 'any' to allow generic selection, but the factory types will enforce TSchema
+    const stateToSelect = fullState.meta || fullState.data;
+    const result = selector(stateToSelect);
 
     // Memoization with custom equality
     if (
@@ -1319,7 +1446,7 @@ export function useWizardContext<
   T = any,
   StepId extends string = string,
 >(): IWizardContext<T, StepId> & {
-  store: WizardStore<T>;
+  store: WizardStore<T, StepId>;
 } {
   const state = useWizardState<T, StepId>();
   const actions = useWizardActions<StepId>();
@@ -1339,5 +1466,5 @@ export function useWizardContext<
       allErrors,
     }),
     [state, actions, wizardData, allErrors]
-  ) as IWizardContext<T, StepId> & { store: WizardStore<T> };
+  ) as IWizardContext<T, StepId> & { store: WizardStore<T, StepId> };
 }
