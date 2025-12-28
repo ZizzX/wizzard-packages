@@ -400,6 +400,22 @@ export default function HooksApi() {
                 </div>
               </pre>
             </div>
+
+            <div className="mt-4 p-4 bg-amber-50 rounded-xl border border-amber-100">
+              <h4 className="flex items-center gap-2 font-bold text-amber-800 text-sm mb-2">
+                ⚠️ When NOT to use
+              </h4>
+              <p className="text-xs text-amber-800 leading-relaxed mb-3">
+                Do not use this hook to access form data (e.g. user input).
+                Using it for data will cause your entire UI layer to re-render
+                unnecessarily on every keystroke.
+              </p>
+              <div className="text-xs font-mono bg-white p-2 rounded border border-amber-200 text-gray-500">
+                ❌ const {"{ activeSteps }"} = useWizardState(); // OK
+                <br />❌ const {"{ wizardData }"} = useWizardState(); // ERROR:
+                Does not exist! Use selector.
+              </div>
+            </div>
           </div>
           <div className="space-y-4">
             <h3 className="font-bold text-gray-800 flex items-center gap-2">

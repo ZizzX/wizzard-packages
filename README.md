@@ -436,6 +436,15 @@ Create a custom subscription to the wizard state. Ideal for derived state or lis
 
 Returns object with actions (`setData`, `goToNextStep`, etc.) **without** subscribing to state changes. Use this in components that trigger updates but don't need to render data.
 
+### 🧠 Hook Choice Cheat Sheet
+
+| Hook | Returns | Best For | Architecture |
+| :--- | :--- | :--- | :--- |
+| **`useWizard`** | Everything | Small forms, root components. | ⚠️ Triggers many re-renders. |
+| **`useWizardSelector`** | *Specific Data* | Inputs, Labels, Lists. | ✅ Atomic Re-renders. |
+| **`useWizardState`** | *UI Meta* | Progress Bars, Headers, Loaders. | ✅ Updates on step change only. |
+| **`useWizardActions`** | *Functions* | Buttons, Event Handlers. | 🚀 **Zero** Re-renders. |
+
 ## Demos
 
 Check out the [Live Demo](https://ZizzX.github.io/wizzard-stepper-react/), [NPM](https://www.npmjs.com/package/wizzard-stepper-react) or the [source code](https://github.com/ZizzX/wizzard-stepper-react-demo) for a complete implementation featuring:
