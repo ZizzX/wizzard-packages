@@ -255,6 +255,78 @@ export default function CoreConcepts() {
         </div>
       </section>
 
+      {/* 2b. The Navigation Lifecycle */}
+      <section className="space-y-8 bg-indigo-900 rounded-3xl p-10 text-white shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -ml-32 -mb-32"></div>
+
+        <div className="relative z-10 space-y-4">
+          <h2 className="text-3xl font-bold tracking-tight">
+            The Navigation Lifecycle
+          </h2>
+          <p className="text-indigo-200 leading-relaxed max-w-2xl">
+            When you call{" "}
+            <code className="bg-white/10 px-1 rounded text-white font-mono">
+              goToNextStep()
+            </code>
+            , the library executes a strictly ordered "Safety Protocol" to
+            ensure state integrity and optimal network usage.
+          </p>
+        </div>
+
+        <div className="relative z-10 grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[
+            {
+              id: "01",
+              title: "Validation",
+              desc: "Current step adapter runs. Navigation halts immediately if validation fails.",
+              color: "bg-rose-500",
+            },
+            {
+              id: "02",
+              title: "Condition",
+              desc: "Next step visibility is re-calculated. Async conditions are awaited.",
+              color: "bg-amber-500",
+            },
+            {
+              id: "03",
+              title: "Guards",
+              desc: "Optional beforeLeave hooks execute to allow or block the exit.",
+              color: "bg-emerald-500",
+            },
+            {
+              id: "04",
+              title: "Resolve",
+              desc: "State updates, progress recalculates, and the URL updates.",
+              color: "bg-sky-500",
+            },
+          ].map((item) => (
+            <div
+              key={item.id}
+              className="bg-white/5 backdrop-blur-sm border border-white/10 p-6 rounded-2xl space-y-4 shadow-lg"
+            >
+              <div
+                className={`${item.color} w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black`}
+              >
+                {item.id}
+              </div>
+              <h4 className="font-bold text-lg">{item.title}</h4>
+              <p className="text-xs text-indigo-100/60 leading-relaxed">
+                {item.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="relative z-10 p-4 bg-indigo-950/50 rounded-xl border border-white/5">
+          <p className="text-xs text-indigo-300 italic text-center">
+            💡 <strong>Why this order?</strong> By validating first, we prevent
+            unnecessary API calls in conditions or guards if the user's data is
+            already incorrect.
+          </p>
+        </div>
+      </section>
+
       {/* 3. Deep-Dive: Step Status */}
       <section className="space-y-6">
         <div className="flex items-center gap-3">

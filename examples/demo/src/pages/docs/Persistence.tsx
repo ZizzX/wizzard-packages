@@ -107,6 +107,13 @@ export default function Persistence() {
               <span className="text-amber-400">'app_wizard'</span>
               <span className="text-emerald-400">),</span>
             </div>
+            <div className="pl-8 text-gray-500">// 🆕 Storage key prefix</div>
+            <div className="pl-8">
+              <span className="text-indigo-400">storageKey</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-amber-400">'registration_v1'</span>
+              <span className="text-emerald-400">,</span>
+            </div>
             <div className="pl-8 text-gray-500">
               // 🆕 Optional: Wait 500ms before writing
             </div>

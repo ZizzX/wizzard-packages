@@ -20,6 +20,7 @@ The demo includes four primary implementation patterns:
 2. **React Hook Form + Zod**: Powerful schema-based validation using `ZodAdapter`.
 3. **Formik + Yup**: Classic form management integration using `YupAdapter`.
 4. **Conditional Steps**: Demonstrating dynamic step routing based on user input.
+5. **Advanced Features (/advanced)**: 🆕 Showcasing `showWhilePending`, `isBusy` loading states, and prioritized validation logic.
 
 ## 🚀 Getting Started
 

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
-import { cn } from './lib/utils';
+import { useState, useEffect } from "react";
+import { Link, Outlet, useLocation } from "react-router-dom";
+import { cn } from "./lib/utils";
 
 const sidebarItems = [
   {
@@ -24,9 +24,18 @@ const sidebarItems = [
     items: [
       { id: "persistence", label: "Persistence", path: "/docs/persistence" },
       { id: "validation", label: "Validation", path: "/docs/validation" },
-      { id: "conditional", label: "Conditional Flow", path: "/docs/conditional-logic" },
+      {
+        id: "conditional",
+        label: "Conditional Flow",
+        path: "/docs/conditional-logic",
+      },
       { id: "routing", label: "Routing & URL", path: "/docs/routing" },
       { id: "rendering", label: "Step Rendering", path: "/docs/rendering" },
+      {
+        id: "deferred",
+        label: "Deferred Rendering",
+        path: "/docs/deferred-rendering",
+      },
       { id: "performance", label: "Performance", path: "/docs/performance" },
       { id: "security", label: "Security & Integrity", path: "/docs/security" },
     ],
@@ -53,57 +62,87 @@ export default function DocsLayout() {
   }, [location.pathname]);
 
   // Find current item for mobile title
-  const currentItem = sidebarItems.flatMap(g => g.items).find(i => i.path === location.pathname);
+  const currentItem = sidebarItems
+    .flatMap((g) => g.items)
+    .find((i) => i.path === location.pathname);
 
   return (
     <div className="flex flex-col md:flex-row gap-10 relative">
       {/* Mobile Sub-Navigation Bar - Sticks below main header */}
       <div className="md:hidden sticky top-16 z-30 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-4 py-2 flex items-center justify-between -mx-4 shadow-sm">
         <div className="flex items-center gap-2">
-            <button 
-                onClick={() => setSidebarOpen(true)}
-                className="flex items-center gap-2 px-2 py-1.5 -ml-1 text-gray-500 hover:text-indigo-600 transition-colors rounded-lg hover:bg-gray-50"
-                aria-label="Open documentation menu"
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="flex items-center gap-2 px-2 py-1.5 -ml-1 text-gray-500 hover:text-indigo-600 transition-colors rounded-lg hover:bg-gray-50"
+            aria-label="Open documentation menu"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h8m-8 6h16" />
-                </svg>
-                <span className="text-xs font-bold uppercase tracking-wider">Docs Menu</span>
-            </button>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h8m-8 6h16"
+              />
+            </svg>
+            <span className="text-xs font-bold uppercase tracking-wider">
+              Docs Menu
+            </span>
+          </button>
         </div>
-        
+
         <div className="flex items-center gap-1 text-[12px] font-medium text-gray-400">
-            <span className="truncate max-w-[120px]">{currentItem?.label}</span>
+          <span className="truncate max-w-[120px]">{currentItem?.label}</span>
         </div>
       </div>
 
       {/* Sidebar & Mobile Drawer */}
-      <aside className={cn(
-        "fixed inset-0 z-50 transition-all duration-300 md:relative md:z-0 md:block md:w-64 shrink-0",
-        isSidebarOpen ? "translate-x-0 opacity-100" : "-translate-x-full md:translate-x-0 opacity-0 md:opacity-100 md:block ",
-        !isSidebarOpen && "pointer-events-none md:pointer-events-auto"
-      )}>
+      <aside
+        className={cn(
+          "fixed inset-0 z-50 transition-all duration-300 md:relative md:z-0 md:block md:w-64 shrink-0",
+          isSidebarOpen
+            ? "translate-x-0 opacity-100"
+            : "-translate-x-full md:translate-x-0 opacity-0 md:opacity-100 md:block ",
+          !isSidebarOpen && "pointer-events-none md:pointer-events-auto"
+        )}
+      >
         {/* Mobile Overlay */}
-        <div 
-            className={cn(
-                "absolute inset-0 bg-gray-900/10 backdrop-blur-[2px] md:hidden transition-opacity duration-300",
-                isSidebarOpen ? "opacity-100" : "opacity-0"
-            )}
-            onClick={() => setSidebarOpen(false)}
+        <div
+          className={cn(
+            "absolute inset-0 bg-gray-900/10 backdrop-blur-[2px] md:hidden transition-opacity duration-300",
+            isSidebarOpen ? "opacity-100" : "opacity-0"
+          )}
+          onClick={() => setSidebarOpen(false)}
         />
 
         {/* Sidebar Content */}
         <nav className="relative h-full w-4/5 max-w-[280px] bg-white border-r border-gray-100 overflow-y-auto px-6 py-8 shadow-2xl md:shadow-none md:p-0 md:w-full md:bg-transparent md:border-none md:sticky md:top-24 space-y-8 no-scrollbar">
           {/* Mobile Close Button */}
           <div className="flex items-center justify-between md:hidden mb-8 border-b border-gray-50 pb-4">
-            <span className="text-sm font-black text-indigo-600 uppercase tracking-widest">Navigation</span>
-            <button 
-                onClick={() => setSidebarOpen(false)}
-                className="p-2 -mr-2 text-gray-400 hover:text-rose-500 transition-colors"
+            <span className="text-sm font-black text-indigo-600 uppercase tracking-widest">
+              Navigation
+            </span>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="p-2 -mr-2 text-gray-400 hover:text-rose-500 transition-colors"
             >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
             </button>
           </div>
 
@@ -122,7 +161,7 @@ export default function DocsLayout() {
                       className={cn(
                         "px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 border border-transparent",
                         isActive
-                           ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100 border-indigo-200 translate-x-1"
+                          ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100 border-indigo-200 translate-x-1"
                           : "text-gray-500 hover:text-gray-900 hover:bg-gray-50 hover:translate-x-1"
                       )}
                     >
@@ -139,7 +178,7 @@ export default function DocsLayout() {
       {/* Main Content */}
       <main className="flex-1 min-w-0 max-w-4xl pt-6 md:pt-0">
         <article className="prose prose-indigo prose-slate max-w-none">
-            <Outlet />
+          <Outlet />
         </article>
       </main>
     </div>

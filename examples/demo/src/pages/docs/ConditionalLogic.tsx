@@ -172,7 +172,13 @@ export default function ConditionalLogic() {
               <span className="text-emerald-400">,</span>
             </div>
             <div className="pl-4 text-gray-500">
-              // Only show if server confirms admin status
+              // 🆕 showWhilePending: true keeps the step visible with a loader
+            </div>
+            <div className="pl-4">
+              <span className="text-indigo-400">showWhilePending</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-amber-400">true</span>
+              <span className="text-emerald-400">,</span>
             </div>
             <div className="pl-4">
               <span className="text-indigo-400">condition</span>
@@ -219,6 +225,86 @@ export default function ConditionalLogic() {
             <div className="pl-4 text-emerald-400">{"}"}</div>
             <div className="text-emerald-400">{"}"}</div>
           </pre>
+        </div>
+      </section>
+
+      {/* 4. Pending States & Visibility */}
+      <section className="space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-bold text-sm">
+            4
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Pending States & Visibility
+          </h2>
+        </div>
+        <p className="text-gray-600 text-sm leading-relaxed">
+          Asynchronous conditions introduce a "Pending" state. To ensure the
+          best user experience, the library implements intelligent visibility
+          rules.
+        </p>
+
+        <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-xl space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            <div className="space-y-4">
+              <h4 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <span className="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                Hidden by Default
+              </h4>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                By default, any step with an <strong>async condition</strong> is{" "}
+                <span className="text-rose-600 font-semibold underline underline-offset-4">
+                  hidden
+                </span>{" "}
+                from the progress list until the condition resolves to{" "}
+                <code className="text-indigo-600">true</code>. This prevents
+                layout shifts and "empty" steps from appearing temporarily.
+              </p>
+            </div>
+            <div className="space-y-4">
+              <h4 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                Force Visibility
+              </h4>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                Use{" "}
+                <code className="text-emerald-600 font-bold">
+                  showWhilePending: true
+                </code>{" "}
+                if you want the step to be visible in the navigation even while
+                the server check is running. The wizard provides an{" "}
+                <code className="text-indigo-600 font-mono">isBusy</code> state
+                you can use to render a loading spinner or shimmer.
+              </p>
+            </div>
+          </div>
+
+          <div className="p-6 bg-amber-50 rounded-2xl border border-amber-100 divide-y divide-amber-100 space-y-4">
+            <div className="pb-4">
+              <h5 className="font-bold text-amber-800 flex items-center gap-2 mb-2 text-sm">
+                <svg
+                  className="w-4 h-4 text-amber-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                Handling Race Conditions
+              </h5>
+              <p className="text-xs text-amber-700 leading-relaxed">
+                Navigation is automatically blocked if you attempt to jump to a
+                step whose condition is still <strong>pending</strong> or has
+                already <strong>failed</strong>. The library treats "Pending" as
+                "Unauthorized" until proven otherwise.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 

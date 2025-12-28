@@ -12,6 +12,8 @@ A flexible, headless, and strictly typed multi-step wizard library for React. Bu
 - � **Comprehensive Guides**: Detailed documentation portal with interactive guides, pro-tips, and type references.
 - ⚡ **High Performance Engine**: Path caching, Hash-Map lookups, and Stateless Provider architecture.
 - 🚀 **Pro Package Components**: Asynchronous conditions, step guards (`beforeLeave`), navigation history, and auto-calculated progress.
+- ⏳ **Async Feedback**: Built-in loading states (`isBusy`, `busySteps`) and visibility control (`showWhilePending`).
+- 🛡️ **Validation Priority**: Intelligent navigation that validates current step *before* checking next step conditions or guards.
 
 ## Installation
 
@@ -245,17 +247,22 @@ const config: IWizardConfig = {
       label: 'Bonus Step', 
       // Synchronous condition
       condition: (data) => !!data.wantBonus 
-    },
-    {
-      id: 'verification',
-      label: 'Server Check',
-      // 🆕 Asynchronous condition (e.g., API check)
-      condition: async (data) => {
-        const res = await checkEligibility(data.userId);
-        return res.isEligible;
-      }
     }
   ]
+}
+```
+
+### 👁️ Visibility & Hiding
+By default, steps with asynchronous conditions are **hidden** until the condition resolves to `true`. This prevents layout shifts and empty steps.
+
+If you want to show a step (e.g., with a shimmer/loader) even while its condition is pending, use `showWhilePending`:
+
+```typescript
+{
+  id: 'verification',
+  label: 'Verification',
+  condition: async (data) => checkApi(data),
+  showWhilePending: true // Step appears in the list immediately with a loader
 }
 ```
 
@@ -275,6 +282,14 @@ const step = {
   }
 };
 ```
+
+### ⚡ Navigation Logic & Priority
+When calling `goToNextStep()` or navigating forward via `goToStep()`:
+1. **Validation First**: The current step is validated. If it's invalid, navigation halts immediately.
+2. **Async Resolution**: Active steps are re-calculated (handling async `condition` functions).
+3. **Guards**: `beforeLeave` guards are executed.
+
+This sequence ensures you don't waste API calls on conditions or guards if the current form data is already invalid.
 
 ## 💾 Persistence
 Automatically save wizard progress so users don't lose data on reload.
@@ -399,6 +414,8 @@ const config: IWizardConfig = {
 - `allErrors`: Map of validation errors.
 - `progress`: 🆕 Auto-calculated progress (0-100%).
 - `history`: 🆕 Array of visited step IDs (navigation path).
+- `isBusy`: 🔄 Global boolean (true if ANY async condition, guard, or validation is running).
+- `busySteps`: 🔄 Set of `StepId` currently performing async work (useful for local loaders).
 
 ### New Performance Hooks
 

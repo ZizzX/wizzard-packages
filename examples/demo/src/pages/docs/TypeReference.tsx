@@ -80,7 +80,27 @@ export default function TypeReference() {
               <span className="text-rose-400">boolean</span>
               <span className="text-emerald-400">;</span>{" "}
               <span className="text-gray-500">
-                // True during async validation or transitions
+                // True during storage hydration
+              </span>
+            </div>
+            <div className="pl-4">
+              <span className="text-indigo-400">isBusy</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-rose-400">boolean</span>
+              <span className="text-emerald-400">;</span>{" "}
+              <span className="text-gray-500">
+                // 🆕 True if any async operation is in progress
+              </span>
+            </div>
+            <div className="pl-4">
+              <span className="text-indigo-400">busySteps</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-amber-400">Set</span>
+              <span className="text-emerald-400">&lt;</span>
+              <span className="text-rose-400">string</span>
+              <span className="text-emerald-400">&gt;;</span>{" "}
+              <span className="text-gray-500">
+                // 🆕 IDs of steps currently running async logic
               </span>
             </div>
             <div className="pl-4">
@@ -130,6 +150,23 @@ export default function TypeReference() {
               <span className="text-emerald-400">&gt;;</span>{" "}
               <span className="text-gray-500">
                 // IDs of steps that passed validation
+              </span>
+            </div>
+            <div className="pl-4">
+              <span className="text-indigo-400">allErrors</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-amber-400">Record</span>
+              <span className="text-emerald-400">&lt;</span>
+              <span className="text-rose-400">string</span>
+              <span className="text-emerald-400">,</span>{" "}
+              <span className="text-amber-400">Record</span>
+              <span className="text-emerald-400">&lt;</span>
+              <span className="text-rose-400">string</span>
+              <span className="text-emerald-400">,</span>{" "}
+              <span className="text-rose-400">string</span>
+              <span className="text-emerald-400">&gt;&gt;;</span>{" "}
+              <span className="text-gray-500">
+                // 🆕 Full error tree across all steps
               </span>
             </div>
             <div className="text-emerald-400">{"}"}</div>
@@ -194,6 +231,16 @@ export default function TypeReference() {
               <span className="text-rose-400">boolean</span>
               <span className="text-emerald-400">&gt;;</span>{" "}
               <span className="text-gray-500">// 🆕 Async supported!</span>
+            </div>
+            <div className="pl-4">
+              <span className="text-indigo-400">showWhilePending</span>
+              <span className="text-emerald-400">?</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-rose-400">boolean</span>
+              <span className="text-emerald-400">;</span>{" "}
+              <span className="text-gray-500">
+                // 🆕 Visible while condition is resolving
+              </span>
             </div>
             <div className="pl-4">
               <span className="text-indigo-400">beforeLeave</span>
@@ -319,6 +366,16 @@ export default function TypeReference() {
               <span className="text-emerald-400">;</span>
             </div>
             <div className="pl-8">
+              <span className="text-indigo-400">storageKey</span>
+              <span className="text-emerald-400">?</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-rose-400">string</span>
+              <span className="text-emerald-400">;</span>{" "}
+              <span className="text-gray-500">
+                // 🆕 Prefix for adapter storage
+              </span>
+            </div>
+            <div className="pl-8">
               <span className="text-indigo-400">debounceTime</span>
               <span className="text-emerald-400">?</span>
               <span className="text-emerald-400">:</span>{" "}
@@ -330,15 +387,32 @@ export default function TypeReference() {
             </div>
             <div className="pl-4 text-emerald-400">{" }"}</div>
             <div className="pl-4">
+              <span className="text-indigo-400">isPending</span>
+              <span className="text-emerald-400">?:</span>{" "}
+              <span className="text-rose-400">boolean</span>
+              <span className="text-emerald-400">;</span>{" "}
+              <span className="text-gray-500">
+                // 🆕 True during condition resolution
+              </span>
+            </div>
+            <div className="pl-4">
               <span className="text-indigo-400">onStepChange</span>
               <span className="text-emerald-400">?</span>
               <span className="text-emerald-400">:</span>{" "}
               <span className="text-emerald-400">(</span>
               <span className="text-indigo-300">from</span>
-              <span className="text-emerald-400">,</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-rose-400">string</span>{" "}
+              <span className="text-purple-400">|</span>{" "}
+              <span className="text-rose-400">null</span>
+              <span className="text-emerald-400">,</span>{" "}
               <span className="text-indigo-300">to</span>
-              <span className="text-emerald-400">,</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-rose-400">string</span>
+              <span className="text-emerald-400">,</span>{" "}
               <span className="text-indigo-300">data</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-indigo-300">T</span>
               <span className="text-emerald-400">) =&gt;</span>{" "}
               <span className="text-rose-400">void</span>
               <span className="text-emerald-400">;</span>
@@ -487,6 +561,50 @@ export default function TypeReference() {
                   <span className="text-emerald-400">;</span>
                 </div>
                 <div className="text-emerald-400">{"}"}</div>
+              </pre>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* ValidationMode */}
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+              ValidationMode
+            </h3>
+            <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-2xl ring-1 ring-white/10">
+              <pre className="text-gray-400">
+                <span className="text-purple-400">type</span>{" "}
+                <span className="text-amber-400">ValidationMode</span>{" "}
+                <span className="text-emerald-400">=</span>{" "}
+                <span className="text-amber-400">'onChange'</span>{" "}
+                <span className="text-emerald-400">|</span>{" "}
+                <span className="text-amber-400">'onStepChange'</span>{" "}
+                <span className="text-emerald-400">|</span>{" "}
+                <span className="text-amber-400">'manual'</span>
+                <span className="text-emerald-400">;</span>
+              </pre>
+            </div>
+          </div>
+
+          {/* PersistenceMode */}
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+              PersistenceMode
+            </h3>
+            <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-2xl ring-1 ring-white/10">
+              <pre className="text-gray-400">
+                <span className="text-purple-400">type</span>{" "}
+                <span className="text-amber-400">PersistenceMode</span>{" "}
+                <span className="text-emerald-400">=</span>{" "}
+                <span className="text-amber-400">'onStepChange'</span>{" "}
+                <span className="text-emerald-400">|</span>{" "}
+                <span className="text-amber-400">'onChange'</span>{" "}
+                <span className="text-emerald-400">|</span>{" "}
+                <span className="text-amber-400">'manual'</span>
+                <span className="text-emerald-400">;</span>
               </pre>
             </div>
           </div>

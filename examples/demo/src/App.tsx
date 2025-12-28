@@ -22,6 +22,7 @@ import Persistence from "./pages/docs/Persistence";
 import ConditionalLogic from "./pages/docs/ConditionalLogic";
 import RoutingDocs from "./pages/docs/RoutingDocs";
 import StepRendering from "./pages/docs/StepRendering";
+import DeferredRendering from "./pages/docs/DeferredRendering";
 import PerformanceDocs from "./pages/docs/Performance";
 
 import ScrollToTop from "./components/ScrollToTop";
@@ -40,7 +41,7 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
           <Route path="examples" element={<Examples />} />
-          
+
           {/* Flat paths for examples (backward compatibility/legacy support) */}
           <Route path="simple" element={<SimpleWizard />} />
           <Route path="legacy" element={<LegacyWizard />} />
@@ -56,28 +57,29 @@ function App() {
             <Route path="introduction" element={<Introduction />} />
             <Route path="installation" element={<Installation />} />
             <Route path="quickstart" element={<QuickStart />} />
-            
+
             <Route path="concepts" element={<CoreConcepts />} />
             <Route path="hooks" element={<HooksApi />} />
             <Route path="types" element={<TypeReference />} />
-            
+
             <Route path="persistence" element={<Persistence />} />
             <Route path="validation" element={<Validation />} />
             <Route path="conditional-logic" element={<ConditionalLogic />} />
             <Route path="routing" element={<RoutingDocs />} />
             <Route path="rendering" element={<StepRendering />} />
+            <Route path="deferred-rendering" element={<DeferredRendering />} />
             <Route path="performance" element={<PerformanceDocs />} />
-            
+
             <Route path="rhf" element={<RHFDocs />} />
             <Route path="formik" element={<FormikDocs />} />
             <Route path="security" element={<SecurityDocs />} />
             <Route path="mantine" element={<MantineDocs />} />
             <Route path="tanstack" element={<TanStackDocs />} />
             <Route path="valibot" element={<ValibotDocs />} />
-            
+
             <Route path="factory" element={<CoreConcepts />} />
             <Route path="steps" element={<CoreConcepts />} />
-            
+
             {/* Placeholders for other docs */}
             <Route path="*" element={<Introduction />} />
           </Route>

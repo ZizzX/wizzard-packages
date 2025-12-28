@@ -359,9 +359,21 @@ export default function HooksApi() {
                   <span className="text-gray-500">// Boolean flags</span>
                 </div>
                 <div className="pl-4">
+                  isBusy<span className="text-emerald-400">,</span>{" "}
+                  <span className="text-gray-500">
+                    // 🆕 Global async state
+                  </span>
+                </div>
+                <div className="pl-4">
+                  busySteps<span className="text-emerald-400">,</span>{" "}
+                  <span className="text-gray-500">
+                    // 🆕 Steps running async logic
+                  </span>
+                </div>
+                <div className="pl-4">
                   isLoading<span className="text-emerald-400">,</span>{" "}
                   <span className="text-gray-500">
-                    // Async operation in progress
+                    // Wizard hydration from storage
                   </span>
                 </div>
                 <div className="pl-4">

@@ -20,6 +20,13 @@ export function DeferredList<T>({
   className,
 }: DeferredListProps<T>) {
   const [visibleCount, setVisibleCount] = useState(chunkSize);
+  const [prevItems, setPrevItems] = useState(items);
+
+  // Reset if items changed
+  if (items !== prevItems) {
+    setPrevItems(items);
+    setVisibleCount(chunkSize);
+  }
 
   useEffect(() => {
     if (visibleCount < items.length) {
@@ -28,18 +35,13 @@ export function DeferredList<T>({
       }, delay);
       return () => clearTimeout(timer);
     }
-  }, [visibleCount, items.length, chunkSize, delay]);
-
-  // Reset if items length decreases significantly or changes completely
-  useEffect(() => {
-     if (items.length < visibleCount) {
-         setVisibleCount(Math.max(chunkSize, items.length));
-     }
-  }, [items.length, chunkSize, visibleCount]);
+  }, [visibleCount, items.length, chunkSize, delay, items]);
 
   return (
     <div className={className}>
-      {items.slice(0, visibleCount).map((item, index) => renderItem(item, index))}
+      {items
+        .slice(0, visibleCount)
+        .map((item, index) => renderItem(item, index))}
     </div>
   );
 }
