@@ -105,7 +105,7 @@ export default function DocsLayout() {
         </div>
 
         <div className="flex items-center gap-1 text-[12px] font-medium text-gray-400">
-          <span className="truncate max-w-[120px]">{currentItem?.label}</span>
+          <span className="truncate max-w-30">{currentItem?.label}</span>
         </div>
       </div>
 
@@ -129,7 +129,7 @@ export default function DocsLayout() {
         />
 
         {/* Sidebar Content */}
-        <nav className="relative h-full w-4/5 max-w-[280px] bg-white border-r border-gray-100 overflow-y-auto px-6 py-8 shadow-2xl md:shadow-none md:p-0 md:w-full md:bg-transparent md:border-none md:sticky md:top-24 space-y-8 no-scrollbar">
+        <nav className="relative h-full w-4/5 max-w-70 bg-white border-r border-gray-100 overflow-y-auto px-6 py-8 shadow-2xl md:shadow-none md:p-0 md:w-full md:bg-transparent md:border-none md:sticky md:top-24 space-y-8 no-scrollbar">
           {/* Mobile Close Button */}
           <div className="flex items-center justify-between md:hidden mb-8 border-b border-gray-50 pb-4">
             <span className="text-sm font-black text-indigo-600 uppercase tracking-widest">

@@ -230,7 +230,7 @@ export default function Validation() {
             </p>
           </div>
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 text-indigo-600">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-indigo-500" />
               Structural Error Matching
             </h3>
