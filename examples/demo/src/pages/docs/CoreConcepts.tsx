@@ -147,6 +147,9 @@ export default function CoreConcepts() {
               steps<span className="text-emerald-400">: [</span>
             </div>
             <div className="pl-8 text-gray-300">
+              <span className="text-gray-500">// 1. Standard Step</span>
+            </div>
+            <div className="pl-8 text-gray-300">
               <span className="text-emerald-400">{"{ "}</span>{" "}
               <span className="text-indigo-400">id</span>
               <span className="text-emerald-400">:</span>{" "}
@@ -158,12 +161,35 @@ export default function CoreConcepts() {
               <span className="text-emerald-400">{" }"}</span>
               <span className="text-emerald-400">,</span>
             </div>
+
+            <div className="pl-8 text-gray-300 mt-2">
+              <span className="text-gray-500">
+                // 2. Step with Dependencies
+              </span>
+            </div>
             <div className="pl-8 text-emerald-400">{"{"}</div>
             <div className="pl-12 text-gray-300">
               <span className="text-indigo-400">id</span>
               <span className="text-emerald-400">:</span>{" "}
               <span className="text-amber-400">"payment"</span>
               <span className="text-emerald-400">,</span>
+            </div>
+            <div className="pl-12 text-gray-300">
+              <span className="text-indigo-300">dependsOn</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-emerald-400">[</span>
+              <span className="text-amber-400">"plan"</span>
+              <span className="text-emerald-400">],</span>{" "}
+              <span className="text-gray-500">// Reset if plan changes</span>
+            </div>
+            <div className="pl-12 text-gray-300">
+              <span className="text-indigo-300">clearData</span>
+              <span className="text-emerald-400">:</span>{" "}
+              <span className="text-emerald-400">[</span>
+              <span className="text-amber-400">"cardInfo"</span>
+              <span className="text-emerald-400">,</span>{" "}
+              <span className="text-amber-400">"billingAddr"</span>
+              <span className="text-emerald-400">],</span>
             </div>
             <div className="pl-12 text-gray-300">
               <span className="text-indigo-300">label</span>

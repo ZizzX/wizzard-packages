@@ -238,7 +238,55 @@ const config: IWizardConfig = {
 - **Hash Table Storage**: Errors are stored internally using `Map` (Hash Table) for **O(1)** access and deletion, ensuring UI stays snappy even with hundreds of errors.
 - **Path Caching**: Data access paths (e.g., `users[0].name`) are cached to eliminate parsing overhead during frequent typing.
 
+## Smart Dependencies & Auto-Clearing 🧠
+
+Wizard steps often depend on data from previous steps. Using `dependsOn` and `clearData` allows you to automatically manage these relationships without writing manual `useEffect` glue code.
+
+### 1. Simple Dependency
+When `plan` changes, the `payment` step is marked as **unvisited** (forcing the user to review it again).
+
+```typescript
+{
+  id: 'payment',
+  dependsOn: ['plan'] // If 'plan' changes, this step becomes unvisited
+}
+```
+
+### 2. Auto-Clearing Data
+Often, changing a dependency invalidates downstream data (e.g., changing "Country" invalidates "State").
+
+**Option A: Clear specific fields (String or Array)**
+```typescript
+{
+  id: 'shipping',
+  dependsOn: ['country'],
+  // Automatically set 'state' and 'zipCode' to undefined when 'country' changes
+  clearData: ['billing.state', 'billing.zipCode'] 
+}
+```
+
+**Option B: Advanced Logic (Function)**
+For complex cases, pass a function that returns a **partial update** to merge into the wizard state.
+
+```typescript
+{
+  id: 'server-config',
+  dependsOn: ['cloudProvider'],
+  
+  // Advanced: Reset 'instanceType' but keep 'region' if it matches a condition
+  clearData: (currentData) => ({
+    serverKeys: undefined, // Clear keys
+    config: {
+      ...currentData.config,
+      instanceType: undefined, // Clear instance type
+      // Keep other config fields intact!
+    }
+  })
+}
+```
+
 ## Conditional Steps
+
 
 Steps can be dynamically included based on the wizard's state.
 
@@ -248,9 +296,17 @@ const config: IWizardConfig = {
     { id: 'start', label: 'Start' },
     { 
       id: 'bonus', 
-      label: 'Bonus Step', 
-      // Synchronous condition
-      condition: (data) => !!data.wantBonus 
+      label: 'Bonus Step',
+      
+      // 1. Condition: Only show this step if 'wantBonus' is true
+      condition: (ctx) => ctx.wizardData.wantBonus === true,
+      
+      // 2. Dependencies: If 'wantBonus' changes, this step's status (visited/completed) is reset
+      dependsOn: ['wantBonus'],
+      
+      // 3. Auto-Clear: If 'wantBonus' changes, automatically clear these fields
+      // Supports: string | string[] | (data) => Partial<Data>
+      clearData: ['bonusFeatures', 'bonusPrice'] 
     }
   ]
 }

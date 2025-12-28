@@ -126,6 +126,7 @@ export default function EnterpriseWizardDemo() {
         label: "Instance Config",
         // Auto-invalidate this step if provider changes
         dependsOn: ["provider", "region"],
+        clearData: ["instance"],
         validationMode: "onChange",
         validationAdapter: {
           validate: (data) => {

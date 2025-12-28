@@ -723,10 +723,7 @@ export function WizardProvider<
       const currentValue = getByPath(prevData, path);
       if (currentValue === value) return;
 
-      const newData = setByPath(prevData, path, value);
-
-      // --- Batching Strategy: Update Store First ---
-      storeRef.current.update(newData, path);
+      let newData = setByPath(prevData, path, value);
 
       // Auto-Invalidation Logic
       localConfig.steps.forEach((step) => {
@@ -746,10 +743,25 @@ export function WizardProvider<
             next.delete(step.id as StepId);
             return next;
           });
-          // Note: Full data reset for step might be risky, but usually dependsOn implies the step data is invalid.
-          // For now, we only reset statuses to force re-entry/re-validation.
+
+          if (step.clearData) {
+            if (typeof step.clearData === "function") {
+              const patch = step.clearData(newData);
+              newData = { ...newData, ...patch };
+            } else {
+              const pathsToClear = Array.isArray(step.clearData)
+                ? step.clearData
+                : [step.clearData];
+
+              pathsToClear.forEach((p) => {
+                newData = setByPath(newData, p, undefined);
+              });
+            }
+          }
         }
       });
+
+      storeRef.current.update(newData, path);
 
       const activeStepId = stateRef.current.currentStepId;
       const stepConfig = stepsMap.get(activeStepId as StepId);

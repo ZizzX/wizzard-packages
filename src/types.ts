@@ -103,6 +103,11 @@ export interface IStepConfig<TStepData = unknown, TGlobalContext = unknown, Step
      * Dependency Tracking: Reset this step's data/status when these paths change.
      */
     dependsOn?: string[];
+    /**
+     * Paths to clear when dependencies change.
+     * Can be a single path string, an array of paths, or a function returning a data patch to merge.
+     */
+    clearData?: string | string[] | ((data: TGlobalContext) => Partial<TGlobalContext>);
 }
 
 /**
