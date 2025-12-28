@@ -53,10 +53,7 @@ function App() {
           <Route path="complex" element={<ComplexDataWizard />} />
           <Route path="complex" element={<ComplexDataWizard />} />
           <Route path="advanced" element={<AdvancedDemo />} />
-          <Route
-            path="examples/enterprise"
-            element={<EnterpriseWizardDemo />}
-          />
+          <Route path="enterprise-wizard" element={<EnterpriseWizardDemo />} />
 
           {/* Documentation Section */}
           <Route path="docs" element={<DocsLayout />}>

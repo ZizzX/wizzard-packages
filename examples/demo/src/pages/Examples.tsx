@@ -10,14 +10,16 @@ export default function Examples() {
   const examples = [
     {
       title: "Simple JS Wizard",
-      description: "The easiest way to get started with no external form libraries.",
+      description:
+        "The easiest way to get started with no external form libraries.",
       path: "/simple",
       icon: "✨",
       color: "bg-blue-50 text-blue-600",
     },
     {
       title: "RHF + Zod",
-      description: "Full-featured forms with React Hook Form and Zod validation.",
+      description:
+        "Full-featured forms with React Hook Form and Zod validation.",
       path: "/rhf-zod",
       icon: "🛡️",
       color: "bg-indigo-50 text-indigo-600",
@@ -38,7 +40,8 @@ export default function Examples() {
     },
     {
       title: "Complex Data & Performance",
-      description: "Optimized validation modes, deep paths, and auto-persistence.",
+      description:
+        "Optimized validation modes, deep paths, and auto-persistence.",
       path: "/complex",
       icon: "⚡", // Changed icon to lightning
       color: "bg-amber-50 text-amber-600",
@@ -51,12 +54,20 @@ export default function Examples() {
       color: "bg-rose-50 text-rose-600",
     },
     {
-        title: "Legacy Integration",
-        description: "How to use with class components or older React versions.",
-        path: "/legacy",
-        icon: "🦖",
-        color: "bg-gray-50 text-gray-600",
-    }
+      title: "Legacy Integration",
+      description: "How to use with class components or older React versions.",
+      path: "/legacy",
+      icon: "🦖",
+      color: "bg-gray-50 text-gray-600",
+    },
+    {
+      title: "Enterprise Cloud Wizard",
+      description:
+        "Google-quality demo with async validation, dependencies, and complex routing.",
+      path: "/enterprise-wizard",
+      icon: "🏢",
+      color: "bg-cyan-50 text-cyan-600",
+    },
   ];
 
   return (
@@ -66,7 +77,8 @@ export default function Examples() {
           Examples Gallery
         </h1>
         <p className="text-lg text-gray-600 leading-relaxed">
-          See how the library integrates with your favorite tools and handles complex scenarios.
+          See how the library integrates with your favorite tools and handles
+          complex scenarios.
         </p>
       </div>
 
@@ -91,7 +103,9 @@ export default function Examples() {
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600 text-sm leading-relaxed">{example.description}</p>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  {example.description}
+                </p>
               </CardContent>
             </Card>
           </Link>

@@ -177,7 +177,8 @@ When rendering lists, avoid passing the whole `children` array to the parent com
 ```tsx
 const ChildrenList = () => {
   // ✅ Only re-renders when the list LENGTH changes or IDs change
-  const childIds = useWizardSelector(state => state.children.map(c => c.id));
+  // state is the full IWizardContext, so we access .wizardData
+  const childIds = useWizardSelector(state => state.wizardData.children.map(c => c.id));
   
   return (
     <div>
@@ -441,6 +442,7 @@ Check out the [Live Demo](https://ZizzX.github.io/wizzard-stepper-react/), [NPM]
 
 - **Premium Documentation**: [Interactive Guides](https://ZizzX.github.io/wizzard-stepper-react/docs/introduction) and a dedicated [Type Reference](https://ZizzX.github.io/wizzard-stepper-react/docs/types).
 - **Tailwind CSS v4** UI overhaul.
+- **Enterprise Cloud Wizard**: (`/enterprise-wizard`) "Google-quality" demo with async validation, dependencies, and granular selectors.
 - **React Hook Form + Zod** integration.
 - **Formik + Yup** integration.
 - **Conditional Routing** logic.

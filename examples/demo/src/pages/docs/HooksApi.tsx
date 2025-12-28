@@ -148,6 +148,8 @@ export default function HooksApi() {
                   <span className="text-emerald-400">=&gt;</span>{" "}
                   <span className="text-indigo-300">s</span>
                   <span className="text-emerald-400">.</span>
+                  <span className="text-indigo-300">wizardData</span>
+                  <span className="text-emerald-400">.</span>
                   <span className="text-indigo-300">items</span>
                   <span className="text-emerald-400">.</span>
                   <span className="text-blue-400">map</span>

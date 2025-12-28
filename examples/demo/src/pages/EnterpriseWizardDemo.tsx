@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { createWizardFactory, type IWizardConfig } from "wizzard-stepper-react";
 import { cn } from "../lib/utils";
 
@@ -276,7 +276,7 @@ function WizardContent() {
 
 // Optimized Step Components: Only re-render on relevant data changes
 
-function StepBasics() {
+const StepBasics = React.memo(function StepBasics() {
   const { setData } = useWizardActions();
   const projectName = useWizardValue("project.name");
   const projectDesc = useWizardValue("project.description");
@@ -358,9 +358,9 @@ function StepBasics() {
       </div>
     </div>
   );
-}
+});
 
-function StepProvider() {
+const StepProvider = React.memo(function StepProvider() {
   const { setData } = useWizardActions();
   const activeProvider = useWizardValue("provider");
   const providerError = useWizardError("provider");
@@ -391,9 +391,9 @@ function StepProvider() {
       )}
     </div>
   );
-}
+});
 
-function StepInstance() {
+const StepInstance = React.memo(function StepInstance() {
   const { setData } = useWizardActions();
   const provider = useWizardValue("provider");
   const instanceType = useWizardValue("instance.type");
@@ -458,9 +458,9 @@ function StepInstance() {
       </div>
     </div>
   );
-}
+});
 
-function StepNetworking() {
+const StepNetworking = React.memo(function StepNetworking() {
   const { setData } = useWizardActions();
   const vpcId = useWizardValue("networking.vpcId");
   const subnet = useWizardValue("networking.subnet");
@@ -487,9 +487,9 @@ function StepNetworking() {
       </div>
     </div>
   );
-}
+});
 
-function StepReview() {
+const StepReview = React.memo(function StepReview() {
   // Here we might want full data to display summary
   const wizardData = useWizardSelector((state) => state.wizardData);
 
@@ -503,7 +503,7 @@ function StepReview() {
       </p>
     </div>
   );
-}
+});
 
 function WizardControls() {
   // Optimized selector for controls
