@@ -57,7 +57,7 @@ const api = {
 const factory = createWizardFactory<CloudSetupData, CloudStepId>();
 const {
   WizardProvider,
-  useWizard, // Only for monolithic access if needed
+  useWizardState, // Only for monolithic access if needed
   useWizardValue, // Optimized: Selector for specific field
   useWizardActions, // Optimized: Stable actions
   useWizardSelector, // Optimized: Custom selectors
@@ -141,7 +141,9 @@ export default function EnterpriseWizardDemo() {
         id: "networking",
         label: "Networking",
         // Conditional step: only show if advanced mode is checked
-        condition: (data) => {
+        condition: (data, metaData) => {
+          console.log("metaData", metaData);
+          console.log("data", data);
           return !!data?.networking?.advancedMode;
         },
         dependsOn: ["networking.advancedMode"],
@@ -628,8 +630,8 @@ function DebugPanel({
   events: { name: string; timestamp: string }[];
 }) {
   // Debug panel deliberately subscribes to everything to show state
-  const { wizardData, activeSteps, activeStepsCount, dirtyFields } =
-    useWizard();
+  const { activeSteps, activeStepsCount, dirtyFields } = useWizardState();
+  const wizardData = useWizardSelector((s) => s);
 
   return (
     <div className="bg-slate-900 rounded-2xl p-6 text-slate-300 font-mono text-xs space-y-6 shadow-2xl h-fit sticky top-6">
@@ -664,7 +666,14 @@ function DebugPanel({
         </div>
         <div className="max-h-60 overflow-y-auto">
           <pre className="text-slate-400">
-            {JSON.stringify(wizardData, null, 2)}
+            {JSON.stringify(
+              wizardData,
+              (_, value) => {
+                if (value instanceof Set) return [...value];
+                return value;
+              },
+              2
+            )}
           </pre>
         </div>
       </div>

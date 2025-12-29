@@ -64,16 +64,19 @@ export class WizardStore<
     return this.state;
   }
 
-  update(newData: T, changedPath?: string) {
+  update(newData: T, changedPath?: string | string[]) {
     if (changedPath) {
-      const initialValue = getByPath(this.initialData, changedPath);
-      const newValue = getByPath(newData, changedPath);
+      const paths = Array.isArray(changedPath) ? changedPath : [changedPath];
+      paths.forEach((path) => {
+        const initialValue = getByPath(this.initialData, path);
+        const newValue = getByPath(newData, path);
 
-      if (JSON.stringify(initialValue) !== JSON.stringify(newValue)) {
-        this.dirtyFields.add(changedPath);
-      } else {
-        this.dirtyFields.delete(changedPath);
-      }
+        if (JSON.stringify(initialValue) !== JSON.stringify(newValue)) {
+          this.dirtyFields.add(path);
+        } else {
+          this.dirtyFields.delete(path);
+        }
+      });
     }
 
     this.state = {
@@ -321,7 +324,10 @@ export function WizardProvider<
             setBusySteps((prev) => new Set(prev).add(step.id as StepId));
 
             try {
-              const conditionResult = step.condition(data || {}, metaData);
+              // Fix: metaData in closure is stale (initial {}).
+              // We must fetch fresh meta from store.
+              const currentMeta = storeRef.current.getSnapshot().meta;
+              const conditionResult = step.condition(data || {}, currentMeta);
 
               if (conditionResult instanceof Promise) {
                 // If it's a promise and showWhilePending is true, we might want to return it as visible but pending
@@ -662,7 +668,11 @@ export function WizardProvider<
       const prevData = storeRef.current.getSnapshot().data;
       const newData = { ...prevData, ...data };
 
-      storeRef.current.update(newData);
+      // Pass keys of data as changed paths (approximation, but better than nothing)
+      // Ideally we would prefix with stepId if T structure is nested.
+      // But assuming data keys are top-level paths in T:
+      const changedPaths = Object.keys(data);
+      storeRef.current.update(newData, changedPaths);
 
       const stepConfig = stateRef.current.stepsMap.get(stepId as StepId);
       const effectiveMode = stepConfig?.persistenceMode || persistenceMode;
@@ -796,7 +806,8 @@ export function WizardProvider<
       const prevData = storeRef.current.getSnapshot().data;
       const newData = options?.replace ? (data as T) : { ...prevData, ...data };
 
-      storeRef.current.update(newData);
+      const changedPaths = Object.keys(data);
+      storeRef.current.update(newData, changedPaths);
 
       if (options?.persist) {
         config.steps.forEach((step) => {

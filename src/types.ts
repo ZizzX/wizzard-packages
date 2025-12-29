@@ -39,7 +39,7 @@ export interface IWizardStore<T, StepId extends string = string> {
       allErrors?: any;
     };
   };
-  update(newData: T, changedPath?: string): void;
+  update(newData: T, changedPath?: string | string[]): void;
   updateMeta(newMeta: Partial<IWizardState<T, StepId>>): void;
   setInitialData(data: T): void;
   updateErrors(newErrors: Record<string, Record<string, string>>): void;
