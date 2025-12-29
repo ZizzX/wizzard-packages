@@ -141,11 +141,7 @@ export default function EnterpriseWizardDemo() {
         id: "networking",
         label: "Networking",
         // Conditional step: only show if advanced mode is checked
-        condition: (data, metaData) => {
-          console.log("metaData", metaData);
-          console.log("data", data);
-          return !!data?.networking?.advancedMode;
-        },
+        condition: (data) => !!data?.networking?.advancedMode,
         dependsOn: ["networking.advancedMode"],
         clearData: ["networking.vpcId", "networking.subnet"],
         validationAdapter: {
@@ -415,6 +411,8 @@ const StepInstance = React.memo(function StepInstance() {
   const instanceType = useWizardValue("instance.type");
   const advancedMode = useWizardValue("networking.advancedMode");
 
+  const instanceTypeError = useWizardError("instance.type");
+
   return (
     <div className="space-y-8 animate-in fade-in">
       <div className="flex items-center gap-2 p-4 bg-yellow-50 text-yellow-800 rounded-lg text-sm border border-yellow-200">
@@ -450,6 +448,9 @@ const StepInstance = React.memo(function StepInstance() {
             </label>
           ))}
         </div>
+        {instanceTypeError && (
+          <p className="text-red-500 text-sm mt-1">{instanceTypeError}</p>
+        )}
       </div>
 
       <div className="pt-4 border-t border-slate-100">

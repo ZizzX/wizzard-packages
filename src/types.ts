@@ -236,7 +236,7 @@ export interface IWizardConfig<T = unknown, StepId extends string = string> {
      * Analytics integration.
      */
     analytics?: {
-        onEvent: (name: string, payload: any) => void;
+        onEvent: WizardEventHandler<StepId>;
     };
     /**
      * Callback triggered when step changes.
@@ -244,6 +244,39 @@ export interface IWizardConfig<T = unknown, StepId extends string = string> {
      */
     onStepChange?: (fromStep: StepId | null, toStep: StepId, data: T) => void;
 }
+
+/**
+ * Standardized Event Names
+ */
+export type WizardEventName = "step_change" | "validation_error" | "wizard_reset";
+
+/**
+ * Event Payloads
+ */
+export type WizardEventPayloads<StepId extends string = string> = {
+    step_change: {
+        from: StepId | null;
+        to: StepId;
+        timestamp: number;
+    };
+    validation_error: {
+        stepId: StepId;
+        errors: Record<string, string> | undefined;
+        timestamp: number;
+    };
+    wizard_reset: {
+        data: any;
+        timestamp?: number;
+    };
+};
+
+/**
+ * Generic Event Handler Type
+ */
+export type WizardEventHandler<StepId extends string = string> = <E extends WizardEventName>(
+    name: E,
+    payload: WizardEventPayloads<StepId>[E]
+) => void;
 
 /**
  * Core Wizard Context State

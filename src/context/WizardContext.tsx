@@ -19,6 +19,9 @@ import type {
   IWizardState,
   IWizardActions,
   IWizardStore,
+  WizardEventHandler,
+  WizardEventName,
+  WizardEventPayloads,
 } from "../types";
 import { MemoryAdapter } from "../adapters/persistence/MemoryAdapter";
 import { getByPath, setByPath } from "../utils/data";
@@ -517,8 +520,11 @@ export function WizardProvider<
   const isLastStep = currentStepIndex === activeSteps.length - 1;
 
   // Analytics helper
-  const trackEvent = useCallback(
-    (name: string, payload: any) => {
+  const trackEvent: WizardEventHandler<StepId> = useCallback(
+    <E extends WizardEventName>(
+      name: E,
+      payload: WizardEventPayloads<StepId>[E]
+    ) => {
       localConfig.analytics?.onEvent(name, payload);
     },
     [localConfig.analytics]
@@ -642,6 +648,11 @@ export function WizardProvider<
         } else {
           // Set errors for this step
           storeRef.current.setStepErrors(stepId, result.errors || null);
+          trackEvent("validation_error", {
+            stepId,
+            errors: result.errors,
+            timestamp: Date.now(),
+          });
 
           setErrorSteps((prev) => {
             const next = new Set(prev);
@@ -998,6 +1009,12 @@ export function WizardProvider<
         if (config.onStepChange) {
           config.onStepChange(currentStepId || null, stepId, currentData); // Call hook
         }
+
+        trackEvent("step_change", {
+          from: (currentStepId || null) as StepId | null,
+          to: stepId,
+          timestamp: Date.now(),
+        });
 
         window.scrollTo(0, 0);
         return true;
