@@ -1,3 +1,85 @@
+
+export interface IWizardHandle<T = unknown, StepId extends string = string> {
+    state: IWizardState<T, StepId>;
+    actions: IWizardActions<StepId>;
+}
+
+export interface IWizardState<T = unknown, StepId extends string = string> {
+  currentStep: IStepConfig<T, StepId> | null;
+  currentStepIndex: number;
+  isFirstStep: boolean;
+  isLastStep: boolean;
+  isLoading: boolean;
+  isPending: boolean;
+  activeSteps: IStepConfig<T, StepId>[];
+  visitedSteps: Set<StepId>;
+  completedSteps: Set<StepId>;
+  errorSteps: Set<StepId>;
+  history: StepId[];
+  busySteps: Set<StepId>;
+  config: IWizardConfig<T, StepId>;
+  progress: number;
+  activeStepsCount: number;
+  isBusy: boolean;
+  isDirty: boolean;
+  dirtyFields: Set<string>;
+  breadcrumbs: IBreadcrumb<StepId>[];
+  allErrors: Record<string, Record<string, string>>;
+  store: IWizardStore<T, StepId>;
+}
+
+export interface IWizardStore<T, StepId extends string = string> {
+  getSnapshot(): {
+    data: T;
+    errors: Record<string, Record<string, string>>;
+    isDirty: boolean;
+    dirtyFields: Set<string>;
+    meta: Partial<IWizardState<T, StepId>> & {
+      wizardData?: T;
+      allErrors?: any;
+    };
+  };
+  update(newData: T, changedPath?: string): void;
+  updateMeta(newMeta: Partial<IWizardState<T, StepId>>): void;
+  setInitialData(data: T): void;
+  updateErrors(newErrors: Record<string, Record<string, string>>): void;
+  setStepErrors(
+    stepId: string,
+    errors: Record<string, string> | undefined | null
+  ): boolean;
+  deleteError(stepId: string, path: string): boolean;
+  subscribe(listener: () => void): () => void;
+  errorsMap: Map<string, Map<string, string>>;
+}
+
+export interface IWizardActions<StepId extends string = string> {
+  goToNextStep: () => Promise<void>;
+  goToPrevStep: () => void;
+  goToStep: (stepId: StepId) => Promise<boolean>;
+  setStepData: (stepId: StepId, data: unknown) => void;
+  handleStepChange: (field: string, value: unknown) => void;
+  validateStep: (sid: StepId) => Promise<boolean>;
+  validateAll: () => Promise<{
+    isValid: boolean;
+    errors: Record<string, Record<string, string>>;
+  }>;
+  save: (stepIds?: StepId | StepId[] | boolean) => void;
+  clearStorage: () => void;
+  reset: () => void;
+  setData: (
+    path: string,
+    value: unknown,
+    options?: { debounceValidation?: number }
+  ) => void;
+  updateData: (
+    data: Partial<any>,
+    options?: { replace?: boolean; persist?: boolean }
+  ) => void;
+  getData: (path: string, defaultValue?: unknown) => unknown;
+}
+
+
+
 /**
  * Validation Result Interface
  */
@@ -56,7 +138,7 @@ export interface IStepConfig<TStepData = unknown, StepId extends string = string
      * Predicate to determine if step should be included/visible.
      * Supports both synchronous and asynchronous predicates.
      */
-    condition?: (data: TStepData) => boolean | Promise<boolean>;
+    condition?: (data: TStepData, metadata: Partial<IWizardState<TStepData, StepId>> & { wizardData?: TStepData | undefined; allErrors?: any; }) => boolean | Promise<boolean>;
     /**
      * If true, the step will be visible while its condition is being resolved.
      * Default: false (step is hidden until condition is resolved)

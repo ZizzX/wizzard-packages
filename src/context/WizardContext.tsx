@@ -16,59 +16,12 @@ import type {
   IWizardContext,
   IBreadcrumb,
   BreadcrumbStatus,
+  IWizardState,
+  IWizardActions,
+  IWizardStore,
 } from "../types";
 import { MemoryAdapter } from "../adapters/persistence/MemoryAdapter";
 import { getByPath, setByPath } from "../utils/data";
-
-export interface IWizardState<T = unknown, StepId extends string = string> {
-  currentStep: IStepConfig<T, StepId> | null;
-  currentStepIndex: number;
-  isFirstStep: boolean;
-  isLastStep: boolean;
-  isLoading: boolean;
-  isPending: boolean;
-  activeSteps: IStepConfig<T, StepId>[];
-  visitedSteps: Set<StepId>;
-  completedSteps: Set<StepId>;
-  errorSteps: Set<StepId>;
-  history: StepId[];
-  busySteps: Set<StepId>;
-  config: IWizardConfig<T, StepId>;
-  progress: number;
-  activeStepsCount: number;
-  isBusy: boolean;
-  isDirty: boolean;
-  dirtyFields: Set<string>;
-  breadcrumbs: IBreadcrumb<StepId>[];
-  allErrors: Record<string, Record<string, string>>;
-  store: WizardStore<T, StepId>;
-}
-
-export interface IWizardActions<StepId extends string = string> {
-  goToNextStep: () => Promise<void>;
-  goToPrevStep: () => void;
-  goToStep: (stepId: StepId) => Promise<boolean>;
-  setStepData: (stepId: StepId, data: unknown) => void;
-  handleStepChange: (field: string, value: unknown) => void;
-  validateStep: (sid: StepId) => Promise<boolean>;
-  validateAll: () => Promise<{
-    isValid: boolean;
-    errors: Record<string, Record<string, string>>;
-  }>;
-  save: (stepIds?: StepId | StepId[] | boolean) => void;
-  clearStorage: () => void;
-  reset: () => void;
-  setData: (
-    path: string,
-    value: unknown,
-    options?: { debounceValidation?: number }
-  ) => void;
-  updateData: (
-    data: Partial<any>,
-    options?: { replace?: boolean; persist?: boolean }
-  ) => void;
-  getData: (path: string, defaultValue?: unknown) => unknown;
-}
 
 const WizardStateContext = createContext<IWizardState<any, any> | undefined>(
   undefined
@@ -76,9 +29,11 @@ const WizardStateContext = createContext<IWizardState<any, any> | undefined>(
 const WizardActionsContext = createContext<IWizardActions<any> | undefined>(
   undefined
 );
-
 // Advanced: Store for granular subscriptions
-export class WizardStore<T, StepId extends string = string> {
+export class WizardStore<
+  T,
+  StepId extends string = string,
+> implements IWizardStore<T, StepId> {
   private initialData: T;
   private dirtyFields = new Set<string>();
   private state: {
@@ -300,6 +255,11 @@ export function WizardProvider<
     () => storeRef.current.getSnapshot().dirtyFields
   );
 
+  const metaData = useSyncExternalStore(
+    storeRef.current.subscribe,
+    () => storeRef.current.getSnapshot().meta
+  );
+
   const [history, setHistory] = useState<StepId[]>([]);
 
   // Initialize history with the first step
@@ -340,7 +300,7 @@ export function WizardProvider<
     return localConfig.steps.filter((step) => {
       if (!step.condition) return true;
       try {
-        const res = step.condition((initialData || {}) as T);
+        const res = step.condition((initialData || {}) as T, metaData);
         return res === true; // Only include if explicitly true (synchronously)
       } catch {
         return false;
@@ -361,7 +321,7 @@ export function WizardProvider<
             setBusySteps((prev) => new Set(prev).add(step.id as StepId));
 
             try {
-              const conditionResult = step.condition(data || {});
+              const conditionResult = step.condition(data || {}, metaData);
 
               if (conditionResult instanceof Promise) {
                 // If it's a promise and showWhilePending is true, we might want to return it as visible but pending
@@ -1457,7 +1417,7 @@ export function useWizardContext<
   T = any,
   StepId extends string = string,
 >(): IWizardContext<T, StepId> & {
-  store: WizardStore<T, StepId>;
+  store: IWizardStore<T, StepId>;
 } {
   const state = useWizardState<T, StepId>();
   const actions = useWizardActions<StepId>();
@@ -1477,5 +1437,5 @@ export function useWizardContext<
       allErrors,
     }),
     [state, actions, wizardData, allErrors]
-  ) as IWizardContext<T, StepId> & { store: WizardStore<T, StepId> };
+  ) as IWizardContext<T, StepId> & { store: IWizardStore<T, StepId> };
 }
