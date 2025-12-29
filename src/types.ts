@@ -49,14 +49,14 @@ export type StepDirection = 'next' | 'prev';
  * TStepData: Type of data for this step
  * TGlobalContext: Type of the global wizard data
  */
-export interface IStepConfig<TStepData = unknown, TGlobalContext = unknown, StepId extends string = string> {
+export interface IStepConfig<TStepData = unknown, StepId extends string = string> {
     id: StepId;
     label: string;
     /**
      * Predicate to determine if step should be included/visible.
      * Supports both synchronous and asynchronous predicates.
      */
-    condition?: (context: TGlobalContext) => boolean | Promise<boolean>;
+    condition?: (data: TStepData) => boolean | Promise<boolean>;
     /**
      * If true, the step will be visible while its condition is being resolved.
      * Default: false (step is hidden until condition is resolved)
@@ -66,7 +66,7 @@ export interface IStepConfig<TStepData = unknown, TGlobalContext = unknown, Step
      * Guard function called before leaving the step.
      * Return false or throw to prevent navigation.
      */
-    beforeLeave?: (context: TGlobalContext, direction: StepDirection) => boolean | Promise<boolean>;
+    beforeLeave?: (data: TStepData, direction: StepDirection) => boolean | Promise<boolean>;
     /**
      * Adapter for validation logic
      */
@@ -107,7 +107,7 @@ export interface IStepConfig<TStepData = unknown, TGlobalContext = unknown, Step
      * Paths to clear when dependencies change.
      * Can be a single path string, an array of paths, or a function returning a data patch to merge.
      */
-    clearData?: string | string[] | ((data: TGlobalContext) => Partial<TGlobalContext>);
+    clearData?: string | string[] | ((data: TStepData) => Partial<TStepData>);
 }
 
 /**
@@ -118,7 +118,7 @@ export interface IWizardConfig<T = unknown, StepId extends string = string> {
     /**
      * Array of step configurations
      */
-    steps: IStepConfig<unknown, T, StepId>[];
+    steps: IStepConfig<T, StepId>[];
     /**
      * Global auto-validation setting (default: true)
      * @deprecated Use validationMode instead
@@ -168,7 +168,7 @@ export interface IWizardConfig<T = unknown, StepId extends string = string> {
  */
 export interface IWizardContext<T = unknown, StepId extends string = string> {
     config: IWizardConfig<T, StepId>;
-    currentStep: IStepConfig<unknown, T, StepId> | null;
+    currentStep: IStepConfig<T, StepId> | null;
     currentStepIndex: number;
     isFirstStep: boolean;
     isLastStep: boolean;
@@ -191,7 +191,7 @@ export interface IWizardContext<T = unknown, StepId extends string = string> {
     /**
      * Active steps (those meeting conditions)
      */
-    activeSteps: IStepConfig<unknown, T, StepId>[];
+    activeSteps: IStepConfig<T, StepId>[];
 
     /**
      * Navigation History

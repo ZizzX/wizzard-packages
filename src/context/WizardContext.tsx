@@ -21,13 +21,13 @@ import { MemoryAdapter } from "../adapters/persistence/MemoryAdapter";
 import { getByPath, setByPath } from "../utils/data";
 
 export interface IWizardState<T = unknown, StepId extends string = string> {
-  currentStep: IStepConfig<unknown, T, StepId> | null;
+  currentStep: IStepConfig<T, StepId> | null;
   currentStepIndex: number;
   isFirstStep: boolean;
   isLastStep: boolean;
   isLoading: boolean;
   isPending: boolean;
-  activeSteps: IStepConfig<unknown, T, StepId>[];
+  activeSteps: IStepConfig<T, StepId>[];
   visitedSteps: Set<StepId>;
   completedSteps: Set<StepId>;
   errorSteps: Set<StepId>;
@@ -316,10 +316,15 @@ export function WizardProvider<
 
   const persistenceMode = localConfig.persistence?.mode || "onStepChange";
 
+  const currentSnapshotData = useSyncExternalStore(
+    storeRef.current.subscribe,
+    () => storeRef.current.getSnapshot().data
+  );
+
   // --- Optimization: Static Step Map ---
   const stepsMap = useMemo(() => {
-    const map = new Map<StepId, IStepConfig<any, T, StepId>>();
-    localConfig.steps.forEach((step: IStepConfig<any, T, StepId>) =>
+    const map = new Map<StepId, IStepConfig<T, StepId>>();
+    localConfig.steps.forEach((step: IStepConfig<T, StepId>) =>
       map.set(step.id, step)
     );
     return map;
@@ -329,7 +334,7 @@ export function WizardProvider<
 
   // Optimized: Calculate Active Steps reactively from the store
   const [asyncActiveSteps, setAsyncActiveSteps] = useState<
-    IStepConfig<any, T, StepId>[]
+    IStepConfig<T, StepId>[]
   >(() => {
     // Initial sync filter to avoid empty steps flash during hydration/initial render
     return localConfig.steps.filter((step) => {
@@ -340,17 +345,12 @@ export function WizardProvider<
       } catch {
         return false;
       }
-    }) as IStepConfig<any, T, StepId>[];
+    }) as IStepConfig<T, StepId>[];
   });
-
-  const currentSnapshotData = useSyncExternalStore(
-    storeRef.current.subscribe,
-    () => storeRef.current.getSnapshot().data
-  );
 
   // Helper for actual active steps calculation (used in effects and actions)
   const resolveActiveStepsHelper = useCallback(
-    async (data: T): Promise<IStepConfig<any, T, StepId>[]> => {
+    async (data: T): Promise<IStepConfig<T, StepId>[]> => {
       setIsBusy(true);
       try {
         const results = await Promise.all(
@@ -361,7 +361,7 @@ export function WizardProvider<
             setBusySteps((prev) => new Set(prev).add(step.id as StepId));
 
             try {
-              const conditionResult = step.condition(data);
+              const conditionResult = step.condition(data || {});
 
               if (conditionResult instanceof Promise) {
                 // If it's a promise and showWhilePending is true, we might want to return it as visible but pending
@@ -393,7 +393,6 @@ export function WizardProvider<
         );
 
         return results.filter((r) => r.ok).map((r) => r.step) as IStepConfig<
-          any,
           T,
           StepId
         >[];
@@ -430,7 +429,7 @@ export function WizardProvider<
 
   const activeStepsIndexMap = useMemo(() => {
     const map = new Map<StepId, number>();
-    activeSteps.forEach((s: IStepConfig<any, T, StepId>, i: number) =>
+    activeSteps.forEach((s: IStepConfig<T, StepId>, i: number) =>
       map.set(s.id, i)
     );
     return map;
@@ -442,7 +441,7 @@ export function WizardProvider<
       if (initialStepId) {
         // Validation: verify initialStepId exists in active steps
         const target = activeSteps.find(
-          (s: IStepConfig<any, T, StepId>) => s.id === initialStepId
+          (s: IStepConfig<T, StepId>) => s.id === initialStepId
         );
         if (target) {
           setCurrentStepId(target.id);
@@ -875,7 +874,7 @@ export function WizardProvider<
 
       // Optimization: Parallel validation
       const validationResults = await Promise.all(
-        actualActiveSteps.map((step: IStepConfig<any, T, StepId>) =>
+        actualActiveSteps.map((step: IStepConfig<T, StepId>) =>
           validateStep(step.id, currentData)
         )
       );
@@ -891,7 +890,7 @@ export function WizardProvider<
   const goToStep = useCallback(
     async (
       stepId: StepId,
-      providedActiveSteps?: IStepConfig<any, T, StepId>[]
+      providedActiveSteps?: IStepConfig<T, StepId>[]
     ): Promise<boolean> => {
       const {
         currentStepId,

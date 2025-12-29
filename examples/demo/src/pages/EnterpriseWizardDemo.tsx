@@ -82,7 +82,7 @@ export default function EnterpriseWizardDemo() {
 
   const wizardConfig = {
     steps: [
-      createStep<CloudSetupData>({
+      createStep({
         id: "basics",
         label: "Project Basics",
         validationMode: "onChange",
@@ -110,7 +110,7 @@ export default function EnterpriseWizardDemo() {
           },
         },
       }),
-      createStep<CloudSetupData>({
+      createStep({
         id: "provider",
         label: "Cloud Provider",
         validationMode: "onStepChange", // Validate only on Next
@@ -121,7 +121,7 @@ export default function EnterpriseWizardDemo() {
           }),
         },
       }),
-      createStep<CloudSetupData>({
+      createStep({
         id: "instance",
         label: "Instance Config",
         // Auto-invalidate this step if provider changes
@@ -137,14 +137,27 @@ export default function EnterpriseWizardDemo() {
           },
         },
       }),
-      createStep<CloudSetupData>({
+      createStep({
         id: "networking",
         label: "Networking",
         // Conditional step: only show if advanced mode is checked
-        condition: (data) => !!data.networking?.advancedMode,
+        condition: (data) => {
+          return !!data?.networking?.advancedMode;
+        },
         dependsOn: ["networking.advancedMode"],
+        clearData: ["networking.vpcId", "networking.subnet"],
+        validationAdapter: {
+          validate: (data) => {
+            const errors: Record<string, string> = {};
+            if (!data.networking?.vpcId)
+              errors["networking.vpcId"] = "Select VPC";
+            if (!data.networking?.subnet)
+              errors["networking.subnet"] = "Select Subnet";
+            return { isValid: Object.keys(errors).length === 0, errors };
+          },
+        },
       }),
-      createStep<CloudSetupData>({
+      createStep({
         id: "review",
         label: "Review & Provision",
       }),
@@ -466,6 +479,9 @@ const StepNetworking = React.memo(function StepNetworking() {
   const vpcId = useWizardValue("networking.vpcId");
   const subnet = useWizardValue("networking.subnet");
 
+  const errorVpcId = useWizardError("networking.vpcId");
+  const errorSubnet = useWizardError("networking.subnet");
+
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -476,6 +492,7 @@ const StepNetworking = React.memo(function StepNetworking() {
           value={vpcId || ""}
           onChange={(e) => setData("networking.vpcId", e.target.value)}
         />
+        {errorVpcId && <div className="text-red-500">{errorVpcId}</div>}
       </div>
       <div className="space-y-2">
         <label className="text-sm font-medium">Subnet CIDR</label>
@@ -485,6 +502,7 @@ const StepNetworking = React.memo(function StepNetworking() {
           value={subnet || ""}
           onChange={(e) => setData("networking.subnet", e.target.value)}
         />
+        {errorSubnet && <div className="text-red-500">{errorSubnet}</div>}
       </div>
     </div>
   );
@@ -512,7 +530,7 @@ function WizardControls() {
   const isLastStep = useWizardSelector((s) => s.isLastStep);
   const isBusy = useWizardSelector((s) => s.isBusy);
 
-  const { goToNextStep, goToPrevStep } = useWizardActions();
+  const { goToNextStep, goToPrevStep, reset } = useWizardActions();
 
   // Use a separate state to handle the "Provisioning" simulation
   const [isProvisioning, setProvisioning] = useState(false);
@@ -523,6 +541,7 @@ function WizardControls() {
       await api.provisionResource();
       alert("Provisioning Complete! 🚀");
       setProvisioning(false);
+      reset();
     } else {
       await goToNextStep();
     }

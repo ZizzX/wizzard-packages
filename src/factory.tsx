@@ -123,8 +123,11 @@ export function createWizardFactory<
    * Helper to create a typed step configuration.
    * By using this helper, TypeScript can infer TStepData from the validationAdapter or other properties.
    */
-  const createStep = <TStepData = unknown,>(
-    config: IStepConfig<TStepData, TSchema, StepId>
+  const createStep = <
+    TSchema extends Record<string, any>,
+    TStepId extends string = string,
+  >(
+    config: IStepConfig<TSchema, TStepId>
   ) => config;
 
   return {
