@@ -914,7 +914,8 @@ export function WizardProvider<
             try {
               const canLeave = await currentStep.beforeLeave(
                 currentData,
-                "next"
+                "next",
+                metaData
               );
               if (canLeave === false) return false;
             } catch (e) {
@@ -935,7 +936,8 @@ export function WizardProvider<
             try {
               const canLeave = await currentStep.beforeLeave(
                 currentData,
-                "prev"
+                "prev",
+                metaData
               );
               if (canLeave === false) return false;
             } catch (e) {

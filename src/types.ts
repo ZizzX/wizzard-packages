@@ -148,7 +148,7 @@ export interface IStepConfig<TStepData = unknown, StepId extends string = string
      * Guard function called before leaving the step.
      * Return false or throw to prevent navigation.
      */
-    beforeLeave?: (data: TStepData, direction: StepDirection) => boolean | Promise<boolean>;
+    beforeLeave?: (data: TStepData, direction: StepDirection, metadata: Partial<IWizardState<TStepData, StepId>> & { wizardData?: TStepData | undefined; allErrors?: any; }) => boolean | Promise<boolean>;
     /**
      * Adapter for validation logic
      */
