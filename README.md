@@ -108,14 +108,23 @@ const MyStep = () => {
   );
 }
 
+```tsx
 // In Config:
-    condition?: (data: T, metadata: StepMetadata<T, StepId>) => boolean | Promise<boolean>;
-    beforeLeave?: (data: T, direction: StepDirection, metadata: StepMetadata<T, StepId>) => boolean | Promise<boolean>;
-    validationAdapter?: IValidatorAdapter<T>;
-    validationMode?: ValidationMode;
-    // ...
-  }
-]
+const config: IWizardConfig = {
+  steps: [
+    { 
+      id: 'step1', 
+      label: 'Email', 
+      condition: (data, { wizardData }) => !!wizardData.email,
+      beforeLeave: (data, direction, { wizardData }) => {
+         // ... custom logic
+         return true;
+      },
+      validationAdapter: new ZodAdapter(schema),
+      validationMode: 'onStepChange' 
+    }
+  ]
+};
 ```
 
 #### What is `StepMetadata`?
