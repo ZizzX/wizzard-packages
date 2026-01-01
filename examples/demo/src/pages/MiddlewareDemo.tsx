@@ -112,7 +112,7 @@ export default function MiddlewareDemo() {
           Middleware & DevTools Demo
         </h1>
         <p className="text-gray-600">
-          This demo showcases the power of the 1.8.0 middleware system and the
+          This demo showcases the power of the 2.0.0 middleware system and the
           visual DevTools overlay.
         </p>
       </div>

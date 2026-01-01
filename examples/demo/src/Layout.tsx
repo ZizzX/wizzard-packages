@@ -111,7 +111,7 @@ export default function Layout() {
                   )
                 }
               >
-                v1.7.2
+                v2.0.0
               </Button>
             </div>
           </div>
