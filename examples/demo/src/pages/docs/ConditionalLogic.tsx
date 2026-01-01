@@ -230,8 +230,6 @@ export default function ConditionalLogic() {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 font-bold text-gray-800">
                   <span className="text-amber-600">A</span>
-                  {/* Navigation */}
-                  <DocsNavigation />
                   <span>
                     {language === "ru"
                       ? "Асинхронные условия"
