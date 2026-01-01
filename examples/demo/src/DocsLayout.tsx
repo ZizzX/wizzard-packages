@@ -1,87 +1,165 @@
 import { useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { cn } from "./lib/utils";
-import { VersionProvider } from "./context/DocVersionContext";
-import {
-  useDocVersion,
-  type DocVersion,
-} from "./context/DocVersionContextLogic";
+import { useDocVersion, type DocVersion } from "./context/VersionContext";
+import { useTranslation } from "./context/LanguageContext";
 
-const sidebarItems = [
-  {
-    title: "Getting Started",
-    items: [
-      { id: "introduction", label: "Introduction", path: "/docs/introduction" },
-      { id: "installation", label: "Installation", path: "/docs/installation" },
-      { id: "migration", label: "Migration Guide 🚀", path: "/docs/migration" },
-      { id: "quickstart", label: "Quick Start", path: "/docs/quickstart" },
-    ],
-  },
-  {
-    title: "Core Concepts",
-    items: [
-      { id: "concepts", label: "Overview & Factory", path: "/docs/concepts" },
-      { id: "hooks", label: "Hooks API", path: "/docs/hooks" },
-      { id: "types", label: "Type Reference", path: "/docs/types" },
-    ],
-  },
-  {
-    title: "Advanced",
-    items: [
-      { id: "persistence", label: "Persistence", path: "/docs/persistence" },
-      { id: "validation", label: "Validation", path: "/docs/validation" },
-      {
-        id: "conditional",
-        label: "Conditional Flow",
-        path: "/docs/conditional-logic",
-      },
-      {
-        id: "middleware",
-        label: "Middleware & DevTools",
-        path: "/docs/middleware",
-      },
-      { id: "routing", label: "Routing & URL", path: "/docs/routing" },
-      { id: "rendering", label: "Step Rendering", path: "/docs/rendering" },
-      {
-        id: "deferred",
-        label: "Deferred Rendering",
-        path: "/docs/deferred-rendering",
-      },
-      {
-        id: "enterprise",
-        label: "Enterprise Guide",
-        path: "/docs/enterprise",
-      },
-      { id: "performance", label: "Performance", path: "/docs/performance" },
-      { id: "security", label: "Security & Integrity", path: "/docs/security" },
-    ],
-  },
-  {
-    title: "Integrations",
-    items: [
-      { id: "rhf", label: "React Hook Form", path: "/docs/rhf" },
-      { id: "formik", label: "Formik", path: "/docs/formik" },
-      { id: "mantine", label: "Mantine Form", path: "/docs/mantine" },
-      { id: "tanstack", label: "TanStack Form", path: "/docs/tanstack" },
-      { id: "valibot", label: "Valibot", path: "/docs/valibot" },
-    ],
-  },
-];
+// Function to filter items based on version
+const getSidebarItems = (t: (key: string) => string, version: DocVersion) => {
+  const allItems = [
+    {
+      title: t("sidebar.getting_started"),
+      items: [
+        {
+          id: "introduction",
+          label: t("item.introduction"),
+          path: "/docs/introduction",
+        },
+        {
+          id: "installation",
+          label: t("item.installation"),
+          path: "/docs/installation",
+        },
+        {
+          id: "migration",
+          label: t("item.migration"),
+          path: "/docs/migration",
+        },
+        {
+          id: "quickstart",
+          label: t("item.quickstart"),
+          path: "/docs/quickstart",
+        },
+      ],
+    },
+    {
+      title: t("sidebar.core_concepts"),
+      items: [
+        { id: "concepts", label: t("item.concepts"), path: "/docs/concepts" },
+        { id: "hooks", label: t("item.hooks"), path: "/docs/hooks" },
+        { id: "types", label: t("item.types"), path: "/docs/types" },
+      ],
+    },
+    {
+      title: t("sidebar.advanced"),
+      items: [
+        {
+          id: "persistence",
+          label: t("item.persistence"),
+          path: "/docs/persistence",
+        },
+        {
+          id: "validation",
+          label: t("item.validation"),
+          path: "/docs/validation",
+        },
+        {
+          id: "conditional",
+          label: t("item.conditional"),
+          path: "/docs/conditional-logic",
+        },
+        {
+          id: "middleware",
+          label: t("item.middleware"),
+          path: "/docs/middleware",
+          minVersion: "2.0.0", // Only for v2.0.0
+        },
+        { id: "routing", label: t("item.routing"), path: "/docs/routing" },
+        {
+          id: "rendering",
+          label: t("item.rendering"),
+          path: "/docs/rendering",
+        },
+        {
+          id: "deferred",
+          label: t("item.deferred"),
+          path: "/docs/deferred-rendering",
+        },
+        {
+          id: "enterprise",
+          label: t("item.enterprise"),
+          path: "/docs/enterprise",
+          minVersion: "2.0.0", // Only for v2.0.0
+        },
+        {
+          id: "performance",
+          label: t("item.performance"),
+          path: "/docs/performance",
+        },
+        { id: "security", label: t("item.security"), path: "/docs/security" },
+      ],
+    },
+    {
+      title: t("sidebar.integrations"),
+      items: [
+        {
+          id: "rhf",
+          label: t("item.rhf") || "React Hook Form",
+          path: "/docs/rhf",
+        },
+        {
+          id: "formik",
+          label: t("item.formik") || "Formik",
+          path: "/docs/formik",
+        },
+        {
+          id: "mantine",
+          label: t("item.mantine") || "Mantine Form",
+          path: "/docs/mantine",
+        },
+        {
+          id: "tanstack",
+          label: t("item.tanstack") || "TanStack Form",
+          path: "/docs/tanstack",
+        },
+        {
+          id: "valibot",
+          label: t("item.valibot") || "Valibot",
+          path: "/docs/valibot",
+        },
+      ],
+    },
+  ] as SidebarGroup[];
+
+  // Filter out items that don't match the current version
+  return allItems.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => {
+      // If item requires 2.0.0 but we are on 1.7.2, hide it
+      if (item.minVersion === "2.0.0" && version === "1.7.2") {
+        return false;
+      }
+      return true;
+    }),
+  }));
+};
 
 export default function DocsLayout() {
-  return (
-    <VersionProvider>
-      <DocsLayoutContent />
-    </VersionProvider>
-  );
+  const { t } = useTranslation();
+  const { version } = useDocVersion();
+  const sidebarItems = getSidebarItems(t, version);
+
+  return <DocsLayoutContent sidebarItems={sidebarItems} />;
 }
 
-function DocsLayoutContent() {
+interface SidebarItem {
+  id: string;
+  label: string;
+  path: string;
+  minVersion?: DocVersion;
+}
+
+interface SidebarGroup {
+  title: string;
+  items: SidebarItem[];
+}
+
+function DocsLayoutContent({ sidebarItems }: { sidebarItems: SidebarGroup[] }) {
+  const { t } = useTranslation();
   const location = useLocation();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const { version, setVersion } = useDocVersion();
 
-  // Close sidebar when route changes on mobile
   // Close sidebar when route changes on mobile
   // Uses state-during-render pattern to safely handle navigation resets
   const [prevPath, setPrevPath] = useState(location.pathname);
@@ -119,7 +197,7 @@ function DocsLayoutContent() {
               />
             </svg>
             <span className="text-xs font-bold uppercase tracking-wider">
-              Docs Menu
+              {t("ui.menu")}
             </span>
           </button>
         </div>
@@ -153,7 +231,7 @@ function DocsLayoutContent() {
           {/* Mobile Close Button */}
           <div className="flex items-center justify-between md:hidden mb-8 border-b border-gray-50 pb-4">
             <span className="text-sm font-black text-indigo-600 uppercase tracking-widest">
-              Navigation
+              {t("ui.navigation")}
             </span>
             <button
               onClick={() => setSidebarOpen(false)}
@@ -178,7 +256,7 @@ function DocsLayoutContent() {
           {/* Version Selector */}
           <div className="mb-8 px-2">
             <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
-              Documentation Version
+              {t("ui.version")}
             </label>
             <select
               value={version}
@@ -186,7 +264,7 @@ function DocsLayoutContent() {
               className="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-2 text-sm font-medium text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer"
             >
               <option value="2.0.0">v2.0.0 (Modern)</option>
-              <option value="1.x.x">v1.x.x (Legacy)</option>
+              <option value="1.7.2">v1.7.2 (Legacy)</option>
             </select>
             <p className="mt-2 text-[10px] text-gray-400 leading-relaxed italic">
               {version === "2.0.0"
@@ -201,7 +279,7 @@ function DocsLayoutContent() {
                 {group.title}
               </h4>
               <div className="flex flex-col space-y-1">
-                {group.items.map((item) => {
+                {group.items.map((item: SidebarItem) => {
                   const isActive = location.pathname === item.path;
                   return (
                     <Link

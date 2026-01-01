@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import Layout from "./Layout";
 import DocsLayout from "./DocsLayout";
+import { VersionProvider } from "./context/VersionContext";
 import Home from "./pages/Home";
 import Examples from "./pages/Examples";
 import SimpleWizard from "./pages/SimpleWizard";
@@ -38,64 +39,74 @@ import MantineDocs from "./pages/docs/MantineForm";
 import TanStackDocs from "./pages/docs/TanStackForm";
 import ValibotDocs from "./pages/docs/Valibot";
 
+import { LanguageProvider } from "./context/LanguageContext";
+
 function App() {
   return (
-    <>
-      <ScrollToTop />
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="examples" element={<Examples />} />
+    <LanguageProvider>
+      <VersionProvider>
+        <ScrollToTop />
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="examples" element={<Examples />} />
 
-          {/* Flat paths for examples (backward compatibility/legacy support) */}
-          <Route path="simple" element={<SimpleWizard />} />
-          <Route path="legacy" element={<LegacyWizard />} />
-          <Route path="rhf-zod" element={<RHFZodWizard />} />
-          <Route path="formik-yup" element={<FormikYupWizard />} />
-          <Route path="conditional" element={<ConditionalWizard />} />
-          <Route path="complex" element={<ComplexDataWizard />} />
-          <Route path="advanced" element={<AdvancedDemo />} />
-          <Route path="enterprise-wizard" element={<EnterpriseWizardDemo />} />
-          <Route path="middleware-demo" element={<MiddlewareDemo />} />
+            {/* Flat paths for examples (backward compatibility/legacy support) */}
+            <Route path="simple" element={<SimpleWizard />} />
+            <Route path="legacy" element={<LegacyWizard />} />
+            <Route path="rhf-zod" element={<RHFZodWizard />} />
+            <Route path="formik-yup" element={<FormikYupWizard />} />
+            <Route path="conditional" element={<ConditionalWizard />} />
+            <Route path="complex" element={<ComplexDataWizard />} />
+            <Route path="advanced" element={<AdvancedDemo />} />
+            <Route
+              path="enterprise-wizard"
+              element={<EnterpriseWizardDemo />}
+            />
+            <Route path="middleware-demo" element={<MiddlewareDemo />} />
 
-          {/* Documentation Section */}
-          <Route path="docs" element={<DocsLayout />}>
-            <Route index element={<Introduction />} />
-            <Route path="introduction" element={<Introduction />} />
-            <Route path="installation" element={<Installation />} />
-            <Route path="migration" element={<MigrationGuide />} />
-            <Route path="quickstart" element={<QuickStart />} />
+            {/* Documentation Section */}
+            <Route path="docs" element={<DocsLayout />}>
+              <Route index element={<Introduction />} />
+              <Route path="introduction" element={<Introduction />} />
+              <Route path="installation" element={<Installation />} />
+              <Route path="migration" element={<MigrationGuide />} />
+              <Route path="quickstart" element={<QuickStart />} />
 
-            <Route path="concepts" element={<CoreConcepts />} />
-            <Route path="hooks" element={<HooksApi />} />
-            <Route path="types" element={<TypeReference />} />
+              <Route path="concepts" element={<CoreConcepts />} />
+              <Route path="hooks" element={<HooksApi />} />
+              <Route path="types" element={<TypeReference />} />
 
-            <Route path="persistence" element={<Persistence />} />
-            <Route path="validation" element={<Validation />} />
-            <Route path="conditional-logic" element={<ConditionalLogic />} />
-            <Route path="routing" element={<RoutingDocs />} />
-            <Route path="rendering" element={<StepRendering />} />
-            <Route path="deferred-rendering" element={<DeferredRendering />} />
-            <Route path="enterprise" element={<EnterpriseFeatures />} />
-            <Route path="performance" element={<PerformanceDocs />} />
-            <Route path="middleware" element={<MiddlewareDevTools />} />
+              <Route path="persistence" element={<Persistence />} />
+              <Route path="validation" element={<Validation />} />
+              <Route path="conditional-logic" element={<ConditionalLogic />} />
+              <Route path="routing" element={<RoutingDocs />} />
+              <Route path="rendering" element={<StepRendering />} />
+              <Route
+                path="deferred-rendering"
+                element={<DeferredRendering />}
+              />
+              <Route path="enterprise" element={<EnterpriseFeatures />} />
+              <Route path="performance" element={<PerformanceDocs />} />
+              <Route path="middleware" element={<MiddlewareDevTools />} />
 
-            <Route path="rhf" element={<RHFDocs />} />
-            <Route path="formik" element={<FormikDocs />} />
-            <Route path="security" element={<SecurityDocs />} />
-            <Route path="mantine" element={<MantineDocs />} />
-            <Route path="tanstack" element={<TanStackDocs />} />
-            <Route path="valibot" element={<ValibotDocs />} />
+              <Route path="rhf" element={<RHFDocs />} />
+              <Route path="formik" element={<FormikDocs />} />
+              <Route path="security" element={<SecurityDocs />} />
+              <Route path="mantine" element={<MantineDocs />} />
+              <Route path="tanstack" element={<TanStackDocs />} />
+              <Route path="valibot" element={<ValibotDocs />} />
 
-            <Route path="factory" element={<CoreConcepts />} />
-            <Route path="steps" element={<CoreConcepts />} />
+              <Route path="factory" element={<CoreConcepts />} />
+              <Route path="steps" element={<CoreConcepts />} />
 
-            {/* Placeholders for other docs */}
-            <Route path="*" element={<Introduction />} />
+              {/* Placeholders for other docs */}
+              <Route path="*" element={<Introduction />} />
+            </Route>
           </Route>
-        </Route>
-      </Routes>
-    </>
+        </Routes>
+      </VersionProvider>
+    </LanguageProvider>
   );
 }
 

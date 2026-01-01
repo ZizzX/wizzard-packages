@@ -1,22 +1,18 @@
-import { useState, useEffect } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { cn } from "./lib/utils";
 import { Button } from "./components/ui/Button";
+import { useTranslation } from "./context/LanguageContext";
 
 export default function Layout() {
   const location = useLocation();
 
+  const { t, language, setLanguage } = useTranslation();
+
   const navItems = [
-    { path: "/", label: "Overview" },
-    { path: "/docs/introduction", label: "Documentation" },
-    { path: "/examples", label: "Examples" },
+    { path: "/", label: t("nav.overview") },
+    { path: "/docs/introduction", label: t("nav.docs") },
+    { path: "/examples", label: t("nav.examples") },
   ];
-
-  const [libVersion, setLibVersion] = useState("1.8.0");
-
-  useEffect(() => {
-    console.log(`[Wizard] Documentation version switched to ${libVersion}`);
-  }, [libVersion]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
@@ -28,7 +24,7 @@ export default function Layout() {
                 <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold group-hover:bg-indigo-700 transition-colors">
                   W
                 </div>
-                <span className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-indigo-800 bg-clip-text text-transparent">
+                <span className="text-2xl font-black bg-clip-text text-transparent bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500">
                   Wizard Stepper
                 </span>
               </Link>
@@ -61,23 +57,37 @@ export default function Layout() {
             </div>
 
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg border border-gray-200">
-                <select
-                  value={libVersion}
-                  onChange={(e) => setLibVersion(e.target.value)}
-                  className="bg-transparent text-[10px] font-bold uppercase tracking-wider px-2 py-1 outline-none cursor-pointer text-indigo-700 font-black"
+              {/* Language Switcher */}
+              <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg border border-gray-200">
+                <button
+                  onClick={() => setLanguage(language === "en" ? "ru" : "en")}
+                  className="px-3 py-1 text-[10px] font-black uppercase cursor-pointer tracking-wider rounded-md transition-all hover:bg-white hover:shadow-sm text-gray-500 hover:text-indigo-600 flex items-center gap-2 min-w-[60px] justify-center"
                 >
-                  <option value="1.8.0">v1.8.0 (Modern)</option>
-                  <option value="1.7.2">v1.7.2 (Legacy)</option>
-                </select>
+                  <span
+                    className={
+                      language === "en" ? "text-indigo-600" : "text-gray-400"
+                    }
+                  >
+                    EN
+                  </span>
+                  <span className="text-gray-300">/</span>
+                  <span
+                    className={
+                      language === "ru" ? "text-indigo-600" : "text-gray-400"
+                    }
+                  >
+                    RU
+                  </span>
+                </button>
               </div>
+
               <a
                 href="https://github.com/ZizzX/wizzard-stepper-react"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
-                <span className="sr-only">GitHub</span>
+                <span className="sr-only">{t("nav.github")}</span>
                 <svg
                   className="h-6 w-6"
                   fill="currentColor"
@@ -114,10 +124,7 @@ export default function Layout() {
 
       <footer className="bg-white border-t border-gray-200 mt-auto">
         <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-gray-500 text-sm">
-            Built with <span className="text-red-500">♥</span> using
-            wizzard-stepper-react
-          </p>
+          <p className="text-gray-500 text-sm">{t("ui.footer")}</p>
         </div>
       </footer>
     </div>

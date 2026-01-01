@@ -1,26 +1,42 @@
-import { useDocVersion } from "../../context/DocVersionContextLogic";
+import { useVersion } from "../../context/VersionContext";
 import DocsNavigation from "../../components/DocsNavigation";
 import { ProTip } from "../../components/ProTip";
+import { useTranslation } from "../../context/LanguageContext";
 
 export default function CoreConcepts() {
-  const { version } = useDocVersion();
+  const { version } = useVersion();
+  const { language } = useTranslation();
   const isV2 = version === "2.0.0";
   return (
     <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
       {/* Header */}
-      <div className="space-y-4">
-        <h1 className="text-4xl font-extrabold tracking-tight text-gray-900">
-          Core Concepts
-        </h1>
-        <p className="text-xl text-gray-600 leading-relaxed max-w-3xl">
-          Everything you need to know about the architecture and building blocks
-          of{" "}
-          <code className="text-indigo-600 bg-indigo-50 px-1 rounded">
-            wizzard-stepper-react
-          </code>
-          .
-        </p>
-      </div>
+      {language === "ru" ? (
+        <div className="space-y-4">
+          <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-6xl">
+            Основные концепции
+          </h1>
+          <p className="text-xl text-gray-600 leading-relaxed max-w-3xl">
+            Архитектура, строительные блоки и философия работы
+            <code className="text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded font-mono ml-1">
+              wizzard-stepper-react
+            </code>
+            .
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-6xl">
+            Core Concepts
+          </h1>
+          <p className="text-xl text-gray-600 leading-relaxed max-w-3xl">
+            Architecture, building blocks, and the philosophy behind
+            <code className="text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded font-mono ml-1">
+              wizzard-stepper-react
+            </code>
+            .
+          </p>
+        </div>
+      )}
 
       {/* 1. The Factory Pattern */}
       <section className="space-y-6">
@@ -29,14 +45,20 @@ export default function CoreConcepts() {
             1
           </div>
           <h2 className="text-2xl font-bold text-gray-900">
-            The Factory Pattern
+            {language === "ru"
+              ? "Паттерн Factory (Фабрика)"
+              : "The Factory Pattern"}
           </h2>
         </div>
-        <div className="prose prose-indigo max-w-none text-gray-600">
+        <div className="prose prose-indigo max-w-none text-gray-600 leading-relaxed">
           <p>
-            {isV2
-              ? "In v2.0.0, the library uses a Factory Pattern to generate fully typed hooks. This eliminates the need for manual type casting and ensures that your store, actions, and selectors are all synchronized with your data schema."
-              : "In legacy v1, you use a generic WizardProvider and useWizard hook. While simpler for small projects, it lacks the strict type inference and performance optimizations of the Factory pattern."}
+            {language === "ru"
+              ? isV2
+                ? "В версии 2.0.0 библиотека использует паттерн Factory (Фабрика) для генерации полностью типизированных хуков. Это исключает необходимость ручного приведения типов и гарантирует, что ваш стор, экшены и селекторы всегда синхронизированы со схемой данных."
+                : "В legacy-версии v1 используется стандартный WizardProvider и хук useWizard. Это проще для маленьких проектов, но лишено строгой типизации и оптимизаций производительности, доступных в v2."
+              : isV2
+                ? "In version 2.0.0, the library uses the Factory Pattern to generate fully typesafe hooks. This eliminates the need for manual type casting and ensures your store, actions, and selectors are always in sync with your data schema."
+                : "In the legacy v1 version, a standard WizardProvider and useWizard hook are used. This is simpler for small projects but lacks the strict typing and performance optimizations available in v2."}
           </p>
         </div>
         {isV2 && (
@@ -98,15 +120,33 @@ const App = () => (
             2
           </div>
           <h2 className="text-2xl font-bold text-gray-900">
-            Advanced Step Logic
+            {language === "ru" ? "Сложная логика шагов" : "Advanced Step Logic"}
           </h2>
         </div>
-        <div className="prose prose-indigo max-w-none text-gray-600">
+        <div className="prose prose-indigo max-w-none text-gray-600 leading-relaxed">
           <p>
-            Steps are more than just a list. They support{" "}
-            <strong>conditional branching</strong>,{" "}
-            <strong>custom validation</strong>, and{" "}
-            <strong>component mapping</strong>.
+            {language === "ru" ? (
+              <>
+                Шаги — это не просто список. Они поддерживают{" "}
+                <strong className="text-gray-900">условное ветвление</strong>,{" "}
+                <strong className="text-gray-900">кастомную валидацию</strong> и{" "}
+                <strong className="text-gray-900">
+                  динамическое сопоставление компонентов
+                </strong>
+                .
+              </>
+            ) : (
+              <>
+                Steps are more than just a list. They support{" "}
+                <strong className="text-gray-900">conditional branching</strong>
+                , <strong className="text-gray-900">custom validation</strong>,
+                and{" "}
+                <strong className="text-gray-900">
+                  dynamic component mapping
+                </strong>
+                .
+              </>
+            )}
           </p>
         </div>
         <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
@@ -245,27 +285,78 @@ const App = () => (
             <span className="text-emerald-400">;</span>
           </pre>
         </div>
-        <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
-          <h4 className="font-bold text-gray-900 mb-2">Conditions</h4>
-          <p className="text-sm text-gray-500 line-clamp-3">
-            Dynamic routing based on data. Supports <strong>Async</strong>{" "}
-            checks for server-side permissions or feature flags.
-          </p>
-        </div>
-        <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
-          <h4 className="font-bold text-gray-900 mb-2">Guards</h4>
-          <p className="text-sm text-gray-500 line-clamp-4">
-            Use <code className="text-xs">beforeLeave</code> to prevent
-            navigation. Ideal for unsaved changes warnings or async final
-            validations.
-          </p>
-        </div>
-        <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
-          <h4 className="font-bold text-gray-900 mb-2">Lifecycle</h4>
-          <p className="text-sm text-gray-500 line-clamp-3">
-            Use <code className="text-xs">onStepChange</code> for analytics,
-            routing, or triggering side effects.
-          </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-indigo-100 transition-colors">
+            <h4 className="font-bold text-gray-900 mb-2">
+              {language === "ru" ? "Conditions (Условия)" : "Conditions"}
+            </h4>
+            <p className="text-sm text-gray-500">
+              {language === "ru" ? (
+                <>
+                  Динамическая маршрутизация на основе данных. Поддерживает{" "}
+                  <strong className="text-indigo-600">Async</strong> проверки
+                  прав на стороне сервера или фича-флагов.
+                </>
+              ) : (
+                <>
+                  Data-driven dynamic routing. Supports{" "}
+                  <strong className="text-indigo-600">Async</strong> server-side
+                  permission checks or feature flags.
+                </>
+              )}
+            </p>
+          </div>
+          <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-indigo-100 transition-colors">
+            <h4 className="font-bold text-gray-900 mb-2">
+              {language === "ru" ? "Guards (Защита)" : "Guards"}
+            </h4>
+            <p className="text-sm text-gray-500">
+              {language === "ru" ? (
+                <>
+                  Используйте{" "}
+                  <code className="text-xs text-indigo-500 bg-indigo-50 px-1 rounded">
+                    beforeLeave
+                  </code>{" "}
+                  для блокировки перехода. Идеально для предупреждений о
+                  несохраненных данных.
+                </>
+              ) : (
+                <>
+                  Use{" "}
+                  <code className="text-xs text-indigo-500 bg-indigo-50 px-1 rounded">
+                    beforeLeave
+                  </code>{" "}
+                  to block transitions. Perfect for unsaved changes warnings.
+                </>
+              )}
+            </p>
+          </div>
+          <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-indigo-100 transition-colors">
+            <h4 className="font-bold text-gray-900 mb-2">
+              {language === "ru" ? "Lifecycle (Жизненный цикл)" : "Lifecycle"}
+            </h4>
+            <p className="text-sm text-gray-500">
+              {language === "ru" ? (
+                <>
+                  Хук{" "}
+                  <code className="text-xs text-indigo-500 bg-indigo-50 px-1 rounded">
+                    onStepChange
+                  </code>{" "}
+                  для аналитики, настройки роутинга или запуска побочных
+                  эффектов.
+                </>
+              ) : (
+                <>
+                  The{" "}
+                  <code className="text-xs text-indigo-500 bg-indigo-50 px-1 rounded">
+                    onStepChange
+                  </code>{" "}
+                  hook for analytics, routing adjustments, or triggering side
+                  effects.
+                </>
+              )}
+            </p>
+          </div>
         </div>
       </section>
 
@@ -276,15 +367,31 @@ const App = () => (
 
         <div className="relative z-10 space-y-4">
           <h2 className="text-3xl font-bold tracking-tight">
-            The Navigation Lifecycle
+            {language === "ru"
+              ? "Жизненный цикл навигации"
+              : "Navigation Lifecycle"}
           </h2>
           <p className="text-indigo-200 leading-relaxed max-w-2xl">
-            When you call{" "}
-            <code className="bg-white/10 px-1 rounded text-white font-mono">
-              goToNextStep()
-            </code>
-            , the library executes a strictly ordered "Safety Protocol" to
-            ensure state integrity and optimal network usage.
+            {language === "ru" ? (
+              <>
+                Когда вы вызываете{" "}
+                <code className="bg-white/10 px-1 rounded text-white font-mono">
+                  goToNextStep()
+                </code>
+                , библиотека запускает строго упорядоченный «Протокол
+                безопасности» для обеспечения целостности состояния и
+                оптимизации сетевого трафика.
+              </>
+            ) : (
+              <>
+                When you call{" "}
+                <code className="bg-white/10 px-1 rounded text-white font-mono">
+                  goToNextStep()
+                </code>
+                , the library triggers a strictly ordered "Security Protocol" to
+                ensure state integrity and optimize network traffic.
+              </>
+            )}
           </p>
         </div>
 
@@ -292,26 +399,42 @@ const App = () => (
           {[
             {
               id: "01",
-              title: "Validation",
-              desc: "Current step adapter runs. Navigation halts immediately if validation fails.",
+              title_ru: "Валидация",
+              title_en: "Validation",
+              desc_ru:
+                "Запускается адаптер текущего шага. Навигация немедленно прерывается, если данные неверны.",
+              desc_en:
+                "Runs the current step's adapter. Navigation is immediately aborted if data is invalid.",
               color: "bg-rose-500",
             },
             {
               id: "02",
-              title: "Condition",
-              desc: "Next step visibility is re-calculated. Async conditions are awaited.",
+              title_ru: "Условия",
+              title_en: "Conditions",
+              desc_ru:
+                "Видимость следующих шагов пересчитывается. Асинхронные условия ожидают завершения.",
+              desc_en:
+                "Re-calculates visibility for upcoming steps. Async conditions await completion.",
               color: "bg-amber-500",
             },
             {
               id: "03",
-              title: "Guards",
-              desc: "Optional beforeLeave hooks execute to allow or block the exit.",
+              title_ru: "Защита",
+              title_en: "Guards",
+              desc_ru:
+                "Выполняются хуки beforeLeave, которые могут разрешить или заблокировать выход из шага.",
+              desc_en:
+                "Executes beforeLeave hooks, which can either permit or block leaving the step.",
               color: "bg-emerald-500",
             },
             {
               id: "04",
-              title: "Resolve",
-              desc: "State updates, progress recalculates, and the URL updates.",
+              title_ru: "Обновление",
+              title_en: "Update",
+              desc_ru:
+                "Стейт обновляется, прогресс пересчитывается, и, если нужно, изменяется URL.",
+              desc_en:
+                "Updates state, recalculates progress, and updates the URL if necessary.",
               color: "bg-sky-500",
             },
           ].map((item) => (
@@ -324,19 +447,31 @@ const App = () => (
               >
                 {item.id}
               </div>
-              <h4 className="font-bold text-lg">{item.title}</h4>
+              <h4 className="font-bold text-lg">
+                {language === "ru" ? item.title_ru : item.title_en}
+              </h4>
               <p className="text-xs text-indigo-100/60 leading-relaxed">
-                {item.desc}
+                {language === "ru" ? item.desc_ru : item.desc_en}
               </p>
             </div>
           ))}
         </div>
 
         <div className="relative z-10 p-4 bg-indigo-950/50 rounded-xl border border-white/5">
-          <p className="text-xs text-indigo-300 italic text-center">
-            💡 <strong>Why this order?</strong> By validating first, we prevent
-            unnecessary API calls in conditions or guards if the user's data is
-            already incorrect.
+          <p className="text-xs text-indigo-300 italic text-center leading-relaxed">
+            {language === "ru" ? (
+              <>
+                💡 <strong>Почему такой порядок?</strong> Выполняя валидацию
+                первой, мы предотвращаем ненужные API-вызовы в условиях или
+                защитных хуках, если данные пользователя уже содержат ошибки.
+              </>
+            ) : (
+              <>
+                💡 <strong>Why this order?</strong> By running validation first,
+                we prevent unnecessary API calls in conditions or guard hooks if
+                the user data already contains errors.
+              </>
+            )}
           </p>
         </div>
       </section>
@@ -348,38 +483,51 @@ const App = () => (
             3
           </div>
           <h2 className="text-2xl font-bold text-gray-900">
-            Tracking Progress
+            {language === "ru" ? "Отслеживание прогресса" : "Progress Tracking"}
           </h2>
         </div>
-        <p className="text-gray-600">
-          The wizard automatically tracks the status of every step in the flow.
-          You can use these sets to build rich sidebars, progress bars, or
-          checkmarks.
+        <p className="text-gray-600 leading-relaxed">
+          {language === "ru"
+            ? "Визард автоматически отслеживает статус каждого шага в потоке. Эти данные можно использовать для создания продвинутых сайдбаров, индикаторов прогресса или чек-листов."
+            : "The wizard automatically tracks the status of each step in the flow. This data can be used to create advanced sidebars, progress indicators, or checklists."}
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-6 bg-indigo-50 rounded-2xl border border-indigo-100">
+          <div className="p-6 bg-indigo-50 rounded-2xl border border-indigo-100 hover:shadow-lg transition-all">
             <code className="text-indigo-700 font-bold block mb-2">
               visitedSteps
             </code>
-            <p className="text-xs text-indigo-600/80">
-              Steps the user has physically landed on.
+            <p className="text-xs text-indigo-600/80 leading-relaxed">
+              {language === "ru"
+                ? "Шаги, на которые пользователь физически переходил."
+                : "Steps that the user has physically visited."}
             </p>
           </div>
-          <div className="p-6 bg-emerald-50 rounded-2xl border border-emerald-100">
+          <div className="p-6 bg-emerald-50 rounded-2xl border border-emerald-100 hover:shadow-lg transition-all">
             <code className="text-emerald-700 font-bold block mb-2">
               completedSteps
             </code>
-            <p className="text-xs text-emerald-600/80">
-              Steps successfully submitted via{" "}
-              <code className="text-xs">goToNextStep</code>.
+            <p className="text-xs text-emerald-600/80 leading-relaxed">
+              {language === "ru" ? (
+                <>
+                  Шаги, успешно пройденные через{" "}
+                  <code className="text-xs font-mono">goToNextStep</code>.
+                </>
+              ) : (
+                <>
+                  Steps successfully passed via{" "}
+                  <code className="text-xs font-mono">goToNextStep</code>.
+                </>
+              )}
             </p>
           </div>
-          <div className="p-6 bg-rose-50 rounded-2xl border border-rose-100">
+          <div className="p-6 bg-rose-50 rounded-2xl border border-rose-100 hover:shadow-lg transition-all">
             <code className="text-rose-700 font-bold block mb-2">
               errorSteps
             </code>
-            <p className="text-xs text-rose-600/80">
-              Steps with active validation errors that need attention.
+            <p className="text-xs text-rose-600/80 leading-relaxed">
+              {language === "ru"
+                ? "Шаги с активными ошибками валидации, требующие внимания."
+                : "Steps with active validation errors requiring attention."}
             </p>
           </div>
         </div>
@@ -392,29 +540,35 @@ const App = () => (
             4
           </div>
           <h2 className="text-2xl font-bold text-gray-900">
-            Data Architecture
+            {language === "ru" ? "Архитектура данных" : "Data Architecture"}
           </h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
           <div className="space-y-4">
             <p className="text-gray-600 leading-relaxed">
-              The wizard maintains a single <strong>Unified State</strong>.
-              Unlike traditional forms where each page has its own state,
-              `wizzard-stepper-react` keeps everything in one place.
+              {language === "ru"
+                ? "Визард поддерживает единое **Консолидированное состояние (Unified State)**. В отличие от традиционных форм, где каждая страница имеет свой стейт, `wizzard-stepper-react` хранит всё в одном месте."
+                : "The wizard maintains a **Unified State**. Unlike traditional forms where each page has its own state, `wizzard-stepper-react` stores everything in one place."}
             </p>
             <ul className="space-y-2">
               <li className="flex items-center gap-2 text-sm text-gray-600">
                 <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                No data lost between transitions
+                {language === "ru"
+                  ? "Никакой потери данных при переходах"
+                  : "No data loss during transitions"}
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-600">
                 <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                Cross-step validation support
+                {language === "ru"
+                  ? "Поддержка кросс-шаговой валидации"
+                  : "Cross-step validation support"}
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-600">
                 <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                Dot-notation updates:{" "}
-                <code className="text-xs">
+                {language === "ru"
+                  ? "Обновление через dot-notation:"
+                  : "Updates via dot-notation:"}{" "}
+                <code className="text-xs font-mono text-indigo-600 bg-indigo-50 px-1 rounded">
                   setData('user.profile.bio', '...')
                 </code>
               </li>
@@ -467,17 +621,37 @@ const App = () => (
             5
           </div>
           <h2 className="text-2xl font-bold text-gray-900">
-            Validation Adapters
+            {language === "ru" ? "Адаптеры валидации" : "Validation Adapters"}
           </h2>
         </div>
-        <div className="prose prose-indigo max-w-none text-gray-600">
+        <div className="prose prose-indigo max-w-none text-gray-600 leading-relaxed">
           <p>
-            We are library-agnostic when it comes to validation. Whether you use{" "}
-            <strong>Zod</strong>, <strong>Yup</strong>, or{" "}
-            <strong>plain functions</strong>, it just works as long as it
-            satisfies the{" "}
-            <code className="text-indigo-600">IValidatorAdapter</code>{" "}
-            interface.
+            {language === "ru" ? (
+              <>
+                Мы придерживаемся политики библиотеки-агностика в вопросах
+                валидации. Используете ли вы{" "}
+                <strong className="text-gray-900">Zod</strong>,{" "}
+                <strong className="text-gray-900">Yup</strong> или{" "}
+                <strong className="text-gray-900">обычные функции</strong> — всё
+                будет работать, пока соблюдается интерфейс{" "}
+                <code className="text-indigo-600 font-mono bg-indigo-50 px-1 rounded">
+                  IValidatorAdapter
+                </code>
+                .
+              </>
+            ) : (
+              <>
+                We maintain a library-agnostic policy regarding validation.
+                Whether you use <strong className="text-gray-900">Zod</strong>,{" "}
+                <strong className="text-gray-900">Yup</strong>, or{" "}
+                <strong className="text-gray-900">plain functions</strong> —
+                everything will work as long as the{" "}
+                <code className="text-indigo-600 font-mono bg-indigo-50 px-1 rounded">
+                  IValidatorAdapter
+                </code>{" "}
+                interface is implemented.
+              </>
+            )}
           </p>
         </div>
         <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
@@ -538,11 +712,11 @@ const App = () => (
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-4">
-            <h4 className="font-bold flex items-center gap-2">
-              <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
+            <h4 className="font-bold flex items-center gap-2 text-gray-900">
+              <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] font-black uppercase tracking-tighter">
                 Official
               </span>
-              Standard Adapters
+              {language === "ru" ? "Стандартные адаптеры" : "Official Adapters"}
             </h4>
             <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
               <pre className="space-y-3">
@@ -562,11 +736,11 @@ const App = () => (
             </div>
           </div>
           <div className="space-y-4">
-            <h4 className="font-bold flex items-center gap-2">
-              <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
+            <h4 className="font-bold flex items-center gap-2 text-gray-900">
+              <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-[10px] font-black uppercase tracking-tighter">
                 Custom
               </span>
-              Hand-written
+              {language === "ru" ? "Ручная валидация" : "Custom Validation"}
             </h4>
             <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
               <pre className="space-y-1">
@@ -648,49 +822,75 @@ const App = () => (
             6
           </div>
           <h2 className="text-2xl font-bold text-gray-900">
-            State Persistence
+            {language === "ru"
+              ? "Сохранение состояния (Persistence)"
+              : "Persistence Strategies"}
           </h2>
         </div>
-        <div className="prose prose-indigo max-w-none text-gray-600">
+        <div className="prose prose-indigo max-w-none text-gray-600 leading-relaxed">
           <p>
-            Choose when and where to save your data. You can even mix-and-match
-            adapters (e.g., save most steps to Memory but the "Payment" step to
-            LocalStorage).
+            {language === "ru"
+              ? "Выбирайте, когда и где сохранять ваши данные. Вы даже можете комбинировать адаптеры (например, сохранять черновики в Memory, а финальный шаг оплаты — в LocalStorage)."
+              : "Choose when and where to save your data. You can even combine adapters (e.g., save drafts in Memory and the final payment step in LocalStorage)."}
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 space-y-3">
-            <h4 className="font-bold text-gray-900">Persistence Modes</h4>
+          <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 space-y-3 hover:border-amber-100 transition-colors">
+            <h4 className="font-bold text-gray-900">
+              {language === "ru"
+                ? "Режимы (Persistence Modes)"
+                : "Persistence Modes"}
+            </h4>
             <div className="space-y-2">
               <div className="flex justify-between items-center text-sm">
-                <code className="text-indigo-600">onStepChange</code>
-                <span className="text-gray-400">Save after navigating</span>
+                <code className="text-indigo-600 font-mono">onStepChange</code>
+                <span className="text-gray-400">
+                  {language === "ru" ? "После смены шага" : "After step change"}
+                </span>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <code className="text-indigo-600">onChange</code>
-                <span className="text-gray-400">Save every keystroke</span>
+                <code className="text-indigo-600 font-mono">onChange</code>
+                <span className="text-gray-400">
+                  {language === "ru"
+                    ? "На каждое нажатие клавиши"
+                    : "On every keystroke"}
+                </span>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <code className="text-indigo-600">manual</code>
-                <span className="text-gray-400">Call save() manually</span>
+                <code className="text-indigo-600 font-mono">manual</code>
+                <span className="text-gray-400">
+                  {language === "ru"
+                    ? "Ручной вызов save()"
+                    : "Manual save() call"}
+                </span>
               </div>
             </div>
           </div>
-          <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 space-y-3">
-            <h4 className="font-bold text-gray-900">Adapters</h4>
+          <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 space-y-3 hover:border-amber-100 transition-colors">
+            <h4 className="font-bold text-gray-900">
+              {language === "ru" ? "Адаптеры" : "Adapters"}
+            </h4>
             <div className="space-y-2 text-sm text-gray-500">
               <div className="flex items-center gap-2">
-                <div className="w-1 h-1 rounded-full bg-amber-500" />
-                <strong>LocalStorageAdapter</strong>: Persistent between
-                sessions.
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                <strong>LocalStorageAdapter</strong>:{" "}
+                {language === "ru"
+                  ? "Сохранение между сессиями."
+                  : "Persists between sessions."}
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-1 h-1 rounded-full bg-amber-500" />
-                <strong>MemoryAdapter</strong>: Volatile, great for testing.
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                <strong>MemoryAdapter</strong>:{" "}
+                {language === "ru"
+                  ? "Временное, отлично для тестов."
+                  : "Temporary, great for testing."}
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-1 h-1 rounded-full bg-amber-500" />
-                <strong>CustomAdapter</strong>: Hook into APIs or DBs.
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                <strong>CustomAdapter</strong>:{" "}
+                {language === "ru"
+                  ? "Привязка к API или БД."
+                  : "Link to API or database."}
               </div>
             </div>
           </div>
@@ -699,15 +899,33 @@ const App = () => (
         {/* Custom Persistence Adapter Implementation */}
         <div className="space-y-4 pt-4">
           <h4 className="font-bold text-gray-900 flex items-center gap-2">
-            <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-xs">
+            <span className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-[10px] font-black uppercase tracking-tighter">
               Custom
             </span>
-            Building a Persistence Adapter
+            {language === "ru"
+              ? "Создание адаптера персистентности"
+              : "Creating a Persistence Adapter"}
           </h4>
-          <p className="text-sm text-gray-600">
-            To build a custom adapter (e.g., for Firebase or Redis), implement
-            the <code className="text-indigo-600">IPersistenceAdapter</code>{" "}
-            interface.
+          <p className="text-sm text-gray-600 leading-relaxed">
+            {language === "ru" ? (
+              <>
+                Чтобы создать кастомный адаптер (например, для Firebase или
+                Redis), реализуйте интерфейс
+                <code className="text-indigo-600 font-mono bg-indigo-50 px-1 rounded ml-1">
+                  IPersistenceAdapter
+                </code>
+                .
+              </>
+            ) : (
+              <>
+                To create a custom adapter (e.g., for Firebase or Redis),
+                implement the
+                <code className="text-indigo-600 font-mono bg-indigo-50 px-1 rounded ml-1">
+                  IPersistenceAdapter
+                </code>
+                interface.
+              </>
+            )}
           </p>
           <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
             <pre className="space-y-1">
@@ -811,14 +1029,16 @@ const App = () => (
             7
           </div>
           <h2 className="text-2xl font-bold text-gray-900">
-            Hydration & Entry Points
+            {language === "ru"
+              ? "Гидратация и входные точки"
+              : "Hydration & Entry Points"}
           </h2>
         </div>
-        <div className="prose prose-indigo max-w-none text-gray-600">
+        <div className="prose prose-indigo max-w-none text-gray-600 leading-relaxed">
           <p>
-            You can seed the wizard with data from your API or start users at a
-            specific step. This is essential for "Edit" flows or "Save & Resume"
-            features.
+            {language === "ru"
+              ? "Вы можете инициализировать визард данными из API или отправить пользователя сразу на конкретный шаг. Это критически важно для сценариев редактирования или функций «Продолжить позже»."
+              : 'You can initialize the wizard with data from an API or send the user directly to a specific step. This is critical for edit scenarios or "Continue later" features.'}
           </p>
         </div>
         <div className="bg-gray-950 rounded-2xl p-8 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
@@ -863,16 +1083,38 @@ const App = () => (
           </pre>
         </div>
         <ProTip>
-          When using <code className="text-xs">initialStepId</code>, the wizard
-          is smart enough to still run conditions for previous steps to ensure
-          the state remains consistent.
+          {language === "ru" ? (
+            <>
+              При использовании{" "}
+              <code className="text-xs text-indigo-500 font-mono">
+                initialStepId
+              </code>{" "}
+              визард достаточно умен, чтобы всё равно проверить условия для
+              предыдущих шагов, гарантируя целостность состояния.
+            </>
+          ) : (
+            <>
+              When using{" "}
+              <code className="text-xs text-indigo-500 font-mono">
+                initialStepId
+              </code>
+              , the wizard is smart enough to still check conditions for
+              previous steps, ensuring state integrity.
+            </>
+          )}
         </ProTip>
       </section>
 
       {/* Navigation */}
       <DocsNavigation
-        prev={{ label: "Quick Start", href: "/docs/quickstart" }}
-        next={{ label: "Hooks API", href: "/docs/hooks" }}
+        prev={{
+          label: language === "ru" ? "Быстрый старт" : "Quick Start",
+          href: "/docs/quickstart",
+        }}
+        next={{
+          label: language === "ru" ? "API Хуков" : "Hooks API",
+          href: "/docs/hooks",
+        }}
       />
     </div>
   );

@@ -1,17 +1,22 @@
 import DocsNavigation from "../../components/DocsNavigation";
+import { useTranslation } from "../../context/LanguageContext";
+import { useDocVersion } from "../../context/VersionContext";
 
 export default function TypeReference() {
+  const { language } = useTranslation();
+  const { version } = useDocVersion();
   return (
     <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
       {/* Header */}
       <div className="space-y-4">
         <h1 className="text-4xl font-extrabold tracking-tight text-gray-900">
-          Type Reference
+          {language === "ru" ? "Типизация" : "Type Reference"}
         </h1>
         <p className="text-xl text-gray-600 leading-relaxed">
-          Comprehensive API reference for all TypeScript interfaces and types
-          used in <code className="text-indigo-600">wizzard-stepper-react</code>
-          .
+          {language === "ru"
+            ? "Полный справочник по API для всех интерфейсов и типов TypeScript, используемых в "
+            : "Comprehensive API reference for all TypeScript interfaces and types used in "}
+          <code className="text-indigo-600">wizzard-stepper-react</code>.
         </p>
       </div>
 
@@ -24,8 +29,9 @@ export default function TypeReference() {
           <h2 className="text-2xl font-bold text-gray-900">IWizardContext</h2>
         </div>
         <p className="text-gray-600 max-w-3xl">
-          The internal state shape managed by the Wizard Provider. This is what
-          you interact with via hooks.
+          {language === "ru"
+            ? "Внутреннее состояние, управляемое Wizard Provider. Это то, с чем вы взаимодействуете через хуки."
+            : "The internal state shape managed by the Wizard Provider. This is what you interact with via hooks."}
         </p>
         <div className="bg-gray-950 rounded-2xl p-8 font-mono text-xs overflow-x-auto shadow-2xl ring-1 ring-white/10">
           <pre className="space-y-2 text-gray-400">
@@ -83,53 +89,57 @@ export default function TypeReference() {
                 // True during storage hydration
               </span>
             </div>
-            <div className="pl-4">
-              <span className="text-indigo-400">isBusy</span>
-              <span className="text-emerald-400">:</span>{" "}
-              <span className="text-rose-400">boolean</span>
-              <span className="text-emerald-400">;</span>{" "}
-              <span className="text-gray-500">
-                // 🆕 True if any async operation is in progress
-              </span>
-            </div>
-            <div className="pl-4">
-              <span className="text-indigo-400">busySteps</span>
-              <span className="text-emerald-400">:</span>{" "}
-              <span className="text-amber-400">Set</span>
-              <span className="text-emerald-400">&lt;</span>
-              <span className="text-rose-400">string</span>
-              <span className="text-emerald-400">&gt;;</span>{" "}
-              <span className="text-gray-500">
-                // 🆕 IDs of steps currently running async logic
-              </span>
-            </div>
-            <div className="pl-4">
-              <span className="text-indigo-400">progress</span>
-              <span className="text-emerald-400">:</span>{" "}
-              <span className="text-rose-400">number</span>
-              <span className="text-emerald-400">;</span>{" "}
-              <span className="text-gray-500">
-                // 🆕 Auto-calculated 0-100%
-              </span>
-            </div>
-            <div className="pl-4">
-              <span className="text-indigo-400">activeStepsCount</span>
-              <span className="text-emerald-400">:</span>{" "}
-              <span className="text-rose-400">number</span>
-              <span className="text-emerald-400">;</span>{" "}
-              <span className="text-gray-500">
-                // 🆕 Length of visible steps array
-              </span>
-            </div>
-            <div className="pl-4">
-              <span className="text-indigo-400">history</span>
-              <span className="text-emerald-400">:</span>{" "}
-              <span className="text-rose-400">string</span>
-              <span className="text-emerald-400">[];</span>{" "}
-              <span className="text-gray-500">
-                // 🆕 Array of visited step IDs (navigation path)
-              </span>
-            </div>
+            {version === "2.0.0" && (
+              <>
+                <div className="pl-4">
+                  <span className="text-indigo-400">isBusy</span>
+                  <span className="text-emerald-400">:</span>{" "}
+                  <span className="text-rose-400">boolean</span>
+                  <span className="text-emerald-400">;</span>{" "}
+                  <span className="text-gray-500">
+                    // 🆕 True if any async operation is in progress
+                  </span>
+                </div>
+                <div className="pl-4">
+                  <span className="text-indigo-400">busySteps</span>
+                  <span className="text-emerald-400">:</span>{" "}
+                  <span className="text-amber-400">Set</span>
+                  <span className="text-emerald-400">&lt;</span>
+                  <span className="text-rose-400">string</span>
+                  <span className="text-emerald-400">&gt;;</span>{" "}
+                  <span className="text-gray-500">
+                    // 🆕 IDs of steps currently running async logic
+                  </span>
+                </div>
+                <div className="pl-4">
+                  <span className="text-indigo-400">progress</span>
+                  <span className="text-emerald-400">:</span>{" "}
+                  <span className="text-rose-400">number</span>
+                  <span className="text-emerald-400">;</span>{" "}
+                  <span className="text-gray-500">
+                    // 🆕 Auto-calculated 0-100%
+                  </span>
+                </div>
+                <div className="pl-4">
+                  <span className="text-indigo-400">activeStepsCount</span>
+                  <span className="text-emerald-400">:</span>{" "}
+                  <span className="text-rose-400">number</span>
+                  <span className="text-emerald-400">;</span>{" "}
+                  <span className="text-gray-500">
+                    // 🆕 Length of visible steps array
+                  </span>
+                </div>
+                <div className="pl-4">
+                  <span className="text-indigo-400">history</span>
+                  <span className="text-emerald-400">:</span>{" "}
+                  <span className="text-rose-400">string</span>
+                  <span className="text-emerald-400">[];</span>{" "}
+                  <span className="text-gray-500">
+                    // 🆕 Array of visited step IDs (navigation path)
+                  </span>
+                </div>
+              </>
+            )}
             <div className="pl-4">
               <span className="text-indigo-400">visitedSteps</span>
               <span className="text-emerald-400">:</span>{" "}
@@ -152,23 +162,25 @@ export default function TypeReference() {
                 // IDs of steps that passed validation
               </span>
             </div>
-            <div className="pl-4">
-              <span className="text-indigo-400">allErrors</span>
-              <span className="text-emerald-400">:</span>{" "}
-              <span className="text-amber-400">Record</span>
-              <span className="text-emerald-400">&lt;</span>
-              <span className="text-rose-400">string</span>
-              <span className="text-emerald-400">,</span>{" "}
-              <span className="text-amber-400">Record</span>
-              <span className="text-emerald-400">&lt;</span>
-              <span className="text-rose-400">string</span>
-              <span className="text-emerald-400">,</span>{" "}
-              <span className="text-rose-400">string</span>
-              <span className="text-emerald-400">&gt;&gt;;</span>{" "}
-              <span className="text-gray-500">
-                // 🆕 Full error tree across all steps
-              </span>
-            </div>
+            {version === "2.0.0" && (
+              <div className="pl-4">
+                <span className="text-indigo-400">allErrors</span>
+                <span className="text-emerald-400">:</span>{" "}
+                <span className="text-amber-400">Record</span>
+                <span className="text-emerald-400">&lt;</span>
+                <span className="text-rose-400">string</span>
+                <span className="text-emerald-400">,</span>{" "}
+                <span className="text-amber-400">Record</span>
+                <span className="text-emerald-400">&lt;</span>
+                <span className="text-rose-400">string</span>
+                <span className="text-emerald-400">,</span>{" "}
+                <span className="text-rose-400">string</span>
+                <span className="text-emerald-400">&gt;&gt;;</span>{" "}
+                <span className="text-gray-500">
+                  // 🆕 Full error tree across all steps
+                </span>
+              </div>
+            )}
             <div className="text-emerald-400">{"}"}</div>
           </pre>
         </div>
@@ -183,8 +195,9 @@ export default function TypeReference() {
           <h2 className="text-2xl font-bold text-gray-900">IStepConfig</h2>
         </div>
         <p className="text-gray-600 max-w-3xl">
-          Individual step definition. Defines behaviors like visibility rules
-          and validation logic.
+          {language === "ru"
+            ? "Определение отдельного шага. Задает правила видимости, валидацию и другие параметры."
+            : "Individual step definition. Defines behaviors like visibility rules and validation logic."}
         </p>
         <div className="bg-gray-950 rounded-2xl p-8 font-mono text-xs overflow-x-auto shadow-2xl ring-1 ring-white/10">
           <pre className="space-y-2 text-gray-400">
@@ -215,56 +228,73 @@ export default function TypeReference() {
                 // Display name for breadcrumbs/indicators
               </span>
             </div>
-            <div className="pl-4">
-              <span className="text-indigo-400">condition</span>
-              <span className="text-emerald-400">?</span>
-              <span className="text-emerald-400">:</span>{" "}
-              <span className="text-emerald-400">(</span>
-              <span className="text-indigo-300">ctx</span>
-              <span className="text-emerald-400">:</span>{" "}
-              <span className="text-indigo-300">TGlobalContext</span>
-              <span className="text-emerald-400">) =&gt;</span>{" "}
-              <span className="text-rose-400">boolean</span>{" "}
-              <span className="text-purple-400">|</span>{" "}
-              <span className="text-purple-400">Promise</span>
-              <span className="text-emerald-400">&lt;</span>
-              <span className="text-rose-400">boolean</span>
-              <span className="text-emerald-400">&gt;;</span>{" "}
-              <span className="text-gray-500">// 🆕 Async supported!</span>
-            </div>
-            <div className="pl-4">
-              <span className="text-indigo-400">showWhilePending</span>
-              <span className="text-emerald-400">?</span>
-              <span className="text-emerald-400">:</span>{" "}
-              <span className="text-rose-400">boolean</span>
-              <span className="text-emerald-400">;</span>{" "}
-              <span className="text-gray-500">
-                // 🆕 Visible while condition is resolving
-              </span>
-            </div>
-            <div className="pl-4">
-              <span className="text-indigo-400">beforeLeave</span>
-              <span className="text-emerald-400">?</span>
-              <span className="text-emerald-400">:</span>{" "}
-              <span className="text-emerald-400">(</span>
-              <span className="text-indigo-300">ctx</span>
-              <span className="text-emerald-400">:</span>{" "}
-              <span className="text-indigo-300">TGlobalContext</span>
-              <span className="text-emerald-400">,</span>{" "}
-              <span className="text-indigo-300">dir</span>
-              <span className="text-emerald-400">:</span>{" "}
-              <span className="text-amber-400">'next'</span>{" "}
-              <span className="text-purple-400">|</span>{" "}
-              <span className="text-amber-400">'prev'</span>
-              <span className="text-emerald-400">) =&gt;</span>{" "}
-              <span className="text-rose-400">boolean</span>{" "}
-              <span className="text-purple-400">|</span>{" "}
-              <span className="text-purple-400">Promise</span>
-              <span className="text-emerald-400">&lt;</span>
-              <span className="text-rose-400">boolean</span>
-              <span className="text-emerald-400">&gt;;</span>{" "}
-              <span className="text-gray-500">// 🆕 Navigation Guard</span>
-            </div>
+            {version === "2.0.0" ? (
+              <>
+                <div className="pl-4">
+                  <span className="text-indigo-400">condition</span>
+                  <span className="text-emerald-400">?</span>
+                  <span className="text-emerald-400">:</span>{" "}
+                  <span className="text-emerald-400">(</span>
+                  <span className="text-indigo-300">ctx</span>
+                  <span className="text-emerald-400">:</span>{" "}
+                  <span className="text-indigo-300">TGlobalContext</span>
+                  <span className="text-emerald-400">) =&gt;</span>{" "}
+                  <span className="text-rose-400">boolean</span>{" "}
+                  <span className="text-purple-400">|</span>{" "}
+                  <span className="text-purple-400">Promise</span>
+                  <span className="text-emerald-400">&lt;</span>
+                  <span className="text-rose-400">boolean</span>
+                  <span className="text-emerald-400">&gt;;</span>{" "}
+                  <span className="text-gray-500">// 🆕 Async supported!</span>
+                </div>
+                <div className="pl-4">
+                  <span className="text-indigo-400">showWhilePending</span>
+                  <span className="text-emerald-400">?</span>
+                  <span className="text-emerald-400">:</span>{" "}
+                  <span className="text-rose-400">boolean</span>
+                  <span className="text-emerald-400">;</span>{" "}
+                  <span className="text-gray-500">
+                    // 🆕 Visible while condition is resolving
+                  </span>
+                </div>
+                <div className="pl-4">
+                  <span className="text-indigo-400">beforeLeave</span>
+                  <span className="text-emerald-400">?</span>
+                  <span className="text-emerald-400">:</span>{" "}
+                  <span className="text-emerald-400">(</span>
+                  <span className="text-indigo-300">ctx</span>
+                  <span className="text-emerald-400">:</span>{" "}
+                  <span className="text-indigo-300">TGlobalContext</span>
+                  <span className="text-emerald-400">,</span>{" "}
+                  <span className="text-indigo-300">dir</span>
+                  <span className="text-emerald-400">:</span>{" "}
+                  <span className="text-amber-400">'next'</span>{" "}
+                  <span className="text-purple-400">|</span>{" "}
+                  <span className="text-amber-400">'prev'</span>
+                  <span className="text-emerald-400">) =&gt;</span>{" "}
+                  <span className="text-rose-400">boolean</span>{" "}
+                  <span className="text-purple-400">|</span>{" "}
+                  <span className="text-purple-400">Promise</span>
+                  <span className="text-emerald-400">&lt;</span>
+                  <span className="text-rose-400">boolean</span>
+                  <span className="text-emerald-400">&gt;;</span>{" "}
+                  <span className="text-gray-500">// 🆕 Navigation Guard</span>
+                </div>
+              </>
+            ) : (
+              <div className="pl-4">
+                <span className="text-indigo-400">condition</span>
+                <span className="text-emerald-400">?</span>
+                <span className="text-emerald-400">:</span>{" "}
+                <span className="text-emerald-400">(</span>
+                <span className="text-indigo-300">ctx</span>
+                <span className="text-emerald-400">:</span>{" "}
+                <span className="text-indigo-300">TGlobalContext</span>
+                <span className="text-emerald-400">) =&gt;</span>{" "}
+                <span className="text-rose-400">boolean</span>
+                <span className="text-emerald-400">;</span>
+              </div>
+            )}
             <div className="pl-4">
               <span className="text-indigo-400">validationAdapter</span>
               <span className="text-emerald-400">?</span>
@@ -311,7 +341,9 @@ export default function TypeReference() {
           <h2 className="text-2xl font-bold text-gray-900">IWizardConfig</h2>
         </div>
         <p className="text-gray-600 max-w-3xl">
-          Global configuration for the Wizard Provider.
+          {language === "ru"
+            ? "Глобальная конфигурация для Wizard Provider."
+            : "Global configuration for the Wizard Provider."}
         </p>
         <div className="bg-gray-950 rounded-2xl p-8 font-mono text-xs overflow-x-auto shadow-2xl ring-1 ring-white/10">
           <pre className="space-y-2 text-gray-400">
@@ -365,36 +397,42 @@ export default function TypeReference() {
               <span className="text-amber-400">IPersistenceAdapter</span>
               <span className="text-emerald-400">;</span>
             </div>
-            <div className="pl-8">
-              <span className="text-indigo-400">storageKey</span>
-              <span className="text-emerald-400">?</span>
-              <span className="text-emerald-400">:</span>{" "}
-              <span className="text-rose-400">string</span>
-              <span className="text-emerald-400">;</span>{" "}
-              <span className="text-gray-500">
-                // 🆕 Prefix for adapter storage
-              </span>
-            </div>
-            <div className="pl-8">
-              <span className="text-indigo-400">debounceTime</span>
-              <span className="text-emerald-400">?</span>
-              <span className="text-emerald-400">:</span>{" "}
-              <span className="text-rose-400">number</span>
-              <span className="text-emerald-400">;</span>{" "}
-              <span className="text-gray-500">
-                // 🆕 Debounce for onChange mode
-              </span>
-            </div>
+            {version === "2.0.0" && (
+              <>
+                <div className="pl-8">
+                  <span className="text-indigo-400">storageKey</span>
+                  <span className="text-emerald-400">?</span>
+                  <span className="text-emerald-400">:</span>{" "}
+                  <span className="text-rose-400">string</span>
+                  <span className="text-emerald-400">;</span>{" "}
+                  <span className="text-gray-500">
+                    // 🆕 Prefix for adapter storage
+                  </span>
+                </div>
+                <div className="pl-8">
+                  <span className="text-indigo-400">debounceTime</span>
+                  <span className="text-emerald-400">?</span>
+                  <span className="text-emerald-400">:</span>{" "}
+                  <span className="text-rose-400">number</span>
+                  <span className="text-emerald-400">;</span>{" "}
+                  <span className="text-gray-500">
+                    // 🆕 Debounce for onChange mode
+                  </span>
+                </div>
+              </>
+            )}
             <div className="pl-4 text-emerald-400">{" }"}</div>
-            <div className="pl-4">
-              <span className="text-indigo-400">isPending</span>
-              <span className="text-emerald-400">?:</span>{" "}
-              <span className="text-rose-400">boolean</span>
-              <span className="text-emerald-400">;</span>{" "}
-              <span className="text-gray-500">
-                // 🆕 True during condition resolution
-              </span>
-            </div>
+            {version === "2.0.0" && (
+              <div className="pl-4">
+                <span className="text-indigo-400">isPending</span>
+                <span className="text-emerald-400">?:</span>{" "}
+                <span className="text-rose-400">boolean</span>
+                <span className="text-emerald-400">;</span>{" "}
+                <span className="text-gray-500">
+                  // 🆕 True during condition resolution
+                </span>
+              </div>
+            )}
             <div className="pl-4">
               <span className="text-indigo-400">onStepChange</span>
               <span className="text-emerald-400">?</span>
@@ -613,8 +651,14 @@ export default function TypeReference() {
 
       {/* Navigation */}
       <DocsNavigation
-        prev={{ label: "Hooks API", href: "/docs/hooks" }}
-        next={{ label: "Persistence", href: "/docs/persistence" }}
+        prev={{
+          label: language === "ru" ? "Hooks API" : "Hooks API",
+          path: "/docs/hooks",
+        }}
+        next={{
+          label: language === "ru" ? "Персистентность" : "Persistence",
+          path: "/docs/persistence",
+        }}
       />
     </div>
   );
