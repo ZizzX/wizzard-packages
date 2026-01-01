@@ -16,6 +16,7 @@ import MiddlewareDemo from "./pages/MiddlewareDemo";
 import Introduction from "./pages/docs/Introduction";
 import Installation from "./pages/docs/Installation";
 import QuickStart from "./pages/docs/QuickStart";
+import MigrationGuide from "./pages/docs/MigrationGuide";
 import CoreConcepts from "./pages/docs/CoreConcepts";
 import HooksApi from "./pages/docs/HooksApi";
 import TypeReference from "./pages/docs/TypeReference";
@@ -62,6 +63,7 @@ function App() {
             <Route index element={<Introduction />} />
             <Route path="introduction" element={<Introduction />} />
             <Route path="installation" element={<Installation />} />
+            <Route path="migration" element={<MigrationGuide />} />
             <Route path="quickstart" element={<QuickStart />} />
 
             <Route path="concepts" element={<CoreConcepts />} />

@@ -167,6 +167,62 @@ export default function Persistence() {
         </div>
       </section>
 
+      {/* Data Isolation Visualization */}
+      <section className="space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-rose-600 rounded-xl flex items-center justify-center text-white font-bold text-sm">
+            !
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Critical: Data Isolation
+          </h2>
+        </div>
+        <div className="p-8 bg-gray-50 rounded-3xl border border-gray-100 space-y-6">
+          <p className="text-gray-600 leading-relaxed">
+            If your application contains multiple wizards (e.g., a "Sign Up"
+            flow and a "Profile Update" flow) using the same{" "}
+            <code>LocalStorageAdapter</code>, you <strong>must</strong> isolate
+            their data storage.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm space-y-4">
+              <h4 className="font-bold text-rose-600 flex items-center gap-2">
+                ❌ Data Collision (Dangerous)
+              </h4>
+              <div className="text-[10px] font-mono bg-gray-100 p-4 rounded-lg text-gray-400">
+                LocalStorage:
+                <br />
+                - wizard_step1: "Data A"
+                <br />- wizard_step1: "Data B" // 💥 Overwrites Data A!
+              </div>
+            </div>
+            <div className="p-6 bg-white rounded-2xl border border-emerald-100 shadow-sm space-y-4">
+              <h4 className="font-bold text-emerald-600 flex items-center gap-2">
+                ✅ Isolation (Safe)
+              </h4>
+              <div className="text-[10px] font-mono bg-gray-100 p-4 rounded-lg text-gray-900">
+                LocalStorage:
+                <br />- <span className="text-emerald-600">auth_</span>
+                wizard_step1: "Data A"
+                <br />- <span className="text-emerald-600">profile_</span>
+                wizard_step1: "Data B"
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-indigo-950 rounded-2xl p-6 font-mono text-xs text-white">
+            <div className="text-indigo-400 mb-2">
+              // Recommended approach for v2
+            </div>
+            <code>
+              const adapter = new LocalStorageAdapter(
+              <span className="text-amber-400">'my_unique_prefix'</span>);
+            </code>
+          </div>
+        </div>
+      </section>
+
       {/* 3. Debouncing Saves */}
       <section className="space-y-6">
         <div className="flex items-center gap-3">

@@ -1,7 +1,10 @@
+import { useDocVersion } from "../../context/DocVersionContextLogic";
 import DocsNavigation from "../../components/DocsNavigation";
 import { ProTip } from "../../components/ProTip";
 
 export default function CoreConcepts() {
+  const { version } = useDocVersion();
+  const isV2 = version === "2.0.0";
   return (
     <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
       {/* Header */}
@@ -31,91 +34,61 @@ export default function CoreConcepts() {
         </div>
         <div className="prose prose-indigo max-w-none text-gray-600">
           <p>
-            The library uses a <strong>Factory Pattern</strong> to provide 100%
-            type safety. Instead of using generic hooks that require manual
-            casting, you create a dedicated "Wizard Kit" for your specific data
-            schema.
+            {isV2
+              ? "In v2.0.0, the library uses a Factory Pattern to generate fully typed hooks. This eliminates the need for manual type casting and ensures that your store, actions, and selectors are all synchronized with your data schema."
+              : "In legacy v1, you use a generic WizardProvider and useWizard hook. While simpler for small projects, it lacks the strict type inference and performance optimizations of the Factory pattern."}
           </p>
         </div>
-        <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
-          <pre className="space-y-1">
-            <div className="text-purple-400">
-              import <span className="text-emerald-400">{"{ "}</span>{" "}
-              <span className="text-blue-400">createWizardFactory</span>{" "}
-              <span className="text-emerald-400">{" }"}</span>{" "}
-              <span className="text-purple-400">from</span>{" "}
-              <span className="text-amber-400">'wizzard-stepper-react'</span>
-              <span className="text-emerald-400">;</span>
-            </div>
-            <div className="mt-4 text-purple-400">
-              interface <span className="text-amber-400">UserSchema</span>{" "}
-              <span className="text-emerald-400">{"{"}</span>
-            </div>
-            <div className="pl-4 text-gray-300">
-              <span className="text-indigo-400">personal</span>
-              <span className="text-emerald-400">:</span>{" "}
-              <span className="text-emerald-400">{"{ "}</span>{" "}
-              <span className="text-indigo-300">name</span>
-              <span className="text-emerald-400">:</span>{" "}
-              <span className="text-rose-400">string</span>
-              <span className="text-emerald-400">;</span>{" "}
-              <span className="text-indigo-300">age</span>
-              <span className="text-emerald-400">:</span>{" "}
-              <span className="text-rose-400">number</span>{" "}
-              <span className="text-emerald-400">{" };"}</span>
-            </div>
-            <div className="pl-4 text-gray-300">
-              <span className="text-indigo-400">account</span>
-              <span className="text-emerald-400">:</span>{" "}
-              <span className="text-emerald-400">{"{ "}</span>{" "}
-              <span className="text-indigo-300">email</span>
-              <span className="text-emerald-400">:</span>{" "}
-              <span className="text-rose-400">string</span>{" "}
-              <span className="text-emerald-400">{" };"}</span>
-            </div>
-            <div className="text-emerald-400">{"}"}</div>
+        {isV2 && (
+          <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
+            {/* V2 Code Example */}
+            <pre className="space-y-1">
+              <div className="text-purple-400">
+                import <span className="text-emerald-400">{"{ "}</span>{" "}
+                <span className="text-blue-400">createWizardFactory</span>{" "}
+                <span className="text-emerald-400">{" }"}</span>{" "}
+                <span className="text-purple-400">from</span>{" "}
+                <span className="text-amber-400">'wizzard-stepper-react'</span>
+                <span className="text-emerald-400">;</span>
+              </div>
+              <div className="mt-4 text-purple-400">
+                interface <span className="text-amber-400">MySchema</span>{" "}
+                <span className="text-emerald-400">{"{ "}</span>
+                <span className="text-indigo-400">step1</span>
+                <span className="text-emerald-400">: string; {"}"}</span>
+              </div>
+              <div className="mt-4 text-gray-500">
+                // Generates perfectly typed hooks
+              </div>
+              <div className="text-purple-400">
+                export const <span className="text-emerald-400">{"{ "}</span>{" "}
+                <span className="text-indigo-400">
+                  WizardProvider, useWizard, useWizardValue
+                </span>{" "}
+                <span className="text-emerald-400">{" }"}</span>{" "}
+                <span className="text-emerald-400">=</span>{" "}
+                <span className="text-blue-400">createWizardFactory</span>
+                <span className="text-emerald-400">&lt;</span>
+                <span className="text-amber-400">MySchema</span>
+                <span className="text-emerald-400">&gt;();</span>
+              </div>
+            </pre>
+          </div>
+        )}
+        {!isV2 && (
+          <div className="bg-gray-100 rounded-2xl p-6 font-mono text-xs overflow-x-auto">
+            {/* V1 Code Example */}
+            <pre>
+              {`import { WizardProvider, useWizard } from 'wizzard-stepper-react';
 
-            <div className="mt-4 text-gray-500">
-              // Optional: Define Step IDs for strict navigation
-            </div>
-            <div className="text-purple-400">
-              type <span className="text-amber-400">MySteps</span>{" "}
-              <span className="text-emerald-400">=</span>{" "}
-              <span className="text-amber-400">'personal'</span>{" "}
-              <span className="text-emerald-400">|</span>{" "}
-              <span className="text-amber-400">'account'</span>
-              <span className="text-emerald-400">;</span>
-            </div>
-
-            <div className="mt-4 text-gray-500">
-              // Generates typed hooks and Provider
-            </div>
-            <div className="text-purple-400">
-              export const <span className="text-emerald-400">{"{ "}</span>
-            </div>
-            <div className="pl-4 text-indigo-400">
-              WizardProvider<span className="text-emerald-400">,</span>
-            </div>
-            <div className="pl-4 text-indigo-400">
-              useWizard<span className="text-emerald-400">,</span>
-            </div>
-            <div className="pl-4 text-indigo-400">
-              useWizardValue<span className="text-emerald-400">,</span>
-            </div>
-            <div className="pl-4 text-indigo-400">createStep</div>
-            <div className="text-purple-400">
-              <span className="text-emerald-400">{"}"}</span>{" "}
-              <span className="text-emerald-400">=</span>{" "}
-              <span className="text-blue-400">createWizardFactory</span>
-              <span className="text-emerald-400">&lt;</span>
-              <span className="text-amber-400">UserSchema</span>
-              <span className="text-emerald-400">,</span>{" "}
-              <span className="text-amber-400">MySteps</span>
-              <span className="text-emerald-400">&gt;()</span>
-              <span className="text-emerald-400">;</span>
-            </div>
-          </pre>
-        </div>
+const App = () => (
+  <WizardProvider>
+    <MyWizard />
+  </WizardProvider>
+);`}
+            </pre>
+          </div>
+        )}
       </section>
 
       {/* 2. Step Configuration */}

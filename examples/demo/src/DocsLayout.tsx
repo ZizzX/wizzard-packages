@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { cn } from "./lib/utils";
+import { VersionProvider } from "./context/DocVersionContext";
+import {
+  useDocVersion,
+  type DocVersion,
+} from "./context/DocVersionContextLogic";
 
 const sidebarItems = [
   {
@@ -8,6 +13,7 @@ const sidebarItems = [
     items: [
       { id: "introduction", label: "Introduction", path: "/docs/introduction" },
       { id: "installation", label: "Installation", path: "/docs/installation" },
+      { id: "migration", label: "Migration Guide 🚀", path: "/docs/migration" },
       { id: "quickstart", label: "Quick Start", path: "/docs/quickstart" },
     ],
   },
@@ -63,8 +69,17 @@ const sidebarItems = [
 ];
 
 export default function DocsLayout() {
+  return (
+    <VersionProvider>
+      <DocsLayoutContent />
+    </VersionProvider>
+  );
+}
+
+function DocsLayoutContent() {
   const location = useLocation();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const { version, setVersion } = useDocVersion();
 
   // Close sidebar when route changes on mobile
   // Close sidebar when route changes on mobile
@@ -158,6 +173,26 @@ export default function DocsLayout() {
                 />
               </svg>
             </button>
+          </div>
+
+          {/* Version Selector */}
+          <div className="mb-8 px-2">
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+              Documentation Version
+            </label>
+            <select
+              value={version}
+              onChange={(e) => setVersion(e.target.value as DocVersion)}
+              className="w-full bg-gray-50 border border-gray-100 rounded-xl px-3 py-2 text-sm font-medium text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer"
+            >
+              <option value="2.0.0">v2.0.0 (Modern)</option>
+              <option value="1.x.x">v1.x.x (Legacy)</option>
+            </select>
+            <p className="mt-2 text-[10px] text-gray-400 leading-relaxed italic">
+              {version === "2.0.0"
+                ? "Showing Store & Factory API (Recommended)"
+                : "Showing Legacy Context API"}
+            </p>
           </div>
 
           {sidebarItems.map((group) => (

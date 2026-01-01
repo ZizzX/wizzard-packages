@@ -1,14 +1,17 @@
 # Professional Evolution Guide: wizzard-stepper-react 🧙‍♂️
 
 ## 1. Modularization (Monorepo Strategy)
+
 To align with **Google/MAANG** best practices, the library should transition from a monolith to a **Monorepo** (using `pnpm workspaces` or `Turborepo`).
 
 ### Why?
+
 - **Tree-shaking**: Users only download the core logic (10kb) and and pick only the adapters they need (Zod, Yup, etc).
 - **Dependency Isolation**: The core remains dependency-free. Only `@wizzard/adapter-zod` depends on `zod`.
 - **Scalability**: New community-driven adapters or middlewares won't bloat the main package.
 
-### Recommended Structure:
+### Recommended Structure
+
 ```text
 /packages
   /core         (State engine, base types, store)
@@ -23,14 +26,17 @@ To align with **Google/MAANG** best practices, the library should transition fro
 
 ## 2. Middleware vs. Adapters
 
-### The Rule of Thumb:
+### The Rule of Thumb
+
 - **Adapters**: Use for **Data Processing & External Logic**. (e.g., "How do I validate this object?", "How do I save string to storage?"). Adapters satisfy a specific interface.
 - **Middleware**: Use for **Side Effects & Observation**. (e.g., "Log every action", "Sync state with Redux DevTools", "Block action based on global state").
 
 ### Custom Middleware (The Power of Extensibility)
+
 Yes, users **can and should** write their own middleware. It uses a standard Curried Function pattern (like Redux).
 
 **Example: Custom Analytics Middleware**
+
 ```typescript
 import { WizardMiddleware, MiddlewareAPI } from 'wizzard-stepper-react';
 
@@ -57,13 +63,16 @@ export const segmentAnalytics = (options: { writeKey: string }): WizardMiddlewar
 ---
 
 ## 3. Documentation & Demo Versioning
+
 For a professional library, never mix "New" and "Legacy" documentation in one long page.
 
-### Recommendation:
+### Recommendation
+
 1. **Docusaurus/Nextra**: Use a dedicated documentation engine that supports versioning (e.g., `/docs/v1` vs `/docs/v2`).
 2. **The "Breaking Change" Banner**: Always highlight new features that require a different setup (like `WizardStore` based context).
 
-### Demo Version Switcher:
+### Demo Version Switcher
+
 In your demo app, implement a simple state-based version toggle to show users both approaches.
 
 ```tsx
@@ -92,6 +101,7 @@ const DemoRoot = () => {
 ---
 
 ## 4. MAANG Standard Checklist
+
 How to reach the next level of engineering excellence:
 
 1.  **Strict Semantic Versioning**: Never introduce a feature that requires `as any` or property renaming (like `wizardData`) without a Major version bump.

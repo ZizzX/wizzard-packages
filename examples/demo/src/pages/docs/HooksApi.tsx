@@ -1,7 +1,10 @@
+import { useDocVersion } from "../../context/DocVersionContextLogic";
 import DocsNavigation from "../../components/DocsNavigation";
 import { ProTip } from "../../components/ProTip";
 
 export default function HooksApi() {
+  const { version } = useDocVersion();
+  const isV2 = version === "2.0.0";
   return (
     <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
       {/* 1. Header & Philosophy */}
@@ -41,9 +44,9 @@ export default function HooksApi() {
           <h2 className="text-2xl font-bold text-gray-900">useWizard</h2>
         </div>
         <p className="text-gray-600 max-w-3xl">
-          The primary entry point. Returns the full{" "}
-          <code className="text-indigo-600">IWizardContext</code>. Use this for
-          component composition where you need access to everything at once.
+          {isV2
+            ? "The primary entry point in v2.0.0. While it returns the full context, we recommend using more specific hooks like useWizardValue for data to maximize performance."
+            : "The standard way to access the wizard in v1. Returns the full context. Note that every state change will trigger a re-render of components using this hook."}
         </p>
 
         <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs overflow-x-auto shadow-xl ring-1 ring-white/10">
@@ -77,108 +80,79 @@ export default function HooksApi() {
         </div>
       </section>
 
-      {/* 3. Performance Hooks: useWizardValue & useWizardSelector */}
-      <section className="space-y-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-bold">
-            2
+      {isV2 && (
+        <section className="space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-bold">
+              2
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Atomic Subscriptions (v2 Only)
+            </h2>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">
-            Atomic Subscriptions
-          </h2>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="space-y-4">
-            <h3 className="font-bold text-gray-800 flex items-center gap-2">
-              <span className="text-emerald-600 text-lg">#</span> useWizardValue
-            </h3>
-            <p className="text-sm text-gray-600">
-              Subscribe to a deeply nested path. The component only re-renders
-              when the specific value at that path changes. Uses dot-notation
-              strings.
-            </p>
-            <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs shadow-lg ring-1 ring-white/10 overflow-x-auto">
-              <pre className="space-y-1">
-                <div className="text-gray-500">
-                  // Subscribe to specific data slice
-                </div>
-                <div>
-                  <span className="text-purple-400">const</span>{" "}
-                  <span className="text-indigo-300">name</span>{" "}
-                  <span className="text-emerald-400">=</span>{" "}
-                  <span className="text-blue-400">useWizardValue</span>
-                  <span className="text-emerald-400">(</span>
-                  <span className="text-amber-400">'user.name'</span>
-                  <span className="text-emerald-400">, {"{ "}</span>
-                  <span className="text-indigo-400">isEqual</span>
-                  <span className="text-emerald-400">:</span>{" "}
-                  <span className="text-indigo-300">shallowEqual</span>
-                  <span className="text-emerald-400"> {"}"}</span>
-                  <span className="text-emerald-400">);</span>
-                </div>
-                <div className="text-gray-500">
-                  // Type-safe return based on schema path
-                </div>
-              </pre>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                <span className="text-emerald-600 text-lg">#</span>{" "}
+                useWizardValue
+              </h3>
+              <p className="text-sm text-gray-600">
+                Subscribe to a deeply nested path. The component only re-renders
+                when the specific value at that path changes. Uses dot-notation
+                strings.
+              </p>
+              <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs shadow-lg ring-1 ring-white/10 overflow-x-auto">
+                <pre className="space-y-1">
+                  <div className="text-gray-500">
+                    // Subscribe to specific data slice
+                  </div>
+                  <div>
+                    <span className="text-purple-400">const</span>{" "}
+                    <span className="text-indigo-300">name</span>{" "}
+                    <span className="text-emerald-400">=</span>{" "}
+                    <span className="text-blue-400">useWizardValue</span>
+                    <span className="text-emerald-400">(</span>
+                    <span className="text-amber-400">'user.name'</span>
+                    <span className="text-emerald-400">);</span>
+                  </div>
+                </pre>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                <span className="text-emerald-600 text-lg">#</span>{" "}
+                useWizardSelector
+              </h3>
+              <p className="text-sm text-gray-600">
+                Redux-style selector. Provide a pure function to derive data.
+                Component re-renders only if the selector's return value
+                changes.
+              </p>
+              <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs shadow-lg ring-1 ring-white/10 overflow-x-auto">
+                <pre className="space-y-1">
+                  <div>
+                    <span className="text-purple-400">const</span>{" "}
+                    <span className="text-indigo-300">count</span>{" "}
+                    <span className="text-emerald-400">=</span>{" "}
+                    <span className="text-blue-400">useWizardSelector</span>
+                    <span className="text-emerald-400">(</span>
+                    <span className="text-indigo-300">s</span>{" "}
+                    <span className="text-emerald-400">=&gt;</span>{" "}
+                    <span className="text-indigo-300">s</span>
+                    <span className="text-emerald-400">.</span>
+                    <span className="text-indigo-300">wizardData</span>
+                    <span className="text-emerald-400">.</span>
+                    <span className="text-indigo-300">items</span>
+                    <span className="text-emerald-400">.</span>
+                    <span className="text-indigo-300">length</span>
+                    <span className="text-emerald-400">);</span>
+                  </div>
+                </pre>
+              </div>
             </div>
           </div>
-          <div className="space-y-4">
-            <h3 className="font-bold text-gray-800 flex items-center gap-2">
-              <span className="text-emerald-600 text-lg">#</span>{" "}
-              useWizardSelector
-            </h3>
-            <p className="text-sm text-gray-600">
-              Redux-style selector. Provide a pure function to derive data.
-              Component re-renders only if the selector's return value changes.
-            </p>
-            <div className="bg-gray-950 rounded-2xl p-6 font-mono text-xs shadow-lg ring-1 ring-white/10 overflow-x-auto">
-              <pre className="space-y-1">
-                <div className="text-gray-500">
-                  // Derive and transform data
-                </div>
-                <div>
-                  <span className="text-purple-400">const</span>{" "}
-                  <span className="text-indigo-300">ids</span>{" "}
-                  <span className="text-emerald-400">=</span>{" "}
-                  <span className="text-blue-400">useWizardSelector</span>
-                  <span className="text-emerald-400">(</span>
-                </div>
-                <div className="pl-4">
-                  <span className="text-indigo-300">s</span>{" "}
-                  <span className="text-emerald-400">=&gt;</span>{" "}
-                  <span className="text-indigo-300">s</span>
-                  <span className="text-emerald-400">.</span>
-                  <span className="text-indigo-300">wizardData</span>
-                  <span className="text-emerald-400">.</span>
-                  <span className="text-indigo-300">items</span>
-                  <span className="text-emerald-400">.</span>
-                  <span className="text-blue-400">map</span>
-                  <span className="text-emerald-400">(</span>
-                  <span className="text-indigo-300">i</span>{" "}
-                  <span className="text-emerald-400">=&gt;</span>{" "}
-                  <span className="text-indigo-300">i</span>
-                  <span className="text-emerald-400">.</span>
-                  <span className="text-indigo-300">id</span>
-                  <span className="text-emerald-400">),</span>
-                </div>
-                <div className="pl-4">
-                  <span className="text-emerald-400">{"{ "}</span>
-                  <span className="text-indigo-400">isEqual</span>
-                  <span className="text-emerald-400">:</span>{" "}
-                  <span className="text-indigo-300">shallowEqual</span>
-                  <span className="text-emerald-400"> {"}"}</span>
-                </div>
-                <div>
-                  <span className="text-emerald-400">);</span>
-                </div>
-                <div className="text-gray-500 pt-2">
-                  // Custom equality prevents re-renders on new array instances
-                </div>
-              </pre>
-            </div>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* 4. Logic Hooks: useWizardActions */}
       <section className="space-y-6">
