@@ -1,5 +1,30 @@
 # Changelog
 
+# [1.8.0](https://github.com/ZizzX/wizzard-stepper-react/compare/v1.7.2...v1.8.0) (2026-01-01)
+
+
+### Features
+
+* add `useWizardActions` and optional `MySteps` type parameter ([6a3a15c](https://github.com/ZizzX/wizzard-stepper-react/commit/6a3a15c6209516c2efdc5e03683759c500485bc2))
+* add async step conditions and `beforeLeave` guards, ([ee8ff07](https://github.com/ZizzX/wizzard-stepper-react/commit/ee8ff07267c0c8764324819f5442f4c020b22a9a))
+* add documentation ([96d3bef](https://github.com/ZizzX/wizzard-stepper-react/commit/96d3bef7063112c30fb6ce4557d378d6465cfe6a))
+* add Enterprise Guide documentation and demo ([cb74746](https://github.com/ZizzX/wizzard-stepper-react/commit/cb747460d86e52ca7f70b59530ed81994d8c4b69))
+* add i18n support and refactor documentation ([76593e5](https://github.com/ZizzX/wizzard-stepper-react/commit/76593e532a8a7ecdd0a7691b413bca3d16ccba9c))
+* allow `update` to track multiple changed paths ([e43e398](https://github.com/ZizzX/wizzard-stepper-react/commit/e43e398d4ed779a61569d7348345e0197de4158a))
+* document v2.0.0 release with breaking changes and new features ([d8379e6](https://github.com/ZizzX/wizzard-stepper-react/commit/d8379e6bb86e20113f4fa11a2ba2d802c1e62fa5))
+* enhance WizardStore with combined state for improved selector access ([5689d48](https://github.com/ZizzX/wizzard-stepper-react/commit/5689d480c04c2e6d8f291ad4f839e8e98573ff19))
+* enterprise Cloud Wizard demo, update its routing ([6784e2e](https://github.com/ZizzX/wizzard-stepper-react/commit/6784e2e0f6aae508e3dde8ffefbafeecd910f295))
+* implement dynamic documentation navigation and add a new docs configuration ([a42c09b](https://github.com/ZizzX/wizzard-stepper-react/commit/a42c09b0bd69a156f527e2f0f0937f153b9cd1bd))
+* implement dynamic version injection for build and demo applications ([48788ba](https://github.com/ZizzX/wizzard-stepper-react/commit/48788ba91cad0e93dd9a5082a021334607073105))
+* introduce `clearData` option for steps to automatically reset data when dependencies change ([9e39f55](https://github.com/ZizzX/wizzard-stepper-react/commit/9e39f55b002aef6932005cbe635021dde853a63e))
+* introduce Pro Package components ([80994fa](https://github.com/ZizzX/wizzard-stepper-react/commit/80994faa99da7674266ebf4caa76b03a6bb8b0d4))
+* introduce typed wizard events with automatic tracking ([d0f743a](https://github.com/ZizzX/wizzard-stepper-react/commit/d0f743a509e4dff1383f1bfa6fec87583d26c9e2))
+* introduce typed wizard events with automatic tracking ([74665f4](https://github.com/ZizzX/wizzard-stepper-react/commit/74665f41b57f36a1d8a127f6aca3ad562cac2e90))
+* introduce WizardStore with middleware support and devtools ([f71847d](https://github.com/ZizzX/wizzard-stepper-react/commit/f71847df713903d0a5379a08dcf227182242c784))
+* pass wizard metadata as a third argument to the `beforeLeave` guard function ([05eaf32](https://github.com/ZizzX/wizzard-stepper-react/commit/05eaf328c9c4f35b600fc112cab63466e67c6910))
+* release v2.0.0 introducing versioned ([7174fe0](https://github.com/ZizzX/wizzard-stepper-react/commit/7174fe058a1ecc5ea7e6b89f46079a63e5a76bcb))
+* аdd busy state management ([6f6d314](https://github.com/ZizzX/wizzard-stepper-react/commit/6f6d314a698c2d1a4561de88af97583b0adbeb56))
+
 ## [2.0.0](https://github.com/ZizzX/wizzard-stepper-react/compare/v1.8.0...v2.0.0) (2026-01-02)
 
 ### ⚠ BREAKING CHANGES
