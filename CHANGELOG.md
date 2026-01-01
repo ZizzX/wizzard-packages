@@ -1,5 +1,7 @@
 # Changelog
 
+## [1.8.1](https://github.com/ZizzX/wizzard-stepper-react/compare/v1.8.0...v1.8.1) (2026-01-01)
+
 # [1.8.0](https://github.com/ZizzX/wizzard-stepper-react/compare/v1.7.2...v1.8.0) (2026-01-01)
 
 
