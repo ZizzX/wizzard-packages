@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { cn } from "./lib/utils";
 import { Button } from "./components/ui/Button";
 import { useTranslation } from "./context/LanguageContext";
@@ -9,20 +9,40 @@ export default function Layout() {
 
   const { t, language, setLanguage } = useTranslation();
 
-  const navItems = [
-    { path: "/", label: t("nav.overview") },
-    { path: "/docs/introduction", label: t("nav.docs") },
-    { path: "/examples", label: t("nav.examples") },
+  const navItems = useMemo(
+    () => [
+      { path: "/", label: t("nav.overview") },
+      { path: "/docs/introduction", label: t("nav.docs") },
+      { path: "/examples", label: t("nav.examples") },
+    ],
+    [t]
+  );
+  const exampleRoutes = [
+    "/examples",
+    "/simple",
+    "/legacy",
+    "/rhf-zod",
+    "/formik-yup",
+    "/conditional",
+    "/complex",
+    "/advanced",
+    "/enterprise-wizard",
+    "/middleware-demo",
   ];
+
+  const getActiveNav = (currentPath: string) => {
+    return navItems.find((item) => {
+      if (item.path === "/") return currentPath === "/";
+      if (item.path.startsWith("/docs")) return currentPath.startsWith("/docs");
+      if (item.path === "/examples")
+        return exampleRoutes.some((route) => currentPath.startsWith(route));
+      return currentPath.startsWith(item.path);
+    });
+  };
+
   useEffect(() => {
     document.documentElement.lang = language;
-    const currentNav = navItems.find((item) =>
-      item.path === "/"
-        ? location.pathname === "/"
-        : location.pathname.includes(
-            item.path.split("/")[2] || item.path.split("/")[1]
-          )
-    );
+    const currentNav = getActiveNav(location.pathname);
     const title = currentNav
       ? `${currentNav.label} | Wizzard Stepper`
       : "Wizzard Stepper";
@@ -49,9 +69,13 @@ export default function Layout() {
                   const isActive =
                     item.path === "/"
                       ? location.pathname === "/"
-                      : location.pathname.includes(
-                          item.path.split("/")[2] || item.path.split("/")[1]
-                        );
+                      : item.path.startsWith("/docs")
+                        ? location.pathname.startsWith("/docs")
+                        : item.path === "/examples"
+                          ? exampleRoutes.some((route) =>
+                              location.pathname.startsWith(route)
+                            )
+                          : location.pathname.startsWith(item.path);
 
                   return (
                     <Link
