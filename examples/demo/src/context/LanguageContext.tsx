@@ -226,7 +226,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   const [language, setLanguageState] = useState<Language>(() => {
     const saved = localStorage.getItem("app-language");
-    return (saved === "ru" || saved === "en" ? saved : "ru") as Language;
+    return (saved === "ru" || saved === "en" ? saved : "en") as Language;
   });
 
   const setLanguage = (lang: Language) => {
