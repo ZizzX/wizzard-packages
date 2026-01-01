@@ -156,7 +156,7 @@ const translations = {
     "home.view_examples": "Примеры",
     "home.feature_fast": "Быстрый и Легкий",
     "home.feature_fast_desc":
-      "Ноль зависимостей в ядре, менее 5кБ в gzip. Идеально для проектов любого размера.",
+      "Ноль зависимостей в ядре, менее 8кБ в gzip. Идеально для проектов любого размера.",
     "home.feature_types": "Типобезопасный",
     "home.feature_types_desc":
       "Написан на TypeScript. Полный автокомплит для ваших данных и шагов.",
