@@ -1,4 +1,4 @@
-import { useVersion } from "../../context/VersionContext";
+import { useVersion, APP_VERSION } from "../../context/VersionContext";
 import { ProTip } from "../../components/ProTip";
 import { useTranslation } from "../../context/LanguageContext";
 import { useNavigate } from "react-router-dom";
@@ -8,7 +8,7 @@ export default function Introduction() {
   const { version } = useVersion();
   const { language } = useTranslation();
   const navigate = useNavigate();
-  const isV2 = version === "2.0.0";
+  const isV2 = version === APP_VERSION;
 
   const content = {
     en: (
@@ -25,7 +25,7 @@ export default function Introduction() {
                   : "bg-amber-100 text-amber-700"
               }`}
             >
-              {isV2 ? "v2.0.0 (Modern)" : "v1.7.2 (Legacy)"}
+              {isV2 ? `v${APP_VERSION} (Modern)` : "v1.7.2 (Legacy)"}
             </span>
             <span className="text-gray-400 text-sm">•</span>
             <span className="text-gray-500 text-sm font-medium">
@@ -146,11 +146,13 @@ export default function Introduction() {
         <section className="p-10 bg-gray-900 rounded-[2.5rem] text-white space-y-6 shadow-2xl overflow-hidden relative group">
           <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 group-hover:bg-indigo-500/20 transition-all duration-700"></div>
           <h2 className="text-3xl font-bold tracking-tight">
-            {isV2 ? "Getting Started with v2.0.0" : "Using Legacy v1.7.2"}
+            {isV2
+              ? `Getting Started with v${APP_VERSION}`
+              : "Using Legacy v1.7.2"}
           </h2>
           <p className="text-gray-400 text-lg leading-relaxed max-w-2xl">
             {isV2
-              ? "v2.0.0 introduces the Factory pattern. This is the recommended way to build wizards as it provides perfect type inference and superior performance."
+              ? `v${APP_VERSION} introduces the Factory pattern. This is the recommended way to build wizards as it provides perfect type inference and superior performance.`
               : "If you're maintaining an older project, you're likely using WizardProvider. We've kept v1 support, but recommend considering migration to v2 for better DX."}
           </p>
           <div className="flex flex-wrap gap-4 pt-4">
@@ -195,7 +197,7 @@ export default function Introduction() {
                   : "bg-amber-100 text-amber-700"
               }`}
             >
-              {isV2 ? "v2.0.0 (Modern)" : "v1.7.2 (Legacy)"}
+              {isV2 ? `v${APP_VERSION} (Modern)` : "v1.7.2 (Legacy)"}
             </span>
             <span className="text-gray-400 text-sm">•</span>
             <span className="text-gray-500 text-sm font-medium">
@@ -319,11 +321,13 @@ export default function Introduction() {
         <section className="p-10 bg-gray-900 rounded-[2.5rem] text-white space-y-6 shadow-2xl overflow-hidden relative group">
           <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 group-hover:bg-indigo-500/20 transition-all duration-700"></div>
           <h2 className="text-3xl font-bold tracking-tight">
-            {isV2 ? "Начинаем работу с v2.0.0" : "Использование Legacy v1.7.2"}
+            {isV2
+              ? `Начинаем работу с v${APP_VERSION}`
+              : "Использование Legacy v1.7.2"}
           </h2>
           <p className="text-gray-400 text-lg leading-relaxed max-w-2xl">
             {isV2
-              ? "Версия 2.0.0 вводит паттерн Factory. Это рекомендуемый способ создания визардов, так как он обеспечивает идеальный вывод типов и превосходную производительность."
+              ? `Версия ${APP_VERSION} вводит паттерн Factory. Это рекомендуемый способ создания визардов, так как он обеспечивает идеальный вывод типов и превосходную производительность.`
               : "Если вы поддерживаете старый проект, скорее всего, вы используете WizardProvider. Мы сохранили поддержку v1, но рекомендуем рассмотреть миграцию на v2 для лучшего DX."}
           </p>
           <div className="flex flex-wrap gap-4 pt-4">

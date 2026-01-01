@@ -3,14 +3,14 @@ import { cn } from "../../lib/utils";
 import DocsNavigation from "../../components/DocsNavigation";
 import { ProTip } from "../../components/ProTip";
 import { useTranslation } from "../../context/LanguageContext";
-import { useDocVersion } from "../../context/VersionContext";
+import { useDocVersion, APP_VERSION } from "../../context/VersionContext";
 
 export default function Installation() {
   const [activeManager, setActiveManager] = useState(0);
   const { language } = useTranslation();
   const { version } = useDocVersion();
 
-  const installSuffix = version === "1.7.2" ? "@1.7.2" : "";
+  const installSuffix = version === APP_VERSION ? "" : "@1.7.2";
 
   const installCommands = [
     {

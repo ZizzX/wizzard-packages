@@ -111,7 +111,7 @@ export default function Layout() {
                   )
                 }
               >
-                v2.0.0
+                v{__APP_VERSION__}
               </Button>
             </div>
           </div>

@@ -5,7 +5,7 @@ import React, {
   type ReactNode,
 } from "react";
 
-export type DocVersion = "1.7.2" | "2.0.0";
+export type DocVersion = "1.7.2" | "2.0.0" | string;
 
 interface VersionContextType {
   version: DocVersion;
@@ -14,15 +14,18 @@ interface VersionContextType {
 
 const VersionContext = createContext<VersionContextType | undefined>(undefined);
 
+//eslint-disable-next-line @typescript-eslint/no-require-imports
+export const APP_VERSION = __APP_VERSION__;
+
 export const VersionProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [version, setVersionState] = useState<DocVersion>(() => {
     const saved = localStorage.getItem("docs-version");
     // Handle potential legacy values with 'v' prefix
-    if (saved === "v2.0.0" || saved === "2.0.0") return "2.0.0";
+    if (saved === "v2.0.0" || saved === "2.0.0") return APP_VERSION;
     if (saved === "v1.7.2" || saved === "1.7.2") return "1.7.2";
-    return "2.0.0";
+    return APP_VERSION;
   });
 
   const setVersion = (v: DocVersion) => {

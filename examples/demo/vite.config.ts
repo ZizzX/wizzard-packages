@@ -3,8 +3,13 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import fs from 'fs';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const packageJson = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf-8'));
+
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {
@@ -34,6 +39,10 @@ export default defineConfig(() => {
         'yup': path.resolve(__dirname, './node_modules/yup'),
         'zod': path.resolve(__dirname, './node_modules/zod'),
       },
+    },
+    define: {
+      'process.env.VERSION': JSON.stringify(packageJson.version),
+      '__APP_VERSION__': JSON.stringify(packageJson.version),
     },
   };
 });
