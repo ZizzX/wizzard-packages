@@ -14,6 +14,7 @@ A flexible, headless, and strictly typed multi-step wizard library for React. Bu
 - 🚀 **Pro Package Components**: Asynchronous conditions, step guards (`beforeLeave`), navigation history, and auto-calculated progress.
 - ⏳ **Async Feedback**: Built-in loading states (`isBusy`, `busySteps`) and visibility control (`showWhilePending`).
 - 🛡️ **Validation Priority**: Intelligent navigation that validates current step *before* checking next step conditions or guards.
+- 🛠️ **Developer Tools**: High-performance in-app debugging overlay and **Redux DevTools** integration via middleware.
 
 ## Installation
 
@@ -47,6 +48,30 @@ const Step1 = () => {
 const App = () => (
   <WizardProvider>
     <Step1 />
+  </WizardProvider>
+);
+```
+
+### 1.1 Developer Tools Usage (New 🚀)
+
+For faster debugging, add the devtools overlay and middleware.
+
+```tsx
+import { 
+  WizardProvider, 
+  WizardDevTools, 
+  devToolsMiddleware,
+  loggerMiddleware 
+} from 'wizzard-stepper-react';
+
+const App = () => (
+  <WizardProvider 
+    middlewares={[loggerMiddleware, devToolsMiddleware]}
+  >
+    <MyWizardComponents />
+    
+    {/* Visual overlay for state & actions inspection */}
+    <WizardDevTools />
   </WizardProvider>
 );
 ```
@@ -107,6 +132,7 @@ const MyStep = () => {
      })} />
   );
 }
+```
 
 ```tsx
 // In Config:
@@ -338,9 +364,12 @@ If you want to show a step (e.g., with a shimmer/loader) even while its conditio
   condition: async (data) => checkApi(data),
   showWhilePending: true // Step appears in the list immediately with a loader
 }
+
 ```
 
-## Step Guards (`beforeLeave`) 🛡️
+### 7. Step Guards (`beforeLeave`)
+
+**Advanced logic before navigation:**
 
 Prevent navigation if certain conditions aren't met (e.g., unsaved changes or async validation).
 

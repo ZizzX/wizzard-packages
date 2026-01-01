@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { cn } from "./lib/utils";
 import { Button } from "./components/ui/Button";
@@ -10,6 +11,12 @@ export default function Layout() {
     { path: "/docs/introduction", label: "Documentation" },
     { path: "/examples", label: "Examples" },
   ];
+
+  const [libVersion, setLibVersion] = useState("1.8.0");
+
+  useEffect(() => {
+    console.log(`[Wizard] Documentation version switched to ${libVersion}`);
+  }, [libVersion]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
@@ -54,6 +61,16 @@ export default function Layout() {
             </div>
 
             <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg border border-gray-200">
+                <select
+                  value={libVersion}
+                  onChange={(e) => setLibVersion(e.target.value)}
+                  className="bg-transparent text-[10px] font-bold uppercase tracking-wider px-2 py-1 outline-none cursor-pointer text-indigo-700 font-black"
+                >
+                  <option value="1.8.0">v1.8.0 (Modern)</option>
+                  <option value="1.7.2">v1.7.2 (Legacy)</option>
+                </select>
+              </div>
               <a
                 href="https://github.com/ZizzX/wizzard-stepper-react"
                 target="_blank"

@@ -11,6 +11,7 @@ import ConditionalWizard from "./pages/ConditionalWizard";
 import ComplexDataWizard from "./pages/ComplexDataWizard";
 import AdvancedDemo from "./pages/AdvancedDemo";
 import EnterpriseWizardDemo from "./pages/EnterpriseWizardDemo";
+import MiddlewareDemo from "./pages/MiddlewareDemo";
 
 import Introduction from "./pages/docs/Introduction";
 import Installation from "./pages/docs/Installation";
@@ -26,6 +27,7 @@ import StepRendering from "./pages/docs/StepRendering";
 import DeferredRendering from "./pages/docs/DeferredRendering";
 import EnterpriseFeatures from "./pages/docs/EnterpriseFeatures";
 import PerformanceDocs from "./pages/docs/Performance";
+import MiddlewareDevTools from "./pages/docs/MiddlewareDevTools";
 
 import ScrollToTop from "./components/ScrollToTop";
 import RHFDocs from "./pages/docs/RHF";
@@ -51,9 +53,9 @@ function App() {
           <Route path="formik-yup" element={<FormikYupWizard />} />
           <Route path="conditional" element={<ConditionalWizard />} />
           <Route path="complex" element={<ComplexDataWizard />} />
-          <Route path="complex" element={<ComplexDataWizard />} />
           <Route path="advanced" element={<AdvancedDemo />} />
           <Route path="enterprise-wizard" element={<EnterpriseWizardDemo />} />
+          <Route path="middleware-demo" element={<MiddlewareDemo />} />
 
           {/* Documentation Section */}
           <Route path="docs" element={<DocsLayout />}>
@@ -74,6 +76,7 @@ function App() {
             <Route path="deferred-rendering" element={<DeferredRendering />} />
             <Route path="enterprise" element={<EnterpriseFeatures />} />
             <Route path="performance" element={<PerformanceDocs />} />
+            <Route path="middleware" element={<MiddlewareDevTools />} />
 
             <Route path="rhf" element={<RHFDocs />} />
             <Route path="formik" element={<FormikDocs />} />

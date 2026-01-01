@@ -29,6 +29,11 @@ const sidebarItems = [
         label: "Conditional Flow",
         path: "/docs/conditional-logic",
       },
+      {
+        id: "middleware",
+        label: "Middleware & DevTools",
+        path: "/docs/middleware",
+      },
       { id: "routing", label: "Routing & URL", path: "/docs/routing" },
       { id: "rendering", label: "Step Rendering", path: "/docs/rendering" },
       {

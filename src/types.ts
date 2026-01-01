@@ -5,6 +5,8 @@ export interface IWizardHandle<T = unknown, StepId extends string = string> {
 }
 
 export interface IWizardState<T = unknown, StepId extends string = string> {
+  data: T;
+  errors: Record<string, Record<string, string>>;
   currentStep: IStepConfig<T, StepId> | null;
   currentStepIndex: number;
   isFirstStep: boolean;
@@ -12,11 +14,12 @@ export interface IWizardState<T = unknown, StepId extends string = string> {
   isLoading: boolean;
   isPending: boolean;
   activeSteps: IStepConfig<T, StepId>[];
+  currentStepId: StepId | "";
+  history: StepId[];
+  busySteps: Set<StepId>;
   visitedSteps: Set<StepId>;
   completedSteps: Set<StepId>;
   errorSteps: Set<StepId>;
-  history: StepId[];
-  busySteps: Set<StepId>;
   config: IWizardConfig<T, StepId>;
   progress: number;
   activeStepsCount: number;
@@ -24,21 +27,11 @@ export interface IWizardState<T = unknown, StepId extends string = string> {
   isDirty: boolean;
   dirtyFields: Set<string>;
   breadcrumbs: IBreadcrumb<StepId>[];
-  allErrors: Record<string, Record<string, string>>;
-  store: IWizardStore<T, StepId>;
 }
 
 export interface IWizardStore<T, StepId extends string = string> {
-  getSnapshot(): {
-    data: T;
-    errors: Record<string, Record<string, string>>;
-    isDirty: boolean;
-    dirtyFields: Set<string>;
-    meta: Partial<IWizardState<T, StepId>> & {
-      wizardData?: T;
-      allErrors?: any;
-    };
-  };
+  getSnapshot(): IWizardState<T, StepId>;
+  dispatch(action: WizardAction<T, StepId>): void;
   update(newData: T, changedPath?: string | string[]): void;
   updateMeta(newMeta: Partial<IWizardState<T, StepId>>): void;
   setInitialData(data: T): void;
@@ -49,6 +42,9 @@ export interface IWizardStore<T, StepId extends string = string> {
   ): boolean;
   deleteError(stepId: string, path: string): boolean;
   subscribe(listener: () => void): () => void;
+  subscribeToActions(
+    listener: (action: WizardAction<T, StepId>) => void
+  ): () => void;
   errorsMap: Map<string, Map<string, string>>;
 }
 
@@ -239,11 +235,55 @@ export interface IWizardConfig<T = unknown, StepId extends string = string> {
         onEvent: WizardEventHandler<StepId>;
     };
     /**
+     * Optional middlewares to intercept actions.
+     */
+    middlewares?: WizardMiddleware<T, StepId>[];
+    /**
      * Callback triggered when step changes.
      * Useful for routing integration or analytics.
      */
     onStepChange?: (fromStep: StepId | null, toStep: StepId, data: T) => void;
 }
+
+/**
+ * Middleware Action Types
+ */
+export type WizardAction<T = any, StepId extends string = string> =
+    | { type: 'INIT'; payload: { data: T; config: IWizardConfig<T, StepId> } }
+    | { type: 'SET_DATA'; payload: { path: string; value: any; options?: any } }
+    | { type: 'UPDATE_DATA'; payload: { data: Partial<T>; options?: any } }
+    | { type: 'GO_TO_STEP'; payload: { from: StepId | null; to: StepId } }
+    | { type: 'VALIDATE_START'; payload: { stepId: StepId } }
+    | { type: 'VALIDATE_END'; payload: { stepId: StepId; result: ValidationResult } }
+    | { type: 'SET_STEP_ERRORS'; payload: { stepId: string; errors: Record<string, string> | undefined | null } }
+    | { type: 'RESET'; payload: { data: T } }
+    | { type: 'UPDATE_META'; payload: { meta: Partial<IWizardState<T, StepId>> } }
+    | { type: 'SET_CURRENT_STEP_ID'; payload: { stepId: StepId | "" } }
+    | { type: 'SET_HISTORY'; payload: { history: StepId[] } }
+    | { type: 'SET_ACTIVE_STEPS'; payload: { steps: IStepConfig<T, StepId>[] } }
+    | { type: 'SET_VISITED_STEPS'; payload: { steps: Set<StepId> } }
+    | { type: 'SET_COMPLETED_STEPS'; payload: { steps: Set<StepId> } }
+    | { type: 'SET_ERROR_STEPS'; payload: { steps: Set<StepId> } };
+
+/**
+ * Middleware API
+ */
+export interface MiddlewareAPI<T = any, StepId extends string = string> {
+    dispatch: (action: WizardAction<T, StepId>) => void;
+    getState: () => T;
+    getSnapshot: () => any; // Returns store snapshot
+}
+
+/**
+ * Middleware Type Definition
+ */
+export type WizardMiddleware<T = any, StepId extends string = string> = (
+    api: MiddlewareAPI<T, StepId>
+) => (
+    next: (action: WizardAction<T, StepId>) => void
+) => (
+    action: WizardAction<T, StepId>
+) => void;
 
 /**
  * Standardized Event Names
@@ -284,6 +324,7 @@ export type WizardEventHandler<StepId extends string = string> = <E extends Wiza
 export interface IWizardContext<T = unknown, StepId extends string = string> {
     config: IWizardConfig<T, StepId>;
     currentStep: IStepConfig<T, StepId> | null;
+    currentStepId: StepId | "";
     currentStepIndex: number;
     isFirstStep: boolean;
     isLastStep: boolean;
@@ -388,7 +429,7 @@ export interface IWizardContext<T = unknown, StepId extends string = string> {
 /**
  * Breadcrumb Status
  */
-export type BreadcrumbStatus = 'visited' | 'current' | 'future' | 'hidden';
+export type BreadcrumbStatus = 'visited' | 'current' | 'upcoming' | 'completed' | 'error' | 'hidden';
 
 /**
  * Breadcrumb Interface

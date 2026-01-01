@@ -61,6 +61,13 @@ export default function Examples() {
       color: "bg-gray-50 text-gray-600",
     },
     {
+      title: "Middleware & DevTools",
+      description: "Visual debugging overlay and custom action interception.",
+      path: "/middleware-demo",
+      icon: "🛠️",
+      color: "bg-stone-50 text-stone-600",
+    },
+    {
       title: "Enterprise Cloud Wizard",
       description:
         "Google-quality demo with async validation, dependencies, and complex routing.",

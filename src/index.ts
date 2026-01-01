@@ -13,4 +13,11 @@ export * from './adapters/persistence/LocalStorageAdapter';
 
 export * from './adapters/validation/ZodAdapter';
 export * from './adapters/validation/YupAdapter';
-export * from './utils/data';
+// Middlewares
+export { loggerMiddleware } from "./middlewares/loggerMiddleware";
+export { devToolsMiddleware } from "./middlewares/devToolsMiddleware";
+
+// DevTools
+export { WizardDevTools } from "./components/WizardDevTools";
+
+export * from "./utils/data";

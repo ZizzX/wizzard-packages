@@ -49,7 +49,7 @@ const WizardConsumer = () => {
 };
 
 describe("Wizard Pro Features", () => {
-  const steps: IStepConfig<any, any, any>[] = [
+  const steps: IStepConfig<any, any>[] = [
     {
       id: "step1",
       label: "Step 1",
