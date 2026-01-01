@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.0.0](https://github.com/ZizzX/wizzard-stepper-react/compare/v1.8.0...v2.0.0) (2026-01-02)
+
+### ⚠ BREAKING CHANGES
+
+* **Factory Pattern**: The primary way to create wizards is now via `createWizardFactory`. The old `WizardProvider` is deprecated but supported for legacy.
+* **Middleware**: New middleware system replaces old monolithic logic.
+* **Types**: stricter type safety, removed `any` assertions in core paths.
+
+### Features
+
+* **Architecture**: Introduced `createWizardFactory` for perfect type inference and scalable state management.
+* **Middleware**: Added support for custom middleware (logging, analytics, persistence).
+* **DevTools**: Added `WizardDevTools` and `devToolsMiddleware` for visual debugging.
+* **Build**: Automated version injection during build process.
+
+### Bug Fixes
+
+* **Typos**: Fixed multiple documentation typos and improved consistent terminology.
+* **Performance**: Optimized selector re-renders.
+
+---
+
 ## [1.8.0](https://github.com/ZizzX/wizzard-stepper-react/compare/v1.7.2...v1.8.0) (2026-01-01)
 
 ### Features

@@ -1,4 +1,5 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import { cn } from "./lib/utils";
 import { Button } from "./components/ui/Button";
 import { useTranslation } from "./context/LanguageContext";
@@ -13,6 +14,20 @@ export default function Layout() {
     { path: "/docs/introduction", label: t("nav.docs") },
     { path: "/examples", label: t("nav.examples") },
   ];
+  useEffect(() => {
+    document.documentElement.lang = language;
+    const currentNav = navItems.find((item) =>
+      item.path === "/"
+        ? location.pathname === "/"
+        : location.pathname.includes(
+            item.path.split("/")[2] || item.path.split("/")[1]
+          )
+    );
+    const title = currentNav
+      ? `${currentNav.label} | Wizzard Stepper`
+      : "Wizzard Stepper";
+    document.title = title;
+  }, [language, location, navItems]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
