@@ -650,16 +650,7 @@ export default function TypeReference() {
       </section>
 
       {/* Navigation */}
-      <DocsNavigation
-        prev={{
-          label: language === "ru" ? "Hooks API" : "Hooks API",
-          path: "/docs/hooks",
-        }}
-        next={{
-          label: language === "ru" ? "Персистентность" : "Persistence",
-          path: "/docs/persistence",
-        }}
-      />
+      <DocsNavigation />
     </div>
   );
 }

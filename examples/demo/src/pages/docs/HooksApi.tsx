@@ -772,16 +772,7 @@ export default function HooksApi() {
       )}
 
       {/* Navigation */}
-      <DocsNavigation
-        prev={{
-          label: language === "ru" ? "Основные концепции" : "Core Concepts",
-          href: "/docs/core-concepts",
-        }}
-        next={{
-          label: language === "ru" ? "Типизация" : "Type Reference",
-          href: "/docs/types",
-        }}
-      />
+      <DocsNavigation />
     </div>
   );
 }

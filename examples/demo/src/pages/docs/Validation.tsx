@@ -488,16 +488,7 @@ export default function Validation() {
       </section>
 
       {/* Navigation */}
-      <DocsNavigation
-        prev={{
-          label: language === "ru" ? "Сохранение данных" : "Persistence",
-          path: "/docs/persistence",
-        }}
-        next={{
-          label: language === "ru" ? "Условная логика" : "Conditional Logic",
-          path: "/docs/conditional-logic",
-        }}
-      />
+      <DocsNavigation />
     </div>
   );
 }

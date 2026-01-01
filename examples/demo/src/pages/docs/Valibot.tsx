@@ -194,7 +194,6 @@ export default function ValibotDocs() {
 
       {/* Navigation */}
       <DocsNavigation
-        prev={{ label: "TanStack Form", href: "/docs/tanstack" }}
         next={{
           label: language === "ru" ? "Все примеры" : "All Examples",
           href: "/examples",

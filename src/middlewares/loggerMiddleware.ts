@@ -1,4 +1,4 @@
-import { WizardMiddleware } from "../types";
+import type { WizardMiddleware } from "../types";
 
 /**
  * Simple logger middleware for Wizard actions

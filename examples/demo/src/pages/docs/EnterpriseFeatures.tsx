@@ -34,7 +34,7 @@ export default function EnterpriseFeatures() {
             </p>
           </div>
           <Link
-            to="/examples/enterprise"
+            to="/enterprise-wizard"
             className="px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 shadow-md transition-colors whitespace-nowrap"
           >
             {language === "ru" ? "Открыть демо →" : "Open Live Demo →"}
@@ -164,17 +164,7 @@ createStep({
           </div>
         </section>
 
-        <DocsNavigation
-          prev={{
-            label:
-              language === "ru" ? "Отложная отрисовка" : "Deferred Rendering",
-            path: "/docs/deferred-rendering",
-          }}
-          next={{
-            label: language === "ru" ? "Производительность" : "Performance",
-            path: "/docs/performance",
-          }}
-        />
+        <DocsNavigation />
       </div>
     </VersionGuard>
   );

@@ -1,5 +1,5 @@
 import { getByPath, setByPath } from "../utils/data";
-import { 
+import type { 
   IWizardStore, 
   IWizardState, 
   WizardAction, 

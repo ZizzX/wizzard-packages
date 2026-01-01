@@ -2,6 +2,7 @@ import { useVersion } from "../../context/VersionContext";
 import { ProTip } from "../../components/ProTip";
 import { useTranslation } from "../../context/LanguageContext";
 import { useNavigate } from "react-router-dom";
+import DocsNavigation from "../../components/DocsNavigation";
 
 export default function Introduction() {
   const { version } = useVersion();
@@ -177,6 +178,7 @@ export default function Introduction() {
           provide a unique <code>storageKey</code> or <code>prefix</code> for
           each. Otherwise, their data will overwrite each other.
         </ProTip>
+        <DocsNavigation />
       </div>
     ),
     ru: (
@@ -349,6 +351,7 @@ export default function Introduction() {
           <code>storageKey</code> или <code>prefix</code> для каждого из них.
           Иначе их данные будут перезаписывать друг друга.
         </ProTip>
+        <DocsNavigation />
       </div>
     ),
   };

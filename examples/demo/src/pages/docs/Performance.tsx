@@ -403,17 +403,7 @@ export default function PerformanceDocs() {
         )}
       </ProTip>
 
-      <DocsNavigation
-        prev={{
-          label:
-            language === "ru" ? "Enterprise Сценарии" : "Enterprise Features",
-          path: "/docs/enterprise",
-        }}
-        next={{
-          label: language === "ru" ? "Безопасность" : "Security",
-          path: "/docs/security",
-        }}
-      />
+      <DocsNavigation />
     </div>
   );
 }

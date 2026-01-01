@@ -120,16 +120,7 @@ export default function MiddlewareDevTools() {
           </div>
         </section>
 
-        <DocsNavigation
-          prev={{
-            label: language === "ru" ? "Условная логика" : "Conditional Logic",
-            href: "/docs/conditional-logic",
-          }}
-          next={{
-            label: language === "ru" ? "Роутинг и URL" : "Routing & URL",
-            href: "/docs/routing",
-          }}
-        />
+        <DocsNavigation />
       </div>
     </VersionGuard>
   );

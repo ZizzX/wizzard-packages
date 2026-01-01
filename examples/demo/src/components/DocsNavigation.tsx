@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "../context/LanguageContext";
+import { useDocVersion } from "../context/VersionContext";
+import { getSidebarItems } from "../config/docs";
 
 interface NavItem {
   label: string;
@@ -15,8 +17,39 @@ interface DocsNavigationProps {
 
 const MotionLink = motion(Link);
 
-export default function DocsNavigation({ prev, next }: DocsNavigationProps) {
+export default function DocsNavigation({
+  prev: manualPrev,
+  next: manualNext,
+}: DocsNavigationProps) {
   const { t } = useTranslation();
+  const { version } = useDocVersion();
+  const location = useLocation();
+
+  const sidebarItems = getSidebarItems(t, version);
+  const flattenedItems = sidebarItems.flatMap((group) => group.items);
+  const currentIndex = flattenedItems.findIndex(
+    (item) => item.path === location.pathname
+  );
+
+  let prevItem = null;
+  let nextItem = null;
+
+  if (currentIndex !== -1) {
+    if (currentIndex > 0) {
+      prevItem = flattenedItems[currentIndex - 1];
+    }
+    if (currentIndex < flattenedItems.length - 1) {
+      nextItem = flattenedItems[currentIndex + 1];
+    }
+  }
+
+  const prev =
+    manualPrev ||
+    (prevItem ? { label: prevItem.label, path: prevItem.path } : undefined);
+  const next =
+    manualNext ||
+    (nextItem ? { label: nextItem.label, path: nextItem.path } : undefined);
+
   return (
     <div className="pt-10 mt-12 border-t border-gray-200 flex flex-col sm:flex-row justify-between gap-4">
       <div>

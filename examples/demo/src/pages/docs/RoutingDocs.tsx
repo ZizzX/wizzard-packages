@@ -215,16 +215,7 @@ export default function RoutingDocs() {
       </section>
 
       {/* Navigation */}
-      <DocsNavigation
-        prev={{
-          label: language === "ru" ? "Middleware" : "Middleware",
-          path: "/docs/middleware",
-        }}
-        next={{
-          label: language === "ru" ? "Отрисовка шагов" : "Step Rendering",
-          path: "/docs/rendering",
-        }}
-      />
+      <DocsNavigation />
     </div>
   );
 }

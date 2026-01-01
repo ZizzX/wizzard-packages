@@ -321,16 +321,7 @@ export default function SecurityDocs() {
       </section>
 
       {/* Navigation */}
-      <DocsNavigation
-        prev={{
-          label: language === "ru" ? "Производительность" : "Performance",
-          path: "/docs/performance",
-        }}
-        next={{
-          label: language === "ru" ? "React Hook Form" : "React Hook Form",
-          path: "/docs/rhf",
-        }}
-      />
+      <DocsNavigation />
     </div>
   );
 }

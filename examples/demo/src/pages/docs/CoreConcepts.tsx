@@ -1106,16 +1106,7 @@ const App = () => (
       </section>
 
       {/* Navigation */}
-      <DocsNavigation
-        prev={{
-          label: language === "ru" ? "Быстрый старт" : "Quick Start",
-          href: "/docs/quickstart",
-        }}
-        next={{
-          label: language === "ru" ? "API Хуков" : "Hooks API",
-          href: "/docs/hooks",
-        }}
-      />
+      <DocsNavigation />
     </div>
   );
 }

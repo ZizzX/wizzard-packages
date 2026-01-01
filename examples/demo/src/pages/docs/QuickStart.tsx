@@ -454,10 +454,7 @@ export default function QuickStart() {
           </pre>
         </div>
       </section>
-      <DocsNavigation
-        prev={{ label: t.prevLabel, href: "/docs/installation" }}
-        next={{ label: t.nextLabel, href: "/docs/concepts" }}
-      />
+      <DocsNavigation />
     </div>
   );
 }

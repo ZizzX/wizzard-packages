@@ -269,13 +269,7 @@ export default function RHFDocs() {
       </ProTip>
 
       {/* Navigation */}
-      <DocsNavigation
-        prev={{
-          label: language === "ru" ? "Производительность" : "Performance",
-          href: "/docs/performance",
-        }}
-        next={{ label: "Formik", href: "/docs/formik" }}
-      />
+      <DocsNavigation />
     </div>
   );
 }

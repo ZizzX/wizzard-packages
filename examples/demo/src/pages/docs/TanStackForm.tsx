@@ -125,10 +125,7 @@ export default function TanStackDocs() {
       </ProTip>
 
       {/* Navigation */}
-      <DocsNavigation
-        prev={{ label: "Mantine Form", href: "/docs/mantine" }}
-        next={{ label: "Valibot", href: "/docs/valibot" }}
-      />
+      <DocsNavigation />
     </div>
   );
 }

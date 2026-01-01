@@ -431,16 +431,7 @@ export default function Persistence() {
       </section>
 
       {/* Navigation */}
-      <DocsNavigation
-        prev={{
-          label: language === "ru" ? "Справочник типов" : "Type Reference",
-          path: "/docs/types",
-        }}
-        next={{
-          label: language === "ru" ? "Валидация" : "Validation",
-          path: "/docs/validation",
-        }}
-      />
+      <DocsNavigation />
     </div>
   );
 }

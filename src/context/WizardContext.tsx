@@ -79,7 +79,7 @@ export function WizardProvider<
     visitedSteps,
     completedSteps,
     data: wizardData,
-    errors: allErrors,
+    errors: {},
   } = snapshot;
 
   // 4. Stable Helpers (Mapping)

@@ -439,17 +439,7 @@ export default function DeferredRendering() {
         </section>
 
         {/* Navigation */}
-        <DocsNavigation
-          prev={{
-            label: language === "ru" ? "Отрисовка шагов" : "Step Rendering",
-            path: "/docs/rendering",
-          }}
-          next={{
-            label:
-              language === "ru" ? "Enterprise Сценарии" : "Enterprise Guide",
-            path: "/docs/enterprise",
-          }}
-        />
+        <DocsNavigation />
       </div>
     </VersionGuard>
   );

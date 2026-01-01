@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useWizardContext } from "../context/WizardContext";
-import { WizardAction, IWizardStore } from "../types";
+import type { WizardAction, IWizardStore } from "../types";
 
 interface IActionLog {
   timestamp: number;
@@ -231,12 +231,7 @@ export function WizardDevTools() {
           justifyContent: "space-between",
         }}
       >
-        <span>
-          v
-          {typeof process !== "undefined" && (process as any).env?.VERSION
-            ? (process as any).env.VERSION
-            : "1.8.0"}
-        </span>
+        <span>v{(globalThis as any).process?.env?.VERSION || "2.0.0"}</span>
         <span>Strict Mode: Active</span>
       </div>
     </div>

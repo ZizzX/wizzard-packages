@@ -230,6 +230,8 @@ export default function ConditionalLogic() {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 font-bold text-gray-800">
                   <span className="text-amber-600">A</span>
+                  {/* Navigation */}
+                  <DocsNavigation />
                   <span>
                     {language === "ru"
                       ? "Асинхронные условия"
@@ -539,20 +541,7 @@ export default function ConditionalLogic() {
       </ProTip>
 
       {/* Navigation */}
-      <DocsNavigation
-        prev={{
-          label: language === "ru" ? "Валидация" : "Validation",
-          path: "/docs/validation",
-        }}
-        next={
-          version === "2.0.0"
-            ? { label: "Middleware", path: "/docs/middleware" }
-            : {
-                label: language === "ru" ? "Маршрутизация" : "Routing",
-                path: "/docs/routing",
-              }
-        }
-      />
+      <DocsNavigation />
     </div>
   );
 }

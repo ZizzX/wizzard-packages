@@ -363,17 +363,7 @@ export default function StepRendering() {
       </section>
 
       {/* Navigation */}
-      <DocsNavigation
-        prev={{
-          label: language === "ru" ? "Роутинг и URL" : "Routing & URL",
-          path: "/docs/routing",
-        }}
-        next={{
-          label:
-            language === "ru" ? "Отложная отрисовка" : "Deferred Rendering",
-          path: "/docs/deferred-rendering",
-        }}
-      />
+      <DocsNavigation />
     </div>
   );
 }

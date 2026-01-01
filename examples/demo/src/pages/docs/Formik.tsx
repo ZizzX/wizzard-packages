@@ -253,10 +253,7 @@ export default function FormikDocs() {
       </section>
 
       {/* Navigation */}
-      <DocsNavigation
-        prev={{ label: "React Hook Form", href: "/docs/rhf" }}
-        next={{ label: "Mantine Form", href: "/docs/mantine" }}
-      />
+      <DocsNavigation />
     </div>
   );
 }

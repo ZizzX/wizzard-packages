@@ -111,53 +111,6 @@ const translations = {
     "home.ready_title": "Ready to integrate?",
     "home.ready_desc":
       "Install the core package and start building your next user onboarding flow in minutes.",
-    // Navigation
-    "nav.prev": "Back",
-    "nav.next": "Next",
-    // UI
-    "ui.version": "Documentation Version",
-    "ui.menu": "Docs Menu",
-    "ui.navigation": "Navigation",
-    "ui.footer": "Built with ♥ using wizzard-stepper-react",
-    // Migration Guide
-    "migration.title": "Migration Guide (v1.x → v2.0.0) 🚀",
-    "migration.subtitle":
-      "Learn how to upgrade your wizards from the legacy Context-based architecture to the highly optimized Store-based engine.",
-    "migration.why_upgrade": "Why Upgrade?",
-    "migration.zero_rerenders": "Zero Re-renders",
-    "migration.zero_rerenders_desc":
-      "Update specific data points without re-rendering the entire wizard tree.",
-    "migration.middleware": "Middleware Support",
-    "migration.middleware_desc":
-      "Perfect for logging, analytics, and complex side-effects.",
-    "migration.devtools": "DevTools",
-    "migration.devtools_desc": "Full Redux-style debugging in your browser.",
-    "migration.universal_store": "Universal Store",
-    "migration.universal_store_desc":
-      "Access wizard state from outside the React tree if needed.",
-    "migration.core_update": "1. The Core Update: Factory Pattern",
-    "migration.factory_desc":
-      "In v1, you used a generic generic WizardProvider. In v2, we use a Factory to generate typesafe hooks and providers.",
-    "migration.legacy_v1": "Legacy (v1)",
-    "migration.modern_v2": "Modern (v2)",
-    "migration.optimized_selectors": "2. Optimized Selectors",
-    "migration.selectors_desc":
-      "Stop using useWizard() for everything! v2 introduces granular selectors to boost performance.",
-    "migration.breaking_changes": "3. Breaking Changes Checklist",
-    "migration.breadcrumb_status": "Breadcrumb Statuses",
-    "migration.breadcrumb_desc":
-      "'future' status renamed to 'upcoming'. Added 'completed' and 'error' statuses.",
-    "migration.action_names": "Action Names",
-    "migration.action_desc":
-      "handleStepChange is now also available via setData in useWizardActions().",
-    "migration.protip":
-      "If you are starting a new project, always use the Factory Pattern. It ensures your app remains performant as it grows.",
-    // V2 Banner
-    "migration.banner.title": "Starting with v2.0.0",
-    "migration.banner.description":
-      "Version 2.0.0 introduces the Factory pattern. This is the recommended way to create wizards as it provides perfect type inference and superior performance.",
-    "migration.banner.btn_quickstart": "Quick Start",
-    "migration.banner.btn_architecture": "Architecture v2",
   },
   ru: {
     // Navbar

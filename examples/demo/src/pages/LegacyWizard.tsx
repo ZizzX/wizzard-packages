@@ -51,7 +51,7 @@ const Step2 = () => {
 };
 
 // No generic passed to IWizardConfig either
-const wizardConfig: IWizardConfig = {
+const wizardConfig: IWizardConfig<Record<string, unknown>, string> = {
   steps: [
     { id: "step1", label: "Step 1" },
     { id: "step2", label: "Summary" },

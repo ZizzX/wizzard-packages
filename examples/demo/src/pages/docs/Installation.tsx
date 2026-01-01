@@ -98,9 +98,7 @@ export default function Installation() {
           </ProTip>
         </section>
 
-        <DocsNavigation
-          next={{ label: "Quick Start", href: "/docs/quickstart" }}
-        />
+        <DocsNavigation />
       </div>
     ),
     ru: (
@@ -172,9 +170,7 @@ export default function Installation() {
           </ProTip>
         </section>
 
-        <DocsNavigation
-          next={{ label: "Быстрый старт", href: "/docs/quickstart" }}
-        />
+        <DocsNavigation />
       </div>
     ),
   };

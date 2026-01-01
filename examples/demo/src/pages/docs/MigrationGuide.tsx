@@ -199,10 +199,7 @@ const hasErrors = useWizardSelector(s => s.errorSteps.size > 0);`}
 
       <ProTip>{t("migration.protip")}</ProTip>
 
-      <DocsNavigation
-        prev={{ label: t("item.installation"), href: "/docs/installation" }}
-        next={{ label: t("item.quickstart"), href: "/docs/quickstart" }}
-      />
+      <DocsNavigation />
     </div>
   );
 }

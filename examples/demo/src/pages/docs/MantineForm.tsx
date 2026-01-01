@@ -211,10 +211,7 @@ export default function MantineDocs() {
       </ProTip>
 
       {/* Navigation */}
-      <DocsNavigation
-        prev={{ label: "Formik", href: "/docs/formik" }}
-        next={{ label: "TanStack Form", href: "/docs/tanstack" }}
-      />
+      <DocsNavigation />
     </div>
   );
 }
