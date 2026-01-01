@@ -1,5 +1,48 @@
 # Migration Guide
 
+## Upgrading to v1.8.0 (Internal Refactoring & Analytics)
+
+This version introduces internal refactoring to clarify the distinction between the Wizard Handle and the underlying Store, along with standardized analytics.
+
+### 1. Renaming `IWizardStore` to `IWizardHandle` [BREAKING IF TYPED]
+
+If you were explicitly importing and using the `IWizardStore` type from `wizzard-stepper-react` (usually when passing the whole wizard object as a prop), you must rename it to `IWizardHandle`.
+
+```diff
+- import { IWizardStore } from 'wizzard-stepper-react';
++ import { IWizardHandle } from 'wizzard-stepper-react';
+
+- function MyComponent({ wizard }: { wizard: IWizardStore }) { ... }
++ function MyComponent({ wizard }: { wizard: IWizardHandle }) { ... }
+```
+
+> [!NOTE]
+> The name `IWizardStore` is now used for the internal store class interface.
+
+### 2. Signature changes for `condition` and `beforeLeave` [BREAKING]
+
+The callback signatures have been updated to provide easier access to the wizard's global state and errors.
+
+**Old signature:**
+`condition?: (data: T) => boolean`
+`beforeLeave?: (data: T, direction: StepDirection) => boolean`
+
+**New signature:**
+`condition?: (data: T, metadata: StepMetadata<T, StepId>) => boolean`
+`beforeLeave?: (data: T, direction: StepDirection, metadata: StepMetadata<T, StepId>) => boolean`
+
+**Migration example:**
+```diff
+- condition: (data) => data.age > 18,
++ condition: (data, { wizardData }) => wizardData.age > 18,
+```
+
+### 3. Analytics standardisation
+
+The `analytics.onEvent` setting is now strictly typed. If you were using a generic `(name: string, payload: any)` handler, it will still work but you can now benefit from autocomplete.
+
+---
+
 ## Upgrading to v2.0 (Strict Typing)
 
 We have introduced a **Factory Pattern** to provide 100% type safety. While the classic usage still works, we strongly recommend migrating to the factory pattern for better developer experience.

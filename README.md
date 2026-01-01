@@ -109,19 +109,24 @@ const MyStep = () => {
 }
 
 // In Config:
-const config = {
-  steps: [
-    { 
-      id: 'step1', 
-      label: 'Email', 
-      // Zero-dependency: works with any Zod version
-      validationAdapter: new ZodAdapter(schema) 
-    }
-  ]
-}
+    condition?: (data: T, metadata: StepMetadata<T, StepId>) => boolean | Promise<boolean>;
+    beforeLeave?: (data: T, direction: StepDirection, metadata: StepMetadata<T, StepId>) => boolean | Promise<boolean>;
+    validationAdapter?: IValidatorAdapter<T>;
+    validationMode?: ValidationMode;
+    // ...
+  }
+]
 ```
 
-## Complex Data (Arrays & Objects)
+#### What is `StepMetadata`?
+Both `condition` and `beforeLeave` receive a third argument containing the wizard's global state:
+- `wizardData`: The entire data object.
+- `allErrors`: Current validation errors.
+- `currentStepIndex`, `isFirstStep`, `isLastStep`, etc.
+
+---
+
+## Integration with React Hook Form + Zod
 
 The library provides `setData` and `getData` helpers that support deep paths using dot notation and array brackets.
 
@@ -299,7 +304,7 @@ const config: IWizardConfig = {
       label: 'Bonus Step',
       
       // 1. Condition: Only show this step if 'wantBonus' is true
-      condition: (ctx) => ctx.wizardData.wantBonus === true,
+      condition: (data, { wizardData }) => wizardData.wantBonus === true,
       
       // 2. Dependencies: If 'wantBonus' changes, this step's status (visited/completed) is reset
       dependsOn: ['wantBonus'],
@@ -333,7 +338,7 @@ Prevent navigation if certain conditions aren't met (e.g., unsaved changes or as
 ```typescript
 const step = {
   id: 'profile',
-  beforeLeave: async (data, direction) => {
+  beforeLeave: async (data, direction, { wizardData }) => {
     if (direction === 'next') {
       const confirmed = await showConfirmDialog("Are you sure?");
       return confirmed;
@@ -404,11 +409,13 @@ Sync wizard state with URL using `onStepChange`.
 const navigate = useNavigate();
 
 const config: IWizardConfig = {
-  // 1. Sync State -> URL
-  onStepChange: (prev, next, data) => {
-    navigate(`/wizard/${next}`);
-    // Optional: Send event to Analytics
-    trackEvent('wizard_step', { step: next });
+  // 1. Analytics & Events (Strictly Typed)
+  analytics: {
+    onEvent: (name, payload) => {
+      console.log(`Wizard Event: ${name}`, payload);
+      // 'name' is "step_change" | "validation_error" | "wizard_reset"
+      // 'payload' is automatically typed based on the name!
+    }
   },
   steps: [...]
 };
@@ -471,11 +478,19 @@ const config: IWizardConfig = {
 - `goToNextStep()`: Validates and moves next.
 - `goToStep(id)`: Jumps to specific step.
 - `reset()`: 🆕 Wipes all data, history, and storage (returns to initial step).
-- `allErrors`: Map of validation errors.
+- `allErrors`: Record of validation errors.
 - `progress`: 🆕 Auto-calculated progress (0-100%).
 - `history`: 🆕 Array of visited step IDs (navigation path).
+- `isDirty`: 🔄 Global boolean (true if ANY field has been modified).
+- `dirtyFields`: 🔄 Set of paths (e.g., `user.name`) that have been changed.
 - `isBusy`: 🔄 Global boolean (true if ANY async condition, guard, or validation is running).
 - `busySteps`: 🔄 Set of `StepId` currently performing async work (useful for local loaders).
+
+### Analytics Events
+The `analytics.onEvent` callback supports the following events:
+- `step_change`: Triggered when navigation succeeds. Payload: `{ from, to, timestamp }`.
+- `validation_error`: Triggered when a step fails validation. Payload: `{ stepId, errors, timestamp }`.
+- `wizard_reset`: Triggered when `reset()` is called. Payload: `{ data, timestamp }`.
 
 ### New Performance Hooks
 

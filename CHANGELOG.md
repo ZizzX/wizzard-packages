@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.8.0](https://github.com/ZizzX/wizzard-stepper-react/compare/v1.7.2...v1.8.0) (2026-01-01)
+
+### Features
+
+* **Analytics**: Standardized and strictly typed event system (`step_change`, `validation_error`, `wizard_reset`).
+* **Store**: Exposed `isDirty` and `dirtyFields` in `IWizardState` for better form tracking.
+* **Context**: Added `metadata` as the third argument to `condition` and `beforeLeave` callbacks for easier access to global state.
+
+### Breaking Changes
+
+* **Types**: Renamed `IWizardStore` to `IWizardHandle` to clarify its role as the public API object. `IWizardStore` is now the interface for the internal store class.
+* **Callbacks**: `condition` and `beforeLeave` signatures have changed to include `metadata`. Existing callbacks using only one or two arguments remain compatible, but TypeScript might require updates if strictly typed.
+
+---
+
 ## [1.7.2](https://github.com/ZizzX/wizzard-stepper-react/compare/v1.7.1...v1.7.2) (2025-12-26)
 
 
