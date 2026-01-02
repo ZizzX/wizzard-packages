@@ -1,7 +1,14 @@
-import { devToolsMiddleware } from "wizzard-stepper-react";
+import { createWizardFactory, devToolsMiddleware } from "wizzard-stepper-react";
 import type { IWizardConfig } from "wizzard-stepper-react";
 
-export const optimizationWizardConfig: IWizardConfig<Record<string, string>> = {
+export interface IOptimizationWizardData {
+    firstName: string;
+    lastName: string;
+    email: string;
+    userType: "basic" | "pro";
+}
+
+export const optimizationWizardConfig: IWizardConfig<IOptimizationWizardData> = {
   middlewares: [devToolsMiddleware],
   persistence: {
       mode: 'manual',
@@ -61,7 +68,8 @@ export const optimizationWizardConfig: IWizardConfig<Record<string, string>> = {
     {
         id: "confirm-leave",
         label: "Confirm Leave",
-        beforeLeave: async (data, dir, meta) => {
+        beforeLeave: async (data, dir, meta) => {     
+          console.log(data, dir, meta);
             if (meta.isDirty) {
                 // In a real app, you might show a modal. 
                 // For demo, we use window.confirm (bad UX but works for proof)
@@ -76,3 +84,9 @@ export const optimizationWizardConfig: IWizardConfig<Record<string, string>> = {
     }
   ],
 };
+
+export const {
+  WizardProvider,
+  useWizard,
+  useWizardState,
+} = createWizardFactory<IOptimizationWizardData>();

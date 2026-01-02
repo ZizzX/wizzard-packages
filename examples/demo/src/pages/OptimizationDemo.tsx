@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import {
-  WizardProvider,
+  optimizationWizardConfig,
   useWizard,
   useWizardState,
-} from "wizzard-stepper-react";
-import { optimizationWizardConfig } from "../wizards/optimization-wizard";
+  WizardProvider,
+  type IOptimizationWizardData,
+} from "../wizards/optimization-wizard";
 
 const DemoContent = () => {
   const {
@@ -143,7 +144,7 @@ const WizardField = ({ name, label }: { name: string; label: string }) => {
 const OptimizationDemo = () => {
   const [loading, setLoading] = useState(true);
   const [initialData, setInitialData] = useState<
-    Record<string, string> | undefined
+    IOptimizationWizardData | undefined
   >(undefined);
 
   useEffect(() => {
@@ -157,6 +158,7 @@ const OptimizationDemo = () => {
         userType: isPro ? "pro" : "basic",
         firstName: "",
         lastName: "",
+        email: "",
       });
       setLoading(false);
     }, 1500);
