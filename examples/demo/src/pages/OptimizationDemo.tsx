@@ -16,6 +16,7 @@ const DemoContent = () => {
     isFirstStep,
     isLastStep,
     progress,
+    reset,
   } = useWizard();
 
   return (
@@ -87,7 +88,16 @@ const DemoContent = () => {
                 Previous
               </button>
               <button
-                onClick={goToNextStep}
+                onClick={async () => {
+                  if (isLastStep) {
+                    const result = await reset();
+                    console.log(result);
+                    window.location.reload();
+                    return;
+                  }
+                  const result = await goToNextStep();
+                  console.log(result);
+                }}
                 disabled={isLastStep && currentStep.id !== "final"}
                 className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
               >
