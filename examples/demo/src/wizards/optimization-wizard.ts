@@ -89,4 +89,6 @@ export const {
   WizardProvider,
   useWizard,
   useWizardState,
+  useWizardActions,
+  useWizardSelector
 } = createWizardFactory<IOptimizationWizardData>();

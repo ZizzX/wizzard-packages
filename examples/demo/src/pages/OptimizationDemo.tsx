@@ -1,30 +1,23 @@
 import { useEffect, useState } from "react";
 import {
   optimizationWizardConfig,
-  useWizard,
   useWizardState,
-  WizardProvider,
+  useWizardSelector,
   type IOptimizationWizardData,
 } from "../wizards/optimization-wizard";
+import { useWizardActions, WizardProvider } from "wizzard-stepper-react";
 
 const DemoContent = () => {
-  const {
-    currentStep,
-    wizardData,
-    goToNextStep,
-    goToPrevStep,
-    isFirstStep,
-    isLastStep,
-    progress,
-    reset,
-  } = useWizard();
+  const { goToNextStep, goToPrevStep, reset } = useWizardActions();
+  const { currentStep, isFirstStep, isLastStep, progress } = useWizardState();
+  const wizardData = useWizardSelector((state) => state.wizardData);
 
   return (
     <div className="max-w-2xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Optimization & DevTools Demo</h1>
       <div className="mb-4 bg-gray-100 p-2 rounded text-sm">
         <p>
-          User Type: <strong>{wizardData.userType || "Loading..."}</strong>{" "}
+          User Type: <strong>{wizardData?.userType || "Loading..."}</strong>{" "}
           (Determines if "Heavy Calculation" step is shown)
         </p>
         <p>Progress: {progress}%</p>
@@ -129,7 +122,7 @@ const DemoContent = () => {
 };
 
 const WizardField = ({ name, label }: { name: string; label: string }) => {
-  const { setData, getData } = useWizard();
+  const { setData, getData } = useWizardActions();
   const { errors } = useWizardState();
   const value = getData(name, "") as string;
   // We can find error for this field from the errors object
