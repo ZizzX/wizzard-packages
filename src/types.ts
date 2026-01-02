@@ -212,6 +212,10 @@ export interface IWizardConfig<T = unknown, StepId extends string = string> {
      */
     validationMode?: ValidationMode;
     /**
+     * Debounce time in ms for validation when mode is 'onChange' (default: 300)
+     */
+    validationDebounceTime?: number;
+    /**
      * Persistence configuration
      */
     persistence?: {

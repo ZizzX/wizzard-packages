@@ -130,6 +130,11 @@ export function WizardProvider<
     Map<StepId, { result: boolean; depsValues: any[] }>
   >(new Map());
 
+  // Validation Debounce Ref
+  const validationDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+
   useEffect(() => {
     stateRef.current = {
       config: localConfig,
@@ -144,6 +149,15 @@ export function WizardProvider<
       history,
     };
   });
+
+  // Cleanup Debounce
+  useEffect(() => {
+    return () => {
+      if (validationDebounceRef.current) {
+        clearTimeout(validationDebounceRef.current);
+      }
+    };
+  }, []);
 
   // Analytics
   const trackEvent = useCallback<WizardEventHandler<StepId>>(
@@ -336,7 +350,8 @@ export function WizardProvider<
   const goToStep = useCallback(
     async (
       stepId: StepId,
-      providedActiveSteps?: IStepConfig<T, StepId>[]
+      providedActiveSteps?: IStepConfig<T, StepId>[],
+      options: { validate?: boolean } = { validate: true }
     ): Promise<boolean> => {
       const {
         currentStepId,
@@ -352,7 +367,7 @@ export function WizardProvider<
       const currentIdx = allSteps.findIndex((s) => s.id === currentStepId);
       const targetIdx = allSteps.findIndex((s) => s.id === stepId);
 
-      if (targetIdx > currentIdx && currentStepId) {
+      if (targetIdx > currentIdx && currentStepId && options.validate) {
         const step = stepsMap.get(currentStepId as StepId);
         const shouldVal =
           step?.autoValidate ??
@@ -457,7 +472,10 @@ export function WizardProvider<
 
     if (idx !== -1 && idx < resolvedSteps.length - 1) {
       const nextStepId = resolvedSteps[idx + 1].id;
-      const success = await goToStep(nextStepId, resolvedSteps);
+      // Pass { validate: false } because we ALREADY validated above
+      const success = await goToStep(nextStepId, resolvedSteps, {
+        validate: false,
+      });
       if (success) {
         // Logic: Mark as completed ONLY if validation passed (already checked above)
         // AND no current errors for this step.
@@ -538,7 +556,18 @@ export function WizardProvider<
             localConfig.validationMode ||
             "onStepChange") === "onChange"
         ) {
-          validateStep(currentStepId as StepId, newData);
+          const debounceMs =
+            options?.debounceValidation ??
+            localConfig.validationDebounceTime ??
+            300;
+
+          if (validationDebounceRef.current) {
+            clearTimeout(validationDebounceRef.current);
+          }
+
+          validationDebounceRef.current = setTimeout(() => {
+            validateStep(currentStepId as StepId, newData);
+          }, debounceMs);
         }
         if ((step?.persistenceMode || persistenceMode) === "onChange") {
           saveData("onChange", currentStepId as StepId, newData);
