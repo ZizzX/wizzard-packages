@@ -130,13 +130,27 @@ export class WizardStore<
         this.updateBulkData(action.payload.data, action.payload.options);
         break;
       case 'GO_TO_STEP':
-        // Metadata update happens via updateMeta usually
+        this.state = {
+          ...this.state,
+          currentStepId: action.payload.to,
+        };
         break;
       case 'VALIDATE_START':
-        // Useful for devtools/logging
+        this.state.busySteps.add(action.payload.stepId);
+        this.state = {
+          ...this.state,
+          busySteps: new Set(this.state.busySteps),
+        };
         break;
       case 'VALIDATE_END':
-        // Useful for devtools/logging
+        this.state.busySteps.delete(action.payload.stepId);
+        this.state = {
+            ...this.state,
+            busySteps: new Set(this.state.busySteps)
+        };
+        if (action.payload.result.errors) {
+            this.setStepErrors(action.payload.stepId, action.payload.result.errors);
+        }
         break;
       case 'SET_STEP_ERRORS':
         this.setStepErrors(action.payload.stepId, action.payload.errors);
@@ -146,6 +160,12 @@ export class WizardStore<
         break;
       case 'SET_ERROR_STEPS':
         this.state = { ...this.state, errorSteps: action.payload.steps };
+        break;
+      case 'SET_VISITED_STEPS':
+        this.state = { ...this.state, visitedSteps: action.payload.steps };
+        break;
+      case 'SET_COMPLETED_STEPS':
+        this.state = { ...this.state, completedSteps: action.payload.steps };
         break;
     }
     this.syncDerivedState();

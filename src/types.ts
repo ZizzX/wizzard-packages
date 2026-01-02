@@ -141,6 +141,11 @@ export interface IStepConfig<TStepData = unknown, StepId extends string = string
      */
     showWhilePending?: boolean;
     /**
+     * Optimization: Array of paths that this step's condition depends on.
+     * If provided, the condition will only be re-evaluated when these paths change.
+     */
+    conditionDependsOn?: string[];
+    /**
      * Guard function called before leaving the step.
      * Return false or throw to prevent navigation.
      */

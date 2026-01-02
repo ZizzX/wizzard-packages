@@ -13,6 +13,7 @@ import ComplexDataWizard from "./pages/ComplexDataWizard";
 import AdvancedDemo from "./pages/AdvancedDemo";
 import EnterpriseWizardDemo from "./pages/EnterpriseWizardDemo";
 import MiddlewareDemo from "./pages/MiddlewareDemo";
+import OptimizationDemo from "./pages/OptimizationDemo";
 
 import Introduction from "./pages/docs/Introduction";
 import Installation from "./pages/docs/Installation";
@@ -64,6 +65,7 @@ function App() {
               element={<EnterpriseWizardDemo />}
             />
             <Route path="middleware-demo" element={<MiddlewareDemo />} />
+            <Route path="optimization" element={<OptimizationDemo />} />
 
             {/* Documentation Section */}
             <Route path="docs" element={<DocsLayout />}>

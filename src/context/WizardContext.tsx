@@ -54,9 +54,16 @@ export function WizardProvider<
     useState<IWizardConfig<T, StepId>>(config);
 
   // 2. Store & Persistence
-  const storeRef = useRef(
-    new WizardStore<T, StepId>((initialData || {}) as T, config.middlewares)
+  const storeRef = useRef<WizardStore<T, StepId>>(
+    null as unknown as WizardStore<T, StepId>
   );
+  if (!storeRef.current) {
+    storeRef.current = new WizardStore<T, StepId>(
+      (initialData || {}) as T,
+      config.middlewares
+    );
+  }
+
   const isInitialized = useRef(false);
 
   const persistenceAdapter = useMemo<IPersistenceAdapter>(() => {
@@ -118,6 +125,11 @@ export function WizardProvider<
     history,
   });
 
+  // Condition Memoization Cache
+  const conditionCacheRef = useRef<
+    Map<StepId, { result: boolean; depsValues: any[] }>
+  >(new Map());
+
   useEffect(() => {
     stateRef.current = {
       config: localConfig,
@@ -169,6 +181,42 @@ export function WizardProvider<
           localConfig.steps.map(async (step) => {
             if (!step.condition) return { step, ok: true };
 
+            // Optimization: Memoized Condition Resolution
+            if (step.conditionDependsOn) {
+              const currentDepsValues = step.conditionDependsOn.map((path) =>
+                getByPath(data, path)
+              );
+              const cached = conditionCacheRef.current.get(step.id);
+
+              if (
+                cached &&
+                cached.depsValues.length === currentDepsValues.length &&
+                cached.depsValues.every(
+                  (val, idx) => val === currentDepsValues[idx]
+                )
+              ) {
+                return { step, ok: cached.result };
+              }
+
+              // If not cached or deps changed, resolve and cache
+              try {
+                const res = step.condition(
+                  data || {},
+                  storeRef.current.getSnapshot()
+                );
+                const ok = res instanceof Promise ? await res : res;
+                conditionCacheRef.current.set(step.id, {
+                  result: ok,
+                  depsValues: currentDepsValues,
+                });
+                return { step, ok };
+              } catch (e) {
+                console.error(`[Wizard] Condition failed for ${step.id}:`, e);
+                return { step, ok: false };
+              }
+            }
+
+            // Fallback: Default behavior (always resolve if no deps specified)
             const nextBusyStart = new Set(
               storeRef.current.getSnapshot().busySteps
             );
@@ -254,6 +302,19 @@ export function WizardProvider<
             type: "SET_ERROR_STEPS",
             payload: { steps: nextErrorSteps },
           });
+
+          // Ensure it's removed from completed if it has errors
+          const nextCompleted = new Set(
+            storeRef.current.getSnapshot().completedSteps
+          );
+          if (nextCompleted.has(stepId)) {
+            nextCompleted.delete(stepId);
+            storeRef.current.dispatch({
+              type: "SET_COMPLETED_STEPS",
+              payload: { steps: nextCompleted },
+            });
+          }
+
           return false;
         }
       } finally {
@@ -327,7 +388,11 @@ export function WizardProvider<
 
         const currentSnapshot = storeRef.current.getSnapshot();
         const nextVisited = new Set(currentSnapshot.visitedSteps);
+        // Mark previous step as visited
         if (currentStepId) nextVisited.add(currentStepId as StepId);
+        // Mark new step as visited (on entry)
+        nextVisited.add(stepId);
+
         storeRef.current.dispatch({
           type: "SET_VISITED_STEPS",
           payload: { steps: nextVisited },
@@ -394,12 +459,17 @@ export function WizardProvider<
       const nextStepId = resolvedSteps[idx + 1].id;
       const success = await goToStep(nextStepId, resolvedSteps);
       if (success) {
-        const nextComp = new Set(storeRef.current.getSnapshot().completedSteps);
-        nextComp.add(currentStepId as StepId);
-        storeRef.current.dispatch({
-          type: "SET_COMPLETED_STEPS",
-          payload: { steps: nextComp },
-        });
+        // Logic: Mark as completed ONLY if validation passed (already checked above)
+        // AND no current errors for this step.
+        const currentSnapshot = storeRef.current.getSnapshot();
+        if (!currentSnapshot.errorSteps.has(currentStepId as StepId)) {
+          const nextComp = new Set(currentSnapshot.completedSteps);
+          nextComp.add(currentStepId as StepId);
+          storeRef.current.dispatch({
+            type: "SET_COMPLETED_STEPS",
+            payload: { steps: nextComp },
+          });
+        }
       }
     }
   }, [goToStep, resolveActiveStepsHelper, validateStep, stepsMap]);
@@ -616,11 +686,10 @@ export function WizardProvider<
     }
   }, [initialData, localConfig]);
 
-  // Handle Dynamic Steps Resolution
+  // Handle Dynamic Steps Resolution (Debounced)
   useEffect(() => {
     let isMounted = true;
-
-    const updateSteps = async () => {
+    const timeoutId = setTimeout(async () => {
       const resolved = await resolveActiveStepsHelper(wizardData);
       if (isMounted) {
         storeRef.current.dispatch({
@@ -628,12 +697,11 @@ export function WizardProvider<
           payload: { steps: resolved },
         });
       }
-    };
-
-    updateSteps();
+    }, 200); // 200ms debounce
 
     return () => {
       isMounted = false;
+      clearTimeout(timeoutId);
     };
   }, [wizardData, resolveActiveStepsHelper]);
 
@@ -691,6 +759,19 @@ export function WizardProvider<
           payload: { history: [startId] },
         });
       }
+
+      // Mark initial step as visited
+      const currentVisited = new Set(
+        storeRef.current.getSnapshot().visitedSteps
+      );
+      if (!currentVisited.has(startId)) {
+        currentVisited.add(startId);
+        storeRef.current.dispatch({
+          type: "SET_VISITED_STEPS",
+          payload: { steps: currentVisited },
+        });
+      }
+
       storeRef.current.updateMeta({ isLoading: false });
     }
   }, [activeSteps, initialStepId, currentStepId, persistenceAdapter]);

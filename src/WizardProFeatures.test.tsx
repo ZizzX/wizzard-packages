@@ -327,7 +327,9 @@ describe("Wizard Pro Features", () => {
     expect(
       result.current.activeSteps.find((s) => s.id === "step2")
     ).toBeUndefined();
-    expect(result.current.busySteps.has("step2")).toBe(true);
+    await waitFor(() => {
+      expect(result.current.busySteps.has("step2")).toBe(true);
+    });
 
     await act(async () => {
       resolveCondition(true);

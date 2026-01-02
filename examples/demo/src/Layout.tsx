@@ -28,6 +28,7 @@ export default function Layout() {
     "/advanced",
     "/enterprise-wizard",
     "/middleware-demo",
+    "/optimization",
   ];
 
   const getActiveNav = (currentPath: string) => {

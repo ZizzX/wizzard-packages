@@ -107,6 +107,19 @@ export default function Examples() {
       icon: "🏢",
       color: "bg-cyan-50 text-cyan-600",
     },
+    {
+      title:
+        language === "ru"
+          ? "Оптимизация и DevTools"
+          : "Optimization & DevTools",
+      description:
+        language === "ru"
+          ? "Демонстрация мемоизации условий, асинхронной инициализации и исправленного DevTools."
+          : "Demo of memoized conditions, async initialization, and fixed DevTools.",
+      path: "/optimization",
+      icon: "⚡",
+      color: "bg-green-50 text-green-600",
+    },
   ];
 
   return (
