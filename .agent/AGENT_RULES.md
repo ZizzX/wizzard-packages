@@ -9,3 +9,5 @@
     *   Editing code (`replace_file_content`, `write_to_file`, etc.).
     *   Reading files and directories (`list_dir`, `view_file`, etc.).
     *   Passive info gathering is permitted, but avoid shell commands where possible.
+
+всегда отвечать на русском!
