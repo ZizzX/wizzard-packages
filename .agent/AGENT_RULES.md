@@ -11,3 +11,5 @@
     *   Passive info gathering is permitted, but avoid shell commands where possible.
 
 всегда отвечать на русском!
+always answer in Russian!
+always use MCP context7!
