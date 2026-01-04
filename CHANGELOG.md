@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.1](https://github.com/ZizzX/wizzard-stepper-react/compare/v2.0.0...v2.0.1) (2026-01-04)
+
+
+### Features
+
+* add configurable validation debounce time ([9c52b31](https://github.com/ZizzX/wizzard-stepper-react/commit/9c52b31548eeb2ac91c7796e145c51d578690fb6))
+* add optimization wizard demo ([4c7c88b](https://github.com/ZizzX/wizzard-stepper-react/commit/4c7c88b0e58d59de3fb8aacf49d2abb6ec6ed73c))
+* add wizard reset and page reload on last step completion ([ea12556](https://github.com/ZizzX/wizzard-stepper-react/commit/ea12556e68230e48818a0b5410ae700c497500f1))
+* introduce typed wizard data with `createWizardFactory` ([b24ab22](https://github.com/ZizzX/wizzard-stepper-react/commit/b24ab22dd3e2f7170a4ec78703def8e8864c2945))
+* update language context with new language selection capabilities ([b830f06](https://github.com/ZizzX/wizzard-stepper-react/commit/b830f06af8c4ee96c719369fd59cba90a4ee9b3e))
+
 # [2.0.0](https://github.com/ZizzX/wizzard-stepper-react/compare/v1.7.2...v1.8.0) (2026-01-01)
 
 
