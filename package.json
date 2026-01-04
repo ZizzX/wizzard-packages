@@ -1,6 +1,6 @@
 {
   "name": "wizzard-stepper-react",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A flexible, headless, and strictly typed multi-step wizard library for React.",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -27,7 +27,7 @@
     "lint": "eslint src/**",
     "test": "vitest",
     "test:run": "vitest run",
-    "release": "release-it",
+    "release": "release-it --no-npm",
     "commit": "cz",
     "prepare": "husky || true"
   },
