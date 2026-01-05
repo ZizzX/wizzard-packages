@@ -263,26 +263,16 @@ export function WizardProvider<
           );
 
           if (isDependent) {
-            console.log(
-              `[WizardContext] 🎯 Step "${step.id}" is dependent on changes in:`,
-              changedPaths
-            );
             if (nextComp.delete(step.id as StepId)) {
-              console.log(
-                `[WizardContext] 🗑️ Removed "${step.id}" from completedSteps`
-              );
               statusChanged = true;
             }
             if (nextVis.delete(step.id as StepId)) {
-              console.log(
-                `[WizardContext] 🗑️ Removed "${step.id}" from visitedSteps`
-              );
               statusChanged = true;
             }
 
             if (step.clearData) {
               if (typeof step.clearData === "function") {
-                const patch = step.clearData(currentData);
+                const patch = step.clearData(currentData, changedPaths);
                 Object.keys(patch).forEach((key) => {
                   if (currentData[key] !== patch[key]) {
                     currentData[key] = patch[key];
@@ -315,10 +305,6 @@ export function WizardProvider<
       processDependencies(paths);
 
       if (statusChanged) {
-        console.log(
-          `[WizardContext] Dispatching new completedSteps:`,
-          Array.from(nextComp)
-        );
         storeRef.current.dispatch({
           type: "SET_COMPLETED_STEPS",
           payload: { steps: nextComp },

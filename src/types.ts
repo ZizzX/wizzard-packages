@@ -5,81 +5,81 @@ export interface IWizardHandle<T = unknown, StepId extends string = string> {
 }
 
 export interface IWizardState<T = unknown, StepId extends string = string> {
-  data: T;
-  errors: Record<StepId, Record<string, string>>;
-  currentStep: IStepConfig<T, StepId> | null;
-  currentStepIndex: number;
-  isFirstStep: boolean;
-  isLastStep: boolean;
-  isLoading: boolean;
-  isPending: boolean;
-  activeSteps: IStepConfig<T, StepId>[];
-  currentStepId: StepId | "";
-  history: StepId[];
-  busySteps: Set<StepId>;
-  visitedSteps: Set<StepId>;
-  completedSteps: Set<StepId>;
-  errorSteps: Set<StepId>;
-  config: IWizardConfig<T, StepId>;
-  progress: number;
-  activeStepsCount: number;
-  isBusy: boolean;
-  isDirty: boolean;
-  dirtyFields: Set<string>;
-  breadcrumbs: IBreadcrumb<StepId>[];
+    data: T;
+    errors: Record<StepId, Record<string, string>>;
+    currentStep: IStepConfig<T, StepId> | null;
+    currentStepIndex: number;
+    isFirstStep: boolean;
+    isLastStep: boolean;
+    isLoading: boolean;
+    isPending: boolean;
+    activeSteps: IStepConfig<T, StepId>[];
+    currentStepId: StepId | "";
+    history: StepId[];
+    busySteps: Set<StepId>;
+    visitedSteps: Set<StepId>;
+    completedSteps: Set<StepId>;
+    errorSteps: Set<StepId>;
+    config: IWizardConfig<T, StepId>;
+    progress: number;
+    activeStepsCount: number;
+    isBusy: boolean;
+    isDirty: boolean;
+    dirtyFields: Set<string>;
+    breadcrumbs: IBreadcrumb<StepId>[];
 }
 
 export interface IWizardStore<T, StepId extends string = string> {
-  getSnapshot(): IWizardState<T, StepId>;
-  dispatch(action: WizardAction<T, StepId>): void;
-  update(newData: T, changedPath?: string | string[]): void;
-  updateMeta(newMeta: Partial<IWizardState<T, StepId>>): void;
-  setInitialData(data: T): void;
-  updateErrors(newErrors: Record<string, Record<string, string>>): void;
-  setStepErrors(
-    stepId: string,
-    errors: Record<string, string> | undefined | null
-  ): boolean;
-  deleteError(stepId: string, path: string): boolean;
-  subscribe(listener: () => void): () => void;
-  subscribeToActions(
-    listener: (action: WizardAction<T, StepId>) => void
-  ): () => void;
-  injectPersistence(adapter: IPersistenceAdapter): void;
-  save(stepId?: StepId): void;
-  hydrate(): void;
-  errorsMap: Map<string, Map<string, string>>;
+    getSnapshot(): IWizardState<T, StepId>;
+    dispatch(action: WizardAction<T, StepId>): void;
+    update(newData: T, changedPath?: string | string[]): void;
+    updateMeta(newMeta: Partial<IWizardState<T, StepId>>): void;
+    setInitialData(data: T): void;
+    updateErrors(newErrors: Record<string, Record<string, string>>): void;
+    setStepErrors(
+        stepId: string,
+        errors: Record<string, string> | undefined | null
+    ): boolean;
+    deleteError(stepId: string, path: string): boolean;
+    subscribe(listener: () => void): () => void;
+    subscribeToActions(
+        listener: (action: WizardAction<T, StepId>) => void
+    ): () => void;
+    injectPersistence(adapter: IPersistenceAdapter): void;
+    save(stepId?: StepId): void;
+    hydrate(): void;
+    errorsMap: Map<string, Map<string, string>>;
 }
 
 export interface IWizardActions<StepId extends string = string> {
-  goToNextStep: () => Promise<void>;
-  goToPrevStep: () => Promise<void>;
-  goToStep: (
-    stepId: StepId,
-    providedActiveSteps?: any[],
-    options?: { validate?: boolean }
-  ) => Promise<boolean>;
-  setStepData: (stepId: StepId, data: unknown) => void;
-  handleStepChange: (field: string, value: unknown) => void;
-  validateStep: (sid: StepId) => Promise<boolean>;
-  validateAll: () => Promise<{
-    isValid: boolean;
-    errors: Record<string, Record<string, string>>;
-  }>;
-  save: (stepIds?: StepId | StepId[] | boolean) => void;
-  clearStorage: () => void;
-  reset: () => void;
-  setData: (
-    path: string,
-    value: unknown,
-    options?: { debounceValidation?: number }
-  ) => void;
-  updateData: (
-    data: Partial<any>,
-    options?: { replace?: boolean; persist?: boolean }
-  ) => void;
-  getData: (path: string, defaultValue?: unknown) => unknown;
-  updateConfig: (config: Partial<IWizardConfig<any, StepId>>) => void;
+    goToNextStep: () => Promise<void>;
+    goToPrevStep: () => Promise<void>;
+    goToStep: (
+        stepId: StepId,
+        providedActiveSteps?: any[],
+        options?: { validate?: boolean }
+    ) => Promise<boolean>;
+    setStepData: (stepId: StepId, data: unknown) => void;
+    handleStepChange: (field: string, value: unknown) => void;
+    validateStep: (sid: StepId) => Promise<boolean>;
+    validateAll: () => Promise<{
+        isValid: boolean;
+        errors: Record<string, Record<string, string>>;
+    }>;
+    save: (stepIds?: StepId | StepId[] | boolean) => void;
+    clearStorage: () => void;
+    reset: () => void;
+    setData: (
+        path: string,
+        value: unknown,
+        options?: { debounceValidation?: number }
+    ) => void;
+    updateData: (
+        data: Partial<any>,
+        options?: { replace?: boolean; persist?: boolean }
+    ) => void;
+    getData: (path: string, defaultValue?: unknown) => unknown;
+    updateConfig: (config: Partial<IWizardConfig<any, StepId>>) => void;
 }
 
 
@@ -199,8 +199,9 @@ export interface IStepConfig<TStepData = unknown, StepId extends string = string
     /**
      * Paths to clear when dependencies change.
      * Can be a single path string, an array of paths, or a function returning a data patch to merge.
+     * Function receives current data and array of changed field paths that triggered the dependency.
      */
-    clearData?: string | string[] | ((data: TStepData) => Partial<TStepData>);
+    clearData?: string | string[] | ((data: TStepData, changedFields: string[]) => Partial<TStepData>);
 }
 
 /**
@@ -445,7 +446,7 @@ export interface IWizardContext<T = unknown, StepId extends string = string> {
     save: (stepIds?: StepId | StepId[] | boolean) => void; // Manual persistence save
     clearStorage: () => void;
     reset: () => void;
-    
+
     /**
      * Dynamic Configuration
      */

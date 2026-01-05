@@ -221,7 +221,6 @@ const Step4 = () => {
         label="Field B (Depends on A)"
         value={data.fieldB || ""}
         onChange={(e) => updateData({ fieldB: e.target.value })}
-        disabled={!data.fieldA}
       />
 
       <Input
@@ -229,7 +228,6 @@ const Step4 = () => {
         label="Field C (Depends on B)"
         value={data.fieldC || ""}
         onChange={(e) => updateData({ fieldC: e.target.value })}
-        disabled={!data.fieldB}
       />
     </div>
   );
@@ -334,7 +332,22 @@ const config: IWizardConfig<DependencyData> = {
       id: "step-4",
       label: "Cascade",
       dependsOn: ["fieldA", "fieldB"],
-      clearData: ["fieldB", "fieldC"],
+      clearData: (_, changedFields) => {
+        // Если изменилось fieldA - очищаем fieldB и fieldC
+        if (changedFields.includes("fieldA")) {
+          return {
+            fieldB: undefined,
+            fieldC: undefined,
+          };
+        }
+        // Если изменилось fieldB - очищаем только fieldC
+        else if (changedFields.includes("fieldB")) {
+          return {
+            fieldC: undefined,
+          };
+        }
+        return {};
+      },
     },
   ],
 };
