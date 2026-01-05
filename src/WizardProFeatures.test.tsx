@@ -431,4 +431,125 @@ describe("Wizard Pro Features", () => {
 
     expect(result.current.error).toBe("min length 6");
   });
+
+  it("should setData and getData correctly for nested paths", async () => {
+    const config: IWizardConfig<any> = {
+      steps: [{ id: "step1", label: "Step 1" }],
+    };
+
+    const { result } = renderHook(
+      () => ({
+        state: useWizardState(),
+        actions: useWizardActions(),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <WizardProvider config={config}>{children}</WizardProvider>
+        ),
+      }
+    );
+
+    await act(() => {
+      result.current.actions.setData("user.address.city", "New York");
+    });
+
+    expect(result.current.state.data).toEqual({
+      user: { address: { city: "New York" } },
+    });
+    expect(result.current.actions.getData("user.address.city")).toBe(
+      "New York"
+    );
+    expect(result.current.actions.getData("user.address")).toEqual({
+      city: "New York",
+    });
+    expect(result.current.actions.getData("user.name", "Unknown")).toBe(
+      "Unknown"
+    );
+  });
+
+  it("should updateData with merge and replace options", async () => {
+    const config: IWizardConfig<any> = {
+      steps: [{ id: "step1", label: "Step 1" }],
+    };
+
+    const { result } = renderHook(
+      () => ({
+        state: useWizardState(),
+        actions: useWizardActions(),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <WizardProvider config={config} initialData={{ a: 1, b: 2 }}>
+            {children}
+          </WizardProvider>
+        ),
+      }
+    );
+
+    // Merge
+    await act(() => {
+      result.current.actions.updateData({ b: 3, c: 4 });
+    });
+    expect(result.current.state.data).toEqual({ a: 1, b: 3, c: 4 });
+
+    // Replace
+    await act(() => {
+      result.current.actions.updateData({ x: 99 }, { replace: true });
+    });
+    expect(result.current.state.data).toEqual({ x: 99 });
+  });
+
+  it("should respect beforeLeave direction and snapshot access", async () => {
+    const config: IWizardConfig<any> = {
+      steps: [
+        {
+          id: "step1",
+          label: "Step 1",
+          beforeLeave: async (data, dir, snapshot) => {
+            if (dir === "next" && data.block === true) return false;
+            if (dir === "next" && snapshot.visitedSteps?.has("step2"))
+              return true; // allow if revisited?
+            return true;
+          },
+        },
+        { id: "step2", label: "Step 2" },
+      ],
+    };
+
+    const { result } = renderHook(
+      () => ({
+        state: useWizardState(),
+        actions: useWizardActions(),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <WizardProvider config={config}>{children}</WizardProvider>
+        ),
+      }
+    );
+
+    // 1. Try to leave when blocked
+    await act(() => {
+      result.current.actions.setData("block", true);
+    });
+    await act(async () => {
+      await result.current.actions.goToNextStep();
+    });
+    expect(result.current.state.currentStepId).toBe("step1");
+
+    // 2. Unblock and go
+    await act(() => {
+      result.current.actions.setData("block", false);
+    });
+    await act(async () => {
+      await result.current.actions.goToNextStep();
+    });
+    expect(result.current.state.currentStepId).toBe("step2");
+
+    // 3. Go back
+    await act(async () => {
+      await result.current.actions.goToPrevStep();
+    });
+    expect(result.current.state.currentStepId).toBe("step1");
+  });
 });
