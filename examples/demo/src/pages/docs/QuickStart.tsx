@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "../../context/LanguageContext";
 
 const TutorialStep1 = () => {
-  const { wizardData, handleStepChange } = useWizard();
+  const { data, handleStepChange } = useWizard();
   const { language } = useTranslation();
 
   const text = {
@@ -50,7 +50,7 @@ const TutorialStep1 = () => {
       </div>
       <Input
         label={t.label}
-        value={wizardData.userName || ""}
+        value={data.userName || ""}
         onChange={(e) => handleStepChange("userName", e.target.value)}
         placeholder={t.placeholder}
       />
@@ -60,7 +60,7 @@ const TutorialStep1 = () => {
 };
 
 const TutorialStep2 = () => {
-  const { wizardData, handleStepChange } = useWizard();
+  const { data, handleStepChange } = useWizard();
   const { language } = useTranslation();
 
   const text = {
@@ -89,7 +89,7 @@ const TutorialStep2 = () => {
           type="checkbox"
           id="react"
           className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-          checked={!!wizardData.knowsReact}
+          checked={!!data.knowsReact}
           onChange={(e) => handleStepChange("knowsReact", e.target.checked)}
         />
         <label htmlFor="react" className="font-medium text-gray-900">
@@ -101,7 +101,7 @@ const TutorialStep2 = () => {
 };
 
 const TutorialStep3 = () => {
-  const { wizardData } = useWizard();
+  const { data } = useWizard();
   const { language } = useTranslation();
 
   const text = {
@@ -124,9 +124,7 @@ const TutorialStep3 = () => {
         <p className="text-gray-600">{t.desc}</p>
       </div>
       <div className="bg-gray-950 rounded-xl p-6 font-mono text-sm shadow-inner overflow-auto">
-        <pre className="text-indigo-400">
-          {JSON.stringify(wizardData, null, 2)}
-        </pre>
+        <pre className="text-indigo-400">{JSON.stringify(data, null, 2)}</pre>
       </div>
     </div>
   );
