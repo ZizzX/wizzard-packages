@@ -127,11 +127,6 @@ export function WizardProvider<
     history,
   });
 
-  // Condition Memoization Cache
-  const conditionCacheRef = useRef<
-    Map<StepId, { result: boolean; depsValues: any[] }>
-  >(new Map());
-
   // Validation Debounce Ref
   const validationDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
@@ -169,95 +164,10 @@ export function WizardProvider<
     [localConfig.analytics]
   );
 
-  // Persistence is now handled internally by WizardStore
-
-  // 6. Action Implementations
+  // Helper wrapper for store method
   const resolveActiveStepsHelper = useCallback(
-    async (data: T): Promise<IStepConfig<T, StepId>[]> => {
-      storeRef.current.updateMeta({ isBusy: true });
-      try {
-        const results = await Promise.all(
-          localConfig.steps.map(async (step) => {
-            if (!step.condition) return { step, ok: true };
-
-            // Optimization: Memoized Condition Resolution
-            if (step.conditionDependsOn) {
-              const currentDepsValues = step.conditionDependsOn.map((path) =>
-                getByPath(data, path)
-              );
-              const cached = conditionCacheRef.current.get(step.id);
-
-              if (
-                cached &&
-                cached.depsValues.length === currentDepsValues.length &&
-                cached.depsValues.every(
-                  (val, idx) => val === currentDepsValues[idx]
-                )
-              ) {
-                return { step, ok: cached.result };
-              }
-
-              // If not cached or deps changed, resolve and cache
-              try {
-                const res = step.condition(
-                  data || {},
-                  storeRef.current.getSnapshot()
-                );
-                const ok = res instanceof Promise ? await res : res;
-                conditionCacheRef.current.set(step.id, {
-                  result: ok,
-                  depsValues: currentDepsValues,
-                });
-                return { step, ok };
-              } catch (e) {
-                console.error(`[Wizard] Condition failed for ${step.id}:`, e);
-                return { step, ok: false };
-              }
-            }
-
-            // Fallback: Default behavior (always resolve if no deps specified)
-            const nextBusyStart = new Set(
-              storeRef.current.getSnapshot().busySteps
-            );
-            nextBusyStart.add(step.id as StepId);
-            storeRef.current.updateMeta({
-              busySteps: nextBusyStart,
-              isBusy: true,
-            });
-
-            try {
-              const res = step.condition(
-                data || {},
-                storeRef.current.getSnapshot()
-              );
-              const ok = res instanceof Promise ? await res : res;
-              return { step, ok };
-            } catch (e) {
-              console.error(`[Wizard] Condition failed for ${step.id}:`, e);
-              return { step, ok: false };
-            } finally {
-              const currentSnapshot = storeRef.current.getSnapshot();
-              const nextBusyEnd = new Set(currentSnapshot.busySteps);
-              nextBusyEnd.delete(step.id as StepId);
-              storeRef.current.updateMeta({
-                busySteps: nextBusyEnd,
-                isBusy: nextBusyEnd.size > 0,
-              });
-            }
-          })
-        );
-        return results.filter((r) => r.ok).map((r) => r.step) as IStepConfig<
-          T,
-          StepId
-        >[];
-      } finally {
-        const currentSnapshot = storeRef.current.getSnapshot();
-        if (currentSnapshot.busySteps.size === 0) {
-          storeRef.current.updateMeta({ isBusy: false });
-        }
-      }
-    },
-    [localConfig.steps]
+    (data: T) => storeRef.current.resolveActiveSteps(data),
+    []
   );
 
   const validateStep = useCallback(
@@ -447,6 +357,7 @@ export function WizardProvider<
       step?.autoValidate ??
       localConfig.autoValidate ??
       !!step?.validationAdapter;
+
     if (shouldVal) {
       const ok = await validateStep(currentStepId as StepId, currentData);
       if (!ok) return;
@@ -493,11 +404,15 @@ export function WizardProvider<
 
       let newData = setByPath(prevData, path, value);
 
-      // Auto-invalidation
+      // 2. Clear Dependent Data (accumulate changes)
+      const dataToUpdate: Record<string, any> = {};
+
+      // Auto-invalidation & Clearing
       localConfig.steps.forEach((step) => {
         if (
           step.dependsOn?.some((p) => path === p || path.startsWith(p + "."))
         ) {
+          // Status Reset
           const nextComp = new Set(
             storeRef.current.getSnapshot().completedSteps
           );
@@ -514,24 +429,62 @@ export function WizardProvider<
               payload: { steps: nextVis },
             });
           }
+
+          // Data Clearing
           if (step.clearData) {
             if (typeof step.clearData === "function") {
-              newData = { ...newData, ...step.clearData(newData) };
+              const patch = step.clearData(newData);
+              Object.assign(dataToUpdate, patch);
+              newData = { ...newData, ...patch };
             } else {
-              (Array.isArray(step.clearData)
+              const pathsToClear = Array.isArray(step.clearData)
                 ? step.clearData
-                : [step.clearData]
-              ).forEach((p) => {
-                newData = setByPath(newData, p as string, undefined);
+                : [step.clearData];
+
+              pathsToClear.forEach((p) => {
+                // Use setByPath to correctly handle nested paths like 'billing.address'
+                // We set to undefined in newData for local consistency
+                newData = setByPath(newData, p, undefined);
+                // We assume clearData paths are root-level or flat for the bulk update partial?
+                // Wait, UPDATE_DATA expects Partial<T>.
+                // If p is 'nested.prop', { nested: { prop: undefined } } is needed.
+                // Simpler approach: Dispatch UPDATE_DATA with the FULL cloned/modified newData
+                // But that might be expensive.
+                // Let's use setByPath on a partial object? No, setByPath works on objects.
+                // Re-strategy: We already have 'newData' which is the FULL updated state.
+                // Efficiency: UPDATE_DATA with { replace: true }?
+                // Or let UPDATE_DATA handle the merge.
+                // 'newData' contains the primary change AND the cleared fields.
+                // So we can just dispatch UPDATE_DATA with newData and replace: true?
+                // Or better, let's just use the `store.update` method directly or dispatch UPDATE_DATA with the full object derived from newData?
+                //
+                // Optimization: 'newData' is already the next state.
+                // We should use that.
               });
             }
           }
         }
       });
 
+      // 3. atomic dispatch
+      // If we cleared data, we must do a full update or smart partial.
+      // Since 'newData' has everything correct (primary value + cleared values),
+      // we can simply use that unless we want to avoid deep cloning everything again.
+      // Given 'newData' was derived from 'prevData' via valid setByPath mutations (which clone path),
+      // it's safe to use as the next state.
+
+      // However, WizardStore.UPDATE_DATA payload.data is Partial<T>.
+      // We can pass the whole newData and say options: { replace: true } ?
+      // Looking at WizardStore.ts:
+      // case 'UPDATE_DATA': this.updateBulkData(action.payload.data, action.payload.options);
+      // updateBulkData(data, options) -> is replace is true, new data IS data.
+
       storeRef.current.dispatch({
-        type: "SET_DATA",
-        payload: { path, value, options },
+        type: "UPDATE_DATA",
+        payload: {
+          data: newData,
+          options: { replace: true }, // Important: we already merged everything in newData
+        },
       });
 
       if (currentStepId) {

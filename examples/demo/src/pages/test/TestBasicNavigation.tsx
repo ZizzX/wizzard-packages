@@ -209,9 +209,12 @@ const WizardContent = () => {
             data-testid={isLastStep ? "submit-button" : "next-button"}
             variant="primary"
             onClick={
-              isLastStep ? () => alert("Wizard completed!") : goToNextStep
+              isLastStep
+                ? () =>
+                    (document.body.innerHTML +=
+                      '<div data-testid="complete-message">Wizard Completed!</div>')
+                : goToNextStep
             }
-            disabled={isLastStep}
           >
             {isLastStep ? "Complete" : "Next"}
           </Button>

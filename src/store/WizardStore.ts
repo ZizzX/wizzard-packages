@@ -504,4 +504,90 @@ export class WizardStore<
           this.saveStepData(currentStepId);
       }, debounceTime));
   }
+
+  // Caching for condition resolution
+  private conditionCache = new Map<StepId, { result: boolean; depsValues: any[] }>();
+
+  async resolveActiveSteps(data?: T): Promise<import("../types").IStepConfig<T, StepId>[]> {
+      const currentData = data || this.state.data;
+      const config = this.state.config;
+
+      this.updateMeta({ isBusy: true });
+      try {
+        const results = await Promise.all(
+          config.steps.map(async (step) => {
+            if (!step.condition) return { step, ok: true };
+
+            // Optimization: Memoized Condition Resolution
+            if (step.conditionDependsOn) {
+              const currentDepsValues = step.conditionDependsOn.map((path) =>
+                getByPath(currentData, path)
+              );
+              const cached = this.conditionCache.get(step.id);
+
+              if (
+                cached &&
+                cached.depsValues.length === currentDepsValues.length &&
+                cached.depsValues.every(
+                  (val, idx) => val === currentDepsValues[idx]
+                )
+              ) {
+                return { step, ok: cached.result };
+              }
+
+              // If not cached or deps changed, resolve and cache
+              try {
+                const res = step.condition(
+                  currentData || ({} as T),
+                  this.getSnapshot()
+                );
+                const ok = res instanceof Promise ? await res : res;
+                this.conditionCache.set(step.id, {
+                  result: ok,
+                  depsValues: currentDepsValues,
+                });
+                return { step, ok };
+              } catch (e) {
+                console.error(`[Wizard] Condition failed for ${step.id}:`, e);
+                return { step, ok: false };
+              }
+            }
+
+            // Fallback: Default behavior (always resolve if no deps specified)
+            const nextBusyStart = new Set(this.state.busySteps);
+            nextBusyStart.add(step.id as StepId);
+            this.updateMeta({
+              busySteps: nextBusyStart,
+              isBusy: true,
+            });
+
+            try {
+              const res = step.condition(
+                currentData || ({} as T),
+                this.getSnapshot()
+              );
+              const ok = res instanceof Promise ? await res : res;
+              return { step, ok };
+            } catch (e) {
+              console.error(`[Wizard] Condition failed for ${step.id}:`, e);
+              return { step, ok: false };
+            } finally {
+              const currentSnapshot = this.getSnapshot();
+              const nextBusyEnd = new Set(currentSnapshot.busySteps);
+              nextBusyEnd.delete(step.id as StepId);
+              this.updateMeta({
+                busySteps: nextBusyEnd,
+                isBusy: nextBusyEnd.size > 0,
+              });
+            }
+          })
+        );
+        return results.filter((r) => r.ok).map((r) => r.step);
+      } finally {
+        const currentSnapshot = this.getSnapshot();
+        if (currentSnapshot.busySteps.size === 0) {
+          this.updateMeta({ isBusy: false });
+        }
+      }
+  }
 }
