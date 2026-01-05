@@ -2,14 +2,12 @@ import {
   WizardProvider,
   useWizard,
   useWizardActions,
-  useWizardSelector,
   type IWizardConfig,
   MemoryAdapter,
 } from "wizzard-stepper-react";
 import { Card, CardContent, CardFooter } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
-import { cn } from "../../lib/utils";
 
 interface DependencyData {
   country?: string;
@@ -35,20 +33,13 @@ interface DependencyData {
 
 // --- Steps ---
 
-const LocationStep = () => {
+const Step1 = () => {
   const { data } = useWizard<DependencyData>();
   const { updateData } = useWizardActions();
 
-  const states =
-    data.country === "US"
-      ? ["CA", "NY", "TX"]
-      : data.country === "CA"
-        ? ["ON", "BC", "QC"]
-        : [];
-
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-bold">Location Dependencies</h2>
+      <h2 className="text-lg font-bold">Step 1: Initiators</h2>
 
       <div>
         <label className="block text-sm font-medium">Country</label>
@@ -63,6 +54,44 @@ const LocationStep = () => {
           <option value="CA">Canada</option>
         </select>
       </div>
+
+      <Input
+        data-testid="user-name"
+        label="User Name"
+        value={data.user?.name || ""}
+        onChange={(e) =>
+          updateData({ user: { ...data.user, name: e.target.value } })
+        }
+      />
+
+      <Input
+        data-testid="user-address-zip"
+        label="Zip Code"
+        value={data.user?.address?.zip || ""}
+        onChange={(e) =>
+          updateData({
+            user: { ...data.user, address: { zip: e.target.value } },
+          })
+        }
+      />
+    </div>
+  );
+};
+
+const Step2 = () => {
+  const { data } = useWizard<DependencyData>();
+  const { updateData } = useWizardActions();
+
+  const states =
+    data.country === "US"
+      ? ["CA", "NY", "TX"]
+      : data.country === "CA"
+        ? ["ON", "BC", "QC"]
+        : [];
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-lg font-bold">Step 2: Dependents A</h2>
 
       <div>
         <label className="block text-sm font-medium">State</label>
@@ -81,17 +110,6 @@ const LocationStep = () => {
           ))}
         </select>
       </div>
-    </div>
-  );
-};
-
-const ProductStep = () => {
-  const { data } = useWizard<DependencyData>();
-  const { updateData } = useWizardActions();
-
-  return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-bold">Product Dependencies</h2>
 
       <div>
         <label className="block text-sm font-medium">Category</label>
@@ -99,13 +117,7 @@ const ProductStep = () => {
           data-testid="category-select"
           className="w-full border p-2 rounded"
           value={data.category || ""}
-          onChange={(e) =>
-            updateData({
-              category: e.target.value,
-              subcategory: undefined,
-              brand: undefined,
-            })
-          }
+          onChange={(e) => updateData({ category: e.target.value })}
         >
           <option value="">Select Category</option>
           <option value="electronics">Electronics</option>
@@ -117,9 +129,7 @@ const ProductStep = () => {
         data-testid="subcategory-input"
         label="Subcategory"
         value={data.subcategory || ""}
-        onChange={(e) =>
-          updateData({ subcategory: e.target.value, brand: undefined })
-        }
+        onChange={(e) => updateData({ subcategory: e.target.value })}
         disabled={!data.category}
       />
 
@@ -130,17 +140,32 @@ const ProductStep = () => {
         onChange={(e) => updateData({ brand: e.target.value })}
         disabled={!data.subcategory}
       />
+
+      <div className="space-y-1">
+        <label className="block text-sm font-medium">Shipping Method</label>
+        <select
+          data-testid="shipping-method"
+          className="w-full border p-2 rounded"
+          value={data.shippingMethod || ""}
+          onChange={(e) => updateData({ shippingMethod: e.target.value })}
+          disabled={!data.user?.address?.zip}
+        >
+          <option value="">Select Shipping</option>
+          <option value="standard">Standard</option>
+          <option value="express">Express</option>
+        </select>
+      </div>
     </div>
   );
 };
 
-const PricingStep = () => {
+const Step3 = () => {
   const { data } = useWizard<DependencyData>();
   const { updateData } = useWizardActions();
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-bold">Pricing Dependencies</h2>
+      <h2 className="text-lg font-bold">Step 3: Pricing</h2>
 
       <div>
         <label className="block text-sm font-medium">Pricing Type</label>
@@ -176,13 +201,13 @@ const PricingStep = () => {
   );
 };
 
-const CascadeStep = () => {
+const Step4 = () => {
   const { data } = useWizard<DependencyData>();
   const { updateData } = useWizardActions();
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-bold">Cascade Dependencies</h2>
+      <h2 className="text-lg font-bold">Step 4: Cascade</h2>
 
       <Input
         data-testid="field-a"
@@ -210,85 +235,48 @@ const CascadeStep = () => {
   );
 };
 
-const UserStep = () => {
-  const { updateData } = useWizardActions();
-  const userName = useWizardSelector((s) => s.data?.user?.name);
-  const userZip = useWizardSelector((s) => s.data?.user?.address?.zip);
-  const shipping = useWizardSelector((s) => s.data?.shippingMethod);
-
-  return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-bold">Nested Dependencies</h2>
-
-      <Input
-        data-testid="user-name"
-        label="User Name"
-        value={userName || ""}
-        onChange={(e) => updateData({ user: { name: e.target.value } })}
-      />
-
-      <Input
-        data-testid="user-address-zip"
-        label="Zip Code"
-        value={userZip || ""}
-        onChange={(e) =>
-          updateData({ user: { address: { zip: e.target.value } } })
-        }
-      />
-
-      <div className="space-y-1">
-        <label className="block text-sm font-medium">Shipping Method</label>
-        <select
-          data-testid="shipping-method"
-          className="w-full border p-2 rounded"
-          value={shipping || ""}
-          onChange={(e) => updateData({ shippingMethod: e.target.value })}
-          disabled={!userZip}
-        >
-          <option value="">Select Shipping</option>
-          <option value="standard">Standard</option>
-          <option value="express">Express</option>
-        </select>
-      </div>
-    </div>
-  );
-};
+// ProductStep, PricingStep, CascadeStep, UserStep removed in favor of Step1-4
 
 const WizardContent = () => {
   const { currentStep, activeSteps, completedSteps, data } =
     useWizard<DependencyData>();
-  const { goToNextStep, goToPrevStep } = useWizardActions();
+  const { goToNextStep, goToPrevStep, goToStep } = useWizardActions();
 
   return (
     <div data-testid="wizard-container" className="max-w-md mx-auto py-8">
       <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-        {activeSteps.map((s, idx) => (
-          <div
-            key={s.id}
-            data-testid={`breadcrumb-step-${idx + 1}`}
-            className={cn(
-              "text-xs p-2 whitespace-nowrap rounded transition-colors",
-              s.id === currentStep?.id &&
-                "font-bold bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200",
-              completedSteps.has(s.id) &&
-                "completed bg-green-50 text-green-700",
-              !completedSteps.has(s.id) &&
-                s.id !== currentStep?.id &&
-                "bg-gray-50 text-gray-400"
-            )}
-          >
-            {s.label}
-          </div>
-        ))}
+        {activeSteps.map((s, idx) => {
+          const isCompleted = completedSteps.has(s.id);
+          const isActive = s.id === currentStep?.id;
+          return (
+            <div
+              key={s.id}
+              data-testid={`breadcrumb-step-${idx + 1}`}
+              data-stepid={s.id}
+              data-is-completed={String(isCompleted)}
+              data-is-active={String(isActive)}
+              onClick={() => goToStep(s.id)}
+              className={`text-xs p-2 whitespace-nowrap rounded transition-colors cursor-pointer ${
+                isActive
+                  ? "font-bold bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200"
+                  : isCompleted
+                    ? "completed bg-green-50 text-green-700"
+                    : "bg-gray-50 text-gray-400"
+              }`}
+            >
+              {s.label}
+              {data.debug && ` (${isCompleted ? "comp" : "not"})`}
+            </div>
+          );
+        })}
       </div>
 
       <Card>
         <CardContent className="pt-6">
-          {currentStep?.id === "step-1" && <LocationStep />}
-          {currentStep?.id === "step-2" && <ProductStep />}
-          {currentStep?.id === "step-3" && <PricingStep />}
-          {currentStep?.id === "step-4" && <CascadeStep />}
-          {currentStep?.id === "step-5" && <UserStep />}
+          {currentStep?.id === "step-1" && <Step1 />}
+          {currentStep?.id === "step-2" && <Step2 />}
+          {currentStep?.id === "step-3" && <Step3 />}
+          {currentStep?.id === "step-4" && <Step4 />}
         </CardContent>
         <CardFooter className="flex justify-between">
           <Button
@@ -329,33 +317,24 @@ const WizardContent = () => {
 const config: IWizardConfig<DependencyData> = {
   persistence: { mode: "onStepChange", adapter: new MemoryAdapter() },
   steps: [
-    { id: "step-1", label: "Location" },
+    { id: "step-1", label: "Root" },
     {
       id: "step-2",
-      label: "Product",
-      dependsOn: ["country"],
-      clearData: ["state"],
+      label: "Dependents A",
+      dependsOn: ["country", "user.address.zip"],
+      clearData: ["state", "shippingMethod"],
     },
     {
       id: "step-3",
-      label: "Pricing",
-      dependsOn: ["pricingType"],
-      clearData: () => ({
-        tier1Price: undefined,
-        tier2Price: undefined,
-      }),
+      label: "Dependents B",
+      dependsOn: ["category", "pricingType"],
+      clearData: ["subcategory", "brand", "tier1Price", "tier2Price"],
     },
     {
       id: "step-4",
       label: "Cascade",
       dependsOn: ["fieldA", "fieldB"],
       clearData: ["fieldB", "fieldC"],
-    },
-    {
-      id: "step-5",
-      label: "User",
-      dependsOn: ["user.address.zip"],
-      clearData: ["shippingMethod"],
     },
   ],
 };

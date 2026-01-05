@@ -282,7 +282,8 @@ export type WizardAction<T = any, StepId extends string = string> =
     | { type: 'SET_ACTIVE_STEPS'; payload: { steps: IStepConfig<T, StepId>[] } }
     | { type: 'SET_VISITED_STEPS'; payload: { steps: Set<StepId> } }
     | { type: 'SET_COMPLETED_STEPS'; payload: { steps: Set<StepId> } }
-    | { type: 'SET_ERROR_STEPS'; payload: { steps: Set<StepId> } };
+    | { type: 'SET_ERROR_STEPS'; payload: { steps: Set<StepId> } }
+    | { type: 'RESTORE_SNAPSHOT'; payload: { snapshot: any } };
 
 /**
  * Middleware API

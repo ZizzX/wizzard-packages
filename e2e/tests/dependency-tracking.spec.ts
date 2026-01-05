@@ -13,7 +13,7 @@ import { test, expect } from '../fixtures/base';
 test.describe('Dependency Tracking', () => {
   test.beforeEach(async ({ page }) => {
     page.on('console', msg => console.log(`[Browser] ${msg.text()}`));
-    await page.goto('#/test/dependency-demo');
+    await page.goto('#/test/dependency-demo?debug=true');
     await page.waitForSelector('[data-testid="wizard-container"]', { timeout: 5000 });
   });
 
@@ -34,7 +34,7 @@ test.describe('Dependency Tracking', () => {
     await page.locator('[data-testid="country-select"]').selectOption('CA');
     await page.waitForTimeout(300);
     // Step 2 should no longer be completed
-    await expect(page.locator('[data-testid="breadcrumb-step-2"]')).not.toHaveClass(/completed/);
+    await expect(page.locator('[data-testid="breadcrumb-step-2"]')).toHaveAttribute('data-is-completed', 'false');
   });
 
   test('should clear dependent data when dependency changes', async ({ page }) => {
@@ -117,52 +117,53 @@ test.describe('Dependency Tracking', () => {
   });
 
   test('should handle cascading invalidations', async ({ page }) => {
-    // Navigate to Step 4 (Cascade)
-    await page.click('[data-testid="next-button"]');
-    await page.click('[data-testid="next-button"]');
-    await page.click('[data-testid="next-button"]');
-    
+    // 1. Complete steps 1, 2, 3 to reach 4
+    await page.selectOption('[data-testid="country-select"]', 'US');
+    await page.click('[data-testid="next-button"]'); // to step 2
+    await page.click('[data-testid="next-button"]'); // to step 3
+    await page.click('[data-testid="next-button"]'); // to step 4
+
+    // 2. Fill fields in Step 4
     await page.fill('[data-testid="field-a"]', 'value-a');
-    // My implementation: Field B enabled?
-    await page.locator('[data-testid="field-b"]').fill('value-b');
-    await page.locator('[data-testid="field-c"]').fill('value-c');
+    await page.fill('[data-testid="field-b"]', 'value-b');
+    await page.fill('[data-testid="field-c"]', 'value-c');
     
-    // I need to simulate "Steps" for invalidation?
-    // The test assumes separate steps for A, B, C?
-    // "Step 2 depends on Step 1... Verify Field A -> Field B..."
-    // My implementation has A, B, C on ONE step.
-    // If I want to pass this test, I need to align implementation or test.
-    // The test expects `breadcrumb-step-1`, coverage?
-    // Lines 120-130 check breadcrumb classes.
-    // This implies A, B, C are solely on separate steps or the test navigates wizards?
+    // 3. Navigate back to Step 1
+    await page.click('[data-testid="breadcrumb-step-1"]');
     
-    // ADJUSTMENT: The test matches a generic wizard.
-    // I will SKIP this test for now as implementation differs.
-    test.skip(true, 'Structure differs'); 
+    // 4. Change country (triggers invalidation of step 2, which clears fields in step 2)
+    // In our structure, step 4 depends on fieldA/B which are IN step 4.
+    // So changing country won't invalidate step 4 directly.
+    
+    // Let's trigger a cascade within Step 4:
+    await page.click('[data-testid="breadcrumb-step-4"]');
+    await page.fill('[data-testid="field-a"]', 'new-value-a');
+    
+    // Changing fieldA should clear fieldB and fieldC (via clearData in config for step-4)
+    // and invalidate step-4
+    await expect(page.locator('[data-testid="field-b"]')).toHaveValue('', { timeout: 5000 });
+    await expect(page.locator('[data-testid="field-c"]')).toHaveValue('');
+    const step4Breadcrumb = page.locator('[data-stepid="step-4"]');
+    const attr = await step4Breadcrumb.getAttribute('data-is-completed');
+    console.log(`[Test] Step 4 data-is-completed: "${attr}"`);
+    await expect(step4Breadcrumb).toHaveAttribute('data-is-completed', 'false');
   });
 
   test('should track dot notation dependencies', async ({ page }) => {
-    // Test dependencies on nested paths like "user.address.city"
+    // Stage 1: Fill initiators on Step 1
     await page.locator('[data-testid="user-name"]').fill('John');
     await page.locator('[data-testid="user-address-zip"]').fill('12345');
-    await page.click('[data-testid="next-button"]');
+    await page.click('[data-testid="next-button"]'); // -> Step 2
     
-    // Dependent step
+    // Stage 2: Fill dependent on Step 2
     await page.locator('[data-testid="shipping-method"]').selectOption('standard');
+    await page.click('[data-testid="prev-button"]'); // -> back to Step 1
     
-    // Navigate to user step (Step 5)
-    await page.click('[data-testid="next-button"]');
-    await page.click('[data-testid="next-button"]');
-    await page.click('[data-testid="next-button"]');
-    await page.click('[data-testid="next-button"]');
-    
-    // Set zip code -> Shipping methods cleared
+    // Stage 3: Trigger invalidation on Step 1
     await page.fill('[data-testid="user-address-zip"]', '90210');
+    await page.click('[data-testid="next-button"]'); // -> back to Step 2
     
-    // Navigate forward
-    await page.click('[data-testid="next-button"]');
-    
-    // Shipping might be recalculated/cleared based on zip change
+    // Stage 4: Verify clearing on Step 2
     await page.waitForTimeout(300);
     const shippingValue = await page.locator('[data-testid="shipping-method"]').inputValue();
     expect(shippingValue).toBe('');

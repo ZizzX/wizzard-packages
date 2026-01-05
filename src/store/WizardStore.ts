@@ -94,6 +94,7 @@ export class WizardStore<
    * Internal dispatch that actually performs the state updates
    */
   private internalDispatch(action: WizardAction<T, StepId>) {
+    console.log(`[WizardStore] ⚡ Action: ${action.type}`, (action as any).payload?.steps ? `Steps: ${Array.from((action as any).payload.steps)}` : "");
     this.notifyActions(action);
     switch (action.type) {
       case 'INIT':
@@ -182,9 +183,15 @@ export class WizardStore<
         break;
       case 'SET_VISITED_STEPS':
         this.state = { ...this.state, visitedSteps: action.payload.steps };
+        this.saveMeta();
         break;
       case 'SET_COMPLETED_STEPS':
         this.state = { ...this.state, completedSteps: action.payload.steps };
+        this.saveMeta();
+        break;
+      case 'RESTORE_SNAPSHOT':
+        this.state = { ...action.payload.snapshot };
+        this.saveMeta();
         break;
     }
     this.syncDerivedState();
@@ -431,6 +438,19 @@ export class WizardStore<
         console.log(`[WizardStore] 📦 Final hydrated data (from ts: ${latestTimestamp}):`, latestData);
         // Replace current data with the latest snapshot
         this.updateBulkData(latestData, { replace: true });
+    }
+  }
+
+  private saveMeta() {
+    const config = this.state.config;
+    const persistenceMode = config.persistence?.mode || 'onStepChange';
+    if (persistenceMode !== "manual" && this.persistenceAdapter) {
+        this.persistenceAdapter.saveStep("__wizzard_meta__", {
+          currentStepId: this.state.currentStepId,
+          visited: Array.from(this.state.visitedSteps),
+          completed: Array.from(this.state.completedSteps),
+          history: this.state.history,
+        });
     }
   }
 
@@ -718,15 +738,7 @@ export class WizardStore<
         });
 
         // Meta persistence
-        const persistenceMode = config.persistence?.mode || 'onStepChange';
-        if (persistenceMode !== "manual" && this.persistenceAdapter) {
-            this.persistenceAdapter.saveStep("__wizzard_meta__", {
-              currentStepId: stepId,
-              visited: Array.from(nextVisited),
-              completed: Array.from(currentSnapshot.completedSteps),
-              history: nextHistory,
-            });
-        }
+        this.saveMeta();
 
         if (config.onStepChange) {
            config.onStepChange(currentStepId || null, stepId, currentData);

@@ -20,6 +20,7 @@ export function WizardDevTools() {
     if (!store) return;
     const s = store as IWizardStore<any, any>;
     return s.subscribeToActions((action: WizardAction<any, any>) => {
+      console.log(`[WizardDevTools] 🟢 Action Received: ${action.type}`);
       setLogs((prev) =>
         [
           {
@@ -145,6 +146,7 @@ export function WizardDevTools() {
         {["state", "actions", "errors"].map((tab) => (
           <button
             key={tab}
+            data-testid={`devtools-tab-${tab}`}
             onClick={() => setActiveTab(tab as any)}
             style={{
               flex: 1,
@@ -241,7 +243,16 @@ export function WizardDevTools() {
               </div>
             ) : (
               logs.map((log, i) => (
-                <ActionLogItem key={log.timestamp + i} log={log} />
+                <ActionLogItem
+                  key={log.timestamp + i}
+                  log={log}
+                  onJump={(s) =>
+                    store.dispatch({
+                      type: "RESTORE_SNAPSHOT",
+                      payload: { snapshot: s },
+                    })
+                  }
+                />
               ))
             )}
           </div>
@@ -267,7 +278,10 @@ export function WizardDevTools() {
   );
 }
 
-const ActionLogItem: React.FC<{ log: IActionLog }> = ({ log }) => {
+const ActionLogItem: React.FC<{
+  log: IActionLog;
+  onJump: (state: any) => void;
+}> = ({ log, onJump }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const time = new Date(log.timestamp).toLocaleTimeString();
 
@@ -282,7 +296,8 @@ const ActionLogItem: React.FC<{ log: IActionLog }> = ({ log }) => {
       }}
     >
       <div
-        onClick={() => setIsExpanded(!isExpanded)}
+        data-testid="action-item-header"
+        onClick={() => onJump(log.state)}
         style={{
           padding: "8px 12px",
           display: "flex",
@@ -293,15 +308,41 @@ const ActionLogItem: React.FC<{ log: IActionLog }> = ({ log }) => {
       >
         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
           <span style={{ color: "#64748b", fontSize: "10px" }}>{time}</span>
-          <span style={{ color: "#60a5fa", fontWeight: 600 }}>
+          <span
+            data-testid="action-type"
+            style={{ color: "#60a5fa", fontWeight: 600 }}
+          >
             {log.action.type}
           </span>
+          <button
+            data-testid="jump-button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onJump(log.state);
+            }}
+            style={{
+              padding: "2px 6px",
+              fontSize: "9px",
+              background: "#1e293b",
+              border: "1px solid #334155",
+              color: "#60a5fa",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+          >
+            Jump
+          </button>
         </div>
         <span
           style={{
             color: "#475569",
             transform: isExpanded ? "rotate(180deg)" : "none",
             transition: "transform 0.2s",
+            padding: "4px",
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsExpanded(!isExpanded);
           }}
         >
           ▾

@@ -243,50 +243,82 @@ export function WizardProvider<
   const handleStepDependencies = useCallback(
     (paths: string[], initialData: any) => {
       let currentData = { ...initialData };
-      let hasClearing = false;
+      let allClearedPaths = new Set<string>();
       const { completedSteps, visitedSteps } = storeRef.current.getSnapshot();
       let nextComp = new Set(completedSteps);
       let nextVis = new Set(visitedSteps);
       let statusChanged = false;
 
-      localConfig.steps.forEach((step) => {
-        const isDependent = step.dependsOn?.some((p) =>
-          paths.some(
-            (path) =>
-              path === p || p.startsWith(path + ".") || path.startsWith(p + ".")
-          )
-        );
+      const processDependencies = (changedPaths: string[]) => {
+        let newlyClearedPaths: string[] = [];
 
-        if (isDependent) {
-          console.log(
-            `[WizardContext] Path match! Step ${step.id} depends on one of ${paths}`
+        localConfig.steps.forEach((step) => {
+          const isDependent = step.dependsOn?.some((p) =>
+            changedPaths.some(
+              (path) =>
+                path === p ||
+                p.startsWith(path + ".") ||
+                path.startsWith(p + ".")
+            )
           );
-          if (nextComp.delete(step.id as StepId)) {
-            console.log(
-              `[WizardContext] Removed ${step.id} from completedSteps`
-            );
-            statusChanged = true;
-          }
 
-          if (step.clearData) {
-            if (typeof step.clearData === "function") {
-              const patch = step.clearData(currentData);
-              currentData = { ...currentData, ...patch };
-              hasClearing = true;
-            } else {
-              const pathsToClear = Array.isArray(step.clearData)
-                ? step.clearData
-                : [step.clearData];
-              pathsToClear.forEach((p) => {
-                currentData = setByPath(currentData, p, undefined);
-                hasClearing = true;
-              });
+          if (isDependent) {
+            console.log(
+              `[WizardContext] 🎯 Step "${step.id}" is dependent on changes in:`,
+              changedPaths
+            );
+            if (nextComp.delete(step.id as StepId)) {
+              console.log(
+                `[WizardContext] 🗑️ Removed "${step.id}" from completedSteps`
+              );
+              statusChanged = true;
+            }
+            if (nextVis.delete(step.id as StepId)) {
+              console.log(
+                `[WizardContext] 🗑️ Removed "${step.id}" from visitedSteps`
+              );
+              statusChanged = true;
+            }
+
+            if (step.clearData) {
+              if (typeof step.clearData === "function") {
+                const patch = step.clearData(currentData);
+                Object.keys(patch).forEach((key) => {
+                  if (currentData[key] !== patch[key]) {
+                    currentData[key] = patch[key];
+                    newlyClearedPaths.push(key);
+                    allClearedPaths.add(key);
+                  }
+                });
+              } else {
+                const pathsToClear = Array.isArray(step.clearData)
+                  ? step.clearData
+                  : [step.clearData];
+                pathsToClear.forEach((p) => {
+                  const val = getByPath(currentData, p);
+                  if (val !== undefined) {
+                    currentData = setByPath(currentData, p, undefined);
+                    newlyClearedPaths.push(p);
+                    allClearedPaths.add(p);
+                  }
+                });
+              }
             }
           }
+        });
+
+        if (newlyClearedPaths.length > 0) {
+          processDependencies(newlyClearedPaths);
         }
-      });
+      };
+
+      processDependencies(paths);
 
       if (statusChanged) {
+        console.log(
+          `[WizardContext] Dispatching new completedSteps:`,
+          Array.from(nextComp)
+        );
         storeRef.current.dispatch({
           type: "SET_COMPLETED_STEPS",
           payload: { steps: nextComp },
@@ -297,7 +329,11 @@ export function WizardProvider<
         });
       }
 
-      return { newData: currentData, hasClearing };
+      return {
+        newData: currentData,
+        hasClearing: allClearedPaths.size > 0,
+        clearedPaths: Array.from(allClearedPaths),
+      };
     },
     [localConfig.steps]
   );
@@ -524,8 +560,13 @@ export function WizardProvider<
     };
   }, [data, resolveActiveStepsHelper]);
 
+  const hasHydratedRef = useRef(false);
+
   // Initial Step Selection and Hydration
   useEffect(() => {
+    if (hasHydratedRef.current) return;
+    hasHydratedRef.current = true;
+
     // Basic Hydration from storage
     const meta = persistenceAdapter.getStep<{
       currentStepId: string;
@@ -561,7 +602,7 @@ export function WizardProvider<
     const currentSnapshot = storeRef.current.getSnapshot();
     const currentActiveSteps = currentSnapshot.activeSteps;
 
-    if (!currentStepId && currentActiveSteps.length > 0) {
+    if (!currentSnapshot.currentStepId && currentActiveSteps.length > 0) {
       const startId =
         initialStepId && currentActiveSteps.some((s) => s.id === initialStepId)
           ? initialStepId
@@ -580,9 +621,7 @@ export function WizardProvider<
       }
 
       // Mark initial step as visited
-      const currentVisited = new Set(
-        storeRef.current.getSnapshot().visitedSteps
-      );
+      const currentVisited = new Set(currentSnapshot.visitedSteps);
       if (!currentVisited.has(startId)) {
         currentVisited.add(startId);
         storeRef.current.dispatch({
@@ -593,7 +632,7 @@ export function WizardProvider<
 
       storeRef.current.updateMeta({ isLoading: false });
     }
-  }, [activeSteps, initialStepId, currentStepId, persistenceAdapter]);
+  }, [activeSteps, initialStepId, persistenceAdapter]); // Removed currentStepId dependency as we use snapshot inside
 
   return (
     <WizardStoreContext.Provider value={storeRef.current}>

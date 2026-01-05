@@ -61,6 +61,9 @@ test.describe('Middleware Integration', () => {
     await page.locator('[data-testid="name-input"]').fill('John');
     await page.click('[data-testid="next-button"]');
     
+    // Click on actions tab
+    await page.click('[data-testid="devtools-tab-actions"]');
+
     // Check DevTools shows actions
     const actionList = page.locator('[data-testid="devtools-action-list"]');
     await expect(actionList).toBeVisible();
@@ -78,8 +81,11 @@ test.describe('Middleware Integration', () => {
     await page.click('[data-testid="next-button"]');
     await page.locator('[data-testid="email-input"]').fill('alice@test.com');
     
+    // Click on actions tab
+    await page.click('[data-testid="devtools-tab-actions"]');
+
     // Click on previous action in DevTools
-    await page.click('[data-testid="action-item"]:first-child');
+    await page.locator('[data-testid="jump-button"]').last().click();
     
     // State should revert
     // (verify via DevTools state display or UI)
