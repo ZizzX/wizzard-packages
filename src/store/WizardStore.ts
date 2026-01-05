@@ -514,8 +514,9 @@ export class WizardStore<
 
       this.updateMeta({ isBusy: true });
       try {
+        const steps = config.steps || [];
         const results = await Promise.all(
-          config.steps.map(async (step) => {
+          steps.map(async (step) => {
             if (!step.condition) return { step, ok: true };
 
             // Optimization: Memoized Condition Resolution
@@ -588,6 +589,160 @@ export class WizardStore<
         if (currentSnapshot.busySteps.size === 0) {
           this.updateMeta({ isBusy: false });
         }
+      }
+  }
+  async validateStep(stepId: StepId): Promise<boolean> {
+      const steps = this.state.config.steps || [];
+      const step = this.stepsMap.get(stepId) || steps.find((s: any) => s.id === stepId);
+      if (!step || !step.validationAdapter) return true;
+
+      this.dispatch({ type: "VALIDATE_START", payload: { stepId } });
+
+      let isValid = true;
+      try {
+        const result = await step.validationAdapter.validate(this.state.data);
+        isValid = result.isValid;
+        
+        if (result.isValid) {
+          this.setStepErrors(stepId, null);
+          const nextErrorSteps = new Set(this.state.errorSteps);
+          nextErrorSteps.delete(stepId);
+          this.dispatch({
+            type: "SET_ERROR_STEPS",
+            payload: { steps: nextErrorSteps },
+          });
+          return true;
+        } else {
+          this.setStepErrors(stepId, result.errors || null);
+          
+          if (this.state.config.analytics?.onEvent) {
+             this.state.config.analytics.onEvent("validation_error", {
+                stepId,
+                errors: result.errors,
+                timestamp: Date.now(),
+             } as any);
+          }
+
+          const nextErrorSteps = new Set(this.state.errorSteps);
+          nextErrorSteps.add(stepId);
+          this.dispatch({
+            type: "SET_ERROR_STEPS",
+            payload: { steps: nextErrorSteps },
+          });
+
+          // Ensure it's removed from completed if it has errors
+          const nextCompleted = new Set(this.state.completedSteps);
+          if (nextCompleted.has(stepId)) {
+            nextCompleted.delete(stepId);
+            this.dispatch({
+              type: "SET_COMPLETED_STEPS",
+              payload: { steps: nextCompleted },
+            });
+          }
+
+          return false;
+        }
+      } finally {
+        this.dispatch({
+          type: "VALIDATE_END",
+          payload: { stepId, result: { isValid } } as any,
+        });
+      }
+  }
+  async goToStep(
+      stepId: StepId, 
+      options: { validate?: boolean; providedActiveSteps?: import("../types").IStepConfig<T, StepId>[] } = { validate: true }
+  ): Promise<boolean> {
+      const {
+        currentStepId,
+        config,
+        data: currentData
+      } = this.state;
+      
+      const allSteps = config.steps || [];
+      const currentIdx = allSteps.findIndex((s: any) => s.id === currentStepId);
+      const targetIdx = allSteps.findIndex((s: any) => s.id === stepId);
+
+      // 1. Validate Current Step if moving forward
+      if (targetIdx > currentIdx && currentStepId && options.validate) {
+        const step = this.stepsMap.get(currentStepId) || allSteps.find((s: any) => s.id === currentStepId);
+        const shouldVal =
+          step?.autoValidate ??
+          config.autoValidate ??
+          !!step?.validationAdapter;
+        
+        if (shouldVal) {
+          const ok = await this.validateStep(currentStepId);
+          if (!ok) return false;
+        }
+      }
+
+      this.updateMeta({ isBusy: true });
+      try {
+        // 2. Resolve Active Steps
+        const resolvedSteps =
+          options.providedActiveSteps || (await this.resolveActiveSteps(currentData));
+        const target = resolvedSteps.find((s) => s.id === stepId);
+        if (!target) return false;
+
+        // 3. Guards (beforeLeave)
+        const step = this.stepsMap.get(currentStepId) || allSteps.find((s: any) => s.id === currentStepId);
+        if (step?.beforeLeave) {
+          const snapshot = this.getSnapshot();
+          const direction = targetIdx > currentIdx ? "next" : "prev";
+          const ok = await step.beforeLeave(currentData, direction, snapshot);
+          if (ok === false) return false;
+        }
+
+        const currentSnapshot = this.getSnapshot();
+        const nextVisited = new Set(currentSnapshot.visitedSteps);
+        // Mark previous step as visited
+        if (currentStepId) nextVisited.add(currentStepId);
+        // Mark new step as visited (on entry)
+        nextVisited.add(stepId);
+
+        this.dispatch({
+          type: "SET_VISITED_STEPS",
+          payload: { steps: nextVisited },
+        });
+
+        this.dispatch({
+          type: "SET_CURRENT_STEP_ID",
+          payload: { stepId },
+        });
+
+        const nextHistory = [...currentSnapshot.history, stepId];
+        this.dispatch({
+          type: "SET_HISTORY",
+          payload: { history: nextHistory },
+        });
+
+        // Meta persistence
+        const persistenceMode = config.persistence?.mode || 'onStepChange';
+        if (persistenceMode !== "manual" && this.persistenceAdapter) {
+            this.persistenceAdapter.saveStep("__wizzard_meta__", {
+              currentStepId: stepId,
+              visited: Array.from(nextVisited),
+              completed: Array.from(currentSnapshot.completedSteps),
+              history: nextHistory,
+            });
+        }
+
+        if (config.onStepChange) {
+           config.onStepChange(currentStepId || null, stepId, currentData);
+        }
+          
+        if (config.analytics?.onEvent) {
+             config.analytics.onEvent("step_change", {
+              from: (currentStepId || null) as any,
+              to: stepId,
+              timestamp: Date.now(),
+            } as any);
+        }
+
+        return true;
+      } finally {
+        this.updateMeta({ isBusy: false });
       }
   }
 }

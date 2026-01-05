@@ -171,75 +171,8 @@ export function WizardProvider<
   );
 
   const validateStep = useCallback(
-    async (stepId: StepId, data: T): Promise<boolean> => {
-      const step = stepsMap.get(stepId);
-      if (!step || !step.validationAdapter) return true;
-
-      storeRef.current.dispatch({
-        type: "VALIDATE_START",
-        payload: { stepId },
-      });
-      const nextBusy = new Set(storeRef.current.getSnapshot().busySteps);
-      nextBusy.add(stepId);
-      storeRef.current.updateMeta({ busySteps: nextBusy, isBusy: true });
-
-      try {
-        const result = await step.validationAdapter.validate(data);
-        if (result.isValid) {
-          storeRef.current.setStepErrors(stepId, null);
-          const nextErrorSteps = new Set(
-            storeRef.current.getSnapshot().errorSteps
-          );
-          nextErrorSteps.delete(stepId);
-          storeRef.current.dispatch({
-            type: "SET_ERROR_STEPS",
-            payload: { steps: nextErrorSteps },
-          });
-          return true;
-        } else {
-          storeRef.current.setStepErrors(stepId, result.errors || null);
-          trackEvent("validation_error", {
-            stepId,
-            errors: result.errors,
-            timestamp: Date.now(),
-          });
-          const nextErrorSteps = new Set(
-            storeRef.current.getSnapshot().errorSteps
-          );
-          nextErrorSteps.add(stepId);
-          storeRef.current.dispatch({
-            type: "SET_ERROR_STEPS",
-            payload: { steps: nextErrorSteps },
-          });
-
-          // Ensure it's removed from completed if it has errors
-          const nextCompleted = new Set(
-            storeRef.current.getSnapshot().completedSteps
-          );
-          if (nextCompleted.has(stepId)) {
-            nextCompleted.delete(stepId);
-            storeRef.current.dispatch({
-              type: "SET_COMPLETED_STEPS",
-              payload: { steps: nextCompleted },
-            });
-          }
-
-          return false;
-        }
-      } finally {
-        const nextBusyAfter = new Set(storeRef.current.getSnapshot().busySteps);
-        nextBusyAfter.delete(stepId);
-        storeRef.current.updateMeta({
-          busySteps: nextBusyAfter,
-          isBusy: nextBusyAfter.size > 0,
-        });
-        storeRef.current.dispatch({
-          type: "VALIDATE_END",
-          payload: { stepId, result: { isValid: true } } as any,
-        });
-      }
-    },
-    [stepsMap, trackEvent]
+    (stepId: StepId) => storeRef.current.validateStep(stepId),
+    []
   );
 
   const goToStep = useCallback(
@@ -248,101 +181,12 @@ export function WizardProvider<
       providedActiveSteps?: IStepConfig<T, StepId>[],
       options: { validate?: boolean } = { validate: true }
     ): Promise<boolean> => {
-      const {
-        currentStepId,
-        config,
-        persistenceMode,
-        persistenceAdapter,
-        stepsMap,
-      } = stateRef.current;
-      const currentData = storeRef.current.getSnapshot().data;
-
-      // Directions & Validation
-      const allSteps = config.steps;
-      const currentIdx = allSteps.findIndex((s) => s.id === currentStepId);
-      const targetIdx = allSteps.findIndex((s) => s.id === stepId);
-
-      if (targetIdx > currentIdx && currentStepId && options.validate) {
-        const step = stepsMap.get(currentStepId as StepId);
-        const shouldVal =
-          step?.autoValidate ??
-          config.autoValidate ??
-          !!step?.validationAdapter;
-        if (shouldVal) {
-          const ok = await validateStep(currentStepId as StepId, currentData);
-          if (!ok) return false;
-        }
-      }
-
-      storeRef.current.updateMeta({ isBusy: true });
-      try {
-        const resolvedSteps =
-          providedActiveSteps || (await resolveActiveStepsHelper(currentData));
-        const target = resolvedSteps.find((s) => s.id === stepId);
-        if (!target) return false;
-
-        const step = stepsMap.get(currentStepId as StepId);
-        if (step?.beforeLeave) {
-          const snapshot = storeRef.current.getSnapshot();
-          const direction = targetIdx > currentIdx ? "next" : "prev";
-          const ok = await step.beforeLeave(currentData, direction, snapshot);
-          if (ok === false) return false;
-        }
-
-        // onStepChange persistence is handled by WizardStore internal dispatch
-
-        const currentSnapshot = storeRef.current.getSnapshot();
-        const nextVisited = new Set(currentSnapshot.visitedSteps);
-        // Mark previous step as visited
-        if (currentStepId) nextVisited.add(currentStepId as StepId);
-        // Mark new step as visited (on entry)
-        nextVisited.add(stepId);
-
-        storeRef.current.dispatch({
-          type: "SET_VISITED_STEPS",
-          payload: { steps: nextVisited },
-        });
-
-        storeRef.current.dispatch({
-          type: "SET_CURRENT_STEP_ID",
-          payload: { stepId },
-        });
-
-        const nextHistory = [...currentSnapshot.history, stepId];
-        storeRef.current.dispatch({
-          type: "SET_HISTORY",
-          payload: { history: nextHistory },
-        });
-
-        // Meta persistence handled by store if we move it there,
-        // OR we leave it here for now as it's separate from DATA persistence?
-        // User request was about data.
-        // Let's keep meta persistence here for now to reduce risk,
-        // OR move it to store?
-        // Let's leave it here, but clarify it uses adapter directly.
-        if (persistenceMode !== "manual") {
-          persistenceAdapter.saveStep(META_KEY, {
-            currentStepId: stepId,
-            visited: Array.from(nextVisited),
-            completed: Array.from(currentSnapshot.completedSteps),
-            history: nextHistory,
-          });
-        }
-
-        if (config.onStepChange)
-          config.onStepChange(currentStepId || null, stepId, currentData);
-        trackEvent("step_change", {
-          from: (currentStepId || null) as any,
-          to: stepId,
-          timestamp: Date.now(),
-        });
-        window.scrollTo(0, 0);
-        return true;
-      } finally {
-        storeRef.current.updateMeta({ isBusy: false });
-      }
+      return storeRef.current.goToStep(stepId, {
+        validate: options.validate,
+        providedActiveSteps,
+      });
     },
-    [resolveActiveStepsHelper, validateStep, trackEvent]
+    []
   );
 
   const goToNextStep = useCallback(async () => {
@@ -359,7 +203,7 @@ export function WizardProvider<
       !!step?.validationAdapter;
 
     if (shouldVal) {
-      const ok = await validateStep(currentStepId as StepId, currentData);
+      const ok = await validateStep(currentStepId as StepId);
       if (!ok) return;
     }
 
@@ -506,7 +350,7 @@ export function WizardProvider<
           }
 
           validationDebounceRef.current = setTimeout(() => {
-            validateStep(currentStepId as StepId, newData);
+            validateStep(currentStepId as StepId);
           }, debounceMs);
         }
         // Persistence handled by store checkAutoSave
@@ -596,14 +440,13 @@ export function WizardProvider<
       handleStepChange: (f: string, v: any) => {
         if (stateRef.current.currentStepId) setData(f, v);
       },
-      validateStep: (sid: StepId) =>
-        validateStep(sid, storeRef.current.getSnapshot().data),
+      validateStep: (sid: StepId) => validateStep(sid),
       validateAll: async () => {
         storeRef.current.updateMeta({ isBusy: true });
         const data = storeRef.current.getSnapshot().data;
         const active = await resolveActiveStepsHelper(data);
         const results = await Promise.all(
-          active.map((s) => validateStep(s.id, data))
+          active.map((s) => validateStep(s.id))
         );
         storeRef.current.updateMeta({ isBusy: false });
         return {
