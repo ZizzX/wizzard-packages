@@ -80,12 +80,15 @@ test.describe('Error Handling', () => {
     await page.goto('#/test/error-demo?async=true');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
+    // Skip step 1
+    await page.click('[data-testid="skip-validation"]');
+    
     // Trigger async validation that fails
     await page.locator('[data-testid="username-input"]').fill('taken-username');
     await page.click('[data-testid="next-button"]');
     
-    // Wait for async check
-    await page.waitForTimeout(1000);
+    // Wait for async check (matches 800ms in code)
+    await page.waitForTimeout(1200);
     
     // Error should appear
     await expect(page.locator('[data-testid="username-input-error"]')).toContainText(/already taken|exists/i);
@@ -94,8 +97,8 @@ test.describe('Error Handling', () => {
     await page.locator('[data-testid="username-input"]').fill('available-username');
     await page.click('[data-testid="next-button"]');
     
-    // Should succeed
-    await expect(page.locator('[data-testid="current-step"]')).toContainText('Step 2');
+    // Should succeed and move to Review step (Step 3)
+    await expect(page.locator('[data-testid="current-step"]')).toContainText('Step 3');
   });
 
   test('should prevent completing step with errors', async ({ page }) => {

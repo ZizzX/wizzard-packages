@@ -25,12 +25,12 @@ export const wizardConfig: IWizardConfig<ValidationWizardSchema> = {
     {
       id: "personal",
       label: "Personal Info",
-      validationAdapter: new ZodAdapter(PersonalInfoSchema),
+      validationAdapter: new ZodAdapter(z.object({ personal: PersonalInfoSchema })),
     },
     {
       id: "account",
       label: "Account Info",
-      validationAdapter: new ZodAdapter(AccountInfoSchema),
+      validationAdapter: new ZodAdapter(z.object({ account: AccountInfoSchema })),
     },
     {
        id: "review",
@@ -47,5 +47,6 @@ export const {
   useWizardValue,
   useWizardError,
   useWizardActions,
-  useWizardState, 
+  useWizardState,
+  useWizardSelector, 
 } = createWizardFactory<ValidationWizardSchema>();

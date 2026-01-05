@@ -8,7 +8,8 @@ import {
 import { Card, CardContent, CardFooter } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 
 /**
  * TestStepGuards
@@ -122,51 +123,68 @@ const GuardDialog = ({
   );
 };
 
-// Start Wrapper to verify logic
-// Implementing the logic requires the `config` to be created.
-// To support the `dialog` interaction, the `beforeLeave` needs to interface with React state.
-// We can achieve this by lifting state up or using a mutable ref accessible to the guard.
-
 const TestStepGuards = () => {
   const [showDialog, setShowDialog] = useState(false);
-  const [pendingRetry] = useState<(() => void) | null>(null);
+  const [pendingResolver, setPendingResolver] = useState<
+    ((allow: boolean) => void) | null
+  >(null);
   const [guardLog, setGuardLog] = useState("");
+  const [isGuardLoading, setIsGuardLoading] = useState(false);
 
-  const query = new URLSearchParams(window.location.hash.split("?")[1]);
+  const location = useLocation();
+  const query = new URLSearchParams(location.search);
   const isDebug = query.get("debug") === "true";
   const isAsync = query.get("async") === "true";
 
-  const config: IWizardConfig<GuardsData> = {
-    persistence: { mode: "onStepChange", adapter: new MemoryAdapter() },
-    steps: [
-      {
-        id: "step-1",
-        label: "Guard Step",
-        beforeLeave: async (data, direction) => {
-          if (isDebug) {
-            setGuardLog(`direction: ${direction}`);
-          }
-
-          if (isAsync) {
-            // Simulate async delay
-            await new Promise((r) => setTimeout(r, 1000));
-          }
-
-          if (direction === "next") {
-            // Logic: if content exists and not saved, block
-            // Note: data might be stale in closure if not careful,
-            // but `beforeLeave` receives latest `data`.
-            if (data.content && !data.saved) {
-              setShowDialog(true);
-              return false; // Block navigation
+  const config = useMemo<IWizardConfig<GuardsData>>(
+    () => ({
+      persistence: { mode: "onStepChange", adapter: new MemoryAdapter() },
+      steps: [
+        {
+          id: "step-1",
+          label: "Guard Step",
+          beforeLeave: async (data, direction) => {
+            if (isDebug) {
+              setGuardLog(`direction: ${direction}`);
             }
-          }
-          return true; // Allow
+
+            if (isAsync) {
+              setIsGuardLoading(true);
+              // Simulate async delay
+              await new Promise((r) => setTimeout(r, 5000));
+              setIsGuardLoading(false);
+            }
+
+            if (direction === "next") {
+              if (data.content && !data.saved) {
+                setShowDialog(true);
+                // Return a promise that resolves when user clicks confirm/cancel
+                return new Promise<boolean>((resolve) => {
+                  setPendingResolver(() => resolve);
+                });
+              }
+            }
+            return true; // Allow
+          },
         },
-      },
-      { id: "step-2", label: "Safe Step" },
-    ],
-  };
+        {
+          id: "step-2",
+          label: "Safe Step",
+          beforeLeave: async (_, direction) => {
+            if (isDebug) {
+              setGuardLog(`direction: ${direction}`);
+            }
+            return true;
+          },
+        },
+        {
+          id: "step-3",
+          label: "Final Step",
+        },
+      ],
+    }),
+    [isDebug, isAsync, setShowDialog]
+  );
 
   return (
     <div className="p-4">
@@ -176,17 +194,13 @@ const TestStepGuards = () => {
         </div>
       )}
 
-      {/* Passing external state handlers via context/props isn't supported by standard WizardProvider directly 
-          unless we wrap components. 
-          Here we use the closure of `TestStepGuards` to defining `config` which closes over `setShowDialog`.
-      */}
-
       <WizardProvider config={config}>
         <WizardContentInternal
           showDialog={showDialog}
           setShowDialog={setShowDialog}
-          pendingRetry={pendingRetry}
+          pendingResolver={pendingResolver}
           isAsync={isAsync}
+          isGuardLoading={isGuardLoading}
         />
       </WizardProvider>
     </div>
@@ -197,27 +211,27 @@ const TestStepGuards = () => {
 const WizardContentInternal = ({
   showDialog,
   setShowDialog,
-  pendingRetry,
+  pendingResolver,
   isAsync,
+  isGuardLoading,
 }: {
   showDialog: boolean;
   setShowDialog: (show: boolean) => void;
-  pendingRetry: (() => void) | null;
+  pendingResolver: ((allow: boolean) => void) | null;
   isAsync: boolean;
+  isGuardLoading: boolean;
 }) => {
-  const { currentStep, activeSteps, isLoading } = useWizard<GuardsData>();
+  const { currentStep, activeSteps, isLoading, isBusy } =
+    useWizard<GuardsData>();
   const { goToNextStep, goToPrevStep } = useWizardActions();
 
   return (
     <div data-testid="wizard-container" className="max-w-md mx-auto">
       {/* Loading Indicator for Async Guard */}
-      {/* Note: useWizard `isLoading` might reflect async guard state if library supports it. 
-          If not, we might need manual tracking. 
-          Assuming library `isBusy` or `isLoading` covers `beforeLeave`. 
-          If not, `data-testid="guard-loading"` won't show. 
-          The spec expects it. Let's assume WizzardStepper handles `isBusy` during async guard.
-      */}
-      {(isLoading || (isAsync && !currentStep)) && (
+      <div data-testid="debug-async" className="hidden">
+        {isAsync.toString()}
+      </div>
+      {(isGuardLoading || isBusy || isLoading || (isAsync && !currentStep)) && (
         <div data-testid="guard-loading" className="text-xs text-blue-500 mb-2">
           Guard Working...
         </div>
@@ -227,9 +241,12 @@ const WizardContentInternal = ({
         isOpen={showDialog}
         onConfirm={() => {
           setShowDialog(false);
-          if (pendingRetry) pendingRetry(); // Call the retry function passed by beforeLeave
+          if (pendingResolver) pendingResolver(true);
         }}
-        onCancel={() => setShowDialog(false)}
+        onCancel={() => {
+          setShowDialog(false);
+          if (pendingResolver) pendingResolver(false);
+        }}
       />
 
       <Card>
@@ -243,6 +260,7 @@ const WizardContentInternal = ({
 
           {currentStep?.id === "step-1" && <GuardStep1 />}
           {currentStep?.id === "step-2" && <GuardStep2 />}
+          {currentStep?.id === "step-3" && <div>Step 3: Final</div>}
         </CardContent>
         <CardFooter className="flex justify-between">
           <Button

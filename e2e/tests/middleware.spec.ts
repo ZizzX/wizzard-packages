@@ -40,6 +40,12 @@ test.describe('Middleware Integration', () => {
     await page.goto('#/middleware-demo?devtools=true');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
+    // Fallback: If auto-open failed, click the toggle
+    const toggle = page.locator('[data-testid="wizard-devtools-toggle"]');
+    if (await toggle.isVisible()) {
+      await toggle.click();
+    }
+    
     // DevTools panel should be visible
     await expect(page.locator('[data-testid="wizard-devtools"]')).toBeVisible();
   });

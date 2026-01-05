@@ -33,9 +33,26 @@ export function WizardDevTools() {
     });
   }, [store]);
 
+  useEffect(() => {
+    // Auto-open if devtools param is present
+    if (typeof window !== "undefined") {
+      const search = new URLSearchParams(window.location.search);
+      const hashSearch = new URLSearchParams(
+        window.location.hash.split("?")[1]
+      );
+      if (
+        search.get("devtools") === "true" ||
+        hashSearch.get("devtools") === "true"
+      ) {
+        setIsOpen(true);
+      }
+    }
+  }, []);
+
   if (!isOpen) {
     return (
       <button
+        data-testid="wizard-devtools-toggle"
         onClick={() => setIsOpen(true)}
         style={{
           position: "fixed",
@@ -61,6 +78,7 @@ export function WizardDevTools() {
 
   return (
     <div
+      data-testid="wizard-devtools"
       style={{
         position: "fixed",
         bottom: "20px",
@@ -199,7 +217,10 @@ export function WizardDevTools() {
         )}
 
         {activeTab === "actions" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <div
+            data-testid="devtools-action-list"
+            style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+          >
             {logs.length === 0 ? (
               <div
                 style={{
@@ -244,6 +265,7 @@ const ActionLogItem: React.FC<{ log: IActionLog }> = ({ log }) => {
 
   return (
     <div
+      data-testid="action-item"
       style={{
         background: "rgba(255, 255, 255, 0.05)",
         borderRadius: "8px",
