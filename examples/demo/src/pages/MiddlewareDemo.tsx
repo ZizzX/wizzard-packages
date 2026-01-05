@@ -51,7 +51,7 @@ const customAnalyticsMiddleware =
 // --- WIZARD COMPONENTS ---
 
 const Step1 = () => {
-  const { handleStepChange, wizardData } = useWizard<DemoData>();
+  const { handleStepChange, data } = useWizard<DemoData>();
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-bold">Step 1: Middleware Demo</h3>
@@ -61,7 +61,7 @@ const Step1 = () => {
       </p>
       <Input
         label="Your Name"
-        value={wizardData.name || ""}
+        value={data.name || ""}
         onChange={(e) => handleStepChange("name", e.target.value)}
       />
     </div>
@@ -98,7 +98,10 @@ export default function MiddlewareDemo() {
         customAnalyticsMiddleware(addLog),
       ],
       steps: [
-        { id: "start", label: "Start" },
+        {
+          id: "start",
+          label: "Start",
+        },
         { id: "finish", label: "Finish" },
       ],
     }),

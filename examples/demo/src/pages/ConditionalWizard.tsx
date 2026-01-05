@@ -13,7 +13,7 @@ import { cn } from "../lib/utils";
 // Conditional Logic Steps
 
 const Step1 = () => {
-  const { handleStepChange, wizardData } = useWizard();
+  const { handleStepChange, data } = useWizard();
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -29,7 +29,7 @@ const Step1 = () => {
             type="checkbox"
             id="hasCoApplicant"
             className="peer h-6 w-6 text-indigo-600 rounded-md border-gray-300 focus:ring-indigo-500 transition-all"
-            checked={!!wizardData.hasCoApplicant}
+            checked={!!data.hasCoApplicant}
             onChange={(e) =>
               handleStepChange("hasCoApplicant", e.target.checked)
             }
@@ -49,7 +49,7 @@ const Step1 = () => {
 };
 
 const StepCoApplicant = () => {
-  const { handleStepChange, wizardData } = useWizard();
+  const { handleStepChange, data } = useWizard();
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -61,7 +61,7 @@ const StepCoApplicant = () => {
       <Input
         label="Full Name"
         placeholder="Jane Smith"
-        value={wizardData.coApplicantName || ""}
+        value={data.coApplicantName || ""}
         onChange={(e) => handleStepChange("coApplicantName", e.target.value)}
       />
     </div>
@@ -69,7 +69,7 @@ const StepCoApplicant = () => {
 };
 
 const StepFinal = () => {
-  const { wizardData } = useWizard();
+  const { data } = useWizard();
   return (
     <div className="space-y-6">
       <div className="space-y-2 text-center py-4">
@@ -87,7 +87,7 @@ const StepFinal = () => {
           Final Data
         </p>
         <pre className="text-xs text-gray-700 leading-relaxed overflow-auto">
-          {JSON.stringify(wizardData, null, 2)}
+          {JSON.stringify(data, null, 2)}
         </pre>
       </div>
     </div>

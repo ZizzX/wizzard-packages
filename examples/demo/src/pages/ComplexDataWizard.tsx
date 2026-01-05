@@ -113,7 +113,7 @@ const Step2 = React.memo(() => {
 
   // Typed selector: state is correctly inferred as FormData
   const childIds = useWizardSelector(
-    (state) => (state?.wizardData?.children || []).map((c: Child) => c.id),
+    (state) => (state?.data?.children || []).map((c: Child) => c.id),
     { isEqual: shallowEqual }
   );
   const childrenError = useWizardError("children");

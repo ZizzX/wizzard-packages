@@ -200,7 +200,7 @@ const SecurityStep = () => {
 
 // Step 3: Preferences
 const PreferencesStep = () => {
-  const { setData, wizardData } = useWizard();
+  const { setData, data } = useWizard();
 
   return (
     <div className="space-y-4">
@@ -208,7 +208,7 @@ const PreferencesStep = () => {
       <label className="flex items-center space-x-2">
         <input
           type="checkbox"
-          checked={!!wizardData.preferences?.newsletter}
+          checked={!!data.preferences?.newsletter}
           onChange={(e) => setData("preferences.newsletter", e.target.checked)}
           className="rounded text-indigo-600 focus:ring-indigo-500"
         />
@@ -216,7 +216,7 @@ const PreferencesStep = () => {
       </label>
       <div className="p-4 bg-gray-100 rounded">
         <p className="text-xs font-mono">
-          {JSON.stringify(wizardData.preferences, null, 2)}
+          {JSON.stringify(data.preferences, null, 2)}
         </p>
       </div>
     </div>

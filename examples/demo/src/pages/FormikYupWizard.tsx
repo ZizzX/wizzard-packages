@@ -15,12 +15,12 @@ import type { FormikYupSchema } from "../wizards/formik-yup-wizard";
 
 // --- Components ---
 const Step1 = () => {
-  const { handleStepChange, wizardData, allErrors } = useWizard();
+  const { handleStepChange, data, allErrors } = useWizard();
 
   const formik = useFormik({
     initialValues: {
-      jobTitle: wizardData.jobTitle || "",
-      company: wizardData.company || "",
+      jobTitle: data.jobTitle || "",
+      company: data.company || "",
     },
     validationSchema: step1Schema,
     onSubmit: () => {},
@@ -65,10 +65,10 @@ const Step1 = () => {
 };
 
 const Step2 = () => {
-  const { handleStepChange, wizardData, allErrors } = useWizard();
+  const { handleStepChange, data, allErrors } = useWizard();
   const formik = useFormik({
     initialValues: {
-      skills: wizardData.skills || "",
+      skills: data.skills || "",
     },
     validationSchema: step2Schema,
     onSubmit: () => {},
@@ -130,8 +130,7 @@ const wizardConfig: IWizardConfig<FormikYupSchema> = {
 };
 
 const WizardContent = () => {
-  const { currentStep, wizardData } = useWizard();
-
+  const { currentStep, data } = useWizard();
 
   if (!currentStep) return null;
 
@@ -156,7 +155,7 @@ const WizardContent = () => {
               </div>
               <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                 <pre className="text-xs text-gray-700 leading-relaxed overflow-auto">
-                  {JSON.stringify(wizardData, null, 2)}
+                  {JSON.stringify(data, null, 2)}
                 </pre>
               </div>
             </div>

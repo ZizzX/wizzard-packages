@@ -14,7 +14,8 @@ export class LocalStorageAdapter implements IPersistenceAdapter {
     saveStep<T>(stepId: string, data: T): void {
         if (typeof window === 'undefined') return;
         try {
-            localStorage.setItem(this.getKey(stepId), JSON.stringify(data));
+            const payload = { timestamp: Date.now(), data };
+            localStorage.setItem(this.getKey(stepId), JSON.stringify(payload));
         } catch (error) {
             console.warn('LocalStorageAdapter: Failed to save step', error);
         }
@@ -24,10 +25,43 @@ export class LocalStorageAdapter implements IPersistenceAdapter {
         if (typeof window === 'undefined') return undefined;
         try {
             const item = localStorage.getItem(this.getKey(stepId));
-            return item ? JSON.parse(item) : undefined;
+            if (!item) return undefined;
+            
+            const parsed = JSON.parse(item);
+            // Handle legacy data (raw data) vs new timestamped data
+            if (parsed && typeof parsed === 'object' && 'timestamp' in parsed && 'data' in parsed) {
+                 return parsed.data as T;
+            }
+            return parsed as T;
         } catch (error) {
             console.warn('LocalStorageAdapter: Failed to get step', error);
             return undefined;
+        }
+    }
+
+    getStepWithMeta<T>(stepId: string): { data: T; timestamp: number } | undefined {
+        if (typeof window === 'undefined') return undefined;
+        try {
+            const item = localStorage.getItem(this.getKey(stepId));
+            if (!item) return undefined;
+            
+            const parsed = JSON.parse(item);
+            if (parsed && typeof parsed === 'object' && 'timestamp' in parsed && 'data' in parsed) {
+                 return parsed as { data: T; timestamp: number };
+            }
+            // Legacy data treated as old (timestamp 0)
+            return { data: parsed as T, timestamp: 0 };
+        } catch (error) {
+            return undefined;
+        }
+    }
+
+    clearStep(stepId: string): void {
+        if (typeof window === 'undefined') return;
+        try {
+            localStorage.removeItem(this.getKey(stepId));
+        } catch (error) {
+            console.warn('LocalStorageAdapter: Failed to clear step', error);
         }
     }
 

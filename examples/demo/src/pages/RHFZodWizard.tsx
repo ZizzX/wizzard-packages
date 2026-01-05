@@ -16,9 +16,9 @@ import type { RHFZodSchema } from "../wizards/rhf-zod-wizard";
 // --- Components ---
 
 const Step1 = () => {
-  const { handleStepChange, wizardData, allErrors } = useWizard();
+  const { handleStepChange, data, allErrors } = useWizard();
   const { register } = useForm({
-    defaultValues: wizardData,
+    defaultValues: data,
     resolver: zodResolver(step1Schema),
     mode: "onChange",
   });
@@ -56,9 +56,9 @@ const Step1 = () => {
 };
 
 const Step2 = () => {
-  const { handleStepChange, wizardData, allErrors } = useWizard();
+  const { handleStepChange, data, allErrors } = useWizard();
   const { register } = useForm({
-    defaultValues: wizardData,
+    defaultValues: data,
     resolver: zodResolver(step2Schema),
     mode: "onChange",
   });
@@ -119,7 +119,7 @@ const wizardConfig: IWizardConfig<RHFZodSchema> = {
 };
 
 const WizardContent = () => {
-  const { currentStep, wizardData } = useWizard();
+  const { currentStep, data } = useWizard();
 
   if (!currentStep) return null;
 
@@ -144,7 +144,7 @@ const WizardContent = () => {
               </div>
               <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
                 <pre className="text-xs text-gray-700 leading-relaxed overflow-auto">
-                  {JSON.stringify(wizardData, null, 2)}
+                  {JSON.stringify(data, null, 2)}
                 </pre>
               </div>
             </div>

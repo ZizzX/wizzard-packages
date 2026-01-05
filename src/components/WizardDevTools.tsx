@@ -13,7 +13,7 @@ export function WizardDevTools() {
   const [activeTab, setActiveTab] = useState<"state" | "actions" | "errors">(
     "state"
   );
-  const { wizardData, allErrors, store, ...state } = useWizardContext();
+  const { data, allErrors, store, ...state } = useWizardContext();
   const [logs, setLogs] = useState<IActionLog[]>([]);
 
   useEffect(() => {
@@ -165,7 +165,7 @@ export function WizardDevTools() {
             </Section>
 
             <Section title="Data">
-              <JsonView data={wizardData} />
+              <JsonView data={data} />
             </Section>
 
             <Section title="Meta">

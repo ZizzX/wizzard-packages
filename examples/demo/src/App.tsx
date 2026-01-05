@@ -42,6 +42,10 @@ import ValibotDocs from "./pages/docs/Valibot";
 
 import { LanguageProvider } from "./context/LanguageContext";
 
+// Test pages for E2E testing
+import TestBasicNavigation from "./pages/test/TestBasicNavigation";
+import TestArrayData from "./pages/test/TestArrayData";
+
 function App() {
   return (
     <LanguageProvider>
@@ -66,6 +70,10 @@ function App() {
             />
             <Route path="middleware-demo" element={<MiddlewareDemo />} />
             <Route path="optimization" element={<OptimizationDemo />} />
+
+            {/* Test Routes for E2E Testing */}
+            <Route path="test-basic" element={<TestBasicNavigation />} />
+            <Route path="array-data-demo" element={<TestArrayData />} />
 
             {/* Documentation Section */}
             <Route path="docs" element={<DocsLayout />}>

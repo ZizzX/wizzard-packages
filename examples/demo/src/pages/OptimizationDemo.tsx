@@ -10,7 +10,7 @@ import { useWizardActions, WizardProvider } from "wizzard-stepper-react";
 const DemoContent = () => {
   const { goToNextStep, goToPrevStep, reset } = useWizardActions();
   const { currentStep, isFirstStep, isLastStep, progress } = useWizardState();
-  const wizardData = useWizardSelector((state) => state.wizardData);
+  const wizardData = useWizardSelector((state) => state.data);
 
   return (
     <div className="max-w-2xl mx-auto p-4">

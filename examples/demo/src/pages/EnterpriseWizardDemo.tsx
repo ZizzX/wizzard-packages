@@ -513,7 +513,7 @@ const StepNetworking = React.memo(function StepNetworking() {
 
 const StepReview = React.memo(function StepReview() {
   // Here we might want full data to display summary
-  const wizardData = useWizardSelector((state) => state.wizardData);
+  const wizardData = useWizardSelector((state) => state.data);
 
   return (
     <div className="space-y-6">

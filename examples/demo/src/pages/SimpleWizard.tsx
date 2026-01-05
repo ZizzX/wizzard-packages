@@ -30,7 +30,7 @@ class SimpleValidator<T> implements IValidatorAdapter<T> {
 
 // 1. Define Fields/Steps
 const Step1 = () => {
-  const { handleStepChange, wizardData, allErrors } = useWizard();
+  const { handleStepChange, data, allErrors } = useWizard();
   // Errors for this step are stored under the step ID ('personal')
   const errors = allErrors["personal"] || {};
 
@@ -47,14 +47,14 @@ const Step1 = () => {
         <Input
           label="First Name"
           placeholder="John"
-          value={wizardData.firstName || ""}
+          value={data.firstName || ""}
           onChange={(e) => handleStepChange("firstName", e.target.value)}
           error={errors["firstName"]}
         />
         <Input
           label="Last Name"
           placeholder="Doe"
-          value={wizardData.lastName || ""}
+          value={data.lastName || ""}
           onChange={(e) => handleStepChange("lastName", e.target.value)}
           error={errors["lastName"]}
         />
@@ -64,7 +64,7 @@ const Step1 = () => {
 };
 
 const Step2 = () => {
-  const { handleStepChange, wizardData, allErrors } = useWizard();
+  const { handleStepChange, data, allErrors } = useWizard();
   const errors = allErrors["contact"] || {};
 
   return (
@@ -77,7 +77,7 @@ const Step2 = () => {
         label="Email Address"
         type="email"
         placeholder="john@example.com"
-        value={wizardData.email || ""}
+        value={data.email || ""}
         onChange={(e) => handleStepChange("email", e.target.value)}
         error={errors["email"]}
       />
@@ -86,7 +86,7 @@ const Step2 = () => {
 };
 
 const Step3 = () => {
-  const { wizardData } = useWizard();
+  const { data } = useWizard();
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -97,7 +97,7 @@ const Step3 = () => {
       </div>
       <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
         <pre className="text-xs text-gray-700 leading-relaxed overflow-auto">
-          {JSON.stringify(wizardData, null, 2)}
+          {JSON.stringify(data, null, 2)}
         </pre>
       </div>
     </div>

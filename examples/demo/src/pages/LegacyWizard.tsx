@@ -14,7 +14,7 @@ import { Card, CardContent, CardFooter } from "../components/ui/Card";
 const Step1 = () => {
   // useWizard<T> defaults to 'any', so wizardData is 'any'
   // No generic passed = no strict type checking
-  const { handleStepChange, wizardData } = useWizard();
+  const { handleStepChange, data } = useWizard();
 
   return (
     <div className="space-y-6">
@@ -27,7 +27,7 @@ const Step1 = () => {
       <Input
         label="Legacy Field"
         placeholder="Type anything..."
-        value={wizardData.legacyField || ""}
+        value={data.legacyField || ""}
         onChange={(e) => handleStepChange("legacyField", e.target.value)}
       />
     </div>
@@ -35,7 +35,7 @@ const Step1 = () => {
 };
 
 const Step2 = () => {
-  const { wizardData } = useWizard();
+  const { data } = useWizard();
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -43,7 +43,7 @@ const Step2 = () => {
       </div>
       <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
         <pre className="text-xs text-gray-700">
-          {JSON.stringify(wizardData, null, 2)}
+          {JSON.stringify(data, null, 2)}
         </pre>
       </div>
     </div>

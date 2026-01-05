@@ -4,7 +4,8 @@ import type {
   IWizardState, 
   WizardAction, 
   WizardMiddleware, 
-  MiddlewareAPI 
+  MiddlewareAPI,
+  IPersistenceAdapter
 } from "../types";
 
 export class WizardStore<
@@ -16,8 +17,11 @@ export class WizardStore<
   private state: IWizardState<T, StepId>;
   private listeners = new Set<() => void>();
   private actionListeners = new Set<(action: WizardAction<T, StepId>) => void>();
-  errorsMap = new Map<string, Map<string, string>>();
+  errorsMap = new Map<StepId, Map<string, string>>();
   private middlewareChain: (action: WizardAction<T, StepId>) => void;
+  private persistenceAdapter?: IPersistenceAdapter;
+  private persistenceDebounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  private stepsMap = new Map<string, any>(); // Cache for O(1) step lookup
 
   subscribeToActions(listener: (action: WizardAction<T, StepId>) => void) {
     this.actionListeners.add(listener);
@@ -29,10 +33,13 @@ export class WizardStore<
   }
 
   constructor(initialData: T, middlewares: WizardMiddleware<T, StepId>[] = []) {
-    this.initialData = JSON.parse(JSON.stringify(initialData)); // Deep copy
+    this.initialData = typeof structuredClone === 'function' 
+      ? structuredClone(initialData) 
+      : JSON.parse(JSON.stringify(initialData));
+
     this.state = {
       data: initialData,
-      errors: {},
+      errors: {} as Record<StepId, Record<string, string>>,
       isDirty: false,
       dirtyFields: this.dirtyFields,
       visitedSteps: new Set(),
@@ -90,8 +97,15 @@ export class WizardStore<
     this.notifyActions(action);
     switch (action.type) {
       case 'INIT':
-        this.initialData = JSON.parse(JSON.stringify(action.payload.data));
+        this.initialData = typeof structuredClone === 'function' ? structuredClone(action.payload.data) : JSON.parse(JSON.stringify(action.payload.data));
         const initialActiveSteps = action.payload.config.steps.filter((s: any) => !s.condition);
+        
+        // Build the fast lookup map
+        this.stepsMap.clear();
+        action.payload.config.steps.forEach((step: any) => {
+             this.stepsMap.set(step.id, step);
+        });
+
         this.state = {
           ...this.state,
           data: action.payload.data,
@@ -102,6 +116,11 @@ export class WizardStore<
         this.notify();
         break;
       case 'SET_CURRENT_STEP_ID':
+        // Trigger persistence for the step we are leaving
+        if (this.state.currentStepId) {
+            this.handleStepChangePersistence(this.state.currentStepId);
+        }
+        
         this.state = {
           ...this.state,
           currentStepId: action.payload.stepId,
@@ -184,8 +203,12 @@ export class WizardStore<
     if (options?.replace) {
       newData = data as T;
     } else {
+      // Deep clone current data
       newData = JSON.parse(JSON.stringify(this.state.data));
-      Object.assign(newData as any, data);
+      // Deep merge the updates (not shallow assign)
+      Object.keys(data).forEach((key) => {
+        (newData as any)[key] = (data as any)[key];
+      });
     }
     this.update(newData, Object.keys(data));
   }
@@ -215,6 +238,16 @@ export class WizardStore<
       isDirty: this.dirtyFields.size > 0,
       dirtyFields: new Set(this.dirtyFields),
     };
+    
+    // Check for auto-save
+    if (changedPath) {
+        const paths = Array.isArray(changedPath) ? changedPath : [changedPath];
+        this.checkAutoSave(paths);
+    } else {
+        // Bulk update
+        this.checkAutoSave(Object.keys(newData as object));
+    }
+
     this.notify();
   }
 
@@ -260,7 +293,9 @@ export class WizardStore<
   }
 
   setInitialData(data: T) {
-    this.initialData = JSON.parse(JSON.stringify(data));
+    this.initialData = typeof structuredClone === 'function' 
+      ? structuredClone(data) 
+      : JSON.parse(JSON.stringify(data));
     this.dirtyFields.clear();
     this.state = {
       ...this.state,
@@ -272,7 +307,7 @@ export class WizardStore<
   }
 
   private syncErrors() {
-    const newErrorsObj: Record<string, Record<string, string>> = {};
+    const newErrorsObj: Record<StepId, Record<string, string>> = {} as unknown as Record<StepId, Record<string, string>>;
     for (const [stepId, fieldErrors] of this.errorsMap.entries()) {
       if (fieldErrors.size > 0) {
         newErrorsObj[stepId] = Object.fromEntries(fieldErrors);
@@ -282,21 +317,21 @@ export class WizardStore<
     this.notify();
   }
 
-  updateErrors(newErrors: Record<string, Record<string, string>>) {
+  updateErrors(newErrors: Record<StepId, Record<string, string>>) {
     this.errorsMap.clear();
     for (const [stepId, fieldErrors] of Object.entries(newErrors)) {
       const stepMap = new Map<string, string>();
-      for (const [field, msg] of Object.entries(fieldErrors)) {
+      for (const [field, msg] of Object.entries(fieldErrors as Record<string, string>)) {
         stepMap.set(field, msg);
       }
-      if (stepMap.size > 0) this.errorsMap.set(stepId, stepMap);
+      if (stepMap.size > 0) this.errorsMap.set(stepId as StepId, stepMap);
     }
     this.state = { ...this.state, errors: newErrors };
     this.notify();
   }
 
   setStepErrors(
-    stepId: string,
+    stepId: StepId,
     errors: Record<string, string> | undefined | null
   ) {
     if (!errors || Object.keys(errors).length === 0) {
@@ -318,7 +353,7 @@ export class WizardStore<
     return true;
   }
 
-  deleteError(stepId: string, path: string): boolean {
+  deleteError(stepId: StepId, path: string): boolean {
     const stepErrors = this.errorsMap.get(stepId);
     if (!stepErrors) return false;
 
@@ -341,4 +376,132 @@ export class WizardStore<
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
   };
+
+  injectPersistence(adapter: IPersistenceAdapter) {
+    this.persistenceAdapter = adapter;
+  }
+
+  hydrate() {
+    if (!this.persistenceAdapter) return;
+    
+    console.log("[WizardStore] 🔄 Hydrating data from persistence...");
+    
+    let latestTimestamp = -1;
+    let latestData: T | null = null;
+    let hasHydrated = false;
+    
+    const config = this.state.config;
+
+    // Iterate all steps to find the latest snapshot
+    config.steps.forEach(step => {
+        const adapter = step.persistenceAdapter || this.persistenceAdapter;
+        if (!adapter) return;
+
+        try {
+            // Use getStepWithMeta if available, otherwise fallback
+            let candidateData: T | undefined;
+            let candidateTimestamp = 0;
+
+            if (adapter.getStepWithMeta) {
+                const result = adapter.getStepWithMeta<T>(step.id);
+                if (result) {
+                    candidateData = result.data;
+                    candidateTimestamp = result.timestamp;
+                }
+            } else {
+                // Fallback for adapters not implementing getStepWithMeta
+                candidateData = adapter.getStep<T>(step.id);
+                // If we found data but no timestamp, we treat it as "old" (0) or maybe ignore?
+                // We'll treat it as 0. 
+            }
+
+            if (candidateData) {
+                if (candidateTimestamp >= latestTimestamp) {
+                    latestTimestamp = candidateTimestamp;
+                    latestData = candidateData;
+                    hasHydrated = true;
+                }
+            }
+        } catch (e) {
+            console.warn(`[WizardStore] ⚠️ Failed to hydrate step ${step.id}:`, e);
+        }
+    });
+
+    if (hasHydrated && latestData) {
+        console.log(`[WizardStore] 📦 Final hydrated data (from ts: ${latestTimestamp}):`, latestData);
+        // Replace current data with the latest snapshot
+        this.updateBulkData(latestData, { replace: true });
+    }
+  }
+
+  clearStepStorage(stepId: string) {
+      const step = this.stepsMap.get(stepId) || this.state.config.steps.find(s => s.id === stepId);
+      const adapter = step?.persistenceAdapter || this.persistenceAdapter;
+      if (adapter && adapter.clearStep) {
+          adapter.clearStep(stepId);
+      }
+  }
+
+  save(stepId?: StepId) {
+    // If specific step requested
+    if (stepId) {
+        this.saveStepData(stepId);
+        return;
+    }
+
+    // If no stepId, save current step
+    if (this.state.currentStepId) {
+        this.saveStepData(this.state.currentStepId);
+    }
+  }
+
+  private saveStepData(stepId: string) {
+      const step = this.stepsMap.get(stepId) || this.state.config.steps.find(s => s.id === stepId);
+      if (!step) return;
+
+      const adapter = step.persistenceAdapter || this.persistenceAdapter;
+      if (!adapter) return; // No adapter configured
+
+      // Check mode
+      // Priority: Step Config -> Global Config -> Default 'onStepChange'
+      const mode = step.persistenceMode || this.state.config.persistence?.mode || 'onStepChange';
+       // We only save here if explicitly called (manual force) OR called by internal logic that checked mode
+      
+      console.log(`[WizardStore] 💾 Saving data for step ${stepId} (mode: ${mode})`, this.state.data);
+      adapter.saveStep(stepId, this.state.data);
+  }
+
+  private handleStepChangePersistence(stepId: string) {
+      const step = this.stepsMap.get(stepId) || this.state.config.steps.find(s => s.id === stepId);
+      if (!step) return;
+
+      const mode = step.persistenceMode || this.state.config.persistence?.mode || 'onStepChange';
+      if (mode === 'onStepChange') {
+          this.saveStepData(stepId);
+      }
+  }
+
+  // Internal helper to handle auto-save on data change
+  private checkAutoSave(_changedPaths: string[]) {
+      const { config, currentStepId } = this.state;
+      if (!currentStepId) return;
+
+      const step = this.stepsMap.get(currentStepId) || config.steps.find(s => s.id === currentStepId);
+      if (!step) return;
+
+      const mode = step.persistenceMode || config.persistence?.mode || 'onStepChange';
+      if (mode !== 'onChange') return;
+
+      // Debounce logic
+      const debounceTime = config.persistence?.debounceTime ?? 300;
+      
+      const timerKey = currentStepId;
+      if (this.persistenceDebounceTimers.has(timerKey)) {
+          clearTimeout(this.persistenceDebounceTimers.get(timerKey));
+      }
+
+      this.persistenceDebounceTimers.set(timerKey, setTimeout(() => {
+          this.saveStepData(currentStepId);
+      }, debounceTime));
+  }
 }

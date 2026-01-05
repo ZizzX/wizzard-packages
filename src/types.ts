@@ -6,7 +6,7 @@ export interface IWizardHandle<T = unknown, StepId extends string = string> {
 
 export interface IWizardState<T = unknown, StepId extends string = string> {
   data: T;
-  errors: Record<string, Record<string, string>>;
+  errors: Record<StepId, Record<string, string>>;
   currentStep: IStepConfig<T, StepId> | null;
   currentStepIndex: number;
   isFirstStep: boolean;
@@ -45,12 +45,15 @@ export interface IWizardStore<T, StepId extends string = string> {
   subscribeToActions(
     listener: (action: WizardAction<T, StepId>) => void
   ): () => void;
+  injectPersistence(adapter: IPersistenceAdapter): void;
+  save(stepId?: StepId): void;
+  hydrate(): void;
   errorsMap: Map<string, Map<string, string>>;
 }
 
 export interface IWizardActions<StepId extends string = string> {
   goToNextStep: () => Promise<void>;
-  goToPrevStep: () => void;
+  goToPrevStep: () => Promise<void>;
   goToStep: (stepId: StepId) => Promise<boolean>;
   setStepData: (stepId: StepId, data: unknown) => void;
   handleStepChange: (field: string, value: unknown) => void;
@@ -72,6 +75,7 @@ export interface IWizardActions<StepId extends string = string> {
     options?: { replace?: boolean; persist?: boolean }
   ) => void;
   getData: (path: string, defaultValue?: unknown) => unknown;
+  updateConfig: (config: Partial<IWizardConfig<any, StepId>>) => void;
 }
 
 
@@ -114,6 +118,8 @@ export type ValidationMode = 'onChange' | 'onStepChange' | 'manual';
 export interface IPersistenceAdapter {
     saveStep: <T>(stepId: string, data: T) => void;
     getStep: <T>(stepId: string) => T | undefined;
+    getStepWithMeta?: <T>(stepId: string) => { data: T; timestamp: number } | undefined;
+    clearStep: (stepId: string) => void;
     clear: () => void;
 }
 
@@ -134,7 +140,7 @@ export interface IStepConfig<TStepData = unknown, StepId extends string = string
      * Predicate to determine if step should be included/visible.
      * Supports both synchronous and asynchronous predicates.
      */
-    condition?: (data: TStepData, metadata: Partial<IWizardState<TStepData, StepId>> & { wizardData?: TStepData | undefined; allErrors?: any; }) => boolean | Promise<boolean>;
+    condition?: (data: TStepData, metadata: Partial<IWizardState<TStepData, StepId>> & { data?: TStepData | undefined; allErrors?: any; }) => boolean | Promise<boolean>;
     /**
      * If true, the step will be visible while its condition is being resolved.
      * Default: false (step is hidden until condition is resolved)
@@ -149,7 +155,7 @@ export interface IStepConfig<TStepData = unknown, StepId extends string = string
      * Guard function called before leaving the step.
      * Return false or throw to prevent navigation.
      */
-    beforeLeave?: (data: TStepData, direction: StepDirection, metadata: Partial<IWizardState<TStepData, StepId>> & { wizardData?: TStepData | undefined; allErrors?: any; }) => boolean | Promise<boolean>;
+    beforeLeave?: (data: TStepData, direction: StepDirection, metadata: Partial<IWizardState<TStepData, StepId>> & { data?: TStepData | undefined; allErrors?: any; }) => boolean | Promise<boolean>;
     /**
      * Adapter for validation logic
      */
@@ -264,7 +270,7 @@ export type WizardAction<T = any, StepId extends string = string> =
     | { type: 'GO_TO_STEP'; payload: { from: StepId | null; to: StepId } }
     | { type: 'VALIDATE_START'; payload: { stepId: StepId } }
     | { type: 'VALIDATE_END'; payload: { stepId: StepId; result: ValidationResult } }
-    | { type: 'SET_STEP_ERRORS'; payload: { stepId: string; errors: Record<string, string> | undefined | null } }
+    | { type: 'SET_STEP_ERRORS'; payload: { stepId: StepId; errors: Record<string, string> | undefined | null } }
     | { type: 'RESET'; payload: { data: T } }
     | { type: 'UPDATE_META'; payload: { meta: Partial<IWizardState<T, StepId>> } }
     | { type: 'SET_CURRENT_STEP_ID'; payload: { stepId: StepId | "" } }
@@ -369,14 +375,14 @@ export interface IWizardContext<T = unknown, StepId extends string = string> {
     busySteps: Set<StepId>;
 
     /**
-     * Unified Wizard Data
+     * Wizard form data
      */
-    wizardData: T;
+    data: T;
 
     /**
      * Errors keyed by stepId -> field -> message
      */
-    allErrors: Record<string, Record<string, string>>;
+    allErrors: Record<StepId, Record<string, string>>;
 
     /**
      * Steps Status
@@ -433,6 +439,11 @@ export interface IWizardContext<T = unknown, StepId extends string = string> {
      * Dynamic Configuration
      */
     updateConfig: (config: Partial<IWizardConfig<T, StepId>>) => void;
+
+    /**
+     * Internal Store Access
+     */
+    store: IWizardStore<T, StepId>;
 }
 
 /**

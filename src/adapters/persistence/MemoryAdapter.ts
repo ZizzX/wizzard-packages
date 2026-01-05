@@ -11,6 +11,17 @@ export class MemoryAdapter implements IPersistenceAdapter {
         return this.storage[stepId] as T;
     }
 
+    getStepWithMeta<T>(stepId: string): { data: T; timestamp: number } | undefined {
+        const item = this.storage[stepId];
+        if (!item) return undefined;
+        // Mock timestamp if not present (backward compat for tests)
+        return { data: item as T, timestamp: Date.now() }; 
+    }
+
+    clearStep(stepId: string): void {
+        delete this.storage[stepId];
+    }
+
     clear(): void {
         this.storage = {};
     }
