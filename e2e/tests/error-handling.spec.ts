@@ -12,7 +12,8 @@ import { test, expect } from '../fixtures/base';
 
 test.describe('Error Handling', () => {
   test.beforeEach(async ({ page }) => {
-    // Force reload to ensure fresh MemoryAdapter and component mount
+    // Force new page for each test to ensure fresh state/memory adapter.
+    // Crucial for MemoryAdapter persistence isolation.
     await page.goto('about:blank');
     await page.goto('#/test/error-demo');
     await page.waitForSelector('[data-testid="wizard-container"]', { timeout: 5000 });
