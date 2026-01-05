@@ -399,11 +399,6 @@ export default function TestArrayData() {
   const searchParams = new URLSearchParams(location.search);
   const initial = searchParams.get("initial") === "true";
 
-  console.log("TestArrayData: Navigation", {
-    search: location.search,
-    initial,
-  });
-
   // Re-create config when initial changes
   const config = useMemo(() => getWizardConfig(initial), [initial]);
 
@@ -429,8 +424,6 @@ export default function TestArrayData() {
         : { products: [] },
     [initial]
   );
-
-  console.log("TestArrayData: initialData", initialData);
 
   return (
     // Force remount when initial mode changes to ensure clean store init
