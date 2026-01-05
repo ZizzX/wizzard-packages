@@ -73,10 +73,14 @@ function App() {
               path="enterprise-wizard"
               element={<EnterpriseWizardDemo />}
             />
-            <Route path="middleware-demo" element={<MiddlewareDemo />} />
+            <Route path="test/middleware-demo" element={<MiddlewareDemo />} />
             <Route path="optimization" element={<OptimizationDemo />} />
 
             {/* Test Routes for E2E Testing */}
+            <Route
+              path="test/conditional-demo"
+              element={<ConditionalWizard />}
+            />
             <Route
               path="test/basic-navigation"
               element={<TestBasicNavigation />}

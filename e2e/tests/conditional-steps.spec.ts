@@ -12,7 +12,7 @@ import { test, expect } from '../fixtures/base';
 
 test.describe('Conditional Steps', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('#/conditional');
+    await page.goto('#/test/conditional-demo');
     await page.waitForSelector('[data-testid="wizard-container"]', { timeout: 5000 });
   });
 
@@ -72,7 +72,7 @@ test.describe('Conditional Steps', () => {
     // This test verifies that condition is not re-evaluated unnecessarily
     // by checking that unrelated data changes don't trigger re-evaluation
     
-    await page.goto('#/conditional?debug=true');
+    await page.goto('#/test/conditional-demo?debug=true');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
     // Get condition evaluation count (if exposed via dev tools)
@@ -101,7 +101,7 @@ test.describe('Conditional Steps', () => {
   });
 
   test.skip('should handle async condition evaluation', async ({ page }) => {
-    await page.goto('#/conditional?async=true');
+    await page.goto('#/test/conditional-demo?async=true');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
     // Select option that triggers async condition
@@ -122,7 +122,7 @@ test.describe('Conditional Steps', () => {
   });
 
   test.skip('should hide step while pending if showWhilePending is false', async ({ page }) => {
-    await page.goto('#/conditional?async=true');
+    await page.goto('#/test/conditional-demo?async=true');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
     const initialStepCount = await page.locator('[data-testid="step-indicator"]').count();

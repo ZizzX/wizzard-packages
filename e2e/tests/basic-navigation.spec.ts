@@ -67,7 +67,7 @@ test.describe('Basic Navigation', () => {
     await expect(page.locator('h2')).toContainText('Step 3');
     
     // Click on Step 1 breadcrumb
-    await page.click('[data-testid="breadcrumb-step-step1"]');
+    await page.click('[data-testid="breadcrumb-step-1"]');
     
     // Should be on Step 1
     await expect(page.locator('h2')).toContainText('Step 1');
@@ -102,7 +102,7 @@ test.describe('Basic Navigation', () => {
      await page.click('[data-testid="next-button"]');
      
      // 3 -> 1 (via breadcrumb)
-     await page.click('[data-testid="breadcrumb-step-step1"]');
+     await page.click('[data-testid="breadcrumb-step-1"]');
      
      // Check history text
      await expect(page.locator('[data-testid="wizard-history"]')).toContainText('step1 → step2 → step3 → step1');

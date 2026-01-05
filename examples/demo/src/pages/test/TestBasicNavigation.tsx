@@ -67,7 +67,7 @@ const BreadcrumbNav = () => {
         return (
           <button
             key={crumb.id}
-            data-testid={`breadcrumb-step-${crumb.id}`}
+            data-testid={`breadcrumb-step-${index + 1}`}
             onClick={() => isClickable && goToStep(crumb.id as string)}
             disabled={!isClickable}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -236,7 +236,7 @@ const wizardConfig: IWizardConfig<BasicNavigationSchema> = {
 // Export
 export default function TestBasicNavigation() {
   return (
-    <WizardProvider config={wizardConfig}>
+    <WizardProvider key="navigation-test" config={wizardConfig}>
       <WizardContent />
     </WizardProvider>
   );

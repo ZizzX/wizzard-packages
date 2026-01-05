@@ -9,6 +9,7 @@ import {
 import { Card, CardContent, CardFooter } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
+import { cn } from "../../lib/utils";
 
 interface DependencyData {
   country?: string;
@@ -29,6 +30,7 @@ interface DependencyData {
     };
   };
   shippingMethod?: string;
+  debug?: boolean;
 }
 
 // --- Steps ---
@@ -54,9 +56,7 @@ const LocationStep = () => {
           data-testid="country-select"
           className="w-full border p-2 rounded"
           value={data.country || ""}
-          onChange={(e) =>
-            updateData({ country: e.target.value, state: undefined })
-          }
+          onChange={(e) => updateData({ country: e.target.value })}
         >
           <option value="">Select Country</option>
           <option value="US">USA</option>
@@ -148,13 +148,7 @@ const PricingStep = () => {
           data-testid="pricing-type"
           className="w-full border p-2 rounded"
           value={data.pricingType || ""}
-          onChange={(e) =>
-            updateData({
-              pricingType: e.target.value,
-              tier1Price: undefined,
-              tier2Price: undefined,
-            })
-          }
+          onChange={(e) => updateData({ pricingType: e.target.value })}
         >
           <option value="">Select Type</option>
           <option value="simple">Simple</option>
@@ -194,22 +188,14 @@ const CascadeStep = () => {
         data-testid="field-a"
         label="Field A (Root)"
         value={data.fieldA || ""}
-        onChange={(e) =>
-          updateData({
-            fieldA: e.target.value,
-            fieldB: undefined,
-            fieldC: undefined,
-          })
-        }
+        onChange={(e) => updateData({ fieldA: e.target.value })}
       />
 
       <Input
         data-testid="field-b"
         label="Field B (Depends on A)"
         value={data.fieldB || ""}
-        onChange={(e) =>
-          updateData({ fieldB: e.target.value, fieldC: undefined })
-        }
+        onChange={(e) => updateData({ fieldB: e.target.value })}
         disabled={!data.fieldA}
       />
 
@@ -246,10 +232,7 @@ const UserStep = () => {
         label="Zip Code"
         value={userZip || ""}
         onChange={(e) =>
-          updateData({
-            user: { address: { zip: e.target.value } },
-            shippingMethod: undefined,
-          })
+          updateData({ user: { address: { zip: e.target.value } } })
         }
       />
 
@@ -272,17 +255,27 @@ const UserStep = () => {
 };
 
 const WizardContent = () => {
-  const { currentStep, activeSteps } = useWizard<DependencyData>();
+  const { currentStep, activeSteps, completedSteps, data } =
+    useWizard<DependencyData>();
   const { goToNextStep, goToPrevStep } = useWizardActions();
 
   return (
     <div data-testid="wizard-container" className="max-w-md mx-auto py-8">
       <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-        {activeSteps.map((s) => (
+        {activeSteps.map((s, idx) => (
           <div
             key={s.id}
-            data-testid={`breadcrumb-${s.id}`}
-            className={`text-xs p-1 whitespace-nowrap ${s.id === currentStep?.id ? "font-bold bg-gray-100 rounded" : ""}`}
+            data-testid={`breadcrumb-step-${idx + 1}`}
+            className={cn(
+              "text-xs p-2 whitespace-nowrap rounded transition-colors",
+              s.id === currentStep?.id &&
+                "font-bold bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200",
+              completedSteps.has(s.id) &&
+                "completed bg-green-50 text-green-700",
+              !completedSteps.has(s.id) &&
+                s.id !== currentStep?.id &&
+                "bg-gray-50 text-gray-400"
+            )}
           >
             {s.label}
           </div>
@@ -314,6 +307,21 @@ const WizardContent = () => {
           </Button>
         </CardFooter>
       </Card>
+
+      {data.debug && (
+        <div className="mt-8 p-4 bg-gray-900 text-green-400 rounded font-mono text-xs overflow-auto max-h-40">
+          <pre data-testid="debug-state">
+            {JSON.stringify(
+              {
+                completed: Array.from(completedSteps),
+                data: data,
+              },
+              null,
+              2
+            )}
+          </pre>
+        </div>
+      )}
     </div>
   );
 };
@@ -322,16 +330,47 @@ const config: IWizardConfig<DependencyData> = {
   persistence: { mode: "onStepChange", adapter: new MemoryAdapter() },
   steps: [
     { id: "step-1", label: "Location" },
-    { id: "step-2", label: "Product" },
-    { id: "step-3", label: "Pricing" },
-    { id: "step-4", label: "Cascade" },
-    { id: "step-5", label: "User" },
+    {
+      id: "step-2",
+      label: "Product",
+      dependsOn: ["country"],
+      clearData: ["state"],
+    },
+    {
+      id: "step-3",
+      label: "Pricing",
+      dependsOn: ["pricingType"],
+      clearData: () => ({
+        tier1Price: undefined,
+        tier2Price: undefined,
+      }),
+    },
+    {
+      id: "step-4",
+      label: "Cascade",
+      dependsOn: ["fieldA", "fieldB"],
+      clearData: ["fieldB", "fieldC"],
+    },
+    {
+      id: "step-5",
+      label: "User",
+      dependsOn: ["user.address.zip"],
+      clearData: ["shippingMethod"],
+    },
   ],
 };
 
 export default function TestDependency() {
+  const searchParams = new URLSearchParams(window.location.search);
+  const mode = searchParams.get("mode");
+  const debug = searchParams.get("debug") === "true";
+
   return (
-    <WizardProvider config={config}>
+    <WizardProvider
+      key={`dependency-test-${mode}-${debug}`}
+      config={config}
+      initialData={{ debug } as DependencyData}
+    >
       <WizardContent />
     </WizardProvider>
   );

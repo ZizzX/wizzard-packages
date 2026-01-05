@@ -240,101 +240,99 @@ export function WizardProvider<
     if (idx > 0) await goToStep(activeSteps[idx - 1].id);
   }, [goToStep]);
 
-  const setData = useCallback(
-    (path: string, value: any, options?: { debounceValidation?: number }) => {
-      const { stepsMap, currentStepId } = stateRef.current;
-      const prevData = storeRef.current.getSnapshot().data;
-      if (getByPath(prevData, path) === value) return;
+  const handleStepDependencies = useCallback(
+    (paths: string[], initialData: any) => {
+      let currentData = { ...initialData };
+      let hasClearing = false;
+      const { completedSteps, visitedSteps } = storeRef.current.getSnapshot();
+      let nextComp = new Set(completedSteps);
+      let nextVis = new Set(visitedSteps);
+      let statusChanged = false;
 
-      let newData = setByPath(prevData, path, value);
-
-      // 2. Clear Dependent Data (accumulate changes)
-      const dataToUpdate: Record<string, any> = {};
-
-      // Auto-invalidation & Clearing
       localConfig.steps.forEach((step) => {
-        if (
-          step.dependsOn?.some((p) => path === p || path.startsWith(p + "."))
-        ) {
-          // Status Reset
-          const nextComp = new Set(
-            storeRef.current.getSnapshot().completedSteps
+        const isDependent = step.dependsOn?.some((p) =>
+          paths.some(
+            (path) =>
+              path === p || p.startsWith(path + ".") || path.startsWith(p + ".")
+          )
+        );
+
+        if (isDependent) {
+          console.log(
+            `[WizardContext] Path match! Step ${step.id} depends on one of ${paths}`
           );
           if (nextComp.delete(step.id as StepId)) {
-            storeRef.current.dispatch({
-              type: "SET_COMPLETED_STEPS",
-              payload: { steps: nextComp },
-            });
-          }
-          const nextVis = new Set(storeRef.current.getSnapshot().visitedSteps);
-          if (nextVis.delete(step.id as StepId)) {
-            storeRef.current.dispatch({
-              type: "SET_VISITED_STEPS",
-              payload: { steps: nextVis },
-            });
+            console.log(
+              `[WizardContext] Removed ${step.id} from completedSteps`
+            );
+            statusChanged = true;
           }
 
-          // Data Clearing
           if (step.clearData) {
             if (typeof step.clearData === "function") {
-              const patch = step.clearData(newData);
-              Object.assign(dataToUpdate, patch);
-              newData = { ...newData, ...patch };
+              const patch = step.clearData(currentData);
+              currentData = { ...currentData, ...patch };
+              hasClearing = true;
             } else {
               const pathsToClear = Array.isArray(step.clearData)
                 ? step.clearData
                 : [step.clearData];
-
               pathsToClear.forEach((p) => {
-                // Use setByPath to correctly handle nested paths like 'billing.address'
-                // We set to undefined in newData for local consistency
-                newData = setByPath(newData, p, undefined);
-                // We assume clearData paths are root-level or flat for the bulk update partial?
-                // Wait, UPDATE_DATA expects Partial<T>.
-                // If p is 'nested.prop', { nested: { prop: undefined } } is needed.
-                // Simpler approach: Dispatch UPDATE_DATA with the FULL cloned/modified newData
-                // But that might be expensive.
-                // Let's use setByPath on a partial object? No, setByPath works on objects.
-                // Re-strategy: We already have 'newData' which is the FULL updated state.
-                // Efficiency: UPDATE_DATA with { replace: true }?
-                // Or let UPDATE_DATA handle the merge.
-                // 'newData' contains the primary change AND the cleared fields.
-                // So we can just dispatch UPDATE_DATA with newData and replace: true?
-                // Or better, let's just use the `store.update` method directly or dispatch UPDATE_DATA with the full object derived from newData?
-                //
-                // Optimization: 'newData' is already the next state.
-                // We should use that.
+                currentData = setByPath(currentData, p, undefined);
+                hasClearing = true;
               });
             }
           }
         }
       });
 
-      // 3. atomic dispatch
-      // If we cleared data, we must do a full update or smart partial.
-      // Since 'newData' has everything correct (primary value + cleared values),
-      // we can simply use that unless we want to avoid deep cloning everything again.
-      // Given 'newData' was derived from 'prevData' via valid setByPath mutations (which clone path),
-      // it's safe to use as the next state.
+      if (statusChanged) {
+        storeRef.current.dispatch({
+          type: "SET_COMPLETED_STEPS",
+          payload: { steps: nextComp },
+        });
+        storeRef.current.dispatch({
+          type: "SET_VISITED_STEPS",
+          payload: { steps: nextVis },
+        });
+      }
 
-      // However, WizardStore.UPDATE_DATA payload.data is Partial<T>.
-      // We can pass the whole newData and say options: { replace: true } ?
-      // Looking at WizardStore.ts:
-      // case 'UPDATE_DATA': this.updateBulkData(action.payload.data, action.payload.options);
-      // updateBulkData(data, options) -> is replace is true, new data IS data.
+      return { newData: currentData, hasClearing };
+    },
+    [localConfig.steps]
+  );
 
-      storeRef.current.dispatch({
-        type: "UPDATE_DATA",
-        payload: {
-          data: newData,
-          options: { replace: true }, // Important: we already merged everything in newData
-        },
-      });
+  const setData = useCallback(
+    (path: string, value: any, options?: { debounceValidation?: number }) => {
+      const { stepsMap, currentStepId } = stateRef.current;
+      const prevData = storeRef.current.getSnapshot().data;
+      if (getByPath(prevData, path) === value) return;
+
+      const baseData = setByPath(prevData, path, value);
+      const { newData, hasClearing } = handleStepDependencies([path], baseData);
+
+      if (!hasClearing) {
+        storeRef.current.dispatch({
+          type: "SET_DATA",
+          payload: {
+            path,
+            value,
+            options: { ...options, __from_set_data__: true },
+          },
+        });
+      } else {
+        storeRef.current.dispatch({
+          type: "UPDATE_DATA",
+          payload: {
+            data: newData,
+            options: { replace: true, __from_set_data__: true, path },
+          },
+        });
+      }
 
       if (currentStepId) {
         storeRef.current.deleteError(currentStepId, path);
         const step = stepsMap.get(currentStepId as StepId);
-        // Validation logic
         if (
           (step?.validationMode ||
             localConfig.validationMode ||
@@ -344,31 +342,27 @@ export function WizardProvider<
             options?.debounceValidation ??
             localConfig.validationDebounceTime ??
             300;
-
           if (validationDebounceRef.current) {
             clearTimeout(validationDebounceRef.current);
           }
-
           validationDebounceRef.current = setTimeout(() => {
             validateStep(currentStepId as StepId);
           }, debounceMs);
         }
-        // Persistence handled by store checkAutoSave
       }
     },
-    [localConfig, validateStep]
+    [localConfig, validateStep, handleStepDependencies]
   );
 
   const updateData = useCallback(
-    // updateData logic
     (data: Partial<T>, options?: { replace?: boolean; persist?: boolean }) => {
-      console.log("updateData", data);
       const prev = storeRef.current.getSnapshot().data;
-      const next = options?.replace ? (data as T) : { ...prev, ...data };
-      console.log("updateData next", next);
-      storeRef.current.update(next, Object.keys(data));
+      const baseData = options?.replace ? (data as T) : { ...prev, ...data };
+
+      const { newData } = handleStepDependencies(Object.keys(data), baseData);
+
+      storeRef.current.update(newData, Object.keys(data));
       if (options?.persist) {
-        // Manual persist trigger
         if (storeRef.current.save) {
           storeRef.current.save(
             storeRef.current.getSnapshot().currentStepId as StepId
@@ -376,7 +370,7 @@ export function WizardProvider<
         }
       }
     },
-    [localConfig.steps]
+    [handleStepDependencies]
   );
 
   const reset = useCallback(() => {

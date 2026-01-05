@@ -152,7 +152,7 @@ const WizardContent = () => {
 
 export default function TestValidation() {
   return (
-    <WizardProvider config={wizardConfig}>
+    <WizardProvider key="validation-test" config={wizardConfig}>
       <WizardContent />
     </WizardProvider>
   );

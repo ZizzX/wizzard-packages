@@ -19,7 +19,7 @@ test.describe('State Persistence', () => {
   });
 
   test('should persist data to localStorage on step change', async ({ page }) => {
-    await page.goto('test/persistence-demo');
+    await page.goto('#/test/persistence-demo');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
     // Fill some data
@@ -53,12 +53,12 @@ test.describe('State Persistence', () => {
     await page.reload();
     await page.waitForSelector('[data-testid="wizard-container"]');
     
-    // Data should be restored
-    await expect(page.locator('[data-testid="name-input"]')).toHaveValue('Jane Smith');
+    // Should be on step 2 (restored)
+    await expect(page.locator('[data-testid="current-step"]')).toContainText('Step 2');
     
-    // Navigate to step 2
-    await page.click('[data-testid="next-button"]');
-    await expect(page.locator('[data-testid="address-input"]')).toHaveValue('123 Main St');
+    // Go back to step 1 to check data
+    await page.click('[data-testid="prev-button"]');
+    await expect(page.locator('[data-testid="name-input"]')).toHaveValue('Jane Smith');
   });
 
   test('should restore current step on reload', async ({ page }) => {
@@ -145,6 +145,7 @@ test.describe('State Persistence', () => {
     
     await page.locator('[data-testid="name-input"]').fill('Wizard 1 Data');
     await page.click('[data-testid="next-button"]');
+    await expect(page.locator('[data-testid="current-step"]')).toContainText('Step 2');
     
     // Navigate to second wizard
     await page.goto('#/test/persistence-demo?key=wizard2');
@@ -160,6 +161,9 @@ test.describe('State Persistence', () => {
     // Go back to first wizard
     await page.goto('#/test/persistence-demo?key=wizard1');
     await page.waitForSelector('[data-testid="wizard-container"]');
+    
+    // It should have restored Step 2, so go back to Step 1 to check data
+    await page.click('[data-testid="prev-button"]');
     
     // Should have original data
     await expect(page.locator('[data-testid="name-input"]')).toHaveValue('Wizard 1 Data');

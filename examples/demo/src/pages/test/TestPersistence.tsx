@@ -134,7 +134,7 @@ const WizardInfo = () => {
           return (
             <div
               key={step.id}
-              data-testid={`breadcrumb-step-${step.id}`}
+              data-testid={`breadcrumb-step-${activeSteps.indexOf(step) + 1}`}
               className={`px-2 py-1 border rounded ${status}`}
             >
               {step.label}
@@ -194,7 +194,7 @@ export default function TestPersistence() {
   }, [searchParams]);
 
   return (
-    <WizardProvider config={config}>
+    <WizardProvider key={searchParams.toString()} config={config}>
       <PersistenceContent />
     </WizardProvider>
   );

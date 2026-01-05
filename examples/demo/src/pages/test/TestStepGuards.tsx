@@ -194,7 +194,7 @@ const TestStepGuards = () => {
         </div>
       )}
 
-      <WizardProvider config={config}>
+      <WizardProvider key={location.search} config={config}>
         <WizardContentInternal
           showDialog={showDialog}
           setShowDialog={setShowDialog}

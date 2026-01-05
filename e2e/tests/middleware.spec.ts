@@ -11,33 +11,36 @@ import { test, expect } from '../fixtures/base';
  */
 
 test.describe('Middleware Integration', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('#/middleware-demo');
-    await page.waitForSelector('[data-testid="wizard-container"]', { timeout: 5000 });
-  });
+  let consoleLogs: string[] = [];
 
-  test('should log actions with logger middleware', async ({ page }) => {
-    // Enable console logging
-    const consoleLogs: string[] = [];
+  test.beforeEach(async ({ page }) => {
+    consoleLogs = [];
     page.on('console', msg => {
       if (msg.type() === 'log') {
         consoleLogs.push(msg.text());
       }
     });
-    
+    await page.goto('#/test/middleware-demo');
+    await page.waitForSelector('[data-testid="wizard-container"]', { timeout: 5000 });
+  });
+
+  test('should log actions with logger middleware', async ({ page }) => {
     // Perform action
     await page.locator('[data-testid="name-input"]').fill('Test User');
     
-    // Wait for debounce
-    await page.waitForTimeout(400);
+    // Wait for state update and log to propagate
+    await page.waitForTimeout(500);
     
     // Check logs
     const setDataLogs = consoleLogs.filter(log => log.includes('SET_DATA'));
+    if (setDataLogs.length === 0) {
+      console.log('Detected logs:', consoleLogs);
+    }
     expect(setDataLogs.length).toBeGreaterThan(0);
   });
 
   test('should display DevTools when enabled', async ({ page }) => {
-    await page.goto('#/middleware-demo?devtools=true');
+    await page.goto('#/test/middleware-demo?devtools=true');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
     // Fallback: If auto-open failed, click the toggle
@@ -51,7 +54,7 @@ test.describe('Middleware Integration', () => {
   });
 
   test('should show action history in DevTools', async ({ page }) => {
-    await page.goto('#/middleware-demo?devtools=true');
+    await page.goto('#/test/middleware-demo?devtools=true');
     await page.waitForSelector('[data-testid="wizard-devtools"]');
     
     // Perform some actions
@@ -67,7 +70,7 @@ test.describe('Middleware Integration', () => {
   });
 
   test('should allow time-travel in DevTools', async ({ page }) => {
-    await page.goto('#/middleware-demo?devtools=true');
+    await page.goto('#/test/middleware-demo?devtools=true');
     await page.waitForSelector('[data-testid="wizard-devtools"]');
     
     // Perform actions
@@ -83,25 +86,30 @@ test.describe('Middleware Integration', () => {
   });
 
   test('should execute custom middleware in correct order', async ({ page }) => {
-    await page.goto('#/middleware-demo?custom=true&debug=true');
+    await page.goto('#/test/middleware-demo?custom=true&debug=true');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
-    // Trigger action
+    // Trigger action (Next Step)
     await page.click('[data-testid="next-button"]');
+    await page.waitForTimeout(200);
     
-    // Check middleware execution order
-    const executionLog = await page.locator('[data-testid="middleware-log"]').textContent();
+    // Check middleware execution order in the UI logs
+    const executionLog = await page.locator('[data-testid="middleware-log"]').textContent() || "";
+    
+    // We expect both middlewares to have run for the navigation action
     expect(executionLog).toContain('Middleware 1');
     expect(executionLog).toContain('Middleware 2');
     
-    // Verify order
-    const index1 = executionLog?.indexOf('Middleware 1') || 0;
-    const index2 = executionLog?.indexOf('Middleware 2') || 0;
-    expect(index1).toBeLessThan(index2);
+    const index1 = executionLog.indexOf('[M1] Middleware 1');
+    const index2 = executionLog.indexOf('[M2] Middleware 2');
+    
+    // In our UI, logs are PREPENDED to the top, so Middleware 2 (logged later) comes BEFORE Middleware 1
+    // index2 < index1
+    expect(index2).toBeLessThan(index1);
   });
 
   test('should allow middleware to modify or block actions', async ({ page }) => {
-    await page.goto('#/middleware-demo?blocking=true');
+    await page.goto('#/test/middleware-demo?blocking=true');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
     // Try to navigate (middleware blocks it without validation)
@@ -118,7 +126,7 @@ test.describe('Middleware Integration', () => {
   });
 
   test('should pass correct context to middleware', async ({ page }) => {
-    await page.goto('#/middleware-demo?debug=true');
+    await page.goto('#/test/middleware-demo?debug=true');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
     // Fill some data

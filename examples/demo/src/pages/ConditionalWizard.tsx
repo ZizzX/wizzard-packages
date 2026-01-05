@@ -108,43 +108,60 @@ const wizardConfig: IWizardConfig<ConditionalWizardSchema> = {
 };
 
 const WizardContent = () => {
-  const { currentStep, activeSteps } = useWizard();
+  const { currentStep, activeSteps, progress } = useWizard();
 
   if (!currentStep) return null;
 
   return (
     <div className="max-w-xl mx-auto py-8">
-      <div className="mb-8 overflow-hidden rounded-2xl bg-white border border-gray-100 shadow-sm p-4">
-        <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
-          {activeSteps.map((s, idx) => {
-            const isActive = s.id === currentStep.id;
-            return (
-              <div key={s.id} className="flex items-center shrink-0">
-                <div
-                  className={cn(
-                    "px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2",
-                    isActive
-                      ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100 ring-2 ring-indigo-50"
-                      : "bg-gray-50 text-gray-400"
-                  )}
-                >
-                  <span
+      <div className="mb-8 space-y-4">
+        <div className="mb-8 overflow-hidden rounded-2xl bg-white border border-gray-100 shadow-sm p-4">
+          <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
+            {activeSteps.map((s, idx) => {
+              const isActive = s.id === currentStep.id;
+              return (
+                <div key={s.id} className="flex items-center shrink-0">
+                  <div
                     className={cn(
-                      "w-5 h-5 rounded-full flex items-center justify-center text-[10px]",
-                      isActive ? "bg-white/20" : "bg-gray-200"
+                      "px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2",
+                      isActive
+                        ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100 ring-2 ring-indigo-50"
+                        : "bg-gray-50 text-gray-400"
                     )}
-                    data-testid="step-indicator"
                   >
-                    {idx + 1}
-                  </span>
-                  {isActive ? s.label : s.label.split(" ")[0]}
+                    <span
+                      className={cn(
+                        "w-5 h-5 rounded-full flex items-center justify-center text-[10px]",
+                        isActive ? "bg-white/20" : "bg-gray-200"
+                      )}
+                      data-testid="step-indicator"
+                    >
+                      {idx + 1}
+                    </span>
+                    {isActive ? s.label : s.label.split(" ")[0]}
+                  </div>
+                  {idx < activeSteps.length - 1 && (
+                    <div className="w-4 h-px bg-gray-200 mx-1" />
+                  )}
                 </div>
-                {idx < activeSteps.length - 1 && (
-                  <div className="w-4 h-px bg-gray-200 mx-1" />
-                )}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="px-2">
+          <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+            <div
+              data-testid="progress-bar"
+              className="h-full bg-indigo-600 transition-all duration-500 ease-out"
+              style={{ width: `${progress}%` }}
+              role="progressbar"
+              aria-valuenow={progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            />
+          </div>
         </div>
       </div>
 
@@ -167,7 +184,7 @@ const WizardContent = () => {
 
 export default function ConditionalWizard() {
   return (
-    <WizardProvider config={wizardConfig}>
+    <WizardProvider key="conditional-test" config={wizardConfig}>
       <WizardContent />
     </WizardProvider>
   );

@@ -37,9 +37,17 @@ export function WizardDevTools() {
     // Auto-open if devtools param is present
     if (typeof window !== "undefined") {
       const search = new URLSearchParams(window.location.search);
-      const hashSearch = new URLSearchParams(
-        window.location.hash.split("?")[1]
-      );
+      const hash = window.location.hash;
+      const hashParams = hash.includes("?") ? hash.split("?")[1] : "";
+      const hashSearch = new URLSearchParams(hashParams);
+
+      console.log("[WizardDevTools] Check parameters:", {
+        search: search.toString(),
+        hash,
+        hashParams,
+        devtools: search.get("devtools") || hashSearch.get("devtools"),
+      });
+
       if (
         search.get("devtools") === "true" ||
         hashSearch.get("devtools") === "true"
