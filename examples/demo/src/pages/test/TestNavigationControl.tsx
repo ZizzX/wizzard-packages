@@ -1,10 +1,10 @@
 import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import {
   WizardProvider,
   useWizard,
   useWizardActions,
   useWizardState,
-  MemoryAdapter,
 } from "wizzard-stepper-react";
 import type { IWizardConfig } from "wizzard-stepper-react";
 import { Input } from "../../components/ui/Input";
@@ -157,10 +157,7 @@ export default function TestNavigationControl() {
   const mode = (search.get("mode") || (userRole === 'admin' ? 'free' : 'visited')) as 'sequential' | 'visited' | 'free';
 
   const config: IWizardConfig<NavigationData, NavigationSteps> = {
-    persistence: {
-      mode: "onStepChange",
-      adapter: new MemoryAdapter(),
-    },
+    // No persistence - we want initialData to be used directly
     navigationMode: mode,
     steps: [
       { 
@@ -182,15 +179,16 @@ export default function TestNavigationControl() {
       { 
         id: "step-4", 
         label: "Review",
-        // Example: Can only navigate if step1Data is filled
+        // Example: Can only navigate if step1Data is filled OR user is admin
         canNavigateTo: (data, metadata) => {
           console.log('[canNavigateTo step-4]', { 
             userRole: data.userRole, 
             step1Data: data.step1Data, 
             visitedSteps: Array.from(metadata.visitedSteps || []) 
           });
-          // Admin role stored in data
+          // Admin role stored in data - always allow
           if (data.userRole === 'admin') return true;
+          // Regular users need step1Data filled
           if (!data.step1Data) return false;
           // Can navigate if step-3 was visited
           return !!(metadata.visitedSteps?.has('step-3'));
@@ -198,6 +196,8 @@ export default function TestNavigationControl() {
       },
     ],
   };
+
+  console.log('[TestNavigationControl] Config created', { userRole, mode, initialData: { userRole } });
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -230,6 +230,18 @@ export default function TestNavigationControl() {
 
 function WizardContent() {
   const { currentStepId } = useWizardState();
+  const { data } = useWizard<NavigationData>();
+  const { updateData } = useWizardActions();
+
+  // Sync role to store for E2E tests consistency
+  useEffect(() => {
+    const search = new URLSearchParams(window.location.hash.split('?')[1] || window.location.search);
+    const role = search.get('role');
+    if (role && data.userRole !== role) {
+      console.log('[WizardContent] Syncing role to store:', role);
+      updateData({ userRole: role as any });
+    }
+  }, [data.userRole, updateData]);
   
   return (
     <>
