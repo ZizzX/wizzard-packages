@@ -10,3 +10,8 @@ coverage
 __tests__/__snapshots__
 dist
 .npmrc
+
+# Playwright
+test-results
+playwright-report
+blob-report

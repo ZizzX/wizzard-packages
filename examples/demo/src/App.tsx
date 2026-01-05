@@ -45,6 +45,7 @@ import { LanguageProvider } from "./context/LanguageContext";
 // Test pages for E2E testing
 import TestBasicNavigation from "./pages/test/TestBasicNavigation";
 import TestArrayData from "./pages/test/TestArrayData";
+import TestPersistence from "./pages/test/TestPersistence";
 
 function App() {
   return (
@@ -74,6 +75,7 @@ function App() {
             {/* Test Routes for E2E Testing */}
             <Route path="test-basic" element={<TestBasicNavigation />} />
             <Route path="array-data-demo" element={<TestArrayData />} />
+            <Route path="persistence-demo" element={<TestPersistence />} />
 
             {/* Documentation Section */}
             <Route path="docs" element={<DocsLayout />}>
