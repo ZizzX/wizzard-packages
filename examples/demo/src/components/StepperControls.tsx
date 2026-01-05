@@ -13,8 +13,6 @@ export const StepperControls = ({ onComplete }: StepperControlsProps) => {
   const { goToNextStep, goToPrevStep, clearStorage } = useWizardActions();
   const navigate = useNavigate();
 
-  if (isLoading) return null;
-
   const handleNext = async () => {
     if (isLastStep) {
       if (onComplete) {
@@ -35,7 +33,7 @@ export const StepperControls = ({ onComplete }: StepperControlsProps) => {
         type="button"
         variant="secondary"
         onClick={goToPrevStep}
-        disabled={isFirstStep}
+        disabled={isFirstStep || isLoading}
       >
         Previous
       </Button>
@@ -52,6 +50,7 @@ export const StepperControls = ({ onComplete }: StepperControlsProps) => {
         type="button"
         variant="primary"
         onClick={handleNext}
+        disabled={isLoading}
       >
         {isLastStep ? "Complete" : "Next"}
       </Button>

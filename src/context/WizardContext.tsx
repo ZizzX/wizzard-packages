@@ -615,7 +615,10 @@ export function WizardProvider<
           payload: { steps: currentVisited },
         });
       }
+    }
 
+    // Always reset isLoading once activeSteps are resolved
+    if (currentActiveSteps.length > 0 && currentSnapshot.isLoading) {
       storeRef.current.updateMeta({ isLoading: false });
     }
   }, [activeSteps, initialStepId, persistenceAdapter]); // Removed currentStepId dependency as we use snapshot inside

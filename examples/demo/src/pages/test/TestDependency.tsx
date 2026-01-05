@@ -333,14 +333,14 @@ const config: IWizardConfig<DependencyData> = {
       label: "Cascade",
       dependsOn: ["fieldA", "fieldB"],
       clearData: (_, changedFields) => {
-        // Если изменилось fieldA - очищаем fieldB и fieldC
+        // If fieldA changed - clear fieldB and fieldC
         if (changedFields.includes("fieldA")) {
           return {
             fieldB: undefined,
             fieldC: undefined,
           };
         }
-        // Если изменилось fieldB - очищаем только fieldC
+        // If fieldB changed - clear only fieldC
         else if (changedFields.includes("fieldB")) {
           return {
             fieldC: undefined,

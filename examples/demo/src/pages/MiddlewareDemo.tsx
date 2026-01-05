@@ -27,7 +27,7 @@ interface DemoData {
   email?: string;
 }
 
-type DemoSteps = "start" | "finish";
+type DemoSteps = "start" | "middle" | "finish";
 
 // --- CUSTOM MIDDLEWARE ---
 
@@ -149,6 +149,7 @@ export default function MiddlewareDemo() {
       middlewares,
       steps: [
         { id: "start", label: "Start" },
+        { id: "middle", label: "Middle" },
         { id: "finish", label: "Finish" },
       ],
     };
@@ -177,7 +178,11 @@ export default function MiddlewareDemo() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <WizardProvider key={search.toString()} config={config}>
+          <WizardProvider 
+            key={search.toString()} 
+            config={config}
+            initialData={{ name: "" }}
+          >
             <Card
               className="border-2 border-indigo-100 shadow-2xl"
               data-testid="wizard-container"
@@ -248,7 +253,15 @@ function WizardContent({ isDebug }: { isDebug?: boolean }) {
         </div>
       )}
       {currentStepId === "start" && <Step1 />}
-      {currentStepId === "finish" && <Step2 />}
+      {currentStepId === "middle" && <Step2 />}
+      {currentStepId === "finish" && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-bold">Step 3: Complete</h3>
+          <p className="text-sm text-gray-500">
+            All middleware events have been logged. Check the DevTools!
+          </p>
+        </div>
+      )}
     </>
   );
 }
