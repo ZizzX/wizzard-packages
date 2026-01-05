@@ -388,7 +388,10 @@ function getWizardConfig(): IWizardConfig<ArrayDataSchema> {
 
 // Export
 export default function TestArrayData() {
-  const searchParams = new URLSearchParams(window.location.search);
+  // Handle both standard search and HashRouter search (after ?)
+  const searchString =
+    window.location.search || window.location.hash.split("?")[1] || "";
+  const searchParams = new URLSearchParams(searchString);
   const initial = searchParams.get("initial") === "true";
 
   const config = getWizardConfig();

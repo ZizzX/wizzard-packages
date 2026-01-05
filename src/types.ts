@@ -54,7 +54,11 @@ export interface IWizardStore<T, StepId extends string = string> {
 export interface IWizardActions<StepId extends string = string> {
   goToNextStep: () => Promise<void>;
   goToPrevStep: () => Promise<void>;
-  goToStep: (stepId: StepId) => Promise<boolean>;
+  goToStep: (
+    stepId: StepId,
+    providedActiveSteps?: any[],
+    options?: { validate?: boolean }
+  ) => Promise<boolean>;
   setStepData: (stepId: StepId, data: unknown) => void;
   handleStepChange: (field: string, value: unknown) => void;
   validateStep: (sid: StepId) => Promise<boolean>;
@@ -383,6 +387,12 @@ export interface IWizardContext<T = unknown, StepId extends string = string> {
      * Errors keyed by stepId -> field -> message
      */
     allErrors: Record<StepId, Record<string, string>>;
+
+    /**
+     * Flattened errors map (field -> message) for convenience.
+     * Contains errors from all steps unless shadowed.
+     */
+    errors: Record<string, string>;
 
     /**
      * Steps Status

@@ -123,7 +123,10 @@ export default function MiddlewareDemo() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <WizardProvider config={config}>
-            <Card className="border-2 border-indigo-100 shadow-2xl">
+            <Card
+              className="border-2 border-indigo-100 shadow-2xl"
+              data-testid="wizard-container"
+            >
               <CardHeader className="bg-indigo-50/50 border-b border-indigo-100">
                 <CardTitle className="text-indigo-900 text-sm uppercase tracking-widest font-black">
                   Active Wizard

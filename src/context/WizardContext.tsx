@@ -717,6 +717,14 @@ export function useWizardContext<
   const store = useContext(WizardStoreContext) as IWizardStore<T, StepId>;
   const data = useWizardSelector((s: IWizardState<T, StepId>) => s.data);
   const allErrors = useWizardSelector((s: IWizardState<T, StepId>) => s.errors);
+  const errors = useMemo(() => {
+    const flat: Record<string, string> = {};
+    Object.values(allErrors).forEach((stepErrors) => {
+      Object.assign(flat, stepErrors as Record<string, string>);
+    });
+    return flat;
+  }, [allErrors]);
+
   const { data: _d, errors: _e, ...stateProps } = state;
   return useMemo(
     () => ({
@@ -724,8 +732,9 @@ export function useWizardContext<
       ...actions,
       data,
       allErrors,
+      errors,
       store,
     }),
-    [stateProps, actions, data, allErrors, store]
+    [stateProps, actions, data, allErrors, errors, store]
   ) as IWizardContext<T, StepId>;
 }

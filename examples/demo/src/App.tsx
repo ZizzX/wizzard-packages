@@ -47,6 +47,9 @@ import TestBasicNavigation from "./pages/test/TestBasicNavigation";
 import TestArrayData from "./pages/test/TestArrayData";
 import TestPersistence from "./pages/test/TestPersistence";
 import TestValidation from "./pages/test/TestValidation";
+import TestStepGuards from "./pages/test/TestStepGuards";
+import TestDependency from "./pages/test/TestDependency";
+import TestError from "./pages/test/TestError";
 
 function App() {
   return (
@@ -81,6 +84,9 @@ function App() {
             <Route path="test/array-data-demo" element={<TestArrayData />} />
             <Route path="test/persistence-demo" element={<TestPersistence />} />
             <Route path="test/validation-demo" element={<TestValidation />} />
+            <Route path="test/guards-demo" element={<TestStepGuards />} />
+            <Route path="test/dependency-demo" element={<TestDependency />} />
+            <Route path="test/error-demo" element={<TestError />} />
 
             {/* Documentation Section */}
             <Route path="docs" element={<DocsLayout />}>

@@ -28,6 +28,7 @@ const Step1 = () => {
           <input
             type="checkbox"
             id="hasCoApplicant"
+            data-testid="co-applicant-checkbox"
             className="peer h-6 w-6 text-indigo-600 rounded-md border-gray-300 focus:ring-indigo-500 transition-all"
             checked={!!data.hasCoApplicant}
             onChange={(e) =>
@@ -132,6 +133,7 @@ const WizardContent = () => {
                       "w-5 h-5 rounded-full flex items-center justify-center text-[10px]",
                       isActive ? "bg-white/20" : "bg-gray-200"
                     )}
+                    data-testid="step-indicator"
                   >
                     {idx + 1}
                   </span>
@@ -146,7 +148,10 @@ const WizardContent = () => {
         </div>
       </div>
 
-      <Card className="shadow-xl shadow-indigo-50/50">
+      <Card
+        className="shadow-xl shadow-indigo-50/50"
+        data-testid="wizard-container"
+      >
         <CardContent className="pt-8">
           {currentStep.id === "start" && <Step1 />}
           {currentStep.id === "co-applicant" && <StepCoApplicant />}

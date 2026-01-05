@@ -14,7 +14,7 @@ import { test, expect } from '../fixtures/base';
 
 test.describe('Array Data Manipulation', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/array-data-demo');
+    await page.goto('#/test/array-data-demo');
     await page.waitForSelector('[data-testid="wizard-container"]', { timeout: 5000 });
   });
 
@@ -118,7 +118,7 @@ test.describe('Array Data Manipulation', () => {
 
   test('should set initial array data', async ({ page }) => {
     // Navigate to demo with initial data query param
-    await page.goto('/array-data-demo?initial=true');
+    await page.goto('#/test/array-data-demo?initial=true');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
     // Should have pre-populated items

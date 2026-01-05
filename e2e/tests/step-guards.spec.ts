@@ -12,7 +12,7 @@ import { test, expect } from '../fixtures/base';
 
 test.describe('Step Guards', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/guards-demo');
+    await page.goto('#/test/guards-demo');
     await page.waitForSelector('[data-testid="wizard-container"]', { timeout: 5000 });
   });
 
@@ -60,7 +60,7 @@ test.describe('Step Guards', () => {
   });
 
   test('should call guard with correct direction', async ({ page }) => {
-    await page.goto('/guards-demo?debug=true');
+    await page.goto('#/test/guards-demo?debug=true');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
     // Fill first step
@@ -80,7 +80,7 @@ test.describe('Step Guards', () => {
   });
 
   test('should handle async guard delays', async ({ page }) => {
-    await page.goto('/guards-demo?async=true');
+    await page.goto('#/test/guards-demo?async=true');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
     // Try to navigate (triggers async guard)

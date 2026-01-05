@@ -12,7 +12,7 @@ import { test, expect } from '../fixtures/base';
 
 test.describe('Middleware Integration', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/middleware-demo');
+    await page.goto('#/middleware-demo');
     await page.waitForSelector('[data-testid="wizard-container"]', { timeout: 5000 });
   });
 
@@ -37,7 +37,7 @@ test.describe('Middleware Integration', () => {
   });
 
   test('should display DevTools when enabled', async ({ page }) => {
-    await page.goto('/middleware-demo?devtools=true');
+    await page.goto('#/middleware-demo?devtools=true');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
     // DevTools panel should be visible
@@ -45,7 +45,7 @@ test.describe('Middleware Integration', () => {
   });
 
   test('should show action history in DevTools', async ({ page }) => {
-    await page.goto('/middleware-demo?devtools=true');
+    await page.goto('#/middleware-demo?devtools=true');
     await page.waitForSelector('[data-testid="wizard-devtools"]');
     
     // Perform some actions
@@ -61,7 +61,7 @@ test.describe('Middleware Integration', () => {
   });
 
   test('should allow time-travel in DevTools', async ({ page }) => {
-    await page.goto('/middleware-demo?devtools=true');
+    await page.goto('#/middleware-demo?devtools=true');
     await page.waitForSelector('[data-testid="wizard-devtools"]');
     
     // Perform actions
@@ -77,7 +77,7 @@ test.describe('Middleware Integration', () => {
   });
 
   test('should execute custom middleware in correct order', async ({ page }) => {
-    await page.goto('/middleware-demo?custom=true&debug=true');
+    await page.goto('#/middleware-demo?custom=true&debug=true');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
     // Trigger action
@@ -95,7 +95,7 @@ test.describe('Middleware Integration', () => {
   });
 
   test('should allow middleware to modify or block actions', async ({ page }) => {
-    await page.goto('/middleware-demo?blocking=true');
+    await page.goto('#/middleware-demo?blocking=true');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
     // Try to navigate (middleware blocks it without validation)
@@ -112,7 +112,7 @@ test.describe('Middleware Integration', () => {
   });
 
   test('should pass correct context to middleware', async ({ page }) => {
-    await page.goto('/middleware-demo?debug=true');
+    await page.goto('#/middleware-demo?debug=true');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
     // Fill some data

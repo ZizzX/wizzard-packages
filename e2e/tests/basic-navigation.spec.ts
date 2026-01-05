@@ -13,7 +13,7 @@ import { test, expect } from '../fixtures/base';
 
 test.describe('Basic Navigation', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/test/basic-navigation');
+    await page.goto('#/test/basic-navigation');
     await page.waitForSelector('[data-testid="wizard-container"]');
   });
 

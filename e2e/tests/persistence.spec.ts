@@ -19,7 +19,7 @@ test.describe('State Persistence', () => {
   });
 
   test('should persist data to localStorage on step change', async ({ page }) => {
-    await page.goto('/persistence-demo');
+    await page.goto('test/persistence-demo');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
     // Fill some data
@@ -41,7 +41,7 @@ test.describe('State Persistence', () => {
   });
 
   test('should restore data on page reload', async ({ page }) => {
-    await page.goto('/persistence-demo');
+    await page.goto('#/test/persistence-demo');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
     // Fill data and navigate
@@ -62,7 +62,7 @@ test.describe('State Persistence', () => {
   });
 
   test('should restore current step on reload', async ({ page }) => {
-    await page.goto('/persistence-demo');
+    await page.goto('#/test/persistence-demo');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
     // Navigate to step 3
@@ -79,7 +79,7 @@ test.describe('State Persistence', () => {
   });
 
   test('should persist data onChange mode', async ({ page }) => {
-    await page.goto('/persistence-demo?mode=onChange');
+    await page.goto('#/test/persistence-demo?mode=onChange');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
     // Type in field
@@ -98,7 +98,7 @@ test.describe('State Persistence', () => {
   });
 
   test('should clear storage on reset', async ({ page }) => {
-    await page.goto('/persistence-demo');
+    await page.goto('#/test/persistence-demo');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
     // Add some data
@@ -121,7 +121,7 @@ test.describe('State Persistence', () => {
   });
 
   test('should restore visited steps state', async ({ page }) => {
-    await page.goto('/persistence-demo');
+    await page.goto('#/test/persistence-demo');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
     // Navigate through steps
@@ -140,14 +140,14 @@ test.describe('State Persistence', () => {
 
   test('should handle storage key isolation', async ({ page }) => {
     // Create two wizards with different storage keys
-    await page.goto('/persistence-demo?key=wizard1');
+    await page.goto('#/test/persistence-demo?key=wizard1');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
     await page.locator('[data-testid="name-input"]').fill('Wizard 1 Data');
     await page.click('[data-testid="next-button"]');
     
     // Navigate to second wizard
-    await page.goto('/persistence-demo?key=wizard2');
+    await page.goto('#/test/persistence-demo?key=wizard2');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
     // Should be empty (different storage key)
@@ -158,7 +158,7 @@ test.describe('State Persistence', () => {
     await page.click('[data-testid="next-button"]');
     
     // Go back to first wizard
-    await page.goto('/persistence-demo?key=wizard1');
+    await page.goto('#/test/persistence-demo?key=wizard1');
     await page.waitForSelector('[data-testid="wizard-container"]');
     
     // Should have original data
