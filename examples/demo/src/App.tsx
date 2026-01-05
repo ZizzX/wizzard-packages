@@ -50,6 +50,7 @@ import TestValidation from "./pages/test/TestValidation";
 import TestStepGuards from "./pages/test/TestStepGuards";
 import TestDependency from "./pages/test/TestDependency";
 import TestError from "./pages/test/TestError";
+import TestNavigationControl from "./pages/test/TestNavigationControl";
 
 function App() {
   return (
@@ -91,6 +92,7 @@ function App() {
             <Route path="test/guards-demo" element={<TestStepGuards />} />
             <Route path="test/dependency-demo" element={<TestDependency />} />
             <Route path="test/error-demo" element={<TestError />} />
+            <Route path="test/navigation-control" element={<TestNavigationControl />} />
 
             {/* Documentation Section */}
             <Route path="docs" element={<DocsLayout />}>

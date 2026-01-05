@@ -1,9 +1,9 @@
 import { getByPath, setByPath } from "../utils/data";
-import type { 
-  IWizardStore, 
-  IWizardState, 
-  WizardAction, 
-  WizardMiddleware, 
+import type {
+  IWizardStore,
+  IWizardState,
+  WizardAction,
+  WizardMiddleware,
   MiddlewareAPI,
   IPersistenceAdapter
 } from "../types";
@@ -33,8 +33,8 @@ export class WizardStore<
   }
 
   constructor(initialData: T, middlewares: WizardMiddleware<T, StepId>[] = []) {
-    this.initialData = typeof structuredClone === 'function' 
-      ? structuredClone(initialData) 
+    this.initialData = typeof structuredClone === 'function'
+      ? structuredClone(initialData)
       : JSON.parse(JSON.stringify(initialData));
 
     this.state = {
@@ -59,9 +59,9 @@ export class WizardStore<
       progress: 0,
       activeStepsCount: 0,
       breadcrumbs: [],
-      config: {} as any, 
+      config: {} as any,
     };
-    
+
     // Initialize middleware chain
     this.middlewareChain = this.setupMiddlewares(middlewares);
   }
@@ -74,7 +74,7 @@ export class WizardStore<
     };
 
     const chain = middlewares.map((middleware) => middleware(middlewareAPI));
-    
+
     // Compose middleware chain
     // Equivalent to redux compose: m1(m2(m3(internalDispatch)))
     return chain.reduceRight(
@@ -100,11 +100,11 @@ export class WizardStore<
       case 'INIT':
         this.initialData = typeof structuredClone === 'function' ? structuredClone(action.payload.data) : JSON.parse(JSON.stringify(action.payload.data));
         const initialActiveSteps = action.payload.config.steps.filter((s: any) => !s.condition);
-        
+
         // Build the fast lookup map
         this.stepsMap.clear();
         action.payload.config.steps.forEach((step: any) => {
-             this.stepsMap.set(step.id, step);
+          this.stepsMap.set(step.id, step);
         });
 
         this.state = {
@@ -119,9 +119,9 @@ export class WizardStore<
       case 'SET_CURRENT_STEP_ID':
         // Trigger persistence for the step we are leaving
         if (this.state.currentStepId) {
-            this.handleStepChangePersistence(this.state.currentStepId);
+          this.handleStepChangePersistence(this.state.currentStepId);
         }
-        
+
         this.state = {
           ...this.state,
           currentStepId: action.payload.stepId,
@@ -165,11 +165,11 @@ export class WizardStore<
       case 'VALIDATE_END':
         this.state.busySteps.delete(action.payload.stepId);
         this.state = {
-            ...this.state,
-            busySteps: new Set(this.state.busySteps)
+          ...this.state,
+          busySteps: new Set(this.state.busySteps)
         };
         if (action.payload.result.errors) {
-            this.setStepErrors(action.payload.stepId, action.payload.result.errors);
+          this.setStepErrors(action.payload.stepId, action.payload.result.errors);
         }
         break;
       case 'SET_STEP_ERRORS':
@@ -245,14 +245,14 @@ export class WizardStore<
       isDirty: this.dirtyFields.size > 0,
       dirtyFields: new Set(this.dirtyFields),
     };
-    
+
     // Check for auto-save
     if (changedPath) {
-        const paths = Array.isArray(changedPath) ? changedPath : [changedPath];
-        this.checkAutoSave(paths);
+      const paths = Array.isArray(changedPath) ? changedPath : [changedPath];
+      this.checkAutoSave(paths);
     } else {
-        // Bulk update
-        this.checkAutoSave(Object.keys(newData as object));
+      // Bulk update
+      this.checkAutoSave(Object.keys(newData as object));
     }
 
     this.notify();
@@ -292,16 +292,16 @@ export class WizardStore<
       currentStepIndex,
       isFirstStep: currentStepIndex === 0,
       isLastStep: activeSteps.length > 0 && currentStepIndex === activeSteps.length - 1,
-      progress: activeSteps.length > 0 
-        ? Math.round(((currentStepIndex + 1) / activeSteps.length) * 100) 
+      progress: activeSteps.length > 0
+        ? Math.round(((currentStepIndex + 1) / activeSteps.length) * 100)
         : 0,
       breadcrumbs,
     };
   }
 
   setInitialData(data: T) {
-    this.initialData = typeof structuredClone === 'function' 
-      ? structuredClone(data) 
+    this.initialData = typeof structuredClone === 'function'
+      ? structuredClone(data)
       : JSON.parse(JSON.stringify(data));
     this.dirtyFields.clear();
     this.state = {
@@ -390,54 +390,54 @@ export class WizardStore<
 
   hydrate() {
     if (!this.persistenceAdapter) return;
-    
+
     console.log("[WizardStore] 🔄 Hydrating data from persistence...");
-    
+
     let latestTimestamp = -1;
     let latestData: T | null = null;
     let hasHydrated = false;
-    
+
     const config = this.state.config;
 
     // Iterate all steps to find the latest snapshot
     config.steps.forEach(step => {
-        const adapter = step.persistenceAdapter || this.persistenceAdapter;
-        if (!adapter) return;
+      const adapter = step.persistenceAdapter || this.persistenceAdapter;
+      if (!adapter) return;
 
-        try {
-            // Use getStepWithMeta if available, otherwise fallback
-            let candidateData: T | undefined;
-            let candidateTimestamp = 0;
+      try {
+        // Use getStepWithMeta if available, otherwise fallback
+        let candidateData: T | undefined;
+        let candidateTimestamp = 0;
 
-            if (adapter.getStepWithMeta) {
-                const result = adapter.getStepWithMeta<T>(step.id);
-                if (result) {
-                    candidateData = result.data;
-                    candidateTimestamp = result.timestamp;
-                }
-            } else {
-                // Fallback for adapters not implementing getStepWithMeta
-                candidateData = adapter.getStep<T>(step.id);
-                // If we found data but no timestamp, we treat it as "old" (0) or maybe ignore?
-                // We'll treat it as 0. 
-            }
-
-            if (candidateData) {
-                if (candidateTimestamp >= latestTimestamp) {
-                    latestTimestamp = candidateTimestamp;
-                    latestData = candidateData;
-                    hasHydrated = true;
-                }
-            }
-        } catch (e) {
-            console.warn(`[WizardStore] ⚠️ Failed to hydrate step ${step.id}:`, e);
+        if (adapter.getStepWithMeta) {
+          const result = adapter.getStepWithMeta<T>(step.id);
+          if (result) {
+            candidateData = result.data;
+            candidateTimestamp = result.timestamp;
+          }
+        } else {
+          // Fallback for adapters not implementing getStepWithMeta
+          candidateData = adapter.getStep<T>(step.id);
+          // If we found data but no timestamp, we treat it as "old" (0) or maybe ignore?
+          // We'll treat it as 0. 
         }
+
+        if (candidateData) {
+          if (candidateTimestamp >= latestTimestamp) {
+            latestTimestamp = candidateTimestamp;
+            latestData = candidateData;
+            hasHydrated = true;
+          }
+        }
+      } catch (e) {
+        console.warn(`[WizardStore] ⚠️ Failed to hydrate step ${step.id}:`, e);
+      }
     });
 
     if (hasHydrated && latestData) {
-        console.log(`[WizardStore] 📦 Final hydrated data (from ts: ${latestTimestamp}):`, latestData);
-        // Replace current data with the latest snapshot
-        this.updateBulkData(latestData, { replace: true });
+      console.log(`[WizardStore] 📦 Final hydrated data (from ts: ${latestTimestamp}):`, latestData);
+      // Replace current data with the latest snapshot
+      this.updateBulkData(latestData, { replace: true });
     }
   }
 
@@ -445,316 +445,363 @@ export class WizardStore<
     const config = this.state.config;
     const persistenceMode = config.persistence?.mode || 'onStepChange';
     if (persistenceMode !== "manual" && this.persistenceAdapter) {
-        this.persistenceAdapter.saveStep("__wizzard_meta__", {
-          currentStepId: this.state.currentStepId,
-          visited: Array.from(this.state.visitedSteps),
-          completed: Array.from(this.state.completedSteps),
-          history: this.state.history,
-        });
+      this.persistenceAdapter.saveStep("__wizzard_meta__", {
+        currentStepId: this.state.currentStepId,
+        visited: Array.from(this.state.visitedSteps),
+        completed: Array.from(this.state.completedSteps),
+        history: this.state.history,
+      });
     }
   }
 
   clearStepStorage(stepId: string) {
-      const step = this.stepsMap.get(stepId) || this.state.config.steps.find(s => s.id === stepId);
-      const adapter = step?.persistenceAdapter || this.persistenceAdapter;
-      if (adapter && adapter.clearStep) {
-          adapter.clearStep(stepId);
-      }
+    const step = this.stepsMap.get(stepId) || this.state.config.steps.find(s => s.id === stepId);
+    const adapter = step?.persistenceAdapter || this.persistenceAdapter;
+    if (adapter && adapter.clearStep) {
+      adapter.clearStep(stepId);
+    }
   }
 
   save(stepId?: StepId) {
     // If specific step requested
     if (stepId) {
-        this.saveStepData(stepId);
-        return;
+      this.saveStepData(stepId);
+      return;
     }
 
     // If no stepId, save current step
     if (this.state.currentStepId) {
-        this.saveStepData(this.state.currentStepId);
+      this.saveStepData(this.state.currentStepId);
     }
   }
 
   private saveStepData(stepId: string) {
-      const step = this.stepsMap.get(stepId) || this.state.config.steps.find(s => s.id === stepId);
-      if (!step) return;
+    const step = this.stepsMap.get(stepId) || this.state.config.steps.find(s => s.id === stepId);
+    if (!step) return;
 
-      const adapter = step.persistenceAdapter || this.persistenceAdapter;
-      if (!adapter) return; // No adapter configured
+    const adapter = step.persistenceAdapter || this.persistenceAdapter;
+    if (!adapter) return; // No adapter configured
 
-      // Check mode
-      // Priority: Step Config -> Global Config -> Default 'onStepChange'
-      const mode = step.persistenceMode || this.state.config.persistence?.mode || 'onStepChange';
-       // We only save here if explicitly called (manual force) OR called by internal logic that checked mode
-      
-      console.log(`[WizardStore] 💾 Saving data for step ${stepId} (mode: ${mode})`, this.state.data);
-      adapter.saveStep(stepId, this.state.data);
+    // Check mode
+    // Priority: Step Config -> Global Config -> Default 'onStepChange'
+    const mode = step.persistenceMode || this.state.config.persistence?.mode || 'onStepChange';
+    // We only save here if explicitly called (manual force) OR called by internal logic that checked mode
+
+    console.log(`[WizardStore] 💾 Saving data for step ${stepId} (mode: ${mode})`, this.state.data);
+    adapter.saveStep(stepId, this.state.data);
   }
 
   private handleStepChangePersistence(stepId: string) {
-      const step = this.stepsMap.get(stepId) || this.state.config.steps.find(s => s.id === stepId);
-      if (!step) return;
+    const step = this.stepsMap.get(stepId) || this.state.config.steps.find(s => s.id === stepId);
+    if (!step) return;
 
-      const mode = step.persistenceMode || this.state.config.persistence?.mode || 'onStepChange';
-      if (mode === 'onStepChange') {
-          this.saveStepData(stepId);
-      }
+    const mode = step.persistenceMode || this.state.config.persistence?.mode || 'onStepChange';
+    if (mode === 'onStepChange') {
+      this.saveStepData(stepId);
+    }
   }
 
   // Internal helper to handle auto-save on data change
   private checkAutoSave(_changedPaths: string[]) {
-      const { config, currentStepId } = this.state;
-      if (!currentStepId) return;
+    const { config, currentStepId } = this.state;
+    if (!currentStepId) return;
 
-      const step = this.stepsMap.get(currentStepId) || config.steps.find(s => s.id === currentStepId);
-      if (!step) return;
+    const step = this.stepsMap.get(currentStepId) || config.steps.find(s => s.id === currentStepId);
+    if (!step) return;
 
-      const mode = step.persistenceMode || config.persistence?.mode || 'onStepChange';
-      if (mode !== 'onChange') return;
+    const mode = step.persistenceMode || config.persistence?.mode || 'onStepChange';
+    if (mode !== 'onChange') return;
 
-      // Debounce logic
-      const debounceTime = config.persistence?.debounceTime ?? 300;
-      
-      const timerKey = currentStepId;
-      if (this.persistenceDebounceTimers.has(timerKey)) {
-          clearTimeout(this.persistenceDebounceTimers.get(timerKey));
-      }
+    // Debounce logic
+    const debounceTime = config.persistence?.debounceTime ?? 300;
 
-      this.persistenceDebounceTimers.set(timerKey, setTimeout(() => {
-          this.saveStepData(currentStepId);
-      }, debounceTime));
+    const timerKey = currentStepId;
+    if (this.persistenceDebounceTimers.has(timerKey)) {
+      clearTimeout(this.persistenceDebounceTimers.get(timerKey));
+    }
+
+    this.persistenceDebounceTimers.set(timerKey, setTimeout(() => {
+      this.saveStepData(currentStepId);
+    }, debounceTime));
   }
 
   // Caching for condition resolution
   private conditionCache = new Map<StepId, { result: boolean; depsValues: any[] }>();
 
   async resolveActiveSteps(data?: T): Promise<import("../types").IStepConfig<T, StepId>[]> {
-      const currentData = data || this.state.data;
-      const config = this.state.config;
+    const currentData = data || this.state.data;
+    const config = this.state.config;
 
-      this.updateMeta({ isBusy: true });
-      try {
-        const steps = config.steps || [];
-        const results = await Promise.all(
-          steps.map(async (step) => {
-            if (!step.condition) return { step, ok: true };
+    this.updateMeta({ isBusy: true });
+    try {
+      const steps = config.steps || [];
+      const results = await Promise.all(
+        steps.map(async (step) => {
+          if (!step.condition) return { step, ok: true };
 
-            // Optimization: Memoized Condition Resolution
-            if (step.conditionDependsOn) {
-              const currentDepsValues = step.conditionDependsOn.map((path) =>
-                getByPath(currentData, path)
-              );
-              const cached = this.conditionCache.get(step.id);
+          // Optimization: Memoized Condition Resolution
+          if (step.conditionDependsOn) {
+            const currentDepsValues = step.conditionDependsOn.map((path) =>
+              getByPath(currentData, path)
+            );
+            const cached = this.conditionCache.get(step.id);
 
-              if (
-                cached &&
-                cached.depsValues.length === currentDepsValues.length &&
-                cached.depsValues.every(
-                  (val, idx) => val === currentDepsValues[idx]
-                )
-              ) {
-                return { step, ok: cached.result };
-              }
-
-              // If not cached or deps changed, resolve and cache
-              try {
-                const res = step.condition(
-                  currentData || ({} as T),
-                  this.getSnapshot()
-                );
-                const ok = res instanceof Promise ? await res : res;
-                this.conditionCache.set(step.id, {
-                  result: ok,
-                  depsValues: currentDepsValues,
-                });
-                return { step, ok };
-              } catch (e) {
-                console.error(`[Wizard] Condition failed for ${step.id}:`, e);
-                return { step, ok: false };
-              }
+            if (
+              cached &&
+              cached.depsValues.length === currentDepsValues.length &&
+              cached.depsValues.every(
+                (val, idx) => val === currentDepsValues[idx]
+              )
+            ) {
+              return { step, ok: cached.result };
             }
 
-            // Fallback: Default behavior (always resolve if no deps specified)
-            const nextBusyStart = new Set(this.state.busySteps);
-            nextBusyStart.add(step.id as StepId);
-            this.updateMeta({
-              busySteps: nextBusyStart,
-              isBusy: true,
-            });
-
+            // If not cached or deps changed, resolve and cache
             try {
               const res = step.condition(
                 currentData || ({} as T),
                 this.getSnapshot()
               );
               const ok = res instanceof Promise ? await res : res;
+              this.conditionCache.set(step.id, {
+                result: ok,
+                depsValues: currentDepsValues,
+              });
               return { step, ok };
             } catch (e) {
               console.error(`[Wizard] Condition failed for ${step.id}:`, e);
               return { step, ok: false };
-            } finally {
-              const currentSnapshot = this.getSnapshot();
-              const nextBusyEnd = new Set(currentSnapshot.busySteps);
-              nextBusyEnd.delete(step.id as StepId);
-              this.updateMeta({
-                busySteps: nextBusyEnd,
-                isBusy: nextBusyEnd.size > 0,
-              });
             }
-          })
-        );
-        return results.filter((r) => r.ok).map((r) => r.step);
-      } finally {
-        const currentSnapshot = this.getSnapshot();
-        if (currentSnapshot.busySteps.size === 0) {
-          this.updateMeta({ isBusy: false });
-        }
-      }
-  }
-  async validateStep(stepId: StepId): Promise<boolean> {
-      const steps = this.state.config.steps || [];
-      const step = this.stepsMap.get(stepId) || steps.find((s: any) => s.id === stepId);
-      if (!step || !step.validationAdapter) return true;
-
-      this.dispatch({ type: "VALIDATE_START", payload: { stepId } });
-
-      let isValid = true;
-      try {
-        const result = await step.validationAdapter.validate(this.state.data);
-        isValid = result.isValid;
-        
-        if (result.isValid) {
-          this.setStepErrors(stepId, null);
-          const nextErrorSteps = new Set(this.state.errorSteps);
-          nextErrorSteps.delete(stepId);
-          this.dispatch({
-            type: "SET_ERROR_STEPS",
-            payload: { steps: nextErrorSteps },
-          });
-          return true;
-        } else {
-          this.setStepErrors(stepId, result.errors || null);
-          
-          if (this.state.config.analytics?.onEvent) {
-             this.state.config.analytics.onEvent("validation_error", {
-                stepId,
-                errors: result.errors,
-                timestamp: Date.now(),
-             } as any);
           }
 
-          const nextErrorSteps = new Set(this.state.errorSteps);
-          nextErrorSteps.add(stepId);
-          this.dispatch({
-            type: "SET_ERROR_STEPS",
-            payload: { steps: nextErrorSteps },
+          // Fallback: Default behavior (always resolve if no deps specified)
+          const nextBusyStart = new Set(this.state.busySteps);
+          nextBusyStart.add(step.id as StepId);
+          this.updateMeta({
+            busySteps: nextBusyStart,
+            isBusy: true,
           });
 
-          // Ensure it's removed from completed if it has errors
-          const nextCompleted = new Set(this.state.completedSteps);
-          if (nextCompleted.has(stepId)) {
-            nextCompleted.delete(stepId);
-            this.dispatch({
-              type: "SET_COMPLETED_STEPS",
-              payload: { steps: nextCompleted },
+          try {
+            const res = step.condition(
+              currentData || ({} as T),
+              this.getSnapshot()
+            );
+            const ok = res instanceof Promise ? await res : res;
+            return { step, ok };
+          } catch (e) {
+            console.error(`[Wizard] Condition failed for ${step.id}:`, e);
+            return { step, ok: false };
+          } finally {
+            const currentSnapshot = this.getSnapshot();
+            const nextBusyEnd = new Set(currentSnapshot.busySteps);
+            nextBusyEnd.delete(step.id as StepId);
+            this.updateMeta({
+              busySteps: nextBusyEnd,
+              isBusy: nextBusyEnd.size > 0,
             });
           }
-
-          return false;
-        }
-      } finally {
-        this.dispatch({
-          type: "VALIDATE_END",
-          payload: { stepId, result: { isValid } } as any,
-        });
-      }
-  }
-  async goToStep(
-      stepId: StepId, 
-      options: { validate?: boolean; providedActiveSteps?: import("../types").IStepConfig<T, StepId>[] } = { validate: true }
-  ): Promise<boolean> {
-      const {
-        currentStepId,
-        config,
-        data: currentData
-      } = this.state;
-      
-      const allSteps = config.steps || [];
-      const currentIdx = allSteps.findIndex((s: any) => s.id === currentStepId);
-      const targetIdx = allSteps.findIndex((s: any) => s.id === stepId);
-
-      // 1. Validate Current Step if moving forward
-      if (targetIdx > currentIdx && currentStepId && options.validate) {
-        const step = this.stepsMap.get(currentStepId) || allSteps.find((s: any) => s.id === currentStepId);
-        const shouldVal =
-          step?.autoValidate ??
-          config.autoValidate ??
-          !!step?.validationAdapter;
-        
-        if (shouldVal) {
-          const ok = await this.validateStep(currentStepId);
-          if (!ok) return false;
-        }
-      }
-
-      this.updateMeta({ isBusy: true });
-      try {
-        // 2. Resolve Active Steps
-        const resolvedSteps =
-          options.providedActiveSteps || (await this.resolveActiveSteps(currentData));
-        const target = resolvedSteps.find((s) => s.id === stepId);
-        if (!target) return false;
-
-        // 3. Guards (beforeLeave)
-        const step = this.stepsMap.get(currentStepId) || allSteps.find((s: any) => s.id === currentStepId);
-        if (step?.beforeLeave) {
-          const snapshot = this.getSnapshot();
-          const direction = targetIdx > currentIdx ? "next" : "prev";
-          const ok = await step.beforeLeave(currentData, direction, snapshot);
-          if (ok === false) return false;
-        }
-
-        const currentSnapshot = this.getSnapshot();
-        const nextVisited = new Set(currentSnapshot.visitedSteps);
-        // Mark previous step as visited
-        if (currentStepId) nextVisited.add(currentStepId);
-        // Mark new step as visited (on entry)
-        nextVisited.add(stepId);
-
-        this.dispatch({
-          type: "SET_VISITED_STEPS",
-          payload: { steps: nextVisited },
-        });
-
-        this.dispatch({
-          type: "SET_CURRENT_STEP_ID",
-          payload: { stepId },
-        });
-
-        const nextHistory = [...currentSnapshot.history, stepId];
-        this.dispatch({
-          type: "SET_HISTORY",
-          payload: { history: nextHistory },
-        });
-
-        // Meta persistence
-        this.saveMeta();
-
-        if (config.onStepChange) {
-           config.onStepChange(currentStepId || null, stepId, currentData);
-        }
-          
-        if (config.analytics?.onEvent) {
-             config.analytics.onEvent("step_change", {
-              from: (currentStepId || null) as any,
-              to: stepId,
-              timestamp: Date.now(),
-            } as any);
-        }
-
-        return true;
-      } finally {
+        })
+      );
+      return results.filter((r) => r.ok).map((r) => r.step);
+    } finally {
+      const currentSnapshot = this.getSnapshot();
+      if (currentSnapshot.busySteps.size === 0) {
         this.updateMeta({ isBusy: false });
       }
+    }
+  }
+  async validateStep(stepId: StepId): Promise<boolean> {
+    const steps = this.state.config.steps || [];
+    const step = this.stepsMap.get(stepId) || steps.find((s: any) => s.id === stepId);
+    if (!step || !step.validationAdapter) return true;
+
+    this.dispatch({ type: "VALIDATE_START", payload: { stepId } });
+
+    let isValid = true;
+    try {
+      const result = await step.validationAdapter.validate(this.state.data);
+      isValid = result.isValid;
+
+      if (result.isValid) {
+        this.setStepErrors(stepId, null);
+        const nextErrorSteps = new Set(this.state.errorSteps);
+        nextErrorSteps.delete(stepId);
+        this.dispatch({
+          type: "SET_ERROR_STEPS",
+          payload: { steps: nextErrorSteps },
+        });
+        return true;
+      } else {
+        this.setStepErrors(stepId, result.errors || null);
+
+        if (this.state.config.analytics?.onEvent) {
+          this.state.config.analytics.onEvent("validation_error", {
+            stepId,
+            errors: result.errors,
+            timestamp: Date.now(),
+          } as any);
+        }
+
+        const nextErrorSteps = new Set(this.state.errorSteps);
+        nextErrorSteps.add(stepId);
+        this.dispatch({
+          type: "SET_ERROR_STEPS",
+          payload: { steps: nextErrorSteps },
+        });
+
+        // Ensure it's removed from completed if it has errors
+        const nextCompleted = new Set(this.state.completedSteps);
+        if (nextCompleted.has(stepId)) {
+          nextCompleted.delete(stepId);
+          this.dispatch({
+            type: "SET_COMPLETED_STEPS",
+            payload: { steps: nextCompleted },
+          });
+        }
+
+        return false;
+      }
+    } finally {
+      this.dispatch({
+        type: "VALIDATE_END",
+        payload: { stepId, result: { isValid } } as any,
+      });
+    }
+  }
+  async goToStep(
+    stepId: StepId,
+    options: { validate?: boolean; providedActiveSteps?: import("../types").IStepConfig<T, StepId>[] } = { validate: true }
+  ): Promise<boolean> {
+    const {
+      currentStepId,
+      config,
+      data: currentData
+    } = this.state;
+
+    const allSteps = config.steps || [];
+    const currentIdx = allSteps.findIndex((s: any) => s.id === currentStepId);
+    const targetIdx = allSteps.findIndex((s: any) => s.id === stepId);
+
+    // 1. Validate Current Step if moving forward
+    if (targetIdx > currentIdx && currentStepId && options.validate) {
+      const step = this.stepsMap.get(currentStepId) || allSteps.find((s: any) => s.id === currentStepId);
+      const shouldVal =
+        step?.autoValidate ??
+        config.autoValidate ??
+        !!step?.validationAdapter;
+
+      if (shouldVal) {
+        const ok = await this.validateStep(currentStepId);
+        if (!ok) return false;
+      }
+    }
+
+    this.updateMeta({ isBusy: true });
+    try {
+      // 2. Resolve Active Steps
+      const resolvedSteps =
+        options.providedActiveSteps || (await this.resolveActiveSteps(currentData));
+      const target = resolvedSteps.find((s) => s.id === stepId);
+      if (!target) return false;
+
+      // 3. Check Navigation Permissions
+      // Priority: Step-level canNavigateTo > Global navigationMode
+      if (target.canNavigateTo) {
+        const snapshot = this.getSnapshot();
+        const canNavigate = await target.canNavigateTo(currentData, snapshot);
+        if (!canNavigate) {
+          console.warn(`[WizardStore] Navigation to step "${stepId}" blocked by canNavigateTo function`);
+          return false;
+        }
+      } else {
+        // Fallback to global navigationMode
+        const navigationMode = config.navigationMode || 'visited';
+        const currentSnapshot = this.getSnapshot();
+        const currentIndex = resolvedSteps.findIndex(s => s.id === currentStepId);
+        const targetIndex = resolvedSteps.findIndex(s => s.id === stepId);
+        const isAdjacent = Math.abs(targetIndex - currentIndex) === 1;
+
+        // Check navigation permissions based on mode
+        if (stepId !== currentStepId) {
+          switch (navigationMode) {
+            case 'sequential':
+              // Sequential: ONLY adjacent steps (strict linear flow)
+              if (!isAdjacent) {
+                console.warn(`[WizardStore] Navigation to step "${stepId}" blocked: sequential mode allows only adjacent steps`);
+                return false;
+              }
+              break;
+
+            case 'visited':
+              // Visited: adjacent steps OR visited/completed steps
+              const isVisitedOrCompleted =
+                currentSnapshot.visitedSteps.has(stepId) ||
+                currentSnapshot.completedSteps.has(stepId);
+
+              if (!isAdjacent && !isVisitedOrCompleted) {
+                console.warn(`[WizardStore] Navigation to step "${stepId}" blocked: step not visited or completed`);
+                return false;
+              }
+              break;
+
+            case 'free':
+              // Free mode: allow navigation to any step
+              break;
+          }
+        }
+      }
+
+      // 4. Guards (beforeLeave)
+      const step = this.stepsMap.get(currentStepId) || allSteps.find((s: any) => s.id === currentStepId);
+      if (step?.beforeLeave) {
+        const snapshot = this.getSnapshot();
+        const direction = targetIdx > currentIdx ? "next" : "prev";
+        const ok = await step.beforeLeave(currentData, direction, snapshot);
+        if (ok === false) return false;
+      }
+
+      const currentSnapshot = this.getSnapshot();
+      const nextVisited = new Set(currentSnapshot.visitedSteps);
+      // Mark previous step as visited
+      if (currentStepId) nextVisited.add(currentStepId);
+      // Mark new step as visited (on entry)
+      nextVisited.add(stepId);
+
+      this.dispatch({
+        type: "SET_VISITED_STEPS",
+        payload: { steps: nextVisited },
+      });
+
+      this.dispatch({
+        type: "SET_CURRENT_STEP_ID",
+        payload: { stepId },
+      });
+
+      const nextHistory = [...currentSnapshot.history, stepId];
+      this.dispatch({
+        type: "SET_HISTORY",
+        payload: { history: nextHistory },
+      });
+
+      // Meta persistence
+      this.saveMeta();
+
+      if (config.onStepChange) {
+        config.onStepChange(currentStepId || null, stepId, currentData);
+      }
+
+      if (config.analytics?.onEvent) {
+        config.analytics.onEvent("step_change", {
+          from: (currentStepId || null) as any,
+          to: stepId,
+          timestamp: Date.now(),
+        } as any);
+      }
+
+      return true;
+    } finally {
+      this.updateMeta({ isBusy: false });
+    }
   }
 }

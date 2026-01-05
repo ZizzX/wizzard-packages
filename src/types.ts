@@ -202,6 +202,14 @@ export interface IStepConfig<TStepData = unknown, StepId extends string = string
      * Function receives current data and array of changed field paths that triggered the dependency.
      */
     clearData?: string | string[] | ((data: TStepData, changedFields: string[]) => Partial<TStepData>);
+    /**
+     * Determines if user can navigate to this step directly.
+     * Useful for implementing role-based access control or conditional navigation.
+     * @param data - Current wizard data
+     * @param metadata - Wizard state (visitedSteps, completedSteps, currentStepId, etc.)
+     * @returns true if navigation is allowed, false otherwise
+     */
+    canNavigateTo?: (data: TStepData, metadata: Partial<IWizardState<TStepData, StepId>> & { data?: TStepData | undefined; allErrors?: any; }) => boolean | Promise<boolean>;
 }
 
 /**
@@ -258,6 +266,15 @@ export interface IWizardConfig<T = unknown, StepId extends string = string> {
      * Optional middlewares to intercept actions.
      */
     middlewares?: WizardMiddleware<T, StepId>[];
+    /**
+     * Navigation mode controls how users can navigate between steps.
+     * - 'sequential': Users can only navigate to next/previous steps (strict linear flow)
+     * - 'visited': Users can jump to any visited or completed step (default, most common)
+     * - 'free': Users can jump to any step regardless of status (admin/preview mode)
+     * 
+     * Note: Individual step's `canNavigateTo` function takes precedence over this global setting.
+     */
+    navigationMode?: 'sequential' | 'visited' | 'free';
     /**
      * Callback triggered when step changes.
      * Useful for routing integration or analytics.
