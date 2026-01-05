@@ -46,6 +46,7 @@ import { LanguageProvider } from "./context/LanguageContext";
 import TestBasicNavigation from "./pages/test/TestBasicNavigation";
 import TestArrayData from "./pages/test/TestArrayData";
 import TestPersistence from "./pages/test/TestPersistence";
+import TestValidation from "./pages/test/TestValidation";
 
 function App() {
   return (
@@ -73,9 +74,13 @@ function App() {
             <Route path="optimization" element={<OptimizationDemo />} />
 
             {/* Test Routes for E2E Testing */}
-            <Route path="test-basic" element={<TestBasicNavigation />} />
-            <Route path="array-data-demo" element={<TestArrayData />} />
-            <Route path="persistence-demo" element={<TestPersistence />} />
+            <Route
+              path="test/basic-navigation"
+              element={<TestBasicNavigation />}
+            />
+            <Route path="test/array-data-demo" element={<TestArrayData />} />
+            <Route path="test/persistence-demo" element={<TestPersistence />} />
+            <Route path="test/validation-demo" element={<TestValidation />} />
 
             {/* Documentation Section */}
             <Route path="docs" element={<DocsLayout />}>
