@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type {
   IWizardConfig,
   IValidatorAdapter,
@@ -17,6 +17,7 @@ import {
 import { Card, CardContent, CardFooter } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
+import { useLocation } from "react-router-dom";
 
 /**
  * TestArrayData
@@ -369,7 +370,7 @@ const WizardContent = () => {
 };
 
 // Wizard Config
-function getWizardConfig(): IWizardConfig<ArrayDataSchema> {
+function getWizardConfig(isInitial: boolean): IWizardConfig<ArrayDataSchema> {
   return {
     steps: [
       {
@@ -381,42 +382,63 @@ function getWizardConfig(): IWizardConfig<ArrayDataSchema> {
     ],
     persistence: {
       mode: "onStepChange",
-      adapter: new LocalStorageAdapter("array_wizard_"),
+      // Use different key for initial data test to avoid pollution
+      adapter: new LocalStorageAdapter(
+        isInitial ? "array_wizard_init_" : "array_wizard_"
+      ),
     },
   };
 }
 
 // Export
 export default function TestArrayData() {
-  // Handle both standard search and HashRouter search (after ?)
-  const searchString =
-    window.location.search || window.location.hash.split("?")[1] || "";
-  const searchParams = new URLSearchParams(searchString);
+  // Use location hook for reactive validation
+  const location = useLocation();
+
+  // Parse query params from location.search (HashRouter parses hash search into this)
+  const searchParams = new URLSearchParams(location.search);
   const initial = searchParams.get("initial") === "true";
 
-  const config = getWizardConfig();
+  console.log("TestArrayData: Navigation", {
+    search: location.search,
+    initial,
+  });
 
-  const initialData: ArrayDataSchema = initial
-    ? {
-        products: [
-          {
-            id: "1",
-            name: "Initial Product 1",
-            price: 10.99,
-            category: "electronics",
-          },
-          {
-            id: "2",
-            name: "Initial Product 2",
-            price: 20.99,
-            category: "clothing",
-          },
-        ],
-      }
-    : { products: [] };
+  // Re-create config when initial changes
+  const config = useMemo(() => getWizardConfig(initial), [initial]);
+
+  const initialData: ArrayDataSchema = useMemo(
+    () =>
+      initial
+        ? {
+            products: [
+              {
+                id: "1",
+                name: "Initial Product 1",
+                price: 10.99,
+                category: "electronics",
+              },
+              {
+                id: "2",
+                name: "Initial Product 2",
+                price: 20.99,
+                category: "clothing",
+              },
+            ],
+          }
+        : { products: [] },
+    [initial]
+  );
+
+  console.log("TestArrayData: initialData", initialData);
 
   return (
-    <WizardProvider config={config} initialData={initialData}>
+    // Force remount when initial mode changes to ensure clean store init
+    <WizardProvider
+      key={initial ? "init" : "normal"}
+      config={config}
+      initialData={initialData}
+    >
       <WizardContent />
     </WizardProvider>
   );

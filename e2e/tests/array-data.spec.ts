@@ -14,6 +14,7 @@ import { test, expect } from '../fixtures/base';
 
 test.describe('Array Data Manipulation', () => {
   test.beforeEach(async ({ page }) => {
+    page.on('console', msg => console.log(`[Browser] ${msg.type()}: ${msg.text()}`));
     await page.goto('#/test/array-data-demo');
     await page.waitForSelector('[data-testid="wizard-container"]', { timeout: 5000 });
   });
