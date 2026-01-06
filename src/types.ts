@@ -436,7 +436,7 @@ export interface IWizardContext<T = unknown, StepId extends string = string> {
      * Data Actions
      */
     setStepData: (stepId: StepId, data: unknown) => void; // Internal use usually
-    handleStepChange: (field: string, value: unknown) => void; // Helper for simple forms
+    handleStepChange: (field: keyof T, value: unknown) => void; // Helper for simple forms
 
     /**
      * Set data by path (supports dot notation and arrays, e.g., 'user.name' or 'items[0].value')

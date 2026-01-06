@@ -325,19 +325,22 @@ export function WizardProvider<
   );
 
   const setData = useCallback(
-    (path: string, value: any, options?: { debounceValidation?: number }) => {
+    (path: keyof T, value: any, options?: { debounceValidation?: number }) => {
       const { stepsMap, currentStepId } = stateRef.current;
       const prevData = storeRef.current.getSnapshot().data;
-      if (getByPath(prevData, path) === value) return;
+      if (getByPath(prevData, path as string) === value) return;
 
-      const baseData = setByPath(prevData, path, value);
-      const { newData, hasClearing } = handleStepDependencies([path], baseData);
+      const baseData = setByPath(prevData, path as string, value);
+      const { newData, hasClearing } = handleStepDependencies(
+        [path as string],
+        baseData
+      );
 
       if (!hasClearing) {
         storeRef.current.dispatch({
           type: "SET_DATA",
           payload: {
-            path,
+            path: path as string,
             value,
             options: { ...options, __from_set_data__: true },
           },
@@ -353,7 +356,7 @@ export function WizardProvider<
       }
 
       if (currentStepId) {
-        storeRef.current.deleteError(currentStepId, path);
+        storeRef.current.deleteError(currentStepId, path as string);
         const step = stepsMap.get(currentStepId as StepId);
         if (
           (step?.validationMode ||
@@ -453,7 +456,7 @@ export function WizardProvider<
         const next = { ...storeRef.current.getSnapshot().data, ...data };
         storeRef.current.update(next, Object.keys(data));
       },
-      handleStepChange: (f: string, v: any) => {
+      handleStepChange: (f: keyof T, v: any) => {
         if (stateRef.current.currentStepId) setData(f, v);
       },
       validateStep: (sid: StepId) => validateStep(sid),

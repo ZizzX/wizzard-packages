@@ -48,6 +48,7 @@ import TestValidation from "./pages/test/TestValidation";
 import TestStepGuards from "./pages/test/TestStepGuards";
 import TestDependency from "./pages/test/TestDependency";
 import TestError from "./pages/test/TestError";
+import TestAdvancedValidation from "./pages/test/TestAdvancedValidation";
 import TestNavigationControl from "./pages/test/TestNavigationControl";
 import MiddlewareDemo from "./pages/test/MiddlewareDemo";
 
@@ -89,6 +90,10 @@ function App() {
             <Route path="test/guards-demo" element={<TestStepGuards />} />
             <Route path="test/dependency-demo" element={<TestDependency />} />
             <Route path="test/error-demo" element={<TestError />} />
+            <Route
+              path="test/advanced-validation-demo"
+              element={<TestAdvancedValidation />}
+            />
             <Route
               path="test/navigation-control"
               element={<TestNavigationControl />}
