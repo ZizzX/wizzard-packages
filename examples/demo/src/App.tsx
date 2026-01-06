@@ -68,7 +68,7 @@ function App() {
             <Route path="complex" element={<ComplexDataWizard />} />
             <Route path="advanced" element={<AdvancedDemo />} />
             <Route
-              path="enterprise-wizard"
+              path="examples/enterprise-wizard"
               element={<EnterpriseWizardDemo />}
             />
             <Route path="test/middleware-demo" element={<MiddlewareDemo />} />

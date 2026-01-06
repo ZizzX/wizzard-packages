@@ -260,7 +260,6 @@ function TopNavigation() {
 }
 
 function WizardContent() {
-  // Only subscribe to currentStep.id to decide which component to render
   const currentStepId = useWizardSelector((state) => state.currentStep?.id);
   const currentStepLabel = useWizardSelector(
     (state) => state.currentStep?.label
@@ -293,10 +292,8 @@ const StepBasics = React.memo(function StepBasics() {
   const projectName = useWizardValue("project.name");
   const projectDesc = useWizardValue("project.description");
   const region = useWizardValue("region");
-  const nameError = useWizardError("project.name"); // Assuming error path matches data path for basics
+  const nameError = useWizardError("project.name");
   const regionError = useWizardError("region");
-  // For 'isBusy', we might want to check if THIS step is busy or global isBusy
-  // But keeping it simple for now, using global isBusy for spinner in input
   const isBusy = useWizardSelector((s) => s.isBusy);
 
   return (
