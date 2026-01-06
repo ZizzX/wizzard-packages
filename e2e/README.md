@@ -104,20 +104,23 @@ Tests error handling:
 - Error summary on submit
 - Async validation errors
 
-### 10. **advanced-validation.spec.ts** (16 tests) ✨ NEW
+### 10. **advanced-validation.spec.ts** (19 tests) ✨ NEW
 Tests advanced validation scenarios:
 - Auto-fill all fields (sync and async)
-- Validate all steps from step 3
-- Error modal with navigation to error steps
+- Validate all steps with error modal
+- Error modal navigation (only first error clickable)
 - Auto-redirect to first error step
-- Block forward navigation with previous step errors
+- Block forward navigation with errors
 - Loading states during async operations
 - Clear current step vs clear all steps
-- Conditional step async evaluation with loaders
-- Error field highlighting
-- Navigation error messages
+- Error highlighting in breadcrumbs
+- Progress bar updates
+- Full 10-step navigation
+- **Breadcrumb navigation (visited mode)**
+- **Navigate to visited steps via breadcrumbs**
+- **Cursor pointer on breadcrumbs**
 
-**Total: 83 test cases**
+**Total: 86 test cases**
 
 ## 🚀 Running Tests
 
@@ -254,4 +257,4 @@ npx playwright show-trace path/to/trace.zip
 ---
 
 **Last Updated:** 2026-01-06  
-**Test Count:** 83 tests across 10 suites
+**Test Count:** 86 tests across 10 suites

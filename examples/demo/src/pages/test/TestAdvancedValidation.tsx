@@ -635,7 +635,8 @@ const WizardContent = () => {
             <div
               key={s.id}
               data-testid={`breadcrumb-${s.id}`}
-              className={`text-xs p-2 whitespace-nowrap rounded ${
+              onClick={() => goToStep(s.id)}
+              className={`text-xs p-2 whitespace-nowrap rounded cursor-pointer ${
                 s.id === currentStep?.id
                   ? "font-bold bg-blue-100"
                   : "bg-gray-100"

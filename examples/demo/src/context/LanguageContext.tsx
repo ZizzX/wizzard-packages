@@ -16,6 +16,7 @@ const translations = {
     "nav.docs": "Documentation",
     "nav.examples": "Examples",
     "nav.github": "GitHub",
+    "nav.test": "Tests",
     // Sidebar Groups
     "sidebar.getting_started": "Getting Started",
     "sidebar.core_concepts": "Core Concepts",
@@ -118,6 +119,7 @@ const translations = {
     "nav.docs": "Документация",
     "nav.examples": "Примеры",
     "nav.github": "GitHub",
+    "nav.test": "Тесты",
     // Sidebar Groups
     "sidebar.getting_started": "Начало работы",
     "sidebar.core_concepts": "Основные концепции",
