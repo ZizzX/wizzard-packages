@@ -15,10 +15,10 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "../components/ui/Card";
-import { StepperControls } from "../components/StepperControls";
-import { Input } from "../components/ui/Input";
-import { ProTip } from "../components/ProTip";
+} from "../../components/ui/Card";
+import { StepperControls } from "../../components/StepperControls";
+import { Input } from "../../components/ui/Input";
+import { ProTip } from "../../components/ProTip";
 
 // --- TYPES ---
 
@@ -178,8 +178,8 @@ export default function MiddlewareDemo() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <WizardProvider 
-            key={search.toString()} 
+          <WizardProvider
+            key={search.toString()}
             config={config}
             initialData={{ name: "" }}
           >

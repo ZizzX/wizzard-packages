@@ -14,6 +14,7 @@ export default function Layout() {
       { path: "/", label: t("nav.overview") },
       { path: "/docs/introduction", label: t("nav.docs") },
       { path: "/examples", label: t("nav.examples") },
+      { path: "/test", label: t("nav.test") },
     ],
     [t]
   );

@@ -3,7 +3,6 @@ import Layout from "./Layout";
 import DocsLayout from "./DocsLayout";
 import { VersionProvider } from "./context/VersionContext";
 import Home from "./pages/Home";
-import Examples from "./pages/Examples";
 import SimpleWizard from "./pages/SimpleWizard";
 import LegacyWizard from "./pages/LegacyWizard";
 import RHFZodWizard from "./pages/RHFZodWizard";
@@ -12,7 +11,6 @@ import ConditionalWizard from "./pages/ConditionalWizard";
 import ComplexDataWizard from "./pages/ComplexDataWizard";
 import AdvancedDemo from "./pages/AdvancedDemo";
 import EnterpriseWizardDemo from "./pages/EnterpriseWizardDemo";
-import MiddlewareDemo from "./pages/MiddlewareDemo";
 import OptimizationDemo from "./pages/OptimizationDemo";
 
 import Introduction from "./pages/docs/Introduction";
@@ -51,6 +49,7 @@ import TestStepGuards from "./pages/test/TestStepGuards";
 import TestDependency from "./pages/test/TestDependency";
 import TestError from "./pages/test/TestError";
 import TestNavigationControl from "./pages/test/TestNavigationControl";
+import MiddlewareDemo from "./pages/test/MiddlewareDemo";
 
 function App() {
   return (
@@ -60,8 +59,6 @@ function App() {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
-            <Route path="examples" element={<Examples />} />
-
             {/* Flat paths for examples (backward compatibility/legacy support) */}
             <Route path="simple" element={<SimpleWizard />} />
             <Route path="legacy" element={<LegacyWizard />} />
@@ -92,7 +89,10 @@ function App() {
             <Route path="test/guards-demo" element={<TestStepGuards />} />
             <Route path="test/dependency-demo" element={<TestDependency />} />
             <Route path="test/error-demo" element={<TestError />} />
-            <Route path="test/navigation-control" element={<TestNavigationControl />} />
+            <Route
+              path="test/navigation-control"
+              element={<TestNavigationControl />}
+            />
 
             {/* Documentation Section */}
             <Route path="docs" element={<DocsLayout />}>
