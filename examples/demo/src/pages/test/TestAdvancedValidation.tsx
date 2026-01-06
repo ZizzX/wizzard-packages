@@ -6,6 +6,7 @@ import {
   MemoryAdapter,
   createWizardFactory,
   WizardDevTools,
+  devToolsMiddleware,
 } from "wizzard-stepper-react";
 import { Card, CardContent, CardFooter } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -734,10 +735,10 @@ const WizardContent = () => {
   );
 };
 
-// Configuration
 const config: IWizardConfig<AdvancedValidationData> = {
   persistence: { mode: "onStepChange", adapter: new MemoryAdapter() },
   validationMode: "onStepChange",
+  middlewares: [devToolsMiddleware],
   steps: [
     {
       id: "step-1",

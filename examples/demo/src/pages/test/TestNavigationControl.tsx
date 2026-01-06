@@ -9,7 +9,13 @@ import {
 import type { IWizardConfig } from "wizzard-stepper-react";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../../components/ui/Card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../../components/ui/Card";
 
 // --- TYPES ---
 
@@ -17,7 +23,7 @@ interface NavigationData {
   step1Data?: string;
   step2Data?: string;
   step3Data?: string;
-  userRole?: 'user' | 'admin';
+  userRole?: "user" | "admin";
 }
 
 type NavigationSteps = "step-1" | "step-2" | "step-3" | "step-4";
@@ -27,7 +33,7 @@ type NavigationSteps = "step-1" | "step-2" | "step-3" | "step-4";
 const Step1 = () => {
   const { data } = useWizard<NavigationData>();
   const { updateData } = useWizardActions();
-  
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-bold">Step 1: Personal Info</h3>
@@ -44,7 +50,7 @@ const Step1 = () => {
 const Step2 = () => {
   const { data } = useWizard<NavigationData>();
   const { updateData } = useWizardActions();
-  
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-bold">Step 2: Contact Info</h3>
@@ -61,7 +67,7 @@ const Step2 = () => {
 const Step3 = () => {
   const { data } = useWizard<NavigationData>();
   const { updateData } = useWizardActions();
-  
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-bold">Step 3: Preferences</h3>
@@ -97,15 +103,15 @@ const Breadcrumbs = () => {
           key={crumb.id}
           data-testid={`breadcrumb-${crumb.id}`}
           data-status={crumb.status}
-          onClick={() => goToStep(crumb.id as any)}
+          onClick={() => goToStep(crumb.id)}
           className={`px-3 py-1 rounded text-sm ${
-            crumb.status === 'current'
-              ? 'bg-indigo-600 text-white'
-              : crumb.status === 'completed'
-              ? 'bg-green-100 text-green-800'
-              : crumb.status === 'visited'
-              ? 'bg-blue-100 text-blue-800'
-              : 'bg-gray-100 text-gray-500'
+            crumb.status === "current"
+              ? "bg-indigo-600 text-white"
+              : crumb.status === "completed"
+                ? "bg-green-100 text-green-800"
+                : crumb.status === "visited"
+                  ? "bg-blue-100 text-blue-800"
+                  : "bg-gray-100 text-gray-500"
           }`}
         >
           {index + 1}. {crumb.label}
@@ -118,7 +124,8 @@ const Breadcrumbs = () => {
 // --- NAVIGATION CONTROLS ---
 
 const NavigationControls = () => {
-  const { isFirstStep, isLastStep, currentStepIndex, activeStepsCount } = useWizardState();
+  const { isFirstStep, isLastStep, currentStepIndex, activeStepsCount } =
+    useWizardState();
   const { goToNextStep, goToPrevStep } = useWizardActions();
 
   return (
@@ -153,51 +160,44 @@ const NavigationControls = () => {
 export default function TestNavigationControl() {
   const location = useLocation();
   const search = new URLSearchParams(location.search);
-  const userRole = (search.get("role") || 'user') as 'user' | 'admin';
-  const mode = (search.get("mode") || (userRole === 'admin' ? 'free' : 'visited')) as 'sequential' | 'visited' | 'free';
+  const userRole = (search.get("role") || "user") as "user" | "admin";
+  const mode = (search.get("mode") ||
+    (userRole === "admin" ? "free" : "visited")) as
+    | "sequential"
+    | "visited"
+    | "free";
 
   const config: IWizardConfig<NavigationData, NavigationSteps> = {
     // No persistence - we want initialData to be used directly
     navigationMode: mode,
     steps: [
-      { 
-        id: "step-1", 
+      {
+        id: "step-1",
         label: "Personal",
         // Example: Admin can always navigate to this step
-        ...(userRole === 'admin' && {
-          canNavigateTo: () => true
-        })
+        ...(userRole === "admin" && {
+          canNavigateTo: () => true,
+        }),
       },
-      { 
-        id: "step-2", 
-        label: "Contact" 
+      {
+        id: "step-2",
+        label: "Contact",
       },
-      { 
-        id: "step-3", 
-        label: "Preferences" 
+      {
+        id: "step-3",
+        label: "Preferences",
       },
-      { 
-        id: "step-4", 
+      {
+        id: "step-4",
         label: "Review",
-        // Example: Can only navigate if step1Data is filled OR user is admin
         canNavigateTo: (data, metadata) => {
-          console.log('[canNavigateTo step-4]', { 
-            userRole: data.userRole, 
-            step1Data: data.step1Data, 
-            visitedSteps: Array.from(metadata.visitedSteps || []) 
-          });
-          // Admin role stored in data - always allow
-          if (data.userRole === 'admin') return true;
-          // Regular users need step1Data filled
+          if (data.userRole === "admin") return true;
           if (!data.step1Data) return false;
-          // Can navigate if step-3 was visited
-          return !!(metadata.visitedSteps?.has('step-3'));
-        }
+          return !!metadata.visitedSteps?.has("step-3");
+        },
       },
     ],
   };
-
-  console.log('[TestNavigationControl] Config created', { userRole, mode, initialData: { userRole } });
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -235,14 +235,16 @@ function WizardContent() {
 
   // Sync role to store for E2E tests consistency
   useEffect(() => {
-    const search = new URLSearchParams(window.location.hash.split('?')[1] || window.location.search);
-    const role = search.get('role');
+    const search = new URLSearchParams(
+      window.location.hash.split("?")[1] || window.location.search
+    );
+    const role = search.get("role");
     if (role && data.userRole !== role) {
-      console.log('[WizardContent] Syncing role to store:', role);
-      updateData({ userRole: role as any });
+      console.log("[WizardContent] Syncing role to store:", role);
+      updateData({ userRole: role });
     }
   }, [data.userRole, updateData]);
-  
+
   return (
     <>
       {currentStepId === "step-1" && <Step1 />}

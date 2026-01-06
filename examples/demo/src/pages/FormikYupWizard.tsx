@@ -28,7 +28,7 @@ const Step1 = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     formik.handleChange(e);
-    handleStepChange(e.target.name, e.target.value);
+    handleStepChange(e.target.name as keyof FormikYupSchema, e.target.value);
   };
 
   return (
@@ -76,7 +76,7 @@ const Step2 = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     formik.handleChange(e);
-    handleStepChange(e.target.name, e.target.value);
+    handleStepChange(e.target.name as keyof FormikYupSchema, e.target.value);
   };
 
   return (
