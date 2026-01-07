@@ -16,6 +16,8 @@ const PersonalStep = () => {
   const emailError = useWizardError("personal.email");
   const { setData } = useWizardActions();
 
+
+
   return (
     <div className="space-y-4">
       <div>
@@ -107,19 +109,19 @@ const AccountStep = () => {
 const ReviewStep = () => <div>Review Step</div>;
 
 const WizardContent = () => {
-  const { currentStep, currentStepId, errorSteps } = useWizardState();
+  const { currentStep, errorSteps } = useWizardState();
   const { goToNextStep, goToPrevStep } = useWizardActions();
 
   if (!currentStep) return null;
 
-  const isStepValid = !errorSteps.has(currentStepId);
+  const isStepValid = !errorSteps.has(currentStep.id);
 
   return (
     <div data-testid="wizard-container" className="max-w-md mx-auto py-10">
       <div className="bg-white shadow rounded-lg p-6">
         <div className="mb-4">
           <span className="font-bold">Current Step: </span>
-          <span data-testid="current-step-id">{currentStepId}</span>
+          <span data-testid="current-step-id">{currentStep.id}</span>
         </div>
 
         <div className="mb-6">
@@ -128,9 +130,9 @@ const WizardContent = () => {
         </div>
 
         <CardContent className="pt-6 min-h-50">
-          {currentStepId === "personal" && <PersonalStep />}
-          {currentStepId === "account" && <AccountStep />}
-          {currentStepId === "review" && <ReviewStep />}
+          {currentStep.id === "personal" && <PersonalStep />}
+          {currentStep.id === "account" && <AccountStep />}
+          {currentStep.id === "review" && <ReviewStep />}
         </CardContent>
 
         <div className="flex justify-between mt-6 pt-4 border-t">
@@ -152,7 +154,7 @@ const WizardContent = () => {
 
 export default function TestValidation() {
   return (
-    <WizardProvider key="validation-test" config={wizardConfig}>
+    <WizardProvider key="validation-test" config={wizardConfig} initialData={{ personal: {}, account: {} } as any}>
       <WizardContent />
     </WizardProvider>
   );

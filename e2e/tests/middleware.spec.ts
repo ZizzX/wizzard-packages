@@ -16,7 +16,7 @@ test.describe('Middleware Integration', () => {
   test.beforeEach(async ({ page }) => {
     consoleLogs = [];
     page.on('console', msg => {
-      if (msg.type() === 'log') {
+      if (msg.type() === 'log' || msg.type() === 'startGroup') {
         consoleLogs.push(msg.text());
       }
     });

@@ -33,7 +33,8 @@ export default defineConfig(() => {
     base: '/wizzard-stepper-react/',
     resolve: {
       alias: {
-        'wizzard-stepper-react': path.resolve(__dirname, '../../src/index.ts'),
+        'wizzard-stepper-react': path.resolve(__dirname, '../../packages/react/src/index.ts'),
+        '@wizzard/core': path.resolve(__dirname, '../../packages/core/src/index.ts'),
         'react': path.resolve(__dirname, './node_modules/react'),
         'react-dom': path.resolve(__dirname, './node_modules/react-dom'),
         'yup': path.resolve(__dirname, './node_modules/yup'),

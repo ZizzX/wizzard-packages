@@ -16,4 +16,4 @@ export const {
   useWizardState,
   useWizardError,
   createStep,
-} = createWizardFactory<ConditionalWizardSchema>();
+} = createWizardFactory<ConditionalWizardSchema, string>();

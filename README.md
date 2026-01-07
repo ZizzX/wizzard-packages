@@ -8,6 +8,16 @@ A flexible, headless, and strictly typed multi-step wizard library for React. Bu
 
 ---
 
+## 🎮 Interactive Playground
+
+Try the library in the browser with these standalone templates on StackBlitz:
+
+| Example | Template |
+| :--- | :--- |
+| **Basic** | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-blue?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-stepper-react/tree/main/.stackblitz/basic) |
+| **Validation** | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-red?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-stepper-react/tree/main/.stackblitz/validation) |
+| **Persistence** | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-green?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-stepper-react/tree/main/.stackblitz/persistence) |
+
 ## 🚀 Quick Start (v2.0.0 Modern)
 
 Version 2.0.0 introduces the **Factory Pattern**, providing 100% type safety and optimized performance out of the box.

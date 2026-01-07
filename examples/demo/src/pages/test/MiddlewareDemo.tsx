@@ -18,7 +18,6 @@ import {
 } from "../../components/ui/Card";
 import { StepperControls } from "../../components/StepperControls";
 import { Input } from "../../components/ui/Input";
-import { ProTip } from "../../components/ProTip";
 
 // --- TYPES ---
 
@@ -233,10 +232,10 @@ export default function MiddlewareDemo() {
             </CardContent>
           </Card>
 
-          <ProTip>
+          <div>
             Try opening the <b>Redux DevTools</b> extension! The same actions
             are being piped there via <code>devToolsMiddleware</code>.
-          </ProTip>
+          </div>
         </div>
       </div>
     </div>

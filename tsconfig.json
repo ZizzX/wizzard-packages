@@ -10,7 +10,6 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
@@ -19,14 +18,11 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "declaration": true,
     "esModuleInterop": true
   },
-  "include": [
-    "src"
-  ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "src"
   ]
 }

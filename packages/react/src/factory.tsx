@@ -1,0 +1,102 @@
+import React from "react";
+import {
+  WizardProvider as BaseWizardProvider,
+  useWizardContext as useBaseWizardContext,
+  useWizardValue as useBaseWizardValue,
+  useWizardSelector as useBaseWizardSelector,
+  useWizardError as useBaseWizardError,
+  useWizardActions as useBaseWizardActions,
+  useWizardState as useBaseWizardState,
+} from "./context/WizardContext";
+import { useWizard as useBaseWizard } from "./hooks/useWizard";
+import type { IWizardConfig, IWizardContext, IStepConfig, Path, PathValue } from "@wizzard/core";
+
+/**
+ * createWizardFactory
+ *
+ * Creates a strongly-typed set of Wizard components and hooks for a specific data schema.
+ * 
+ * @template TSchema The shape of your wizard's global data state
+ */
+export function createWizardFactory<
+  TSchema extends Record<string, any>,
+  StepId extends string = string,
+>() {
+  const WizardProvider = ({
+    config,
+    initialData,
+    children,
+  }: {
+    config: IWizardConfig<TSchema, StepId>;
+    initialData?: Partial<TSchema>;
+    children: React.ReactNode;
+  }) => {
+    return (
+      <BaseWizardProvider<TSchema, StepId>
+        config={config}
+        initialData={initialData as TSchema}
+      >
+        {children}
+      </BaseWizardProvider>
+    );
+  };
+
+  const useWizard = (): IWizardContext<TSchema, StepId> => {
+    return useBaseWizard<TSchema, StepId>() as any;
+  };
+
+  const useWizardContext = () => {
+    return useBaseWizardContext<TSchema, StepId>() as any;
+  };
+
+  const useWizardValue = <P extends Path<TSchema>>(
+    path: P,
+    options?: {
+      isEqual?: (a: PathValue<TSchema, P>, b: PathValue<TSchema, P>) => boolean;
+    }
+  ): PathValue<TSchema, P> => {
+    return useBaseWizardValue<PathValue<TSchema, P>>(path as string, options);
+  };
+
+  const useWizardSelector = <TSelected,>(
+    selector: (state: IWizardContext<TSchema, StepId>) => TSelected,
+    options?: { isEqual?: (a: TSelected, b: TSelected) => boolean }
+  ): TSelected => {
+    return useBaseWizardSelector<TSelected>(selector as any, options);
+  };
+
+  const useWizardError = <P extends Path<TSchema>>(
+    path: P
+  ): string | undefined => {
+    return useBaseWizardError(path as string);
+  };
+
+  const useWizardActions = () => {
+    return useBaseWizardActions<StepId>();
+  };
+
+  const useWizardState = () => {
+    return useBaseWizardState<TSchema, StepId>();
+  };
+
+  const useBreadcrumbs = () => {
+    return useBaseWizardState<TSchema, StepId>().breadcrumbs;
+  };
+
+  const createStep = (
+    config: IStepConfig<TSchema, StepId>
+  ) => config;
+
+  return {
+    WizardProvider,
+    useWizard,
+    useWizardContext,
+    useWizardValue,
+    useWizardSelector,
+    useWizardError,
+    useWizardActions,
+    useWizardState,
+    useBreadcrumbs,
+    createStep,
+  };
+}

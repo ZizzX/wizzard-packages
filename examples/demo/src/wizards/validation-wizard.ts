@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { ZodAdapter, createWizardFactory } from "wizzard-stepper-react"; // Using local source
-import type { IWizardConfig } from "wizzard-stepper-react";
 
 // Schemas
 export const PersonalInfoSchema = z.object({
@@ -14,39 +13,41 @@ export const AccountInfoSchema = z.object({
 });
 
 export type ValidationWizardSchema = {
-    personal: z.infer<typeof PersonalInfoSchema>;
-    account: z.infer<typeof AccountInfoSchema>;
-    review: Record<string, never>;
+  personal: z.infer<typeof PersonalInfoSchema>;
+  account: z.infer<typeof AccountInfoSchema>;
+  review: Record<string, never>;
 }
 
-// Wizard Config
-export const wizardConfig: IWizardConfig<ValidationWizardSchema> = {
-  steps: [
-    {
-      id: "personal",
-      label: "Personal Info",
-      validationAdapter: new ZodAdapter(z.object({ personal: PersonalInfoSchema })),
-    },
-    {
-      id: "account",
-      label: "Account Info",
-      validationAdapter: new ZodAdapter(z.object({ account: AccountInfoSchema })),
-    },
-    {
-       id: "review",
-       label: "Review"
-    }
-  ],
-};
+type TStep = 'personal' | 'account' | 'review';
 
 // Create Typed Factory
 export const {
   WizardProvider,
   useWizard,
-  // useWizardStep, // Not available in factory
+  createStep,
   useWizardValue,
   useWizardError,
   useWizardActions,
   useWizardState,
-  useWizardSelector, 
-} = createWizardFactory<ValidationWizardSchema>();
+  useWizardSelector,
+} = createWizardFactory<ValidationWizardSchema, TStep>();
+
+// Wizard Config
+export const wizardConfig = {
+  steps: [
+    createStep({
+      id: "personal",
+      label: "Personal Info",
+      validationAdapter: new ZodAdapter(z.object({ personal: PersonalInfoSchema })),
+    }),
+    createStep({
+      id: "account",
+      label: "Account Info",
+      validationAdapter: new ZodAdapter(z.object({ account: AccountInfoSchema })),
+    }),
+    createStep({
+      id: "review",
+      label: "Review"
+    })
+  ],
+};

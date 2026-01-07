@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   type IWizardConfig,
   type IValidatorAdapter,
@@ -7,11 +7,13 @@ import {
   createWizardFactory,
   WizardDevTools,
   devToolsMiddleware,
+  useWizardError,
 } from "wizzard-stepper-react";
 import { Card, CardContent, CardFooter } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { cn } from "../../lib/utils";
+import { useLocation, useSearchParams } from "react-router-dom";
 
 // Advanced validation demo with 10 steps
 interface AdvancedValidationData {
@@ -457,6 +459,7 @@ const Step8 = () => {
 
 const Step9 = () => {
   const { data, handleStepChange } = useWizard();
+  const termsError = useWizardError("terms");
 
   return (
     <div className="space-y-4">
@@ -470,6 +473,11 @@ const Step9 = () => {
         />
         Accept Terms
       </label>
+      {termsError && (
+        <div data-testid="terms-error" className="text-red-600 text-sm">
+          {termsError}
+        </div>
+      )}
       <label className="flex items-center gap-2">
         <input
           data-testid="newsletter-checkbox"
@@ -558,6 +566,7 @@ const WizardContent = () => {
   const handleClearAll = () => {
     reset();
   };
+
 
   return (
     <div data-testid="wizard-container" className="max-w-2xl mx-auto py-8">
@@ -737,7 +746,7 @@ const WizardContent = () => {
 
 const config: IWizardConfig<AdvancedValidationData> = {
   persistence: { mode: "onStepChange", adapter: new MemoryAdapter() },
-  validationMode: "onStepChange",
+  validationMode: "onChange",
   middlewares: [devToolsMiddleware],
   steps: [
     {
@@ -836,8 +845,11 @@ const config: IWizardConfig<AdvancedValidationData> = {
 };
 
 export default function TestAdvancedValidation() {
+    const searchParams = useSearchParams();
+    const navigationMode = searchParams[0].get("navigationMode") as IWizardConfig<AdvancedValidationData>["navigationMode"] || "onStepChange";
+ 
   return (
-    <WizardProvider config={config}>
+    <WizardProvider config={{...config, navigationMode: navigationMode as any}}>
       <WizardContent />
       <WizardDevTools />
     </WizardProvider>

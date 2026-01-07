@@ -1,4 +1,3 @@
-import { useState, useMemo } from "react";
 import {
   WizardProvider,
   useWizard,
@@ -7,10 +6,12 @@ import {
   type IValidatorAdapter,
   type ValidationResult,
   MemoryAdapter,
+  WizardDevTools,
 } from "wizzard-stepper-react";
 import { Card, CardContent, CardFooter } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
+import { useMemo, useState } from "react";
 
 interface ErrorData {
   name?: string;
@@ -186,6 +187,8 @@ const ReviewStep = () => {
     ([field, msg]) => `${field}: ${msg}`
   );
 
+  console.log('errors', errors);
+
   const handleSubmit = async () => {
     setSubmitAttempted(true);
     await validateAll();
@@ -330,6 +333,7 @@ export default function TestError() {
   return (
     <WizardProvider config={config}>
       <WizardContent />
+      <WizardDevTools />
     </WizardProvider>
   );
 }
