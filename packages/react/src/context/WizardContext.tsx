@@ -344,7 +344,6 @@ export function WizardProvider<
         storeRef.current.deleteError(currentStepId as StepId, path);
         const step = stepsMap.get(currentStepId as StepId);
         const mode = step?.validationMode || localConfig.validationMode || "onStepChange";
-        console.log(`[WizardContext] setData for ${path}: validationMode=${mode}`, { stepMode: step?.validationMode, configMode: localConfig.validationMode });
 
         if (mode === "onChange") {
             const debounceMs =
@@ -514,7 +513,6 @@ export function WizardProvider<
       storeRef.current.hydrate();
       isInitialized.current = true;
     } else {
-      console.log("[WizardContext] Updating store config:", localConfig);
       storeRef.current.updateMeta({ config: localConfig as any });
     }
   }, [initialData, localConfig, persistenceAdapter]);

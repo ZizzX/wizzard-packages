@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import {
   WizardProvider,
@@ -33,23 +33,58 @@ type DemoSteps = "start" | "middle" | "finish";
 /**
  * A custom middleware that mirrors the wizard data to a local state for debugging.
  * Real-world use case: Syncing with external analytics or a legacy storage.
+ * 
+ * Following Redux best practices: middleware is created once with a logger callback.
+ * The callback is stored in a ref to avoid recreating the middleware on every render.
  */
 const customAnalyticsMiddleware =
-  (setLogs: (msg: string) => void): WizardMiddleware<DemoData, DemoSteps> =>
+  (getLogger: () => (msg: string) => void): WizardMiddleware<DemoData, DemoSteps> =>
   () =>
-  // This is the API (getState, dispatch)
   (next) =>
   (action) => {
+    const logger = getLogger();
     if (action.type === "GO_TO_STEP") {
-      setLogs(`🚀 Navigation: Moving to step ${action.payload.to}`);
+      logger(`🚀 Navigation: Moving to step ${action.payload.to}`);
     }
     if (action.type === "SET_DATA") {
-      setLogs(`✍️ Data Change: Field "${action.payload.path}" updated`);
+      logger(`✍️ Data Change: Field "${action.payload.path}" updated`);
     }
     if (action.type === "UPDATE_DATA" && action.payload.options?.path) {
-      setLogs(
+      logger(
         `✍️ Data Change: Field "${action.payload.options.path}" updated (Bulk)`
       );
+    }
+    return next(action);
+  };
+
+/**
+ * Custom middleware 1 for testing middleware order
+ */
+const customMiddleware1 =
+  (getLogger: () => (msg: string) => void): WizardMiddleware<DemoData, DemoSteps> =>
+  () =>
+  (next) =>
+  (action) => {
+    // Skip logging for INIT to prevent infinite loops
+    if (action.type !== 'INIT' && action.type !== 'SET_ACTIVE_STEPS' && action.type !== 'UPDATE_META') {
+      const logger = getLogger();
+      logger(`[M1] Middleware 1 (Action: ${action.type})`);
+    }
+    return next(action);
+  };
+
+/**
+ * Custom middleware 2 for testing middleware order
+ */
+const customMiddleware2 =
+  (getLogger: () => (msg: string) => void): WizardMiddleware<DemoData, DemoSteps> =>
+  () =>
+  (next) =>
+  (action) => {
+    // Skip logging for INIT to prevent infinite loops
+    if (action.type !== 'INIT' && action.type !== 'SET_ACTIVE_STEPS' && action.type !== 'UPDATE_META') {
+      const logger = getLogger();
+      logger(`[M2] Middleware 2 (Action: ${action.type})`);
     }
     return next(action);
   };
@@ -105,26 +140,25 @@ export default function MiddlewareDemo() {
   const isDebug = search.get("debug") === "true";
   const isCustom = search.get("custom") === "true";
 
-  const addLog = (msg: string) => {
+  // Use ref to ensure addLog never changes reference
+  const addLogRef = useRef<(msg: string) => void>(() => {});
+  addLogRef.current = (msg: string) => {
     setLogs((prev) => [msg, ...prev].slice(0, 5));
   };
 
   const config: IWizardConfig<DemoData, DemoSteps> = useMemo(() => {
+    // Create a stable getter function that always returns the current addLog ref
+    const getLogger = () => addLogRef.current!;
+    
     const middlewares: WizardMiddleware<DemoData, DemoSteps>[] = [
       loggerMiddleware,
       devToolsMiddleware,
-      customAnalyticsMiddleware(addLog),
+      customAnalyticsMiddleware(getLogger),
     ];
 
     if (isCustom) {
-      middlewares.push(() => (next) => (action) => {
-        addLog(`[M1] Middleware 1 (Action: ${action.type})`);
-        return next(action);
-      });
-      middlewares.push(() => (next) => (action) => {
-        addLog(`[M2] Middleware 2 (Action: ${action.type})`);
-        return next(action);
-      });
+      middlewares.push(customMiddleware1(getLogger));
+      middlewares.push(customMiddleware2(getLogger));
     }
 
     if (isBlocking) {

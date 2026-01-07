@@ -103,7 +103,6 @@ export class WizardStore<
      * Internal dispatch that actually performs the state updates
      */
     private internalDispatch(action: WizardAction<T, StepId>) {
-        console.log(`[WizardStore] ⚡ Action: ${action.type}`, (action as any).payload?.steps ? `Steps: ${Array.from((action as any).payload.steps)}` : "");
         this.notifyActions(action);
         switch (action.type) {
             case 'INIT':
@@ -431,8 +430,6 @@ export class WizardStore<
     hydrate() {
         if (!this.persistenceAdapter) return;
 
-        console.log("[WizardStore] 🔄 Hydrating data from persistence...");
-
         let latestTimestamp = -1;
         let latestData: T | null = null;
         let hasHydrated = false;
@@ -475,7 +472,6 @@ export class WizardStore<
         });
 
         if (hasHydrated && latestData) {
-            console.log(`[WizardStore] 📦 Final hydrated data (from ts: ${latestTimestamp}):`, latestData);
             // Replace current data with the latest snapshot
             this.updateBulkData(latestData, { replace: true });
         }
@@ -527,12 +523,6 @@ export class WizardStore<
         const adapter = step.persistenceAdapter || this.persistenceAdapter;
         if (!adapter) return; // No adapter configured
 
-        // Check mode
-        // Priority: Step Config -> Global Config -> Default 'onStepChange'
-        const mode = step.persistenceMode || this.state.config.persistence?.mode || 'onStepChange';
-        // We only save here if explicitly called (manual force) OR called by internal logic that checked mode
-
-        console.log(`[WizardStore] 💾 Saving data for step ${stepId} (mode: ${mode})`, this.state.data);
         adapter.saveStep(stepId, this.state.data);
     }
 
@@ -557,7 +547,6 @@ export class WizardStore<
         const mode = step.persistenceMode || config.persistence?.mode || 'onStepChange';
         if (mode !== 'onChange') return;
 
-        // Debounce logic
         const debounceTime = config.persistence?.debounceTime ?? 300;
 
         const timerKey = currentStepId;
