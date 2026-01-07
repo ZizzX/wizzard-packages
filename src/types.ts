@@ -1,31 +1,62 @@
+/**
+ * @module Types
+ */
 
+/**
+ * Handle returned by components for imperative access to the wizard.
+ */
 export interface IWizardHandle<T = unknown, StepId extends string = string> {
     state: IWizardState<T, StepId>;
     actions: IWizardActions<StepId>;
 }
 
+/**
+ * Full state of the wizard.
+ */
 export interface IWizardState<T = unknown, StepId extends string = string> {
+    /** Global wizard data object */
     data: T;
+    /** Current errors map by step and field */
     errors: Record<StepId, Record<string, string>>;
+    /** Active step configuration (if any) */
     currentStep: IStepConfig<T, StepId> | null;
+    /** Numeric index of current step in active steps list */
     currentStepIndex: number;
+    /** True if currently on the first active step */
     isFirstStep: boolean;
+    /** True if currently on the last active step */
     isLastStep: boolean;
+    /** True if the wizard is in an initial loading/hydrating state */
     isLoading: boolean;
+    /** True if an async action (like navigation or validation) is in progress */
     isPending: boolean;
+    /** List of steps that currently meet their visibility conditions */
     activeSteps: IStepConfig<T, StepId>[];
+    /** String ID of the current step */
     currentStepId: StepId | "";
+    /** History of visited steps (navigation path) */
     history: StepId[];
+    /** Set of step IDs that are currently performing async work */
     busySteps: Set<StepId>;
+    /** Set of step IDs that have been visited by the user */
     visitedSteps: Set<StepId>;
+    /** Set of step IDs that have passed validation */
     completedSteps: Set<StepId>;
+    /** Set of step IDs that currently have active validation errors */
     errorSteps: Set<StepId>;
+    /** Current wizard configuration */
     config: IWizardConfig<T, StepId>;
+    /** Percentage of completion (0-100) */
     progress: number;
+    /** Number of active steps */
     activeStepsCount: number;
+    /** Alias for isPending */
     isBusy: boolean;
+    /** True if any field has been modified since initialization */
     isDirty: boolean;
+    /** Set of paths to fields that have been modified */
     dirtyFields: Set<string>;
+    /** Breadcrumb items for navigation UI */
     breadcrumbs: IBreadcrumb<StepId>[];
 }
 
@@ -51,34 +82,89 @@ export interface IWizardStore<T, StepId extends string = string> {
     errorsMap: Map<string, Map<string, string>>;
 }
 
+/**
+ * Public actions available to control the wizard.
+ */
 export interface IWizardActions<StepId extends string = string> {
+    /**
+     * Attempts to move to the next step.
+     * Triggers validation and guards if enabled.
+     */
     goToNextStep: () => Promise<void>;
+    /**
+     * Moves to the previous step.
+     */
     goToPrevStep: () => Promise<void>;
+    /**
+     * Navigates directly to a specific step.
+     * @param stepId Target step ID
+     * @param providedActiveSteps Optional override for active steps
+     * @param options Navigation options (e.g. bypass validation)
+     */
     goToStep: (
         stepId: StepId,
         providedActiveSteps?: any[],
         options?: { validate?: boolean }
     ) => Promise<boolean>;
+    /**
+     * Sets experimental bulk data for a step.
+     * @internal
+     */
     setStepData: (stepId: StepId, data: unknown) => void;
+    /**
+     * Helper for simple field updates in basic forms.
+     */
     handleStepChange: (field: string, value: unknown) => void;
+    /**
+     * Forces validation for an individual step.
+     */
     validateStep: (sid: StepId) => Promise<boolean>;
+    /**
+     * Forces validation for all active steps.
+     */
     validateAll: () => Promise<{
         isValid: boolean;
         errors: Record<string, Record<string, string>>;
     }>;
+    /**
+     * Persists specific steps to the configured storage.
+     */
     save: (stepIds?: StepId | StepId[] | boolean) => void;
+    /**
+     * Clears all saved data for this wizard from storage.
+     */
     clearStorage: () => void;
+    /**
+     * Resets the entire wizard to its initial state.
+     */
     reset: () => void;
+    /**
+     * Primary method to update specific fields by path.
+     * Supports dot notation and debounced validation.
+     * @example actions.setData('user.address.zip', '12345')
+     */
     setData: (
         path: string,
         value: unknown,
         options?: { debounceValidation?: number }
     ) => void;
+    /**
+     * Merges a partial data object into the wizard state.
+     * @param data Object to merge
+     * @param options options.replace will overwrite the entire state
+     */
     updateData: (
         data: Partial<any>,
         options?: { replace?: boolean; persist?: boolean }
     ) => void;
+    /**
+     * Retrieves data value at a specific path.
+     */
     getData: (path: string, defaultValue?: unknown) => unknown;
+    /**
+     * Dynamically updates wizard configuration.
+     * Useful for changing steps or modes at runtime.
+     */
     updateConfig: (config: Partial<IWizardConfig<any, StepId>>) => void;
 }
 
@@ -209,75 +295,84 @@ export interface IStepConfig<TStepData = unknown, StepId extends string = string
      * @param metadata - Wizard state (visitedSteps, completedSteps, currentStepId, etc.)
      * @returns true if navigation is allowed, false otherwise
      */
+    /**
+     * Determines if user can navigate to this step directly.
+     * Useful for implementing role-based access control or conditional navigation.
+     * @param data - Current wizard data
+     * @param metadata - Wizard state (visitedSteps, completedSteps, currentStepId, etc.)
+     * @returns true if navigation is allowed, false otherwise
+     */
     canNavigateTo?: (data: TStepData, metadata: Partial<IWizardState<TStepData, StepId>> & { data?: TStepData | undefined; allErrors?: any; }) => boolean | Promise<boolean>;
 }
 
 /**
- * Wizard Configuration
- * T: Type of the Global Wizard Data
+ * Global Wizard Configuration.
+ * 
+ * Defines steps, validation rules, persistence settings and overall behavior.
  */
 export interface IWizardConfig<T = unknown, StepId extends string = string> {
-    /**
-     * Array of step configurations
-     */
+    /** List of steps in order. Conditions may dynamically skip some of them. */
     steps: IStepConfig<T, StepId>[];
-    /**
-     * Global auto-validation setting (default: true)
-     * @deprecated Use validationMode instead
+
+    /** 
+     * @deprecated Use validationMode instead 
      */
     autoValidate?: boolean;
-    /**
-     * Default validation mode for all steps (default: 'onChange')
+
+    /** 
+     * Default validation trigger for all steps.
+     * Can be overridden per-step.
+     * Default: 'onStepChange'
      */
     validationMode?: ValidationMode;
-    /**
-     * Debounce time in ms for validation when mode is 'onChange' (default: 300)
+
+    /** 
+     * Time (ms) to wait before triggering validation on field change. 
+     * Only applies if validationMode is 'onChange'.
      */
     validationDebounceTime?: number;
-    /**
-     * Persistence configuration
+
+    /** 
+     * Data persistence settings.
      */
     persistence?: {
+        /** When to save state to storage */
         mode?: PersistenceMode;
+        /** Store implementation (LocalStorageAdapter by default) */
         adapter?: IPersistenceAdapter;
-        /**
-         * Storage key prefix (default: 'wizard_')
-         */
+        /** Unique key for storage isolation */
         storageKey?: string;
-        /**
-         * Debounce time in ms for 'onChange' persistence (default: 0)
-         */
+        /** Throttle/Debounce time for storage operations */
         debounceTime?: number;
     };
-    /**
+
+    /** 
      * Conflict resolution strategy for persistence hydration.
-     * - 'merge': Shallow merge local and initial/server data (default)
-     * - 'replace': Overwrite local with initial/server data
-     * - 'keep-local': Ignore initial/server data if local exists
      */
     onConflict?: 'merge' | 'replace' | 'keep-local';
-    /**
-     * Analytics integration.
+
+    /** 
+     * Integration with analytics services.
      */
     analytics?: {
         onEvent: WizardEventHandler<StepId>;
     };
-    /**
-     * Optional middlewares to intercept actions.
+
+    /** 
+     * Function chain to intercept or enrich wizard actions.
      */
     middlewares?: WizardMiddleware<T, StepId>[];
-    /**
-     * Navigation mode controls how users can navigate between steps.
-     * - 'sequential': Users can only navigate to next/previous steps (strict linear flow)
-     * - 'visited': Users can jump to any visited or completed step (default, most common)
-     * - 'free': Users can jump to any step regardless of status (admin/preview mode)
-     * 
-     * Note: Individual step's `canNavigateTo` function takes precedence over this global setting.
+
+    /** 
+     * Global navigation rules.
+     * - 'sequential': Forward/Back only.
+     * - 'visited': Can jump to any previously visited step.
+     * - 'free': Full access to all steps at any time.
      */
     navigationMode?: 'sequential' | 'visited' | 'free';
+
     /**
-     * Callback triggered when step changes.
-     * Useful for routing integration or analytics.
+     * Callback triggered on every successful step transition.
      */
     onStepChange?: (fromStep: StepId | null, toStep: StepId, data: T) => void;
 }

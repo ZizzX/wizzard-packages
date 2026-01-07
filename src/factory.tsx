@@ -131,15 +131,76 @@ export function createWizardFactory<
   ) => config;
 
   return {
+    /**
+     * Context provider that must wrap any component using wizard hooks.
+     * 
+     * @example
+     * ```tsx
+     * <WizardProvider config={myConfig}>
+     *   <MyWizardContent />
+     * </WizardProvider>
+     * ```
+     */
     WizardProvider,
+
+    /**
+     * Primary hook to access both state and actions.
+     * Note: Accessing data through this hook will trigger re-renders on ANY data change.
+     * For better performance, use `useWizardValue` or `useWizardSelector`.
+     */
     useWizard,
+
+    /**
+     * Alias for `useWizard` that emphasizes context usage.
+     */
     useWizardContext,
+
+    /**
+     * Atomic hook to subscribe to a single field value by its path.
+     * Component will ONLY re-render when the specific path value changes.
+     * 
+     * @param path Dot-notation path to the value
+     * @example const email = useWizardValue('user.email');
+     */
     useWizardValue,
+
+    /**
+     * Powerful hook to select exactly what you need from the wizard context.
+     * Accepts a selector function and an optional equality checker.
+     * 
+     * @param selector Function to select data
+     * @example const isCompleted = useWizardSelector(s => s.completedSteps.size === 5);
+     */
     useWizardSelector,
+
+    /**
+     * Atomic hook to subscribe to validation errors for a specific field.
+     * 
+     * @param path Dot-notation path to the field
+     */
     useWizardError,
+
+    /**
+     * Actions hook returns stable functions to control the wizard (navigating, updating data).
+     * This hook NEVER causes re-renders.
+     */
     useWizardActions,
+
+    /**
+     * Provides access to the full internal state object.
+     * Use with caution as it will trigger re-renders on any state update.
+     */
     useWizardState,
+
+    /**
+     * Returns the current list of breadcrumbs for navigation.
+     */
     useBreadcrumbs,
+
+    /**
+     * Helper to create a typed step configuration.
+     * Useful when defining steps outside of the main factory call.
+     */
     createStep,
   };
 }

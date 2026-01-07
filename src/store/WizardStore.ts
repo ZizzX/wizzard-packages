@@ -8,6 +8,12 @@ import type {
   IPersistenceAdapter
 } from "../types";
 
+/**
+ * Core event-driven store for managing wizard state, data, and navigation.
+ * 
+ * @template T Type of the global wizard data object
+ * @template StepId String union of valid step IDs
+ */
 export class WizardStore<
   T,
   StepId extends string = string,
@@ -84,7 +90,10 @@ export class WizardStore<
   }
 
   /**
-   * Public dispatch method to trigger actions through middleware
+   * Processes an action through the middleware chain and updates the state.
+   * This is the primary way to trigger any state change in the wizard.
+   * 
+   * @param action The action to perform
    */
   dispatch(action: WizardAction<T, StepId>) {
     this.middlewareChain(action);
@@ -220,10 +229,20 @@ export class WizardStore<
     this.update(newData, Object.keys(data));
   }
 
+  /**
+   * Returns the current immutable snapshot of the wizard state.
+   */
   getSnapshot = () => {
     return this.state;
   };
 
+  /**
+   * Performs a granular data update at a specific path.
+   * Automatically calculates dirty fields and triggers auto-save if configured.
+   * 
+   * @param newData Full new data object
+   * @param changedPath Path(s) that were modified
+   */
   update(newData: T, changedPath?: string | string[]) {
     if (changedPath) {
       const paths = Array.isArray(changedPath) ? changedPath : [changedPath];
@@ -299,6 +318,10 @@ export class WizardStore<
     };
   }
 
+  /**
+   * Sets the initial data for the wizard.
+   * Resets dirty tracking based on this new data.
+   */
   setInitialData(data: T) {
     this.initialData = typeof structuredClone === 'function'
       ? structuredClone(data)
@@ -388,6 +411,10 @@ export class WizardStore<
     this.persistenceAdapter = adapter;
   }
 
+  /**
+   * Restores wizard state from persistence storage.
+   * Implements "latest wins" conflict resolution based on step timestamps.
+   */
   hydrate() {
     if (!this.persistenceAdapter) return;
 
@@ -462,6 +489,11 @@ export class WizardStore<
     }
   }
 
+  /**
+   * Manually triggers data persistence for specific steps or the current step.
+   * 
+   * @param stepId Optional ID of step to save. If omitted, saves current step.
+   */
   save(stepId?: StepId) {
     // If specific step requested
     if (stepId) {
@@ -528,6 +560,12 @@ export class WizardStore<
   // Caching for condition resolution
   private conditionCache = new Map<StepId, { result: boolean; depsValues: any[] }>();
 
+  /**
+   * Evaluates visibility conditions for all steps and returns only those that should be active.
+   * Uses memoization to avoid redundant async calls if dependencies haven't changed.
+   * 
+   * @param data Optional data override for evaluation
+   */
   async resolveActiveSteps(data?: T): Promise<import("../types").IStepConfig<T, StepId>[]> {
     const currentData = data || this.state.data;
     const config = this.state.config;

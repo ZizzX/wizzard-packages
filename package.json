@@ -32,6 +32,8 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
     "test:all": "pnpm test:run && pnpm test:e2e",
+    "docs:api": "typedoc",
+    "docs:watch": "typedoc --watch",
     "release": "release-it",
     "commit": "cz",
     "prepare": "husky || true"
@@ -97,6 +99,8 @@
     "prettier": "^3.7.4",
     "release-it": "^19.2.0",
     "tsup": "^8.5.1",
+    "typedoc": "^0.28.15",
+    "typedoc-plugin-markdown": "^4.9.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16",
     "yup": "^1.7.1",

@@ -1,7 +1,7 @@
 import React, { useMemo, Suspense } from "react";
 import { useWizardContext } from "../context/WizardContext";
 
-interface WizardStepRendererProps {
+export interface WizardStepRendererProps {
   /**
    * Optional wrapper component for each step.
    * Useful for adding animations (e.g., Framer Motion).

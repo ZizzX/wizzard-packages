@@ -32,13 +32,30 @@ const WizardStoreContext = createContext<IWizardStore<any, any> | undefined>(
   undefined
 );
 
-interface WizardProviderProps<T, StepId extends string> {
+export interface WizardProviderProps<T, StepId extends string> {
   config: IWizardConfig<T, StepId>;
   initialData?: T;
   initialStepId?: StepId;
   children: React.ReactNode;
 }
 
+/**
+ * Component that provides the wizard context to its children.
+ * Manages the core lifecycle, persistence, and state synchronization.
+ * 
+ * @example
+ * ```tsx
+ * const config = { steps: [...] };
+ * 
+ * function App() {
+ *   return (
+ *     <WizardProvider config={config}>
+ *       <MyWizard />
+ *     </WizardProvider>
+ *   );
+ * }
+ * ```
+ */
 export function WizardProvider<
   T extends Record<string, any>,
   StepId extends string = string,
@@ -637,6 +654,10 @@ export function WizardProvider<
   );
 }
 
+/**
+ * Hook to access the full wizard state.
+ * @throws Error if used outside of WizardProvider
+ */
 export function useWizardState<
   T = unknown,
   StepId extends string = string,
@@ -647,6 +668,13 @@ export function useWizardState<
   return context as IWizardState<T, StepId>;
 }
 
+/**
+ * Subscribes to a specific data value by its path.
+ * Uses `useSyncExternalStore` for atomic updates and high performance.
+ * 
+ * @param path Dot-notation path to the value
+ * @param options optional equality checker for selection
+ */
 export function useWizardValue<TValue = any>(
   path: string,
   options?: { isEqual?: (a: TValue, b: TValue) => boolean }
@@ -674,6 +702,11 @@ export function useWizardValue<TValue = any>(
   return useSyncExternalStore(store.subscribe, getSnapshot);
 }
 
+/**
+ * Subscribes to validation errors for a specific field.
+ * 
+ * @param path Dot-notation path to the field
+ */
 export function useWizardError(path: string): string | undefined {
   const store = useContext(WizardStoreContext);
   if (!store)
@@ -692,6 +725,13 @@ export function useWizardError(path: string): string | undefined {
   return useSyncExternalStore(store.subscribe, getSnapshot);
 }
 
+/**
+ * Generic selector hook for custom state slices.
+ * Component will only re-render if the selected value changes.
+ * 
+ * @param selector Pure function that transforms state
+ * @param options optional equality checker
+ */
 export function useWizardSelector<TSelected = any>(
   selector: (state: any) => TSelected,
   options?: { isEqual?: (a: TSelected, b: TSelected) => boolean }
@@ -724,6 +764,10 @@ export function useWizardSelector<TSelected = any>(
   return useSyncExternalStore(store.subscribe, getSnapshot);
 }
 
+/**
+ * Returns stable actions to control the wizard.
+ * Use this hook if you only need setters/navigation methods to avoid re-renders.
+ */
 export function useWizardActions<
   StepId extends string = string,
 >(): IWizardActions<StepId> {
