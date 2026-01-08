@@ -203,7 +203,6 @@ For migration steps, see [MIGRATION.md](./MIGRATION.md).
 
 - 📚 **Full Docs**: [Interactive Documentation Portal](https://ZizzX.github.io/wizzard-stepper-react/)
 - 📖 **API Reference**: [Advanced Types & Methods](./docs/API_REFERENCE.md)
-- 🧪 **Enterprise Demo**: [Google-quality complex wizard implementation](https://ZizzX.github.io/wizzard-stepper-react/docs/introduction)
 - 🚀 **NPMS**: [View on npm](https://www.npmjs.com/package/wizzard-stepper-react)
 - 🧪 **E2E Testing**: [Testing Guide](./e2e/README.md)
 
