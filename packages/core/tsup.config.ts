@@ -1,3 +1,4 @@
+import { resolve } from 'path';
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
@@ -9,6 +10,6 @@ export default defineConfig({
   clean: true,
   minify: false,
   external: [],
-  tsconfig: 'tsconfig.json',
+  tsconfig: resolve(__dirname, 'tsconfig.build.json'),
   treeshake: true,
 });

@@ -14,7 +14,8 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
   },
-  "exclude": ["node_modules", "dist", "src"]
+  "files": [],
+  "references": [{ "path": "./packages/core" }, { "path": "./packages/react" }],
 }
