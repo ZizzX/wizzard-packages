@@ -1,5 +1,8 @@
 import type { IPersistenceAdapter } from '../../types';
 
+/**
+ * In-memory persistence adapter for tests or ephemeral sessions.
+ */
 export class MemoryAdapter implements IPersistenceAdapter {
   private storage: Record<string, any> = {};
 

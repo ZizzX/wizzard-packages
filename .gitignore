@@ -11,6 +11,9 @@ __tests__/__snapshots__
 dist
 .npmrc
 
+# Local tools
+tools/bd
+
 # Playwright
 test-results
 playwright-report

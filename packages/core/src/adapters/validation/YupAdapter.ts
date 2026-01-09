@@ -1,6 +1,9 @@
 import type { IValidatorAdapter, ValidationResult } from '../../types';
 import type { YupLikeSchema, YupLikeError } from './internal-types';
 
+/**
+ * Validation adapter for Yup-like schemas.
+ */
 export class YupAdapter<T> implements IValidatorAdapter<T> {
   private schema: YupLikeSchema<T>;
 

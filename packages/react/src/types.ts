@@ -6,6 +6,9 @@ import type {
   IWizardConfig,
 } from '@wizzard/core';
 
+/**
+ * Re-export core config types for convenience.
+ */
 export type { IStepConfig, IWizardConfig };
 
 /**

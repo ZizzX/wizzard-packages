@@ -1,11 +1,17 @@
 import React, { useMemo, Suspense } from 'react';
 import { useWizardContext } from '../context/WizardContext';
 
+/**
+ * Props for rendering the current step component.
+ */
 export interface WizardStepRendererProps {
   wrapper?: React.ComponentType<{ children: React.ReactNode; key: string }>;
   fallback?: React.ReactNode;
 }
 
+/**
+ * Renders the active step component with optional wrapper and suspense fallback.
+ */
 export const WizardStepRenderer: React.FC<WizardStepRendererProps> = ({
   wrapper: Wrapper,
   fallback = null,

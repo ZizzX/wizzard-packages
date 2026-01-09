@@ -54,6 +54,9 @@ export interface IWizardState<T = unknown, StepId extends string = string> {
   goToStepResult?: boolean | null | 'init';
 }
 
+/**
+ * Store interface for reading state and dispatching actions.
+ */
 export interface IWizardStore<T, StepId extends string = string> {
   getSnapshot(): IWizardState<T, StepId>;
   dispatch(action: WizardAction<T, StepId>): void;
@@ -113,7 +116,13 @@ export interface IValidatorAdapter<TData = unknown> {
   validate: (data: TData) => Promise<ValidationResult> | ValidationResult;
 }
 
+/**
+ * Persistence strategy for step data.
+ */
 export type PersistenceMode = 'onStepChange' | 'onChange' | 'manual';
+/**
+ * Validation strategy for step data.
+ */
 export type ValidationMode = 'onChange' | 'onStepChange' | 'manual';
 
 /**
@@ -164,9 +173,9 @@ export interface IStepConfig<TStepData = unknown, StepId extends string = string
   persistenceMode?: PersistenceMode;
   dependsOn?: string[];
   clearData?:
-  | string
-  | string[]
-  | ((data: TStepData, changedFields: string[]) => Partial<TStepData>);
+    | string
+    | string[]
+    | ((data: TStepData, changedFields: string[]) => Partial<TStepData>);
   canNavigateTo?: (
     data: TStepData,
     metadata: Partial<IWizardState<TStepData, StepId>> & {
@@ -207,13 +216,22 @@ export type WizardAction<T = any, StepId extends string = string> =
   | { type: 'INIT'; payload: { data: T; config: IWizardConfig<T, StepId> } }
   | { type: 'SET_DATA'; payload: { path: string; value: any; options?: any } }
   | { type: 'UPDATE_DATA'; payload: { data: Partial<T>; options?: any } }
-  | { type: 'GO_TO_STEP'; payload: { from: StepId; to: StepId; result: boolean | null | 'init'; nextVisitedSteps?: Set<StepId>; nextHistory?: StepId[] } }
+  | {
+      type: 'GO_TO_STEP';
+      payload: {
+        from: StepId;
+        to: StepId;
+        result: boolean | null | 'init';
+        nextVisitedSteps?: Set<StepId>;
+        nextHistory?: StepId[];
+      };
+    }
   | { type: 'VALIDATE_START'; payload: { stepId: StepId } }
   | { type: 'VALIDATE_END'; payload: { stepId: StepId; result: ValidationResult } }
   | {
-    type: 'SET_STEP_ERRORS';
-    payload: { stepId: StepId; errors: Record<string, string> | undefined | null };
-  }
+      type: 'SET_STEP_ERRORS';
+      payload: { stepId: StepId; errors: Record<string, string> | undefined | null };
+    }
   | { type: 'RESET'; payload: { data: T } }
   | { type: 'UPDATE_META'; payload: { meta: Partial<IWizardState<T, StepId>> } }
   | { type: 'SET_CURRENT_STEP_ID'; payload: { stepId: StepId | '' } }

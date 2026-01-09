@@ -42,7 +42,7 @@ const serializeForDevTools = (data: any): any => {
 };
 
 /**
- * Middleware for Redux DevTools integration
+ * Middleware for Redux DevTools integration.
  */
 export const devToolsMiddleware: WizardMiddleware<any, any> = (api) => {
   const globalContext: any = typeof window !== 'undefined' ? window : globalThis;

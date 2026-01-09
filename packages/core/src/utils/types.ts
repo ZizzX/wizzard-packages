@@ -12,6 +12,9 @@ type PathImpl<K extends string | number, V> = V extends Primitive
   ? `${K}`
   : `${K}` | `${K}.${Path<V>}`;
 
+/**
+ * Dot-notation path for a nested data type.
+ */
 export type Path<T> =
   T extends ReadonlyArray<infer V>
     ? IsTuple<T> extends true
@@ -23,6 +26,9 @@ export type Path<T> =
         [K in keyof T]-?: PathImpl<K & string, T[K]>;
       }[keyof T];
 
+/**
+ * Value type resolved from a dot-notation path.
+ */
 export type PathValue<T, P extends Path<T>> = T extends any
   ? P extends `${infer K}.${infer R}`
     ? K extends keyof T

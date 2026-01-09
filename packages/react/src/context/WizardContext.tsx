@@ -25,6 +25,9 @@ const WizardStateContext = createContext<IWizardState<any, any> | undefined>(und
 const WizardActionsContext = createContext<IWizardActions<any> | undefined>(undefined);
 const WizardStoreContext = createContext<IWizardStore<any, any> | undefined>(undefined);
 
+/**
+ * Props for WizardProvider.
+ */
 export interface WizardProviderProps<T, StepId extends string> {
   config: IWizardConfig<T, StepId>;
   initialData?: T;
@@ -579,6 +582,9 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
   );
 }
 
+/**
+ * Reads the full wizard state.
+ */
 export function useWizardState<T = unknown, StepId extends string = string>(): IWizardState<
   T,
   StepId
@@ -588,6 +594,9 @@ export function useWizardState<T = unknown, StepId extends string = string>(): I
   return context as IWizardState<T, StepId>;
 }
 
+/**
+ * Subscribes to a specific data value by path.
+ */
 export function useWizardValue<TValue = any>(
   path: string,
   options?: { isEqual?: (a: TValue, b: TValue) => boolean }
@@ -614,6 +623,9 @@ export function useWizardValue<TValue = any>(
   return useSyncExternalStore(store.subscribe, getSnapshot);
 }
 
+/**
+ * Returns the first error message for a path across all steps.
+ */
 export function useWizardError(path: string): string | undefined {
   const store = useContext(WizardStoreContext);
   if (!store) throw new Error('useWizardError must be used within a WizardProvider');
@@ -628,6 +640,9 @@ export function useWizardError(path: string): string | undefined {
   return useSyncExternalStore(store.subscribe, getSnapshot);
 }
 
+/**
+ * Selects a derived value from the wizard state with optional equality check.
+ */
 export function useWizardSelector<TSelected = any>(
   selector: (state: any) => TSelected,
   options?: { isEqual?: (a: TSelected, b: TSelected) => boolean }
@@ -655,12 +670,18 @@ export function useWizardSelector<TSelected = any>(
   return useSyncExternalStore(store.subscribe, getSnapshot);
 }
 
+/**
+ * Returns the wizard actions API.
+ */
 export function useWizardActions<StepId extends string = string>(): IWizardActions<StepId> {
   const context = useContext(WizardActionsContext);
   if (!context) throw new Error('useWizardActions must be used within a WizardProvider');
   return context as IWizardActions<StepId>;
 }
 
+/**
+ * Returns combined wizard state, actions, and derived errors.
+ */
 export function useWizardContext<T = any, StepId extends string = string>(): IWizardContext<
   T,
   StepId

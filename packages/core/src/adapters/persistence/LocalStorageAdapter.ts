@@ -1,5 +1,8 @@
 import type { IPersistenceAdapter } from '../../types';
 
+/**
+ * Browser persistence adapter backed by localStorage.
+ */
 export class LocalStorageAdapter implements IPersistenceAdapter {
   private prefix: string;
 

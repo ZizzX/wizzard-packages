@@ -1,6 +1,9 @@
 import type { IValidatorAdapter, ValidationResult } from '../../types';
 import type { ZodLikeSchema } from './internal-types';
 
+/**
+ * Validation adapter for Zod-like schemas.
+ */
 export class ZodAdapter<T> implements IValidatorAdapter<T> {
   private schema: ZodLikeSchema<T>;
 
