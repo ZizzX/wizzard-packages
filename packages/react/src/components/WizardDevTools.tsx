@@ -8,9 +8,6 @@ interface IActionLog {
   state: any;
 }
 
-/**
- * In-app DevTools panel for inspecting wizard state and actions.
- */
 export function WizardDevTools() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'state' | 'actions' | 'errors'>('state');
