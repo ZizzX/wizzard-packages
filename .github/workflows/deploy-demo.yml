@@ -5,6 +5,10 @@ on:
     branches: [main]
     paths:
       - 'examples/demo/**'
+      - 'src/**'
+      - 'typedoc.json'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
   workflow_dispatch:
 
 permissions:
@@ -29,14 +33,22 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "pnpm"
+          node-version: '20'
+          cache: 'pnpm'
 
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Build Demo
         run: pnpm --filter demo build
+
+      - name: Build API Docs
+        run: pnpm docs:api
+
+      - name: Copy API Docs into demo site
+        run: |
+          mkdir -p examples/demo/dist/docs/api
+          cp -R docs/api/* examples/demo/dist/docs/api/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
