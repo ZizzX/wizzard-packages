@@ -89,6 +89,31 @@ const customMiddleware2 =
     return next(action);
   };
 
+  /**
+   * Middleware that blocks navigation from start step.
+   * Demonstrates proper blocking pattern: don't call next() to block.
+   */
+  const customMiddlewareBlockNavigation =  (
+    setAlert: (msg: string) => void
+  ): WizardMiddleware<DemoData, DemoSteps> => (api) => (next) => (action) => {
+    if (action.type === 'GO_TO_STEP') {
+      const currentStepId = api.getSnapshot().currentStepId;
+      const targetStepId = action.payload.to;
+      
+      console.log('[BlockNav]', { from: currentStepId, to: targetStepId });
+      
+      // Block leaving start step
+      if (currentStepId === 'start' && targetStepId !== 'start') {
+        setAlert("Navigation blocked! Cannot leave start step.");
+        // Don't call next() - this blocks the action
+        return;
+      }
+    }
+    
+    // Allow the action through
+    return next(action);
+  };
+
 // --- WIZARD COMPONENTS ---
 
 const Step1 = () => {
@@ -162,16 +187,7 @@ export default function MiddlewareDemo() {
     }
 
     if (isBlocking) {
-      middlewares.push(() => (next) => (action) => {
-        if (
-          action.type === "GO_TO_STEP" ||
-          action.type === "SET_CURRENT_STEP_ID"
-        ) {
-          setAlert("Navigation blocked by middleware!");
-          return action; // Block by returning original action without next
-        }
-        return next(action);
-      });
+      middlewares.push(customMiddlewareBlockNavigation(setAlert));
     }
 
     return {

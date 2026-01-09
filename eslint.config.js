@@ -26,8 +26,27 @@ export default [
             },
         },
         rules: {
+            // TypeScript rules
             '@typescript-eslint/no-explicit-any': 'off',
-            '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+            '@typescript-eslint/no-unused-vars': [
+                'warn',
+                {
+                    argsIgnorePattern: '^_',
+                    varsIgnorePattern: '^_',
+                    caughtErrorsIgnorePattern: '^_',
+                },
+            ],
+            '@typescript-eslint/no-unused-expressions': 'error',
+
+            // Import rules
+            'no-unused-vars': 'off', // Use TypeScript version instead
+            'no-duplicate-imports': 'error',
+
+            // Code quality
+            'no-console': ['warn', { allow: ['warn', 'error'] }],
+            'no-debugger': 'warn',
+            'prefer-const': 'error',
+            'no-var': 'error',
         },
     },
 ];

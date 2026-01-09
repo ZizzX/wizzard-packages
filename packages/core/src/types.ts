@@ -50,6 +50,8 @@ export interface IWizardState<T = unknown, StepId extends string = string> {
     dirtyFields: Set<string>;
     /** Breadcrumb items for navigation UI */
     breadcrumbs: IBreadcrumb<StepId>[];
+    /** Result of the last goToStep action */
+    goToStepResult?: boolean | null;
 }
 
 export interface IWizardStore<T, StepId extends string = string> {
@@ -195,7 +197,7 @@ export type WizardAction<T = any, StepId extends string = string> =
     | { type: 'INIT'; payload: { data: T; config: IWizardConfig<T, StepId> } }
     | { type: 'SET_DATA'; payload: { path: string; value: any; options?: any } }
     | { type: 'UPDATE_DATA'; payload: { data: Partial<T>; options?: any } }
-    | { type: 'GO_TO_STEP'; payload: { from: StepId | null; to: StepId } }
+    | { type: 'GO_TO_STEP'; payload: { from: StepId | null; to: StepId | null; result: boolean; } }
     | { type: 'VALIDATE_START'; payload: { stepId: StepId } }
     | { type: 'VALIDATE_END'; payload: { stepId: StepId; result: ValidationResult } }
     | { type: 'SET_STEP_ERRORS'; payload: { stepId: StepId; errors: Record<string, string> | undefined | null } }
@@ -215,7 +217,7 @@ export type WizardAction<T = any, StepId extends string = string> =
 export interface MiddlewareAPI<T = any, StepId extends string = string> {
     dispatch: (action: WizardAction<T, StepId>) => void;
     getState: () => T;
-    getSnapshot: () => any;
+    getSnapshot: () => IWizardState<T, StepId>;
 }
 
 /**

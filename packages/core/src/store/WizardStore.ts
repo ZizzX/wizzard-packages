@@ -1,12 +1,12 @@
-import { getByPath, setByPath } from "../utils/data";
 import type {
-    IWizardStore,
+    IPersistenceAdapter,
     IWizardState,
-    WizardAction,
-    WizardMiddleware,
+    IWizardStore,
     MiddlewareAPI,
-    IPersistenceAdapter
+    WizardAction,
+    WizardMiddleware
 } from "../types";
+import { getByPath, setByPath } from "../utils/data";
 
 /**
  * Core event-driven store for managing wizard state, data, and navigation.
@@ -66,6 +66,7 @@ export class WizardStore<
             activeStepsCount: 0,
             breadcrumbs: [],
             config: {} as any,
+            goToStepResult: null,
         };
 
         // Initialize middleware chain
@@ -102,7 +103,7 @@ export class WizardStore<
     /**
      * Internal dispatch that actually performs the state updates
      */
-    private internalDispatch(action: WizardAction<T, StepId>) {
+    private internalDispatch(action: WizardAction<T, StepId>): void {
         this.notifyActions(action);
         switch (action.type) {
             case 'INIT':
@@ -160,7 +161,8 @@ export class WizardStore<
             case 'GO_TO_STEP':
                 this.state = {
                     ...this.state,
-                    currentStepId: action.payload.to,
+                    goToStepResult: action.payload.result,
+                    currentStepId: action.payload.to ? action.payload.to : this.state.currentStepId,
                 };
                 break;
             case 'VALIDATE_START':
@@ -651,6 +653,7 @@ export class WizardStore<
             }
         }
     }
+
     async validateStep(stepId: StepId): Promise<boolean> {
         const steps = this.state.config.steps || [];
         const step = this.stepsMap.get(stepId) || steps.find((s: any) => s.id === stepId);
@@ -709,6 +712,7 @@ export class WizardStore<
             });
         }
     }
+
     async goToStep(
         stepId: StepId,
         options: { validate?: boolean; providedActiveSteps?: import("../types").IStepConfig<T, StepId>[] } = { validate: true }
@@ -723,6 +727,8 @@ export class WizardStore<
         const currentIdx = allSteps.findIndex((s: any) => s.id === currentStepId);
         const targetIdx = allSteps.findIndex((s: any) => s.id === stepId);
 
+        if (targetIdx === currentIdx) return true;
+
         // 1. Validate Current Step if moving forward
         if (targetIdx > currentIdx && currentStepId && options.validate) {
             const step = this.stepsMap.get(currentStepId) || allSteps.find((s: any) => s.id === currentStepId);
@@ -733,7 +739,13 @@ export class WizardStore<
 
             if (shouldVal) {
                 const ok = await this.validateStep(currentStepId);
-                if (!ok) return false;
+                if (!ok) {
+                    this.dispatch({
+                        type: "GO_TO_STEP",
+                        payload: { result: false, to: null, from: currentStepId || null },
+                    })
+                    return false;
+                }
             }
         }
 
@@ -743,7 +755,13 @@ export class WizardStore<
             const resolvedSteps =
                 options.providedActiveSteps || (await this.resolveActiveSteps(currentData));
             const target = resolvedSteps.find((s) => s.id === stepId);
-            if (!target) return false;
+            if (!target) {
+                this.dispatch({
+                    type: "GO_TO_STEP",
+                    payload: { result: false, to: stepId, from: currentStepId || null },
+                })
+                return false;
+            }
 
             // 3. Check Navigation Permissions
             // Priority: Step-level canNavigateTo > Global navigationMode
@@ -752,6 +770,10 @@ export class WizardStore<
                 const canNavigate = await target.canNavigateTo(currentData, snapshot);
                 if (!canNavigate) {
                     console.warn(`[WizardStore] Navigation to step "${stepId}" blocked by canNavigateTo function`);
+                    this.dispatch({
+                        type: "GO_TO_STEP",
+                        payload: { result: false, to: allSteps[currentIdx].id, from: currentStepId || null },
+                    })
                     return false;
                 }
             } else {
@@ -769,6 +791,10 @@ export class WizardStore<
                             // Sequential: ONLY adjacent steps (strict linear flow)
                             if (!isAdjacent) {
                                 console.warn(`[WizardStore] Navigation to step "${stepId}" blocked: sequential mode allows only adjacent steps`);
+                                this.dispatch({
+                                    type: "GO_TO_STEP",
+                                    payload: { result: false, to: allSteps[targetIdx].id, from: currentStepId || null },
+                                })
                                 return false;
                             }
                             break;
@@ -781,6 +807,10 @@ export class WizardStore<
 
                             if (!isAdjacent && !isVisitedOrCompleted) {
                                 console.warn(`[WizardStore] Navigation to step "${stepId}" blocked: step not visited or completed`);
+                                this.dispatch({
+                                    type: "GO_TO_STEP",
+                                    payload: { result: false, to: allSteps[targetIdx].id, from: currentStepId || null },
+                                })
                                 return false;
                             }
                             break;
@@ -798,7 +828,13 @@ export class WizardStore<
                 const snapshot = this.getSnapshot();
                 const direction = targetIdx > currentIdx ? "next" : "prev";
                 const ok = await step.beforeLeave(currentData, direction, snapshot);
-                if (ok === false) return false;
+                if (ok === false) {
+                    this.dispatch({
+                        type: "GO_TO_STEP",
+                        payload: { result: false, to: allSteps[targetIdx].id, from: currentStepId || null },
+                    })
+                    return false;
+                }
             }
 
             const currentSnapshot = this.getSnapshot();
@@ -807,6 +843,11 @@ export class WizardStore<
             if (currentStepId) nextVisited.add(currentStepId);
             // Mark new step as visited (on entry)
             nextVisited.add(stepId);
+
+            this.dispatch({
+                type: "GO_TO_STEP",
+                payload: { result: true, to: allSteps[targetIdx].id, from: currentStepId || null },
+            })
 
             this.dispatch({
                 type: "SET_VISITED_STEPS",

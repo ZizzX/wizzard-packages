@@ -1,7 +1,7 @@
-import { describe, expect, test, beforeEach, vi } from "vitest";
-import { WizardStore } from "./WizardStore";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { devToolsMiddleware } from "../middlewares/devToolsMiddleware";
 import type { IWizardConfig } from "../types";
+import { WizardStore } from "./WizardStore";
 
 describe("WizardStore", () => {
     let store: WizardStore<any>;
@@ -39,7 +39,7 @@ describe("WizardStore", () => {
     test("handle GO_TO_STEP action", () => {
         store.dispatch({
             type: "GO_TO_STEP",
-            payload: { from: "step1", to: "step2" },
+            payload: { from: "step1", to: "step2", result: true },
         });
         // Assuming GO_TO_STEP updates currentStepId
         expect(store.getSnapshot().currentStepId).toBe("step2");

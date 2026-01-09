@@ -24,7 +24,10 @@
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "lint": "pnpm -r lint",
+    "lint:fix": "eslint . --fix",
     "test": "vitest",
     "test:run": "vitest run",
     "test:e2e": "playwright test",

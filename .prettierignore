@@ -1,0 +1,22 @@
+# Dependencies
+node_modules
+pnpm-lock.yaml
+package-lock.json
+
+# Build outputs
+dist
+build
+.next
+out
+
+# Test outputs
+coverage
+playwright-report
+test-results
+
+# Generated files
+.husky/_
+*.log
+
+# Config
+.stackblitz
