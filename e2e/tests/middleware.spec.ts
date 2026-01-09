@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/base';
+import { expect, test } from '../fixtures/base';
 
 /**
  * E2E Test: Middleware Integration
@@ -121,7 +121,7 @@ test.describe('Middleware Integration', () => {
   });
 
   test('should allow middleware to modify or block actions', async ({ page }) => {
-    await page.goto('#/test/middleware-demo?blocking=true');
+    await page.goto('#/test/middleware-demo?blocking=true&debug=true');
     await page.waitForSelector('[data-testid="wizard-container"]');
 
     // Try to navigate (middleware blocks it without validation)

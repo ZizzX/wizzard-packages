@@ -1,16 +1,16 @@
-import { useState, useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import type { IWizardConfig, WizardMiddleware } from 'wizzard-stepper-react';
 import {
-  WizardProvider,
-  useWizard,
-  loggerMiddleware,
   devToolsMiddleware,
-  WizardDevTools,
+  loggerMiddleware,
   MemoryAdapter,
+  useWizard,
+  WizardDevTools,
+  WizardProvider,
 } from 'wizzard-stepper-react';
-import type { WizardMiddleware, IWizardConfig } from 'wizzard-stepper-react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../components/ui/Card';
 import { StepperControls } from '../../components/StepperControls';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 
 // --- TYPES ---
@@ -102,10 +102,14 @@ const customMiddlewareBlockNavigation =
       const currentStepId = api.getSnapshot().currentStepId;
       const targetStepId = action.payload.to;
 
-      console.log('[BlockNav]', { from: currentStepId, to: targetStepId });
+      console.log('[BlockNav]', {
+        from: currentStepId,
+        to: targetStepId,
+        result: action.payload.result,
+      });
 
-      // Block leaving start step
-      if (currentStepId === 'start' && targetStepId !== 'start') {
+      // Block leaving start step (but allow init navigation)
+      if (action.payload.result === 'init') {
         setAlert('Navigation blocked! Cannot leave start step.');
         // Don't call next() - this blocks the action
         return;

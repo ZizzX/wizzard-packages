@@ -51,7 +51,7 @@ export interface IWizardState<T = unknown, StepId extends string = string> {
   /** Breadcrumb items for navigation UI */
   breadcrumbs: IBreadcrumb<StepId>[];
   /** Result of the last goToStep action */
-  goToStepResult?: boolean | null;
+  goToStepResult?: boolean | null | 'init';
 }
 
 export interface IWizardStore<T, StepId extends string = string> {
@@ -164,9 +164,9 @@ export interface IStepConfig<TStepData = unknown, StepId extends string = string
   persistenceMode?: PersistenceMode;
   dependsOn?: string[];
   clearData?:
-    | string
-    | string[]
-    | ((data: TStepData, changedFields: string[]) => Partial<TStepData>);
+  | string
+  | string[]
+  | ((data: TStepData, changedFields: string[]) => Partial<TStepData>);
   canNavigateTo?: (
     data: TStepData,
     metadata: Partial<IWizardState<TStepData, StepId>> & {
@@ -207,13 +207,13 @@ export type WizardAction<T = any, StepId extends string = string> =
   | { type: 'INIT'; payload: { data: T; config: IWizardConfig<T, StepId> } }
   | { type: 'SET_DATA'; payload: { path: string; value: any; options?: any } }
   | { type: 'UPDATE_DATA'; payload: { data: Partial<T>; options?: any } }
-  | { type: 'GO_TO_STEP'; payload: { from: StepId | null; to: StepId | null; result: boolean } }
+  | { type: 'GO_TO_STEP'; payload: { from: StepId; to: StepId; result: boolean | null | 'init'; nextVisitedSteps?: Set<StepId>; nextHistory?: StepId[] } }
   | { type: 'VALIDATE_START'; payload: { stepId: StepId } }
   | { type: 'VALIDATE_END'; payload: { stepId: StepId; result: ValidationResult } }
   | {
-      type: 'SET_STEP_ERRORS';
-      payload: { stepId: StepId; errors: Record<string, string> | undefined | null };
-    }
+    type: 'SET_STEP_ERRORS';
+    payload: { stepId: StepId; errors: Record<string, string> | undefined | null };
+  }
   | { type: 'RESET'; payload: { data: T } }
   | { type: 'UPDATE_META'; payload: { meta: Partial<IWizardState<T, StepId>> } }
   | { type: 'SET_CURRENT_STEP_ID'; payload: { stepId: StepId | '' } }

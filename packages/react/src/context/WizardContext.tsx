@@ -200,14 +200,14 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
   const handleStepDependencies = useCallback(
     (paths: string[], initialData: any) => {
       let currentData = { ...initialData };
-      let allClearedPaths = new Set<string>();
+      const allClearedPaths = new Set<string>();
       const { completedSteps, visitedSteps } = storeRef.current.getSnapshot();
-      let nextComp = new Set(completedSteps);
-      let nextVis = new Set(visitedSteps);
+      const nextComp = new Set(completedSteps);
+      const nextVis = new Set(visitedSteps);
       let statusChanged = false;
 
       const processDependencies = (changedPaths: string[]) => {
-        let newlyClearedPaths: string[] = [];
+        const newlyClearedPaths: string[] = [];
 
         localConfig.steps.forEach((step: IStepConfig<T, StepId>) => {
           const isDependent = step.dependsOn?.some((p: string) =>
