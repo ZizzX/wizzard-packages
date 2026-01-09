@@ -1,6 +1,6 @@
 [**wizzard-stepper-react**](../README.md)
 
-***
+---
 
 [wizzard-stepper-react](../README.md) / IWizardContext
 
@@ -18,7 +18,7 @@ Core Wizard Context State
 
 ### StepId
 
-`StepId` *extends* `string` = `string`
+`StepId` _extends_ `string` = `string`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: [types.ts:483](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Active steps (those meeting conditions)
 
-***
+---
 
 ### activeStepsCount
 
@@ -38,7 +38,7 @@ Active steps (those meeting conditions)
 
 Defined in: [types.ts:478](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L478)
 
-***
+---
 
 ### allErrors
 
@@ -48,7 +48,7 @@ Defined in: [types.ts:503](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Errors keyed by stepId -> field -> message
 
-***
+---
 
 ### breadcrumbs
 
@@ -58,7 +58,7 @@ Defined in: [types.ts:521](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Breadcrumbs
 
-***
+---
 
 ### busySteps
 
@@ -68,7 +68,7 @@ Defined in: [types.ts:493](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Steps that are currently performing async actions (conditions, validation, guards)
 
-***
+---
 
 ### clearStorage()
 
@@ -80,7 +80,7 @@ Defined in: [types.ts:559](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 `void`
 
-***
+---
 
 ### completedSteps
 
@@ -88,7 +88,7 @@ Defined in: [types.ts:559](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Defined in: [types.ts:515](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L515)
 
-***
+---
 
 ### config
 
@@ -96,7 +96,7 @@ Defined in: [types.ts:515](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Defined in: [types.ts:458](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L458)
 
-***
+---
 
 ### currentStep
 
@@ -104,7 +104,7 @@ Defined in: [types.ts:458](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Defined in: [types.ts:459](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L459)
 
-***
+---
 
 ### currentStepId
 
@@ -112,7 +112,7 @@ Defined in: [types.ts:459](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Defined in: [types.ts:460](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L460)
 
-***
+---
 
 ### currentStepIndex
 
@@ -120,7 +120,7 @@ Defined in: [types.ts:460](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Defined in: [types.ts:461](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L461)
 
-***
+---
 
 ### data
 
@@ -130,7 +130,7 @@ Defined in: [types.ts:498](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Wizard form data
 
-***
+---
 
 ### dirtyFields
 
@@ -138,7 +138,7 @@ Wizard form data
 
 Defined in: [types.ts:472](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L472)
 
-***
+---
 
 ### errors
 
@@ -149,7 +149,7 @@ Defined in: [types.ts:509](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 Flattened errors map (field -> message) for convenience.
 Contains errors from all steps unless shadowed.
 
-***
+---
 
 ### errorSteps
 
@@ -157,7 +157,7 @@ Contains errors from all steps unless shadowed.
 
 Defined in: [types.ts:516](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L516)
 
-***
+---
 
 ### getData()
 
@@ -181,7 +181,7 @@ Get data by path
 
 `unknown`
 
-***
+---
 
 ### goToNextStep()
 
@@ -195,7 +195,7 @@ Navigation Actions
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### goToPrevStep()
 
@@ -207,7 +207,7 @@ Defined in: [types.ts:527](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 `void`
 
-***
+---
 
 ### goToStep()
 
@@ -225,7 +225,7 @@ Defined in: [types.ts:528](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 `Promise`\<`boolean`\>
 
-***
+---
 
 ### handleStepChange()
 
@@ -247,7 +247,7 @@ keyof `T`
 
 `void`
 
-***
+---
 
 ### history
 
@@ -257,7 +257,7 @@ Defined in: [types.ts:488](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Navigation History
 
-***
+---
 
 ### isBusy
 
@@ -265,7 +265,7 @@ Navigation History
 
 Defined in: [types.ts:466](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L466)
 
-***
+---
 
 ### isDirty
 
@@ -275,7 +275,7 @@ Defined in: [types.ts:471](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Dirty State Tracking
 
-***
+---
 
 ### isFirstStep
 
@@ -283,7 +283,7 @@ Dirty State Tracking
 
 Defined in: [types.ts:462](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L462)
 
-***
+---
 
 ### isLastStep
 
@@ -291,7 +291,7 @@ Defined in: [types.ts:462](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Defined in: [types.ts:463](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L463)
 
-***
+---
 
 ### isLoading
 
@@ -299,7 +299,7 @@ Defined in: [types.ts:463](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Defined in: [types.ts:464](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L464)
 
-***
+---
 
 ### isPending?
 
@@ -307,7 +307,7 @@ Defined in: [types.ts:464](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Defined in: [types.ts:465](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L465)
 
-***
+---
 
 ### progress
 
@@ -317,7 +317,7 @@ Defined in: [types.ts:477](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Progress and Stats
 
-***
+---
 
 ### reset()
 
@@ -329,7 +329,7 @@ Defined in: [types.ts:560](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 `void`
 
-***
+---
 
 ### save()
 
@@ -347,7 +347,7 @@ Defined in: [types.ts:558](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 `void`
 
-***
+---
 
 ### setData()
 
@@ -377,7 +377,7 @@ Set data by path (supports dot notation and arrays, e.g., 'user.name' or 'items[
 
 `void`
 
-***
+---
 
 ### setStepData()
 
@@ -401,7 +401,7 @@ Data Actions
 
 `void`
 
-***
+---
 
 ### store
 
@@ -411,7 +411,7 @@ Defined in: [types.ts:570](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Internal Store Access
 
-***
+---
 
 ### updateConfig()
 
@@ -431,7 +431,7 @@ Dynamic Configuration
 
 `void`
 
-***
+---
 
 ### updateData()
 
@@ -461,7 +461,7 @@ If true, replaces entire state instead of merging.
 
 `void`
 
-***
+---
 
 ### validateAll()
 
@@ -473,7 +473,7 @@ Defined in: [types.ts:557](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 `Promise`\<\{ `errors`: `Record`\<`string`, `Record`\<`string`, `string`\>\>; `isValid`: `boolean`; \}\>
 
-***
+---
 
 ### validateStep()
 
@@ -493,7 +493,7 @@ Validation & Persistence
 
 `Promise`\<`boolean`\>
 
-***
+---
 
 ### visitedSteps
 

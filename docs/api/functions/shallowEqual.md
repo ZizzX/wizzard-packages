@@ -1,6 +1,6 @@
 [**wizzard-stepper-react**](../README.md)
 
-***
+---
 
 [wizzard-stepper-react](../README.md) / shallowEqual
 

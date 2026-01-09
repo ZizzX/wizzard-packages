@@ -32,6 +32,7 @@ The callback signatures have been updated to provide easier access to the wizard
 `beforeLeave?: (data: T, direction: StepDirection, metadata: StepMetadata<T, StepId>) => boolean`
 
 **Migration example:**
+
 ```diff
 - condition: (data) => data.age > 18,
 + condition: (data, { wizardData }) => wizardData.age > 18,
@@ -76,12 +77,8 @@ const schema = z.object({
 export type MySchema = z.infer<typeof schema>;
 
 // 🪄 Create the factory
-export const {
-  WizardProvider,
-  useWizard,
-  useWizardValue,
-  createStep
-} = createWizardFactory<MySchema>();
+export const { WizardProvider, useWizard, useWizardValue, createStep } =
+  createWizardFactory<MySchema>();
 ```
 
 #### Step 2: Update Your Components
@@ -95,9 +92,9 @@ Replace imports from `wizzard-stepper-react` with imports from your new file.
 const Step1 = () => {
 - const { wizardData } = useWizard<MySchema>(); // Manual generic
 + const { wizardData } = useWizard(); // 🪄 Automatically typed!
-  
+
   // TypeScript knows this is a string
-  console.log(wizardData.firstName); 
+  console.log(wizardData.firstName);
 }
 ```
 

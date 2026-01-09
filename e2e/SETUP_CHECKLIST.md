@@ -79,30 +79,23 @@ pnpm test:e2e
 
 ```tsx
 // Example: Navigation buttons
-<button 
-  data-testid="next-button"
-  onClick={goToNextStep}
->
+<button data-testid="next-button" onClick={goToNextStep}>
   Next
-</button>
+</button>;
 
 // Example: Dynamic breadcrumbs
-{breadcrumbs.map((crumb) => (
-  <div 
-    key={crumb.id}
-    data-testid={`breadcrumb-step-${crumb.id}`}
-    className={crumb.status}
-  >
-    {crumb.label}
-  </div>
-))}
+{
+  breadcrumbs.map((crumb) => (
+    <div key={crumb.id} data-testid={`breadcrumb-step-${crumb.id}`} className={crumb.status}>
+      {crumb.label}
+    </div>
+  ));
+}
 
 // Example: Error display
-{error && (
-  <div data-testid={`${fieldName}-error`}>
-    {error}
-  </div>
-)}
+{
+  error && <div data-testid={`${fieldName}-error`}>{error}</div>;
+}
 ```
 
 ### Progressive Implementation

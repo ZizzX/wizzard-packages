@@ -1,6 +1,6 @@
 [**wizzard-stepper-react**](../README.md)
 
-***
+---
 
 [wizzard-stepper-react](../README.md) / IWizardConfig
 
@@ -20,7 +20,7 @@ Defines steps, validation rules, persistence settings and overall behavior.
 
 ### StepId
 
-`StepId` *extends* `string` = `string`
+`StepId` _extends_ `string` = `string`
 
 ## Properties
 
@@ -36,7 +36,7 @@ Integration with analytics services.
 
 > **onEvent**: [`WizardEventHandler`](../type-aliases/WizardEventHandler.md)\<`StepId`\>
 
-***
+---
 
 ### ~~autoValidate?~~
 
@@ -48,7 +48,7 @@ Defined in: [types.ts:320](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Use validationMode instead
 
-***
+---
 
 ### middlewares?
 
@@ -58,7 +58,7 @@ Defined in: [types.ts:364](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Function chain to intercept or enrich wizard actions.
 
-***
+---
 
 ### navigationMode?
 
@@ -67,11 +67,12 @@ Function chain to intercept or enrich wizard actions.
 Defined in: [types.ts:372](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L372)
 
 Global navigation rules.
+
 - 'sequential': Forward/Back only.
 - 'visited': Can jump to any previously visited step.
 - 'free': Full access to all steps at any time.
 
-***
+---
 
 ### onConflict?
 
@@ -81,7 +82,7 @@ Defined in: [types.ts:352](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Conflict resolution strategy for persistence hydration.
 
-***
+---
 
 ### onStepChange()?
 
@@ -109,7 +110,7 @@ Callback triggered on every successful step transition.
 
 `void`
 
-***
+---
 
 ### persistence?
 
@@ -143,7 +144,7 @@ When to save state to storage
 
 Unique key for storage isolation
 
-***
+---
 
 ### steps
 
@@ -153,7 +154,7 @@ Defined in: [types.ts:315](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 List of steps in order. Conditions may dynamically skip some of them.
 
-***
+---
 
 ### validationDebounceTime?
 
@@ -161,10 +162,10 @@ List of steps in order. Conditions may dynamically skip some of them.
 
 Defined in: [types.ts:333](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L333)
 
-Time (ms) to wait before triggering validation on field change. 
+Time (ms) to wait before triggering validation on field change.
 Only applies if validationMode is 'onChange'.
 
-***
+---
 
 ### validationMode?
 

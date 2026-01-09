@@ -1,6 +1,6 @@
 [**wizzard-stepper-react**](../README.md)
 
-***
+---
 
 [wizzard-stepper-react](../README.md) / IPersistenceAdapter
 
@@ -22,7 +22,7 @@ Defined in: [types.ts:213](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 `void`
 
-***
+---
 
 ### clearStep()
 
@@ -40,7 +40,7 @@ Defined in: [types.ts:212](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 `void`
 
-***
+---
 
 ### getStep()
 
@@ -64,7 +64,7 @@ Defined in: [types.ts:210](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 `T` \| `undefined`
 
-***
+---
 
 ### getStepWithMeta()?
 
@@ -88,7 +88,7 @@ Defined in: [types.ts:211](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 \{ `data`: `T`; `timestamp`: `number`; \} \| `undefined`
 
-***
+---
 
 ### saveStep()
 

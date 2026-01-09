@@ -1,6 +1,6 @@
 [**wizzard-stepper-react**](../README.md)
 
-***
+---
 
 [wizzard-stepper-react](../README.md) / WizardAction
 
@@ -20,4 +20,4 @@ Middleware Action Types
 
 ### StepId
 
-`StepId` *extends* `string` = `string`
+`StepId` _extends_ `string` = `string`

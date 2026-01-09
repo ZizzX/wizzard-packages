@@ -64,7 +64,7 @@ const products = useWizardSelector((state) => state.data.products);
 const email = useWizardSelector((state) => state.data.email);
 
 // ✅ CORRECT - Derived state
-const totalPrice = useWizardSelector((state) => 
+const totalPrice = useWizardSelector((state) =>
   state.data.items.reduce((sum, item) => sum + item.price, 0)
 );
 ```
@@ -134,7 +134,7 @@ const { wizardData } = useWizard();
 // ✅ CORRECT
 const { data } = useWizard();
 // OR even better:
-const products = useWizardSelector(state => state.data.products);
+const products = useWizardSelector((state) => state.data.products);
 ```
 
 ### 2. Don't import from base library when using factory
@@ -151,10 +151,10 @@ import { useWizard, WizardProvider } from '../wizards/my-wizard';
 
 ```tsx
 // ❌ WRONG - incorrect structure
-const products = useWizardSelector(state => state.wizardData?.products);
+const products = useWizardSelector((state) => state.wizardData?.products);
 
 // ✅ CORRECT - state.data is the correct field
-const products = useWizardSelector(state => state.data.products);
+const products = useWizardSelector((state) => state.data.products);
 ```
 
 ### 4. Don't use Object.assign for nested updates
@@ -196,22 +196,24 @@ import { useWizardSelector, useWizardActions, useWizardError } from '../wizards/
 
 const CartStep = () => {
   // ✅ Read data with selector
-  const items = useWizardSelector(state => state.data.items);
-  
+  const items = useWizardSelector((state) => state.data.items);
+
   // ✅ Get actions
   const { updateData } = useWizardActions();
-  
+
   // ✅ Get field error
   const itemsError = useWizardError('items');
-  
+
   // ✅ Update data
   const addItem = (item: Product) => {
     updateData({ items: [...items, item] });
   };
-  
+
   return (
     <div>
-      {items.map(item => <div key={item.id}>{item.name}</div>)}
+      {items.map((item) => (
+        <div key={item.id}>{item.name}</div>
+      ))}
       {itemsError && <span className="error">{itemsError}</span>}
     </div>
   );
@@ -233,12 +235,12 @@ const CartStep = () => {
 
 ## 🐛 Common Issues & Solutions
 
-| Issue | Wrong | Correct |
-|-------|-------|---------|
-| Type errors | `useWizard()` from base lib | Import from wizard factory |
-| Stale selectors | `wizardData` in selector | Use `data` field |
-| No autocomplete | Direct library import | Use factory hooks |
-| Re-renders | Full `useWizard()` | Use `useWizardSelector` |
+| Issue           | Wrong                       | Correct                    |
+| --------------- | --------------------------- | -------------------------- |
+| Type errors     | `useWizard()` from base lib | Import from wizard factory |
+| Stale selectors | `wizardData` in selector    | Use `data` field           |
+| No autocomplete | Direct library import       | Use factory hooks          |
+| Re-renders      | Full `useWizard()`          | Use `useWizardSelector`    |
 
 ---
 
@@ -279,12 +281,8 @@ interface AuthSchema {
   preferences: { theme: 'light' | 'dark' };
 }
 
-export const { 
-  WizardProvider, 
-  useWizard, 
-  useWizardValue, 
-  useWizardActions 
-} = createWizardFactory<AuthSchema>();
+export const { WizardProvider, useWizard, useWizardValue, useWizardActions } =
+  createWizardFactory<AuthSchema>();
 ```
 
 ### 2. Wrap your App
@@ -309,7 +307,7 @@ const EmailInput = () => {
   const email = useWizardValue('email');
   const { setData } = useWizardActions();
 
-  return <input value={email} onChange={e => setData('email', e.target.value)} />;
+  return <input value={email} onChange={(e) => setData('email', e.target.value)} />;
 };
 ```
 
@@ -363,8 +361,8 @@ const config = {
   persistence: {
     // 🛡️ Always use a unique prefix for isolation
     adapter: new LocalStorageAdapter('auth_wizard_v2'),
-    mode: 'onStepChange' 
-  }
+    mode: 'onStepChange',
+  },
 };
 ```
 
@@ -372,12 +370,12 @@ const config = {
 
 ## 🛠️ Performance Tuning
 
-| Hook | Returns | Re-renders | Best For |
-| :--- | :--- | :--- | :--- |
-| `useWizardActions` | Navigation/Setters | **Zero** | Buttons, Handlers |
-| `useWizardValue` | Specific Field | **Atomic** | Inputs, Labels |
-| `useWizardState` | UI Meta (Progress) | **Minimal** | Progress Bars |
-| `useWizard` | Everything | **Full** | Orchestration |
+| Hook               | Returns            | Re-renders  | Best For          |
+| :----------------- | :----------------- | :---------- | :---------------- |
+| `useWizardActions` | Navigation/Setters | **Zero**    | Buttons, Handlers |
+| `useWizardValue`   | Specific Field     | **Atomic**  | Inputs, Labels    |
+| `useWizardState`   | UI Meta (Progress) | **Minimal** | Progress Bars     |
+| `useWizard`        | Everything         | **Full**    | Orchestration     |
 
 ---
 
@@ -409,4 +407,3 @@ For migration steps, see [MIGRATION.md](./MIGRATION.md).
 ## License
 
 MIT © [ZizzX](https://github.com/ZizzX)
-

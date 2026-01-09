@@ -22,7 +22,9 @@ e2e/
 ## 🧪 Test Suites
 
 ### 1. **basic-navigation.spec.ts** (8 tests)
+
 Tests core wizard navigation functionality:
+
 - Next/previous navigation
 - Direct step navigation
 - First/last step boundaries
@@ -31,7 +33,9 @@ Tests core wizard navigation functionality:
 - Scroll behavior
 
 ### 2. **validation.spec.ts** (9 tests)
+
 Tests form validation with Zod and Yup:
+
 - Preventing navigation with invalid data
 - onChange and onStepChange validation modes
 - Error display and clearing
@@ -39,7 +43,9 @@ Tests form validation with Zod and Yup:
 - Async validation
 
 ### 3. **persistence.spec.ts** (7 tests)
+
 Tests state persistence with LocalStorage:
+
 - Data persistence on step change
 - Data restoration on page reload
 - Current step restoration
@@ -48,7 +54,9 @@ Tests state persistence with LocalStorage:
 - Storage key isolation
 
 ### 4. **conditional-steps.spec.ts** (8 tests)
+
 Tests dynamic step visibility:
+
 - Step condition evaluation
 - showWhilePending behavior
 - conditionDependsOn optimization
@@ -56,21 +64,27 @@ Tests dynamic step visibility:
 - Dynamic step count changes
 
 ### 5. **dependency-tracking.spec.ts** (6 tests)
+
 Tests wizard dependency tracking:
+
 - Step invalidation on dependency change
 - clearData functionality (arrays and functions)
 - Cascading invalidations
 - Dot notation dependencies
 
 ### 6. **step-guards.spec.ts** (6 tests)
+
 Tests step guard (beforeLeave) functionality:
+
 - Blocking navigation when guard returns false
 - Confirmation dialogs
 - Async guards
 - Guard direction (next/prev)
 
 ### 7. **middleware.spec.ts** (7 tests)
+
 Tests middleware integration:
+
 - Logger middleware
 - DevTools middleware
 - Custom middleware execution order
@@ -78,7 +92,9 @@ Tests middleware integration:
 - Time-travel debugging
 
 ### 8. **error-handling.spec.ts** (6 tests)
+
 Tests error handling:
+
 - Inline validation error display
 - Error state in breadcrumbs
 - Error recovery
@@ -86,7 +102,9 @@ Tests error handling:
 - Async validation errors
 
 ### 9. **array-data.spec.ts** (10 tests)
+
 Tests array data manipulation:
+
 - Add item to array
 - Remove item from array
 - Update item in array
@@ -97,7 +115,9 @@ Tests array data manipulation:
 - Reset functionality
 
 ### 9. **error-handling.spec.ts** (6 tests)
+
 Tests error handling:
+
 - Inline validation error display
 - Error state in breadcrumbs
 - Error recovery
@@ -105,7 +125,9 @@ Tests error handling:
 - Async validation errors
 
 ### 10. **advanced-validation.spec.ts** (19 tests) ✨ NEW
+
 Tests advanced validation scenarios:
+
 - Auto-fill all fields (sync and async)
 - Validate all steps with error modal
 - Error modal navigation (only first error clickable)
@@ -125,31 +147,37 @@ Tests advanced validation scenarios:
 ## 🚀 Running Tests
 
 ### Run all E2E tests
+
 ```bash
 pnpm test:e2e
 ```
 
 ### Run with UI mode (interactive)
+
 ```bash
 pnpm test:e2e:ui
 ```
 
 ### Run in headed mode (see browser)
+
 ```bash
 pnpm test:e2e:headed
 ```
 
 ### Run specific test file
+
 ```bash
 pnpm test:e2e validation.spec.ts
 ```
 
 ### Debug mode
+
 ```bash
 pnpm test:e2e:debug
 ```
 
 ### Run all tests (unit + E2E)
+
 ```bash
 pnpm test:all
 ```
@@ -157,6 +185,7 @@ pnpm test:all
 ## ⚙️ Configuration
 
 E2E tests are configured in `playwright.config.ts`:
+
 - **Test directory:** `./e2e/tests`
 - **Base URL:** `http://localhost:5173` (demo app)
 - **Browser:** Chromium (can be extended to Firefox/Safari)
@@ -199,11 +228,13 @@ The E2E tests assume that the demo application in `examples/demo` has the follow
 
 1. Create a new spec file in `e2e/tests/`
 2. Import base fixtures:
+
 ```typescript
 import { test, expect } from '../fixtures/base';
 ```
 
 3. Write test suite:
+
 ```typescript
 test.describe('My Feature', () => {
   test.beforeEach(async ({ page }) => {
@@ -232,17 +263,21 @@ test.describe('My Feature', () => {
 ## 🐛 Debugging
 
 ### View test report
+
 After test failure, open the HTML report:
+
 ```bash
 npx playwright show-report
 ```
 
 ### Debug specific test
+
 ```bash
 npx playwright test --debug validation.spec.ts
 ```
 
 ### Run with trace viewer
+
 ```bash
 npx playwright show-trace path/to/trace.zip
 ```

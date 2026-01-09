@@ -1,26 +1,29 @@
-import { Routes, Route } from "react-router-dom";
-import ScrollToTop from "./components/ScrollToTop";
+import { Routes, Route } from 'react-router-dom';
+import ScrollToTop from './components/ScrollToTop';
 
 // Test pages for E2E testing
-import TestBasicNavigation from "./pages/test/TestBasicNavigation";
-import TestArrayData from "./pages/test/TestArrayData";
-import TestPersistence from "./pages/test/TestPersistence";
-import TestValidation from "./pages/test/TestValidation";
-import TestStepGuards from "./pages/test/TestStepGuards";
-import TestDependency from "./pages/test/TestDependency";
-import TestError from "./pages/test/TestError";
-import TestAdvancedValidation from "./pages/test/TestAdvancedValidation";
-import TestNavigationControl from "./pages/test/TestNavigationControl";
-import MiddlewareDemo from "./pages/test/MiddlewareDemo";
-import TestConditional from "./pages/test/TestConditional";
+import TestBasicNavigation from './pages/test/TestBasicNavigation';
+import TestArrayData from './pages/test/TestArrayData';
+import TestPersistence from './pages/test/TestPersistence';
+import TestValidation from './pages/test/TestValidation';
+import TestStepGuards from './pages/test/TestStepGuards';
+import TestDependency from './pages/test/TestDependency';
+import TestError from './pages/test/TestError';
+import TestAdvancedValidation from './pages/test/TestAdvancedValidation';
+import TestNavigationControl from './pages/test/TestNavigationControl';
+import MiddlewareDemo from './pages/test/MiddlewareDemo';
+import TestConditional from './pages/test/TestConditional';
 
 function App() {
   return (
     <>
       <ScrollToTop />
       <Routes>
-        <Route path="/" element={<div className="p-8 text-center text-gray-500">Wizzard E2E Test Suite</div>} />
-        
+        <Route
+          path="/"
+          element={<div className="p-8 text-center text-gray-500">Wizzard E2E Test Suite</div>}
+        />
+
         {/* Test Routes for E2E Testing */}
         <Route path="test/basic-navigation" element={<TestBasicNavigation />} />
         <Route path="test/array-data-demo" element={<TestArrayData />} />

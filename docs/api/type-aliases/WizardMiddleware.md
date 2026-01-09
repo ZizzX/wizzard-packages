@@ -1,6 +1,6 @@
 [**wizzard-stepper-react**](../README.md)
 
-***
+---
 
 [wizzard-stepper-react](../README.md) / WizardMiddleware
 
@@ -20,7 +20,7 @@ Middleware Type Definition
 
 ### StepId
 
-`StepId` *extends* `string` = `string`
+`StepId` _extends_ `string` = `string`
 
 ## Parameters
 

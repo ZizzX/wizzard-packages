@@ -1,6 +1,6 @@
 [**wizzard-stepper-react**](../README.md)
 
-***
+---
 
 [wizzard-stepper-react](../README.md) / WizardProviderProps
 
@@ -16,7 +16,7 @@ Defined in: [context/WizardContext.tsx:35](https://github.com/ZizzX/wizzard-step
 
 ### StepId
 
-`StepId` *extends* `string`
+`StepId` _extends_ `string`
 
 ## Properties
 
@@ -26,7 +26,7 @@ Defined in: [context/WizardContext.tsx:35](https://github.com/ZizzX/wizzard-step
 
 Defined in: [context/WizardContext.tsx:39](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/context/WizardContext.tsx#L39)
 
-***
+---
 
 ### config
 
@@ -34,7 +34,7 @@ Defined in: [context/WizardContext.tsx:39](https://github.com/ZizzX/wizzard-step
 
 Defined in: [context/WizardContext.tsx:36](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/context/WizardContext.tsx#L36)
 
-***
+---
 
 ### initialData?
 
@@ -42,7 +42,7 @@ Defined in: [context/WizardContext.tsx:36](https://github.com/ZizzX/wizzard-step
 
 Defined in: [context/WizardContext.tsx:37](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/context/WizardContext.tsx#L37)
 
-***
+---
 
 ### initialStepId?
 

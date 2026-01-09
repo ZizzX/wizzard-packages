@@ -1,38 +1,38 @@
 {
-    "name": "@wizzard/react",
-    "version": "2.1.0",
-    "description": "React components and hooks for Wizzard Stepper.",
-    "type": "module",
-    "main": "./dist/index.cjs",
-    "module": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "files": [
-        "dist"
-    ],
-    "scripts": {
-        "build": "tsup",
-        "dev": "tsup src/index.ts --format cjs,esm --watch --dts",
-        "lint": "eslint .",
-        "test": "vitest",
-        "test:run": "vitest run",
-        "type-check": "tsc --noEmit"
-    },
-    "peerDependencies": {
-        "react": ">=18.0.0",
-        "react-dom": ">=18.0.0"
-    },
-    "dependencies": {
-        "@wizzard/core": "workspace:*"
-    },
-    "devDependencies": {
-        "react": "^19.2.0",
-        "react-dom": "^19.2.0",
-        "tsup": "^8.3.5",
-        "typescript": "^5.7.2",
-        "vitest": "^2.1.8",
-        "@testing-library/react": "^16.1.0",
-        "@testing-library/jest-dom": "^6.6.3",
-        "jsdom": "^25.0.1",
-        "@vitejs/plugin-react": "^4.3.4"
-    }
+  "name": "@wizzard/react",
+  "version": "2.1.0",
+  "description": "React components and hooks for Wizzard Stepper.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup src/index.ts --format cjs,esm --watch --dts",
+    "lint": "eslint .",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "type-check": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "dependencies": {
+    "@wizzard/core": "workspace:*"
+  },
+  "devDependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "jsdom": "^25.0.1",
+    "@vitejs/plugin-react": "^4.3.4"
+  }
 }

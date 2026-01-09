@@ -1,6 +1,6 @@
 [**wizzard-stepper-react**](../README.md)
 
-***
+---
 
 [wizzard-stepper-react](../README.md) / LocalStorageAdapter
 
@@ -48,7 +48,7 @@ Defined in: [adapters/persistence/LocalStorageAdapter.ts:68](https://github.com/
 
 [`IPersistenceAdapter`](../interfaces/IPersistenceAdapter.md).[`clear`](../interfaces/IPersistenceAdapter.md#clear)
 
-***
+---
 
 ### clearStep()
 
@@ -70,7 +70,7 @@ Defined in: [adapters/persistence/LocalStorageAdapter.ts:59](https://github.com/
 
 [`IPersistenceAdapter`](../interfaces/IPersistenceAdapter.md).[`clearStep`](../interfaces/IPersistenceAdapter.md#clearstep)
 
-***
+---
 
 ### getStep()
 
@@ -98,7 +98,7 @@ Defined in: [adapters/persistence/LocalStorageAdapter.ts:24](https://github.com/
 
 [`IPersistenceAdapter`](../interfaces/IPersistenceAdapter.md).[`getStep`](../interfaces/IPersistenceAdapter.md#getstep)
 
-***
+---
 
 ### getStepWithMeta()
 
@@ -126,7 +126,7 @@ Defined in: [adapters/persistence/LocalStorageAdapter.ts:42](https://github.com/
 
 [`IPersistenceAdapter`](../interfaces/IPersistenceAdapter.md).[`getStepWithMeta`](../interfaces/IPersistenceAdapter.md#getstepwithmeta)
 
-***
+---
 
 ### saveStep()
 

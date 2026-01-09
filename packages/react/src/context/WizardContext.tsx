@@ -7,7 +7,7 @@ import React, {
   useCallback,
   useSyncExternalStore,
   useRef,
-} from "react";
+} from 'react';
 import type {
   IWizardConfig,
   IPersistenceAdapter,
@@ -18,18 +18,12 @@ import type {
   IWizardStore,
   WizardEventHandler,
   WizardEventName,
-} from "@wizzard/core";
-import { WizardStore, MemoryAdapter, getByPath, setByPath } from "@wizzard/core";
+} from '@wizzard/core';
+import { WizardStore, MemoryAdapter, getByPath, setByPath } from '@wizzard/core';
 
-const WizardStateContext = createContext<IWizardState<any, any> | undefined>(
-  undefined
-);
-const WizardActionsContext = createContext<IWizardActions<any> | undefined>(
-  undefined
-);
-const WizardStoreContext = createContext<IWizardStore<any, any> | undefined>(
-  undefined
-);
+const WizardStateContext = createContext<IWizardState<any, any> | undefined>(undefined);
+const WizardActionsContext = createContext<IWizardActions<any> | undefined>(undefined);
+const WizardStoreContext = createContext<IWizardStore<any, any> | undefined>(undefined);
 
 export interface WizardProviderProps<T, StepId extends string> {
   config: IWizardConfig<T, StepId>;
@@ -41,27 +35,18 @@ export interface WizardProviderProps<T, StepId extends string> {
 /**
  * Component that provides the wizard context to its children.
  */
-export function WizardProvider<
-  T extends Record<string, any>,
-  StepId extends string = string,
->({
+export function WizardProvider<T extends Record<string, any>, StepId extends string = string>({
   config,
   initialData,
   initialStepId,
   children,
 }: WizardProviderProps<T, StepId>) {
-  const [localConfig, setLocalConfig] =
-    useState<IWizardConfig<T, StepId>>(config);
+  const [localConfig, setLocalConfig] = useState<IWizardConfig<T, StepId>>(config);
 
-  const storeRef = useRef<WizardStore<T, StepId>>(
-    null as unknown as WizardStore<T, StepId>
-  );
+  const storeRef = useRef<WizardStore<T, StepId>>(null as unknown as WizardStore<T, StepId>);
 
   if (!storeRef.current) {
-    storeRef.current = new WizardStore<T, StepId>(
-      (initialData || {}) as T,
-      config.middlewares
-    );
+    storeRef.current = new WizardStore<T, StepId>((initialData || {}) as T, config.middlewares);
   }
 
   const isInitialized = useRef(false);
@@ -70,8 +55,8 @@ export function WizardProvider<
     return localConfig.persistence?.adapter || new MemoryAdapter();
   }, [localConfig.persistence?.adapter]);
 
-  const persistenceMode = localConfig.persistence?.mode || "onStepChange";
-  const META_KEY = "__wizzard_meta__";
+  const persistenceMode = localConfig.persistence?.mode || 'onStepChange';
+  const META_KEY = '__wizzard_meta__';
 
   const snapshot = useSyncExternalStore<IWizardState<T, StepId>>(
     storeRef.current.subscribe,
@@ -90,9 +75,7 @@ export function WizardProvider<
 
   const stepsMap = useMemo(() => {
     const map = new Map<StepId, IStepConfig<T, StepId>>();
-    localConfig.steps.forEach((step: IStepConfig<T, StepId>) =>
-      map.set(step.id, step)
-    );
+    localConfig.steps.forEach((step: IStepConfig<T, StepId>) => map.set(step.id, step));
     return map;
   }, [localConfig.steps]);
 
@@ -102,9 +85,7 @@ export function WizardProvider<
 
   const activeStepsIndexMap = useMemo(() => {
     const map = new Map<StepId, number>();
-    activeSteps.forEach((s: IStepConfig<T, StepId>, i: number) =>
-      map.set(s.id, i)
-    );
+    activeSteps.forEach((s: IStepConfig<T, StepId>, i: number) => map.set(s.id, i));
     return map;
   }, [activeSteps]);
 
@@ -121,9 +102,7 @@ export function WizardProvider<
     history,
   });
 
-  const validationDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
+  const validationDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     stateRef.current = {
@@ -160,10 +139,7 @@ export function WizardProvider<
     []
   );
 
-  const validateStep = useCallback(
-    (stepId: StepId) => storeRef.current.validateStep(stepId),
-    []
-  );
+  const validateStep = useCallback((stepId: StepId) => storeRef.current.validateStep(stepId), []);
 
   const goToStep = useCallback(
     async (
@@ -186,10 +162,7 @@ export function WizardProvider<
     const currentData = storeRef.current.getSnapshot().data;
     const step = stepsMap.get(currentStepId as StepId);
 
-    const shouldVal =
-      step?.autoValidate ??
-      localConfig.autoValidate ??
-      !!step?.validationAdapter;
+    const shouldVal = step?.autoValidate ?? localConfig.autoValidate ?? !!step?.validationAdapter;
 
     if (shouldVal) {
       const ok = await validateStep(currentStepId as StepId);
@@ -210,7 +183,7 @@ export function WizardProvider<
           const nextComp = new Set(currentSnapshot.completedSteps);
           nextComp.add(currentStepId as StepId);
           storeRef.current.dispatch({
-            type: "SET_COMPLETED_STEPS",
+            type: 'SET_COMPLETED_STEPS',
             payload: { steps: nextComp },
           });
         }
@@ -219,8 +192,7 @@ export function WizardProvider<
   }, [goToStep, resolveActiveStepsHelper, validateStep, stepsMap, localConfig]);
 
   const goToPrevStep = useCallback(async () => {
-    const { currentStepId, activeSteps, activeStepsIndexMap } =
-      stateRef.current;
+    const { currentStepId, activeSteps, activeStepsIndexMap } = stateRef.current;
     const idx = activeStepsIndexMap.get(currentStepId as StepId) ?? -1;
     if (idx > 0) await goToStep(activeSteps[idx - 1].id as any);
   }, [goToStep]);
@@ -240,10 +212,7 @@ export function WizardProvider<
         localConfig.steps.forEach((step: IStepConfig<T, StepId>) => {
           const isDependent = step.dependsOn?.some((p: string) =>
             changedPaths.some(
-              (path) =>
-                path === p ||
-                p.startsWith(path + ".") ||
-                path.startsWith(p + ".")
+              (path) => path === p || p.startsWith(path + '.') || path.startsWith(p + '.')
             )
           );
 
@@ -256,7 +225,7 @@ export function WizardProvider<
             }
 
             if (step.clearData) {
-              if (typeof step.clearData === "function") {
+              if (typeof step.clearData === 'function') {
                 const patch = step.clearData(currentData, changedPaths);
                 Object.keys(patch).forEach((key) => {
                   if (currentData[key] !== patch[key]) {
@@ -291,11 +260,11 @@ export function WizardProvider<
 
       if (statusChanged) {
         storeRef.current.dispatch({
-          type: "SET_COMPLETED_STEPS",
+          type: 'SET_COMPLETED_STEPS',
           payload: { steps: nextComp },
         });
         storeRef.current.dispatch({
-          type: "SET_VISITED_STEPS",
+          type: 'SET_VISITED_STEPS',
           payload: { steps: nextVis },
         });
       }
@@ -316,14 +285,11 @@ export function WizardProvider<
       if (getByPath(prevData, path) === value) return;
 
       const baseData = setByPath(prevData, path, value);
-      const { newData, hasClearing } = handleStepDependencies(
-        [path],
-        baseData
-      );
+      const { newData, hasClearing } = handleStepDependencies([path], baseData);
 
       if (!hasClearing) {
         storeRef.current.dispatch({
-          type: "SET_DATA",
+          type: 'SET_DATA',
           payload: {
             path,
             value,
@@ -332,7 +298,7 @@ export function WizardProvider<
         });
       } else {
         storeRef.current.dispatch({
-          type: "UPDATE_DATA",
+          type: 'UPDATE_DATA',
           payload: {
             data: newData,
             options: { replace: true, __from_set_data__: true, path },
@@ -343,20 +309,18 @@ export function WizardProvider<
       if (currentStepId) {
         storeRef.current.deleteError(currentStepId as StepId, path);
         const step = stepsMap.get(currentStepId as StepId);
-        const mode = step?.validationMode || localConfig.validationMode || "onStepChange";
+        const mode = step?.validationMode || localConfig.validationMode || 'onStepChange';
 
-        if (mode === "onChange") {
-            const debounceMs =
-              options?.debounceValidation ??
-              localConfig.validationDebounceTime ??
-              300;
-            if (validationDebounceRef.current) {
-              clearTimeout(validationDebounceRef.current);
-            }
-            validationDebounceRef.current = setTimeout(() => {
-              validateStep(currentStepId as StepId);
-            }, debounceMs);
+        if (mode === 'onChange') {
+          const debounceMs =
+            options?.debounceValidation ?? localConfig.validationDebounceTime ?? 300;
+          if (validationDebounceRef.current) {
+            clearTimeout(validationDebounceRef.current);
           }
+          validationDebounceRef.current = setTimeout(() => {
+            validateStep(currentStepId as StepId);
+          }, debounceMs);
+        }
       }
     },
     [localConfig, validateStep, handleStepDependencies]
@@ -372,9 +336,7 @@ export function WizardProvider<
       storeRef.current.update(newData as T, Object.keys(data));
       if (options?.persist) {
         if (storeRef.current.save) {
-          storeRef.current.save(
-            storeRef.current.getSnapshot().currentStepId as StepId
-          );
+          storeRef.current.save(storeRef.current.getSnapshot().currentStepId as StepId);
         }
       }
     },
@@ -386,39 +348,39 @@ export function WizardProvider<
     storeRef.current.update((initialData || {}) as T);
     storeRef.current.updateErrors({} as Record<StepId, Record<string, string>>);
     storeRef.current.dispatch({
-      type: "SET_VISITED_STEPS",
+      type: 'SET_VISITED_STEPS',
       payload: { steps: new Set() },
     });
     storeRef.current.dispatch({
-      type: "SET_COMPLETED_STEPS",
+      type: 'SET_COMPLETED_STEPS',
       payload: { steps: new Set() },
     });
     storeRef.current.dispatch({
-      type: "SET_ERROR_STEPS",
+      type: 'SET_ERROR_STEPS',
       payload: { steps: new Set() },
     });
     if (activeSteps.length > 0) {
       const startId = activeSteps[0].id;
       storeRef.current.dispatch({
-        type: "SET_CURRENT_STEP_ID",
+        type: 'SET_CURRENT_STEP_ID',
         payload: { stepId: startId as StepId },
       });
       storeRef.current.dispatch({
-        type: "SET_HISTORY",
+        type: 'SET_HISTORY',
         payload: { history: [startId as StepId] },
       });
     } else {
       storeRef.current.dispatch({
-        type: "SET_CURRENT_STEP_ID",
-        payload: { stepId: "" as StepId },
+        type: 'SET_CURRENT_STEP_ID',
+        payload: { stepId: '' as StepId },
       });
       storeRef.current.dispatch({
-        type: "SET_HISTORY",
+        type: 'SET_HISTORY',
         payload: { history: [] },
       });
     }
     persistenceAdapter.clear();
-    trackEvent("wizard_reset", { data: initialData } as any);
+    trackEvent('wizard_reset', { data: initialData } as any);
   }, [initialData, activeSteps, persistenceAdapter, trackEvent]);
 
   const stateValue = useMemo<IWizardState<T, StepId>>(
@@ -437,12 +399,12 @@ export function WizardProvider<
         // Handle both signatures:
         // 1. goToStep(id, options)
         // 2. goToStep(id, undefined, options) - mistakenly used by user but likely legacy or internal leak
-        
+
         let finalOptions = optionsOrUndefined;
         if (thirdArg && optionsOrUndefined === undefined) {
           finalOptions = thirdArg;
         }
-        
+
         return goToStep(sid, undefined, finalOptions);
       },
       setStepData: (_stepId: StepId, data: any) => {
@@ -474,19 +436,16 @@ export function WizardProvider<
         } else if (!ids) {
           storeRef.current.save();
         } else {
-          (Array.isArray(ids) ? ids : [ids]).forEach((id) =>
-            storeRef.current.save(id as StepId)
-          );
+          (Array.isArray(ids) ? ids : [ids]).forEach((id) => storeRef.current.save(id as StepId));
         }
       },
       clearStorage: () => persistenceAdapter.clear(),
       reset,
       setData,
       updateData,
-      getData: (p: string, d?: any) =>
-        getByPath(storeRef.current.getSnapshot().data, p, d),
+      getData: (p: string, d?: any) => getByPath(storeRef.current.getSnapshot().data, p, d),
       updateConfig: (nc: any) => {
-        setLocalConfig((prev: IWizardConfig<T, StepId>) => ({...prev, ...nc}));
+        setLocalConfig((prev: IWizardConfig<T, StepId>) => ({ ...prev, ...nc }));
       },
     }),
     [
@@ -499,7 +458,7 @@ export function WizardProvider<
       updateData,
       persistenceAdapter,
       localConfig,
-      resolveActiveStepsHelper
+      resolveActiveStepsHelper,
     ]
   );
 
@@ -507,7 +466,7 @@ export function WizardProvider<
     if (!isInitialized.current) {
       storeRef.current.injectPersistence(persistenceAdapter);
       storeRef.current.dispatch({
-        type: "INIT",
+        type: 'INIT',
         payload: { data: initialData || ({} as T), config: localConfig as any },
       });
       storeRef.current.hydrate();
@@ -523,7 +482,7 @@ export function WizardProvider<
       const resolved = await resolveActiveStepsHelper(data);
       if (isMounted) {
         storeRef.current.dispatch({
-          type: "SET_ACTIVE_STEPS",
+          type: 'SET_ACTIVE_STEPS',
           payload: { steps: resolved as any },
         });
       }
@@ -550,23 +509,23 @@ export function WizardProvider<
     if (meta) {
       if (meta.currentStepId) {
         storeRef.current.dispatch({
-          type: "SET_CURRENT_STEP_ID",
+          type: 'SET_CURRENT_STEP_ID',
           payload: { stepId: meta.currentStepId as StepId },
         });
       }
       if (meta.visited)
         storeRef.current.dispatch({
-          type: "SET_VISITED_STEPS",
+          type: 'SET_VISITED_STEPS',
           payload: { steps: new Set(meta.visited as StepId[]) },
         });
       if (meta.completed)
         storeRef.current.dispatch({
-          type: "SET_COMPLETED_STEPS",
+          type: 'SET_COMPLETED_STEPS',
           payload: { steps: new Set(meta.completed as StepId[]) },
         });
       if (meta.history) {
         storeRef.current.dispatch({
-          type: "SET_HISTORY",
+          type: 'SET_HISTORY',
           payload: { history: meta.history as StepId[] },
         });
       }
@@ -577,18 +536,19 @@ export function WizardProvider<
 
     if (!currentSnapshot.currentStepId && currentActiveSteps.length > 0) {
       const startId =
-        initialStepId && currentActiveSteps.some((s: IStepConfig<T, StepId>) => s.id === initialStepId)
+        initialStepId &&
+        currentActiveSteps.some((s: IStepConfig<T, StepId>) => s.id === initialStepId)
           ? initialStepId
           : currentActiveSteps[0].id;
 
       storeRef.current.dispatch({
-        type: "SET_CURRENT_STEP_ID",
+        type: 'SET_CURRENT_STEP_ID',
         payload: { stepId: startId as StepId },
       });
 
       if (currentSnapshot.history.length === 0) {
         storeRef.current.dispatch({
-          type: "SET_HISTORY",
+          type: 'SET_HISTORY',
           payload: { history: [startId as StepId] },
         });
       }
@@ -597,7 +557,7 @@ export function WizardProvider<
       if (!currentVisited.has(startId as StepId)) {
         currentVisited.add(startId as StepId);
         storeRef.current.dispatch({
-          type: "SET_VISITED_STEPS",
+          type: 'SET_VISITED_STEPS',
           payload: { steps: currentVisited },
         });
       }
@@ -619,13 +579,12 @@ export function WizardProvider<
   );
 }
 
-export function useWizardState<
-  T = unknown,
-  StepId extends string = string,
->(): IWizardState<T, StepId> {
+export function useWizardState<T = unknown, StepId extends string = string>(): IWizardState<
+  T,
+  StepId
+> {
   const context = useContext(WizardStateContext);
-  if (!context)
-    throw new Error("useWizardState must be used within a WizardProvider");
+  if (!context) throw new Error('useWizardState must be used within a WizardProvider');
   return context as IWizardState<T, StepId>;
 }
 
@@ -634,8 +593,7 @@ export function useWizardValue<TValue = any>(
   options?: { isEqual?: (a: TValue, b: TValue) => boolean }
 ): TValue {
   const store = useContext(WizardStoreContext);
-  if (!store)
-    throw new Error("useWizardValue must be used within a WizardProvider");
+  if (!store) throw new Error('useWizardValue must be used within a WizardProvider');
   const lastStateRef = useRef<any>(null);
   const lastValueRef = useRef<any>(null);
   const getSnapshot = useCallback(() => {
@@ -658,8 +616,7 @@ export function useWizardValue<TValue = any>(
 
 export function useWizardError(path: string): string | undefined {
   const store = useContext(WizardStoreContext);
-  if (!store)
-    throw new Error("useWizardError must be used within a WizardProvider");
+  if (!store) throw new Error('useWizardError must be used within a WizardProvider');
   const getSnapshot = useCallback(() => {
     const errors = store.getSnapshot().errors;
     for (const [_, stepErrors] of Object.entries(errors)) {
@@ -676,8 +633,7 @@ export function useWizardSelector<TSelected = any>(
   options?: { isEqual?: (a: TSelected, b: TSelected) => boolean }
 ): TSelected {
   const store = useContext(WizardStoreContext);
-  if (!store)
-    throw new Error("useWizardSelector must be used within a WizardProvider");
+  if (!store) throw new Error('useWizardSelector must be used within a WizardProvider');
 
   const lastResultRef = useRef<TSelected | null>(null);
 
@@ -699,19 +655,16 @@ export function useWizardSelector<TSelected = any>(
   return useSyncExternalStore(store.subscribe, getSnapshot);
 }
 
-export function useWizardActions<
-  StepId extends string = string,
->(): IWizardActions<StepId> {
+export function useWizardActions<StepId extends string = string>(): IWizardActions<StepId> {
   const context = useContext(WizardActionsContext);
-  if (!context)
-    throw new Error("useWizardActions must be used within a WizardProvider");
+  if (!context) throw new Error('useWizardActions must be used within a WizardProvider');
   return context as IWizardActions<StepId>;
 }
 
-export function useWizardContext<
-  T = any,
-  StepId extends string = string,
->(): IWizardContext<T, StepId> {
+export function useWizardContext<T = any, StepId extends string = string>(): IWizardContext<
+  T,
+  StepId
+> {
   const state = useWizardState<T, StepId>();
   const actions = useWizardActions<StepId>();
   const store = useContext(WizardStoreContext) as IWizardStore<T, StepId>;

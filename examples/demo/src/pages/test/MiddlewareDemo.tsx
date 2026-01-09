@@ -1,5 +1,5 @@
-import { useState, useMemo, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useState, useMemo, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   WizardProvider,
   useWizard,
@@ -7,17 +7,11 @@ import {
   devToolsMiddleware,
   WizardDevTools,
   MemoryAdapter,
-} from "wizzard-stepper-react";
-import type { WizardMiddleware, IWizardConfig } from "wizzard-stepper-react";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "../../components/ui/Card";
-import { StepperControls } from "../../components/StepperControls";
-import { Input } from "../../components/ui/Input";
+} from 'wizzard-stepper-react';
+import type { WizardMiddleware, IWizardConfig } from 'wizzard-stepper-react';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../components/ui/Card';
+import { StepperControls } from '../../components/StepperControls';
+import { Input } from '../../components/ui/Input';
 
 // --- TYPES ---
 
@@ -26,14 +20,14 @@ interface DemoData {
   email?: string;
 }
 
-type DemoSteps = "start" | "middle" | "finish";
+type DemoSteps = 'start' | 'middle' | 'finish';
 
 // --- CUSTOM MIDDLEWARE ---
 
 /**
  * A custom middleware that mirrors the wizard data to a local state for debugging.
  * Real-world use case: Syncing with external analytics or a legacy storage.
- * 
+ *
  * Following Redux best practices: middleware is created once with a logger callback.
  * The callback is stored in a ref to avoid recreating the middleware on every render.
  */
@@ -43,16 +37,14 @@ const customAnalyticsMiddleware =
   (next) =>
   (action) => {
     const logger = getLogger();
-    if (action.type === "GO_TO_STEP") {
+    if (action.type === 'GO_TO_STEP') {
       logger(`🚀 Navigation: Moving to step ${action.payload.to}`);
     }
-    if (action.type === "SET_DATA") {
+    if (action.type === 'SET_DATA') {
       logger(`✍️ Data Change: Field "${action.payload.path}" updated`);
     }
-    if (action.type === "UPDATE_DATA" && action.payload.options?.path) {
-      logger(
-        `✍️ Data Change: Field "${action.payload.options.path}" updated (Bulk)`
-      );
+    if (action.type === 'UPDATE_DATA' && action.payload.options?.path) {
+      logger(`✍️ Data Change: Field "${action.payload.options.path}" updated (Bulk)`);
     }
     return next(action);
   };
@@ -66,7 +58,11 @@ const customMiddleware1 =
   (next) =>
   (action) => {
     // Skip logging for INIT to prevent infinite loops
-    if (action.type !== 'INIT' && action.type !== 'SET_ACTIVE_STEPS' && action.type !== 'UPDATE_META') {
+    if (
+      action.type !== 'INIT' &&
+      action.type !== 'SET_ACTIVE_STEPS' &&
+      action.type !== 'UPDATE_META'
+    ) {
       const logger = getLogger();
       logger(`[M1] Middleware 1 (Action: ${action.type})`);
     }
@@ -82,34 +78,40 @@ const customMiddleware2 =
   (next) =>
   (action) => {
     // Skip logging for INIT to prevent infinite loops
-    if (action.type !== 'INIT' && action.type !== 'SET_ACTIVE_STEPS' && action.type !== 'UPDATE_META') {
+    if (
+      action.type !== 'INIT' &&
+      action.type !== 'SET_ACTIVE_STEPS' &&
+      action.type !== 'UPDATE_META'
+    ) {
       const logger = getLogger();
       logger(`[M2] Middleware 2 (Action: ${action.type})`);
     }
     return next(action);
   };
 
-  /**
-   * Middleware that blocks navigation from start step.
-   * Demonstrates proper blocking pattern: don't call next() to block.
-   */
-  const customMiddlewareBlockNavigation =  (
-    setAlert: (msg: string) => void
-  ): WizardMiddleware<DemoData, DemoSteps> => (api) => (next) => (action) => {
+/**
+ * Middleware that blocks navigation from start step.
+ * Demonstrates proper blocking pattern: don't call next() to block.
+ */
+const customMiddlewareBlockNavigation =
+  (setAlert: (msg: string) => void): WizardMiddleware<DemoData, DemoSteps> =>
+  (api) =>
+  (next) =>
+  (action) => {
     if (action.type === 'GO_TO_STEP') {
       const currentStepId = api.getSnapshot().currentStepId;
       const targetStepId = action.payload.to;
-      
+
       console.log('[BlockNav]', { from: currentStepId, to: targetStepId });
-      
+
       // Block leaving start step
       if (currentStepId === 'start' && targetStepId !== 'start') {
-        setAlert("Navigation blocked! Cannot leave start step.");
+        setAlert('Navigation blocked! Cannot leave start step.');
         // Don't call next() - this blocks the action
         return;
       }
     }
-    
+
     // Allow the action through
     return next(action);
   };
@@ -122,14 +124,13 @@ const Step1 = () => {
     <div className="space-y-4">
       <h3 className="text-lg font-bold">Step 1: Middleware Demo</h3>
       <p className="text-sm text-gray-500">
-        Notice the logs below update as you type. This is handled by a custom
-        middleware.
+        Notice the logs below update as you type. This is handled by a custom middleware.
       </p>
       <Input
         label="Your Name"
         data-testid="name-input"
-        value={data.name || ""}
-        onChange={(e) => handleStepChange("name", e.target.value)}
+        value={data.name || ''}
+        onChange={(e) => handleStepChange('name', e.target.value)}
       />
     </div>
   );
@@ -146,8 +147,8 @@ const Step2 = () => {
       <Input
         label="Email Address"
         data-testid="email-input"
-        value={data.email || ""}
-        onChange={(e) => handleStepChange("email", e.target.value)}
+        value={data.email || ''}
+        onChange={(e) => handleStepChange('email', e.target.value)}
       />
     </div>
   );
@@ -161,9 +162,9 @@ export default function MiddlewareDemo() {
 
   const location = useLocation();
   const search = new URLSearchParams(location.search);
-  const isBlocking = search.get("blocking") === "true";
-  const isDebug = search.get("debug") === "true";
-  const isCustom = search.get("custom") === "true";
+  const isBlocking = search.get('blocking') === 'true';
+  const isDebug = search.get('debug') === 'true';
+  const isCustom = search.get('custom') === 'true';
 
   // Use ref to ensure addLog never changes reference
   const addLogRef = useRef<(msg: string) => void>(() => {});
@@ -174,7 +175,7 @@ export default function MiddlewareDemo() {
   const config: IWizardConfig<DemoData, DemoSteps> = useMemo(() => {
     // Create a stable getter function that always returns the current addLog ref
     const getLogger = () => addLogRef.current!;
-    
+
     const middlewares: WizardMiddleware<DemoData, DemoSteps>[] = [
       loggerMiddleware,
       devToolsMiddleware,
@@ -192,14 +193,14 @@ export default function MiddlewareDemo() {
 
     return {
       persistence: {
-        mode: "onChange",
+        mode: 'onChange',
         adapter: new MemoryAdapter(),
       },
       middlewares,
       steps: [
-        { id: "start", label: "Start" },
-        { id: "middle", label: "Middle" },
-        { id: "finish", label: "Finish" },
+        { id: 'start', label: 'Start' },
+        { id: 'middle', label: 'Middle' },
+        { id: 'finish', label: 'Finish' },
       ],
     };
   }, [isBlocking, isCustom]);
@@ -220,22 +221,15 @@ export default function MiddlewareDemo() {
           Middleware & DevTools Demo
         </h1>
         <p className="text-gray-600">
-          This demo showcases the power of the {__APP_VERSION__} middleware
-          system and the visual DevTools overlay.
+          This demo showcases the power of the {__APP_VERSION__} middleware system and the visual
+          DevTools overlay.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <WizardProvider
-            key={search.toString()}
-            config={config}
-            initialData={{ name: "" }}
-          >
-            <Card
-              className="border-2 border-indigo-100 shadow-2xl"
-              data-testid="wizard-container"
-            >
+          <WizardProvider key={search.toString()} config={config} initialData={{ name: '' }}>
+            <Card className="border-2 border-indigo-100 shadow-2xl" data-testid="wizard-container">
               <CardHeader className="bg-indigo-50/50 border-b border-indigo-100">
                 <CardTitle className="text-indigo-900 text-sm uppercase tracking-widest font-black">
                   Active Wizard
@@ -261,14 +255,9 @@ export default function MiddlewareDemo() {
                 Middleware Event Log
               </CardTitle>
             </CardHeader>
-            <CardContent
-              className="pt-4 space-y-2"
-              data-testid="middleware-log"
-            >
+            <CardContent className="pt-4 space-y-2" data-testid="middleware-log">
               {logs.length === 0 && (
-                <p className="text-gray-600 text-xs italic">
-                  No events yet. Start interacting...
-                </p>
+                <p className="text-gray-600 text-xs italic">No events yet. Start interacting...</p>
               )}
               {logs.map((log, i) => (
                 <div
@@ -283,8 +272,8 @@ export default function MiddlewareDemo() {
           </Card>
 
           <div>
-            Try opening the <b>Redux DevTools</b> extension! The same actions
-            are being piped there via <code>devToolsMiddleware</code>.
+            Try opening the <b>Redux DevTools</b> extension! The same actions are being piped there
+            via <code>devToolsMiddleware</code>.
           </div>
         </div>
       </div>
@@ -301,9 +290,9 @@ function WizardContent({ isDebug }: { isDebug?: boolean }) {
           {JSON.stringify(data)}
         </div>
       )}
-      {currentStepId === "start" && <Step1 />}
-      {currentStepId === "middle" && <Step2 />}
-      {currentStepId === "finish" && (
+      {currentStepId === 'start' && <Step1 />}
+      {currentStepId === 'middle' && <Step2 />}
+      {currentStepId === 'finish' && (
         <div className="space-y-4">
           <h3 className="text-lg font-bold">Step 3: Complete</h3>
           <p className="text-sm text-gray-500">

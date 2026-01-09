@@ -2,7 +2,7 @@ import { test, expect } from '../fixtures/base';
 
 /**
  * E2E Test: Dependency Tracking
- * 
+ *
  * Tests wizard dependency tracking functionality:
  * - dependsOn field tracking
  * - Step invalidation on dependency change
@@ -12,7 +12,7 @@ import { test, expect } from '../fixtures/base';
 
 test.describe('Dependency Tracking', () => {
   test.beforeEach(async ({ page }) => {
-    page.on('console', msg => console.log(`[Browser] ${msg.text()}`));
+    page.on('console', (msg) => console.log(`[Browser] ${msg.text()}`));
     await page.goto('#/test/dependency-demo?debug=true');
     await page.waitForSelector('[data-testid="wizard-container"]', { timeout: 5000 });
   });
@@ -34,7 +34,10 @@ test.describe('Dependency Tracking', () => {
     await page.locator('[data-testid="country-select"]').selectOption('CA');
     await page.waitForTimeout(300);
     // Step 2 should no longer be completed
-    await expect(page.locator('[data-testid="breadcrumb-step-2"]')).toHaveAttribute('data-is-completed', 'false');
+    await expect(page.locator('[data-testid="breadcrumb-step-2"]')).toHaveAttribute(
+      'data-is-completed',
+      'false'
+    );
   });
 
   test('should clear dependent data when dependency changes', async ({ page }) => {
@@ -57,7 +60,7 @@ test.describe('Dependency Tracking', () => {
   });
 
   test('should clear specific fields with clearData array', async ({ page }) => {
-    // Navigate to step 2 manually? No, it's sequential. 
+    // Navigate to step 2 manually? No, it's sequential.
     // Wait, the previous test might leave state? No, beforeEach resets.
 
     // Fill multiple fields on first step
@@ -88,7 +91,7 @@ test.describe('Dependency Tracking', () => {
     // My implementation clears BOTH if category changes?
     // "onChange={e => updateData({ category: e.target.value, subcategory: undefined, brand: undefined })}"
     // So both are cleared. The test says "Brand might or might not be cleared".
-    // I should ensure Brand is NOT cleared if I want to match specific behavior, 
+    // I should ensure Brand is NOT cleared if I want to match specific behavior,
     // but clearing both is safer for "clothing".
     // Let's see if test fails on brand check. It doesn't check brand?
     // Lines 76-78: comments only.

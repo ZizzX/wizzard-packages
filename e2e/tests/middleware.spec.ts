@@ -2,7 +2,7 @@ import { test, expect } from '../fixtures/base';
 
 /**
  * E2E Test: Middleware Integration
- * 
+ *
  * Tests middleware functionality:
  * - Logger middleware
  * - DevTools middleware
@@ -15,7 +15,7 @@ test.describe('Middleware Integration', () => {
 
   test.beforeEach(async ({ page }) => {
     consoleLogs = [];
-    page.on('console', msg => {
+    page.on('console', (msg) => {
       if (msg.type() === 'log' || msg.type() === 'startGroup') {
         consoleLogs.push(msg.text());
       }
@@ -32,7 +32,7 @@ test.describe('Middleware Integration', () => {
     await page.waitForTimeout(500);
 
     // Check logs
-    const setDataLogs = consoleLogs.filter(log => log.includes('SET_DATA'));
+    const setDataLogs = consoleLogs.filter((log) => log.includes('SET_DATA'));
     if (setDataLogs.length === 0) {
       console.log('Detected logs:', consoleLogs);
     }
@@ -106,7 +106,7 @@ test.describe('Middleware Integration', () => {
     await page.waitForTimeout(200);
 
     // Check middleware execution order in the UI logs
-    const executionLog = await page.locator('[data-testid="middleware-log"]').textContent() || "";
+    const executionLog = (await page.locator('[data-testid="middleware-log"]').textContent()) || '';
 
     // We expect both middlewares to have run for the navigation action
     expect(executionLog).toContain('Middleware 1');

@@ -1,6 +1,6 @@
 **wizzard-stepper-react**
 
-***
+---
 
 # wizzard-stepper-react
 

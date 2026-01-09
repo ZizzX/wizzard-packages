@@ -1,6 +1,6 @@
 [**wizzard-stepper-react**](../README.md)
 
-***
+---
 
 [wizzard-stepper-react](../README.md) / IWizardActions
 
@@ -14,7 +14,7 @@ Public actions available to control the wizard.
 
 ### StepId
 
-`StepId` *extends* `string` = `string`
+`StepId` _extends_ `string` = `string`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Clears all saved data for this wizard from storage.
 
 `void`
 
-***
+---
 
 ### getData()
 
@@ -54,7 +54,7 @@ Retrieves data value at a specific path.
 
 `unknown`
 
-***
+---
 
 ### goToNextStep()
 
@@ -69,7 +69,7 @@ Triggers validation and guards if enabled.
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### goToPrevStep()
 
@@ -83,7 +83,7 @@ Moves to the previous step.
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### goToStep()
 
@@ -119,7 +119,7 @@ Navigation options (e.g. bypass validation)
 
 `Promise`\<`boolean`\>
 
-***
+---
 
 ### handleStepChange()
 
@@ -143,7 +143,7 @@ Helper for simple field updates in basic forms.
 
 `void`
 
-***
+---
 
 ### reset()
 
@@ -157,7 +157,7 @@ Resets the entire wizard to its initial state.
 
 `void`
 
-***
+---
 
 ### save()
 
@@ -177,7 +177,7 @@ Persists specific steps to the configured storage.
 
 `void`
 
-***
+---
 
 ### setData()
 
@@ -211,10 +211,10 @@ Supports dot notation and debounced validation.
 #### Example
 
 ```ts
-actions.setData('user.address.zip', '12345')
+actions.setData('user.address.zip', '12345');
 ```
 
-***
+---
 
 ### setStepData()
 
@@ -240,7 +240,7 @@ Sets experimental bulk data for a step.
 
 `void`
 
-***
+---
 
 ### updateConfig()
 
@@ -261,7 +261,7 @@ Useful for changing steps or modes at runtime.
 
 `void`
 
-***
+---
 
 ### updateData()
 
@@ -295,7 +295,7 @@ options.replace will overwrite the entire state
 
 `void`
 
-***
+---
 
 ### validateAll()
 
@@ -309,7 +309,7 @@ Forces validation for all active steps.
 
 `Promise`\<\{ `errors`: `Record`\<`string`, `Record`\<`string`, `string`\>\>; `isValid`: `boolean`; \}\>
 
-***
+---
 
 ### validateStep()
 

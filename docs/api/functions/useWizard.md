@@ -1,6 +1,6 @@
 [**wizzard-stepper-react**](../README.md)
 
-***
+---
 
 [wizzard-stepper-react](../README.md) / useWizard
 
@@ -18,7 +18,7 @@ Defined in: [hooks/useWizard.ts:4](https://github.com/ZizzX/wizzard-stepper-reac
 
 ### StepId
 
-`StepId` *extends* `string` = `string`
+`StepId` _extends_ `string` = `string`
 
 ## Returns
 

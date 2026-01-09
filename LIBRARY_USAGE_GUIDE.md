@@ -60,7 +60,7 @@ const products = useWizardSelector((state) => state.data.products);
 const email = useWizardSelector((state) => state.data.email);
 
 // ✅ CORRECT - Derived state
-const totalPrice = useWizardSelector((state) => 
+const totalPrice = useWizardSelector((state) =>
   state.data.items.reduce((sum, item) => sum + item.price, 0)
 );
 ```
@@ -130,7 +130,7 @@ const { wizardData } = useWizard();
 // ✅ CORRECT
 const { data } = useWizard();
 // OR even better:
-const products = useWizardSelector(state => state.data.products);
+const products = useWizardSelector((state) => state.data.products);
 ```
 
 ### 2. Don't import from base library when using factory
@@ -147,10 +147,10 @@ import { useWizard, WizardProvider } from '../wizards/my-wizard';
 
 ```tsx
 // ❌ WRONG - incorrect structure
-const products = useWizardSelector(state => state.wizardData?.products);
+const products = useWizardSelector((state) => state.wizardData?.products);
 
 // ✅ CORRECT - state.data is the correct field
-const products = useWizardSelector(state => state.data.products);
+const products = useWizardSelector((state) => state.data.products);
 ```
 
 ### 4. Don't use Object.assign for nested updates
@@ -192,22 +192,24 @@ import { useWizardSelector, useWizardActions, useWizardError } from '../wizards/
 
 const CartStep = () => {
   // ✅ Read data with selector
-  const items = useWizardSelector(state => state.data.items);
-  
+  const items = useWizardSelector((state) => state.data.items);
+
   // ✅ Get actions
   const { updateData } = useWizardActions();
-  
+
   // ✅ Get field error
   const itemsError = useWizardError('items');
-  
+
   // ✅ Update data
   const addItem = (item: Product) => {
     updateData({ items: [...items, item] });
   };
-  
+
   return (
     <div>
-      {items.map(item => <div key={item.id}>{item.name}</div>)}
+      {items.map((item) => (
+        <div key={item.id}>{item.name}</div>
+      ))}
       {itemsError && <span className="error">{itemsError}</span>}
     </div>
   );
@@ -229,12 +231,12 @@ const CartStep = () => {
 
 ## 🐛 Common Issues & Solutions
 
-| Issue | Wrong | Correct |
-|-------|-------|---------|
-| Type errors | `useWizard()` from base lib | Import from wizard factory |
-| Stale selectors | `wizardData` in selector | Use `data` field |
-| No autocomplete | Direct library import | Use factory hooks |
-| Re-renders | Full `useWizard()` | Use `useWizardSelector` |
+| Issue           | Wrong                       | Correct                    |
+| --------------- | --------------------------- | -------------------------- |
+| Type errors     | `useWizard()` from base lib | Import from wizard factory |
+| Stale selectors | `wizardData` in selector    | Use `data` field           |
+| No autocomplete | Direct library import       | Use factory hooks          |
+| Re-renders      | Full `useWizard()`          | Use `useWizardSelector`    |
 
 ---
 

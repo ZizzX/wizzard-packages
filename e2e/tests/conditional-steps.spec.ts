@@ -2,7 +2,7 @@ import { test, expect } from '../fixtures/base';
 
 /**
  * E2E Test: Conditional Steps
- * 
+ *
  * Tests dynamic step visibility based on data:
  * - Step condition evaluation
  * - showWhilePending behavior
@@ -56,7 +56,9 @@ test.describe('Conditional Steps', () => {
 
   test('should update progress based on active steps', async ({ page }) => {
     // Get initial progress
-    const initialProgress = await page.locator('[data-testid="progress-bar"]').getAttribute('aria-valuenow');
+    const initialProgress = await page
+      .locator('[data-testid="progress-bar"]')
+      .getAttribute('aria-valuenow');
 
     // Enable conditional step (more total steps)
     // Enable conditional step (more total steps)
@@ -64,7 +66,9 @@ test.describe('Conditional Steps', () => {
     await page.waitForTimeout(300);
 
     // Progress percentage should change (same position, different total)
-    const newProgress = await page.locator('[data-testid="progress-bar"]').getAttribute('aria-valuenow');
+    const newProgress = await page
+      .locator('[data-testid="progress-bar"]')
+      .getAttribute('aria-valuenow');
     expect(newProgress).not.toBe(initialProgress);
   });
 

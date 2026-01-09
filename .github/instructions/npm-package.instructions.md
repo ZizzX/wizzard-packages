@@ -1,5 +1,5 @@
 ---
-applyTo: "**"
+applyTo: '**'
 ---
 
 ## 🚀 NPM PACKAGE PRODUCT MODE (Agnostic / Mass Adoption)

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { useWizardContext } from "../context/WizardContext";
-import type { WizardAction, IWizardStore } from "@wizzard/core";
+import React, { useState, useEffect } from 'react';
+import { useWizardContext } from '../context/WizardContext';
+import type { WizardAction, IWizardStore } from '@wizzard/core';
 
 interface IActionLog {
   timestamp: number;
@@ -10,9 +10,7 @@ interface IActionLog {
 
 export function WizardDevTools() {
   const [isOpen, setIsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"state" | "actions" | "errors">(
-    "state"
-  );
+  const [activeTab, setActiveTab] = useState<'state' | 'actions' | 'errors'>('state');
   const { data, allErrors, store, ...state } = useWizardContext();
   const [logs, setLogs] = useState<IActionLog[]>([]);
 
@@ -34,16 +32,13 @@ export function WizardDevTools() {
   }, [store]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       const search = new URLSearchParams(window.location.search);
       const hash = window.location.hash;
-      const hashParams = hash.includes("?") ? hash.split("?")[1] : "";
+      const hashParams = hash.includes('?') ? hash.split('?')[1] : '';
       const hashSearch = new URLSearchParams(hashParams);
 
-      if (
-        search.get("devtools") === "true" ||
-        hashSearch.get("devtools") === "true"
-      ) {
+      if (search.get('devtools') === 'true' || hashSearch.get('devtools') === 'true') {
         setIsOpen(true);
       }
     }
@@ -55,20 +50,20 @@ export function WizardDevTools() {
         data-testid="wizard-devtools-toggle"
         onClick={() => setIsOpen(true)}
         style={{
-          position: "fixed",
-          bottom: "20px",
-          right: "20px",
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
           zIndex: 9999,
-          padding: "10px 15px",
-          borderRadius: "50px",
-          background: "rgba(37, 99, 235, 0.9)",
-          color: "white",
-          border: "none",
-          boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
-          cursor: "pointer",
-          fontWeight: "bold",
-          fontSize: "12px",
-          backdropFilter: "blur(5px)",
+          padding: '10px 15px',
+          borderRadius: '50px',
+          background: 'rgba(37, 99, 235, 0.9)',
+          color: 'white',
+          border: 'none',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+          cursor: 'pointer',
+          fontWeight: 'bold',
+          fontSize: '12px',
+          backdropFilter: 'blur(5px)',
         }}
       >
         Wizard DevTools
@@ -80,45 +75,43 @@ export function WizardDevTools() {
     <div
       data-testid="wizard-devtools"
       style={{
-        position: "fixed",
-        bottom: "20px",
-        right: "20px",
-        width: "400px",
-        height: "500px",
-        backgroundColor: "rgba(15, 23, 42, 0.9)",
-        backdropFilter: "blur(12px)",
-        borderRadius: "16px",
-        border: "1px solid rgba(255, 255, 255, 0.1)",
-        boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
+        position: 'fixed',
+        bottom: '20px',
+        right: '20px',
+        width: '400px',
+        height: '500px',
+        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+        backdropFilter: 'blur(12px)',
+        borderRadius: '16px',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
         zIndex: 9999,
-        display: "flex",
-        flexDirection: "column",
-        color: "#e2e8f0",
-        fontFamily: "Inter, sans-serif",
-        overflow: "hidden",
+        display: 'flex',
+        flexDirection: 'column',
+        color: '#e2e8f0',
+        fontFamily: 'Inter, sans-serif',
+        overflow: 'hidden',
       }}
     >
       <div
         style={{
-          padding: "12px 16px",
-          borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          background: "rgba(255, 255, 255, 0.03)",
+          padding: '12px 16px',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          background: 'rgba(255, 255, 255, 0.03)',
         }}
       >
-        <span style={{ fontWeight: 600, fontSize: "14px" }}>
-          Wizard DevTools
-        </span>
+        <span style={{ fontWeight: 600, fontSize: '14px' }}>Wizard DevTools</span>
         <button
           onClick={() => setIsOpen(false)}
           style={{
-            background: "none",
-            border: "none",
-            color: "#94a3b8",
-            cursor: "pointer",
-            fontSize: "18px",
+            background: 'none',
+            border: 'none',
+            color: '#94a3b8',
+            cursor: 'pointer',
+            fontSize: '18px',
           }}
         >
           &times;
@@ -127,26 +120,26 @@ export function WizardDevTools() {
 
       <div
         style={{
-          display: "flex",
-          borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
-          background: "rgba(255, 255, 255, 0.02)",
+          display: 'flex',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+          background: 'rgba(255, 255, 255, 0.02)',
         }}
       >
-        {["state", "actions", "errors"].map((tab) => (
+        {['state', 'actions', 'errors'].map((tab) => (
           <button
             key={tab}
             data-testid={`devtools-tab-${tab}`}
             onClick={() => setActiveTab(tab as any)}
             style={{
               flex: 1,
-              padding: "10px",
-              background: activeTab === tab ? "rgba(37, 99, 235, 0.2)" : "none",
-              border: "none",
-              color: activeTab === tab ? "#60a5fa" : "#94a3b8",
-              borderBottom: activeTab === tab ? "2px solid #3b82f6" : "none",
-              cursor: "pointer",
-              fontSize: "12px",
-              textTransform: "capitalize",
+              padding: '10px',
+              background: activeTab === tab ? 'rgba(37, 99, 235, 0.2)' : 'none',
+              border: 'none',
+              color: activeTab === tab ? '#60a5fa' : '#94a3b8',
+              borderBottom: activeTab === tab ? '2px solid #3b82f6' : 'none',
+              cursor: 'pointer',
+              fontSize: '12px',
+              textTransform: 'capitalize',
               fontWeight: activeTab === tab ? 600 : 400,
             }}
           >
@@ -158,12 +151,12 @@ export function WizardDevTools() {
       <div
         style={{
           flex: 1,
-          overflowY: "auto",
-          padding: "16px",
-          fontSize: "12px",
+          overflowY: 'auto',
+          padding: '16px',
+          fontSize: '12px',
         }}
       >
-        {activeTab === "state" && (
+        {activeTab === 'state' && (
           <div>
             <Section title="Navigation">
               <KeyVal label="Current Step" value={state.currentStepId} />
@@ -175,9 +168,7 @@ export function WizardDevTools() {
             </Section>
 
             <Section title="History">
-              <div style={{ color: "#94a3b8" }}>
-                {state.history.join(" → ") || "Empty"}
-              </div>
+              <div style={{ color: '#94a3b8' }}>{state.history.join(' → ') || 'Empty'}</div>
             </Section>
 
             <Section title="Data">
@@ -196,14 +187,14 @@ export function WizardDevTools() {
           </div>
         )}
 
-        {activeTab === "errors" && (
+        {activeTab === 'errors' && (
           <div>
             {Object.keys(allErrors).length === 0 ? (
               <div
                 style={{
-                  color: "#94a3b8",
-                  textAlign: "center",
-                  marginTop: "20px",
+                  color: '#94a3b8',
+                  textAlign: 'center',
+                  marginTop: '20px',
                 }}
               >
                 No active errors
@@ -214,17 +205,17 @@ export function WizardDevTools() {
           </div>
         )}
 
-        {activeTab === "actions" && (
+        {activeTab === 'actions' && (
           <div
             data-testid="devtools-action-list"
-            style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+            style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
           >
             {logs.length === 0 ? (
               <div
                 style={{
-                  color: "#94a3b8",
-                  textAlign: "center",
-                  marginTop: "20px",
+                  color: '#94a3b8',
+                  textAlign: 'center',
+                  marginTop: '20px',
                 }}
               >
                 No actions recorded yet
@@ -236,7 +227,7 @@ export function WizardDevTools() {
                   log={log}
                   onJump={(s) =>
                     store.dispatch({
-                      type: "RESTORE_SNAPSHOT",
+                      type: 'RESTORE_SNAPSHOT',
                       payload: { snapshot: s },
                     })
                   }
@@ -249,13 +240,13 @@ export function WizardDevTools() {
 
       <div
         style={{
-          padding: "8px 16px",
-          fontSize: "10px",
-          color: "#64748b",
-          borderTop: "1px solid rgba(255, 255, 255, 0.1)",
-          background: "rgba(255, 255, 255, 0.02)",
-          display: "flex",
-          justifyContent: "space-between",
+          padding: '8px 16px',
+          fontSize: '10px',
+          color: '#64748b',
+          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+          background: 'rgba(255, 255, 255, 0.02)',
+          display: 'flex',
+          justifyContent: 'space-between',
         }}
       >
         <span>v2.1.0</span>
@@ -276,29 +267,26 @@ const ActionLogItem: React.FC<{
     <div
       data-testid="action-item"
       style={{
-        background: "rgba(255, 255, 255, 0.05)",
-        borderRadius: "8px",
-        overflow: "hidden",
-        border: "1px solid rgba(255, 255, 255, 0.05)",
+        background: 'rgba(255, 255, 255, 0.05)',
+        borderRadius: '8px',
+        overflow: 'hidden',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
       }}
     >
       <div
         data-testid="action-item-header"
         onClick={() => onJump(log.state)}
         style={{
-          padding: "8px 12px",
-          display: "flex",
-          justifyContent: "space-between",
-          cursor: "pointer",
-          alignItems: "center",
+          padding: '8px 12px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          cursor: 'pointer',
+          alignItems: 'center',
         }}
       >
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          <span style={{ color: "#64748b", fontSize: "10px" }}>{time}</span>
-          <span
-            data-testid="action-type"
-            style={{ color: "#60a5fa", fontWeight: 600 }}
-          >
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <span style={{ color: '#64748b', fontSize: '10px' }}>{time}</span>
+          <span data-testid="action-type" style={{ color: '#60a5fa', fontWeight: 600 }}>
             {log.action.type}
           </span>
           <button
@@ -308,13 +296,13 @@ const ActionLogItem: React.FC<{
               onJump(log.state);
             }}
             style={{
-              padding: "2px 6px",
-              fontSize: "9px",
-              background: "#1e293b",
-              border: "1px solid #334155",
-              color: "#60a5fa",
-              borderRadius: "4px",
-              cursor: "pointer",
+              padding: '2px 6px',
+              fontSize: '9px',
+              background: '#1e293b',
+              border: '1px solid #334155',
+              color: '#60a5fa',
+              borderRadius: '4px',
+              cursor: 'pointer',
             }}
           >
             Jump
@@ -322,10 +310,10 @@ const ActionLogItem: React.FC<{
         </div>
         <span
           style={{
-            color: "#475569",
-            transform: isExpanded ? "rotate(180deg)" : "none",
-            transition: "transform 0.2s",
-            padding: "4px",
+            color: '#475569',
+            transform: isExpanded ? 'rotate(180deg)' : 'none',
+            transition: 'transform 0.2s',
+            padding: '4px',
           }}
           onClick={(e) => {
             e.stopPropagation();
@@ -338,28 +326,28 @@ const ActionLogItem: React.FC<{
       {isExpanded && (
         <div
           style={{
-            padding: "0 12px 12px 12px",
-            borderTop: "1px solid rgba(255, 255, 255, 0.05)",
+            padding: '0 12px 12px 12px',
+            borderTop: '1px solid rgba(255, 255, 255, 0.05)',
           }}
         >
-          <div style={{ marginTop: "8px" }}>
+          <div style={{ marginTop: '8px' }}>
             <div
               style={{
-                color: "#94a3b8",
-                marginBottom: "4px",
-                fontSize: "10px",
+                color: '#94a3b8',
+                marginBottom: '4px',
+                fontSize: '10px',
               }}
             >
               Payload:
             </div>
             <JsonView data={log.action.payload} />
           </div>
-          <div style={{ marginTop: "8px" }}>
+          <div style={{ marginTop: '8px' }}>
             <div
               style={{
-                color: "#94a3b8",
-                marginBottom: "4px",
-                fontSize: "10px",
+                color: '#94a3b8',
+                marginBottom: '4px',
+                fontSize: '10px',
               }}
             >
               State after:
@@ -372,18 +360,15 @@ const ActionLogItem: React.FC<{
   );
 };
 
-const Section: React.FC<{ title: string; children: React.ReactNode }> = ({
-  title,
-  children,
-}) => (
-  <div style={{ marginBottom: "20px" }}>
+const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+  <div style={{ marginBottom: '20px' }}>
     <h4
       style={{
-        margin: "0 0 8px 0",
-        color: "#3b82f6",
-        fontSize: "11px",
-        textTransform: "uppercase",
-        letterSpacing: "0.05em",
+        margin: '0 0 8px 0',
+        color: '#3b82f6',
+        fontSize: '11px',
+        textTransform: 'uppercase',
+        letterSpacing: '0.05em',
       }}
     >
       {title}
@@ -395,13 +380,13 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({
 const KeyVal: React.FC<{ label: string; value: any }> = ({ label, value }) => (
   <div
     style={{
-      display: "flex",
-      justifyContent: "space-between",
-      marginBottom: "4px",
+      display: 'flex',
+      justifyContent: 'space-between',
+      marginBottom: '4px',
     }}
   >
-    <span style={{ color: "#94a3b8" }}>{label}:</span>
-    <span style={{ color: "#f8fafc", fontWeight: 500 }}>{value}</span>
+    <span style={{ color: '#94a3b8' }}>{label}:</span>
+    <span style={{ color: '#f8fafc', fontWeight: 500 }}>{value}</span>
   </div>
 );
 
@@ -416,12 +401,12 @@ const JsonView: React.FC<{ data: any }> = ({ data }) => {
   return (
     <pre
       style={{
-        background: "rgba(0, 0, 0, 0.3)",
-        padding: "10px",
-        borderRadius: "8px",
-        overflowX: "auto",
-        color: "#60a5fa",
-        border: "1px solid rgba(255, 255, 255, 0.05)",
+        background: 'rgba(0, 0, 0, 0.3)',
+        padding: '10px',
+        borderRadius: '8px',
+        overflowX: 'auto',
+        color: '#60a5fa',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
         margin: 0,
       }}
     >

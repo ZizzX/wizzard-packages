@@ -2,7 +2,7 @@ import { test, expect } from '../fixtures/base';
 
 /**
  * E2E Test: Error Handling
- * 
+ *
  * Tests wizard error handling:
  * - Validation errors display
  * - Error recovery
@@ -50,7 +50,9 @@ test.describe('Error Handling', () => {
     await page.click('[data-testid="next-button"]');
 
     // Error state should be cleared
-    await expect(page.locator('[data-testid="breadcrumb-step-1"]')).not.toHaveClass(/error|invalid/);
+    await expect(page.locator('[data-testid="breadcrumb-step-1"]')).not.toHaveClass(
+      /error|invalid/
+    );
     // await expect(page.locator('[data-testid="breadcrumb-step-1"]')).toHaveClass(/completed/); // Breadcrumbs logic varies
   });
 
@@ -91,7 +93,9 @@ test.describe('Error Handling', () => {
     await page.waitForTimeout(1200);
 
     // Error should appear
-    await expect(page.locator('[data-testid="username-input-error"]')).toContainText(/already taken|exists/i);
+    await expect(page.locator('[data-testid="username-input-error"]')).toContainText(
+      /already taken|exists/i
+    );
 
     // Fix it
     await page.locator('[data-testid="username-input"]').fill('available-username');

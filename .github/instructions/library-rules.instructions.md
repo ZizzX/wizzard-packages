@@ -1,5 +1,5 @@
 ---
-applyTo: "**"
+applyTo: '**'
 ---
 
 ---
@@ -32,7 +32,7 @@ export interface MyWizardSchema {
 ### Step 2: Create Typed Hooks
 
 ```typescript
-import { createWizardFactory } from "wizzard-stepper-react";
+import { createWizardFactory } from 'wizzard-stepper-react';
 
 export const {
   WizardProvider,
@@ -49,7 +49,7 @@ export const {
 ### Step 3: Import and Use
 
 ```tsx
-import { useWizardSelector, useWizardActions } from "../wizards/my-wizard";
+import { useWizardSelector, useWizardActions } from '../wizards/my-wizard';
 ```
 
 ---
@@ -82,7 +82,7 @@ Use when you need to perform actions:
 const { updateData, goToNextStep, goToPrevStep } = useWizardActions();
 
 const handleSubmit = () => {
-  updateData({ email: "user@example.com" });
+  updateData({ email: 'user@example.com' });
   goToNextStep();
 };
 ```
@@ -109,7 +109,7 @@ Use when you only need one field value:
 
 ```tsx
 // ✅ CORRECT - Optimized, doesn't re-render on other field changes
-const name = useWizardValue("name");
+const name = useWizardValue('name');
 ```
 
 #### 5. **`createStep`** - For Typed Step Definitions
@@ -119,8 +119,8 @@ Use factory-generated createStep for type-safe step configs:
 ```tsx
 // ✅ CORRECT
 const step1 = createStep({
-  id: "personal-info",
-  label: "Personal Info",
+  id: 'personal-info',
+  label: 'Personal Info',
   // Full autocomplete and type checking!
 });
 ```
@@ -145,10 +145,10 @@ const products = useWizardSelector((state) => state.data.products);
 
 ```tsx
 // ❌ WRONG - no type inference
-import { useWizard, WizardProvider } from "wizzard-stepper-react";
+import { useWizard, WizardProvider } from 'wizzard-stepper-react';
 
 // ✅ CORRECT - typed hooks from factory
-import { useWizard, WizardProvider } from "../wizards/my-wizard";
+import { useWizard, WizardProvider } from '../wizards/my-wizard';
 ```
 
 ### 3. Don't access data.data or state.wizardData
@@ -196,11 +196,7 @@ export const {
 
 // 2. Use in component
 // components/CartStep.tsx
-import {
-  useWizardSelector,
-  useWizardActions,
-  useWizardError,
-} from "../wizards/checkout-wizard";
+import { useWizardSelector, useWizardActions, useWizardError } from '../wizards/checkout-wizard';
 
 const CartStep = () => {
   // ✅ Read data with selector
@@ -210,7 +206,7 @@ const CartStep = () => {
   const { updateData } = useWizardActions();
 
   // ✅ Get field error
-  const itemsError = useWizardError("items");
+  const itemsError = useWizardError('items');
 
   // ✅ Update data
   const addItem = (item: Product) => {
@@ -282,11 +278,11 @@ Define your data schema and generate typed hooks.
 
 ```typescript
 // wizards/auth-wizard.ts
-import { createWizardFactory } from "wizzard-stepper-react";
+import { createWizardFactory } from 'wizzard-stepper-react';
 
 interface AuthSchema {
   email: string;
-  preferences: { theme: "light" | "dark" };
+  preferences: { theme: 'light' | 'dark' };
 }
 
 export const { WizardProvider, useWizard, useWizardValue, useWizardActions } =
@@ -296,7 +292,7 @@ export const { WizardProvider, useWizard, useWizardValue, useWizardActions } =
 ### 2. Wrap your App
 
 ```tsx
-import { WizardProvider } from "./wizards/auth-wizard";
+import { WizardProvider } from './wizards/auth-wizard';
 
 const App = () => (
   <WizardProvider>
@@ -308,16 +304,14 @@ const App = () => (
 ### 3. Use Granular Hooks
 
 ```tsx
-import { useWizardValue, useWizardActions } from "./wizards/auth-wizard";
+import { useWizardValue, useWizardActions } from './wizards/auth-wizard';
 
 const EmailInput = () => {
   // ⚡ Atomic re-render: component only updates if 'email' changes
-  const email = useWizardValue("email");
+  const email = useWizardValue('email');
   const { setData } = useWizardActions();
 
-  return (
-    <input value={email} onChange={(e) => setData("email", e.target.value)} />
-  );
+  return <input value={email} onChange={(e) => setData('email', e.target.value)} />;
 };
 ```
 
@@ -341,14 +335,14 @@ const EmailInput = () => {
 We are library-agnostic. Use our pre-built adapters or write your own.
 
 ```tsx
-import { ZodAdapter } from "wizzard-stepper-react";
-import { z } from "zod";
+import { ZodAdapter } from 'wizzard-stepper-react';
+import { z } from 'zod';
 
 const schema = z.object({ age: z.number().min(18) });
 const adapter = new ZodAdapter(schema);
 
 // In your config:
-const step = { id: "age", validationAdapter: adapter };
+const step = { id: 'age', validationAdapter: adapter };
 ```
 
 ### Navigation Lifecycle
@@ -365,13 +359,13 @@ const step = { id: "age", validationAdapter: adapter };
 Isolate your wizard data to prevent collisions when using multiple instances.
 
 ```typescript
-import { LocalStorageAdapter } from "wizzard-stepper-react";
+import { LocalStorageAdapter } from 'wizzard-stepper-react';
 
 const config = {
   persistence: {
     // 🛡️ Always use a unique prefix for isolation
-    adapter: new LocalStorageAdapter("auth_wizard_v2"),
-    mode: "onStepChange",
+    adapter: new LocalStorageAdapter('auth_wizard_v2'),
+    mode: 'onStepChange',
   },
 };
 ```
@@ -394,7 +388,7 @@ const config = {
 If you are maintaining an older project, you can still use the classic Context-based provider. Note that this mode does not support the new performance-optimized hooks.
 
 ```tsx
-import { WizardProvider, useWizard } from "wizzard-stepper-react";
+import { WizardProvider, useWizard } from 'wizzard-stepper-react';
 
 const OldApp = () => (
   <WizardProvider>

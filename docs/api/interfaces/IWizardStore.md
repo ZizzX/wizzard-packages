@@ -1,6 +1,6 @@
 [**wizzard-stepper-react**](../README.md)
 
-***
+---
 
 [wizzard-stepper-react](../README.md) / IWizardStore
 
@@ -16,7 +16,7 @@ Defined in: [types.ts:63](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 ### StepId
 
-`StepId` *extends* `string` = `string`
+`StepId` _extends_ `string` = `string`
 
 ## Properties
 
@@ -48,7 +48,7 @@ Defined in: [types.ts:74](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 `boolean`
 
-***
+---
 
 ### dispatch()
 
@@ -66,7 +66,7 @@ Defined in: [types.ts:65](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 `void`
 
-***
+---
 
 ### getSnapshot()
 
@@ -78,7 +78,7 @@ Defined in: [types.ts:64](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 [`IWizardState`](IWizardState.md)\<`T`, `StepId`\>
 
-***
+---
 
 ### hydrate()
 
@@ -90,7 +90,7 @@ Defined in: [types.ts:81](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 `void`
 
-***
+---
 
 ### injectPersistence()
 
@@ -108,7 +108,7 @@ Defined in: [types.ts:79](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 `void`
 
-***
+---
 
 ### save()
 
@@ -126,7 +126,7 @@ Defined in: [types.ts:80](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 `void`
 
-***
+---
 
 ### setInitialData()
 
@@ -144,7 +144,7 @@ Defined in: [types.ts:68](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 `void`
 
-***
+---
 
 ### setStepErrors()
 
@@ -166,7 +166,7 @@ Defined in: [types.ts:70](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 `boolean`
 
-***
+---
 
 ### subscribe()
 
@@ -188,7 +188,7 @@ Defined in: [types.ts:75](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 `void`
 
-***
+---
 
 ### subscribeToActions()
 
@@ -210,7 +210,7 @@ Defined in: [types.ts:76](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 `void`
 
-***
+---
 
 ### update()
 
@@ -232,7 +232,7 @@ Defined in: [types.ts:66](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 `void`
 
-***
+---
 
 ### updateErrors()
 
@@ -250,7 +250,7 @@ Defined in: [types.ts:69](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 `void`
 
-***
+---
 
 ### updateMeta()
 

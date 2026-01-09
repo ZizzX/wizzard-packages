@@ -8,8 +8,9 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const packageJson = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf-8'));
-
+const packageJson = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf-8')
+);
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {
@@ -35,15 +36,15 @@ export default defineConfig(() => {
       alias: {
         'wizzard-stepper-react': path.resolve(__dirname, '../../packages/react/src/index.ts'),
         '@wizzard/core': path.resolve(__dirname, '../../packages/core/src/index.ts'),
-        'react': path.resolve(__dirname, './node_modules/react'),
+        react: path.resolve(__dirname, './node_modules/react'),
         'react-dom': path.resolve(__dirname, './node_modules/react-dom'),
-        'yup': path.resolve(__dirname, './node_modules/yup'),
-        'zod': path.resolve(__dirname, './node_modules/zod'),
+        yup: path.resolve(__dirname, './node_modules/yup'),
+        zod: path.resolve(__dirname, './node_modules/zod'),
       },
     },
     define: {
       'process.env.VERSION': JSON.stringify(packageJson.version),
-      '__APP_VERSION__': JSON.stringify(packageJson.version),
+      __APP_VERSION__: JSON.stringify(packageJson.version),
     },
   };
 });

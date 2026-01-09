@@ -1,6 +1,6 @@
 [**wizzard-stepper-react**](../README.md)
 
-***
+---
 
 [wizzard-stepper-react](../README.md) / IStepConfig
 
@@ -20,7 +20,7 @@ TGlobalContext: Type of the global wizard data
 
 ### StepId
 
-`StepId` *extends* `string` = `string`
+`StepId` _extends_ `string` = `string`
 
 ## Properties
 
@@ -36,7 +36,7 @@ Override global auto-validation setting for this step
 
 Use validationMode instead
 
-***
+---
 
 ### beforeLeave()?
 
@@ -65,7 +65,7 @@ Return false or throw to prevent navigation.
 
 `boolean` \| `Promise`\<`boolean`\>
 
-***
+---
 
 ### canNavigateTo()?
 
@@ -96,7 +96,7 @@ Wizard state (visitedSteps, completedSteps, currentStepId, etc.)
 
 true if navigation is allowed, false otherwise
 
-***
+---
 
 ### clearData?
 
@@ -108,7 +108,7 @@ Paths to clear when dependencies change.
 Can be a single path string, an array of paths, or a function returning a data patch to merge.
 Function receives current data and array of changed field paths that triggered the dependency.
 
-***
+---
 
 ### component?
 
@@ -119,7 +119,7 @@ Defined in: [types.ts:269](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 Optional React Component to render for this step.
 Used by the <WizardStepRenderer /> component.
 
-***
+---
 
 ### condition()?
 
@@ -144,7 +144,7 @@ Supports both synchronous and asynchronous predicates.
 
 `boolean` \| `Promise`\<`boolean`\>
 
-***
+---
 
 ### conditionDependsOn?
 
@@ -155,7 +155,7 @@ Defined in: [types.ts:243](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 Optimization: Array of paths that this step's condition depends on.
 If provided, the condition will only be re-evaluated when these paths change.
 
-***
+---
 
 ### dependsOn?
 
@@ -165,7 +165,7 @@ Defined in: [types.ts:284](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Dependency Tracking: Reset this step's data/status when these paths change.
 
-***
+---
 
 ### id
 
@@ -173,7 +173,7 @@ Dependency Tracking: Reset this step's data/status when these paths change.
 
 Defined in: [types.ts:227](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L227)
 
-***
+---
 
 ### label
 
@@ -181,7 +181,7 @@ Defined in: [types.ts:227](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Defined in: [types.ts:228](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L228)
 
-***
+---
 
 ### persistenceAdapter?
 
@@ -191,7 +191,7 @@ Defined in: [types.ts:273](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Override global persistence adapter for this specific step.
 
-***
+---
 
 ### persistenceMode?
 
@@ -200,11 +200,12 @@ Override global persistence adapter for this specific step.
 Defined in: [types.ts:280](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L280)
 
 Control when persistence occurs for this specific step.
+
 - 'onStepChange': Save when moving between steps (default)
 - 'onChange': Save on every data change (debounced)
 - 'manual': Save only when manually triggered
 
-***
+---
 
 ### showWhilePending?
 
@@ -215,7 +216,7 @@ Defined in: [types.ts:238](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 If true, the step will be visible while its condition is being resolved.
 Default: false (step is hidden until condition is resolved)
 
-***
+---
 
 ### validationAdapter?
 
@@ -225,7 +226,7 @@ Defined in: [types.ts:252](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Adapter for validation logic
 
-***
+---
 
 ### validationMode?
 
@@ -234,6 +235,7 @@ Adapter for validation logic
 Defined in: [types.ts:264](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L264)
 
 Control when validation occurs for this step.
+
 - 'onChange': Validate on every keystroke (debounced)
 - 'onStepChange': Validate only when attempting to leave the step
 - 'manual': Only validate when explicitly triggered

@@ -1,6 +1,6 @@
 [**wizzard-stepper-react**](../README.md)
 
-***
+---
 
 [wizzard-stepper-react](../README.md) / useWizardContext
 
@@ -18,7 +18,7 @@ Defined in: [context/WizardContext.tsx:780](https://github.com/ZizzX/wizzard-ste
 
 ### StepId
 
-`StepId` *extends* `string` = `string`
+`StepId` _extends_ `string` = `string`
 
 ## Returns
 

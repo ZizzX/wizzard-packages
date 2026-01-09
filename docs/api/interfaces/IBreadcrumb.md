@@ -1,6 +1,6 @@
 [**wizzard-stepper-react**](../README.md)
 
-***
+---
 
 [wizzard-stepper-react](../README.md) / IBreadcrumb
 
@@ -14,7 +14,7 @@ Breadcrumb Interface
 
 ### StepId
 
-`StepId` *extends* `string` = `string`
+`StepId` _extends_ `string` = `string`
 
 ## Properties
 
@@ -24,7 +24,7 @@ Breadcrumb Interface
 
 Defined in: [types.ts:582](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L582)
 
-***
+---
 
 ### label
 
@@ -32,7 +32,7 @@ Defined in: [types.ts:582](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 Defined in: [types.ts:583](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L583)
 
-***
+---
 
 ### status
 

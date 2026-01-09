@@ -1,6 +1,6 @@
 [**wizzard-stepper-react**](../README.md)
 
-***
+---
 
 [wizzard-stepper-react](../README.md) / MemoryAdapter
 
@@ -40,7 +40,7 @@ Defined in: [adapters/persistence/MemoryAdapter.ts:25](https://github.com/ZizzX/
 
 [`IPersistenceAdapter`](../interfaces/IPersistenceAdapter.md).[`clear`](../interfaces/IPersistenceAdapter.md#clear)
 
-***
+---
 
 ### clearStep()
 
@@ -62,7 +62,7 @@ Defined in: [adapters/persistence/MemoryAdapter.ts:21](https://github.com/ZizzX/
 
 [`IPersistenceAdapter`](../interfaces/IPersistenceAdapter.md).[`clearStep`](../interfaces/IPersistenceAdapter.md#clearstep)
 
-***
+---
 
 ### getStep()
 
@@ -90,7 +90,7 @@ Defined in: [adapters/persistence/MemoryAdapter.ts:10](https://github.com/ZizzX/
 
 [`IPersistenceAdapter`](../interfaces/IPersistenceAdapter.md).[`getStep`](../interfaces/IPersistenceAdapter.md#getstep)
 
-***
+---
 
 ### getStepWithMeta()
 
@@ -118,7 +118,7 @@ Defined in: [adapters/persistence/MemoryAdapter.ts:14](https://github.com/ZizzX/
 
 [`IPersistenceAdapter`](../interfaces/IPersistenceAdapter.md).[`getStepWithMeta`](../interfaces/IPersistenceAdapter.md#getstepwithmeta)
 
-***
+---
 
 ### saveStep()
 

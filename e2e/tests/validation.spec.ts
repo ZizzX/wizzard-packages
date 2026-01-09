@@ -2,7 +2,7 @@ import { test, expect } from '../fixtures/base';
 
 /**
  * E2E Test: Validation Logic
- * 
+ *
  * Tests wizard validation using Zod adapter:
  * - Field requirement validation
  * - Format validation (email, min length)

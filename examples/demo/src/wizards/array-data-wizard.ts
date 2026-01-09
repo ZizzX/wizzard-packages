@@ -1,4 +1,4 @@
-import { createWizardFactory } from "wizzard-stepper-react";
+import { createWizardFactory } from 'wizzard-stepper-react';
 
 export interface Product {
   id: string;

@@ -4,10 +4,10 @@ import {
   useWizardActions,
   type IWizardConfig,
   MemoryAdapter,
-} from "wizzard-stepper-react";
-import { Card, CardContent, CardFooter } from "../../components/ui/Card";
-import { Button } from "../../components/ui/Button";
-import { Input } from "../../components/ui/Input";
+} from 'wizzard-stepper-react';
+import { Card, CardContent, CardFooter } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
 
 interface DependencyData {
   country?: string;
@@ -15,7 +15,7 @@ interface DependencyData {
   category?: string;
   subcategory?: string;
   brand?: string;
-  pricingType?: "simple" | "tiered";
+  pricingType?: 'simple' | 'tiered';
   tier1Price?: string;
   tier2Price?: string;
   fieldA?: string;
@@ -46,7 +46,7 @@ const Step1 = () => {
         <select
           data-testid="country-select"
           className="w-full border p-2 rounded"
-          value={data.country || ""}
+          value={data.country || ''}
           onChange={(e) => updateData({ country: e.target.value })}
         >
           <option value="">Select Country</option>
@@ -58,16 +58,14 @@ const Step1 = () => {
       <Input
         data-testid="user-name"
         label="User Name"
-        value={data.user?.name || ""}
-        onChange={(e) =>
-          updateData({ user: { ...data.user, name: e.target.value } })
-        }
+        value={data.user?.name || ''}
+        onChange={(e) => updateData({ user: { ...data.user, name: e.target.value } })}
       />
 
       <Input
         data-testid="user-address-zip"
         label="Zip Code"
-        value={data.user?.address?.zip || ""}
+        value={data.user?.address?.zip || ''}
         onChange={(e) =>
           updateData({
             user: { ...data.user, address: { zip: e.target.value } },
@@ -83,11 +81,7 @@ const Step2 = () => {
   const { updateData } = useWizardActions();
 
   const states =
-    data.country === "US"
-      ? ["CA", "NY", "TX"]
-      : data.country === "CA"
-        ? ["ON", "BC", "QC"]
-        : [];
+    data.country === 'US' ? ['CA', 'NY', 'TX'] : data.country === 'CA' ? ['ON', 'BC', 'QC'] : [];
 
   return (
     <div className="space-y-4">
@@ -98,7 +92,7 @@ const Step2 = () => {
         <select
           data-testid="state-select"
           className="w-full border p-2 rounded"
-          value={data.state || ""}
+          value={data.state || ''}
           onChange={(e) => updateData({ state: e.target.value })}
           disabled={!data.country}
         >
@@ -116,7 +110,7 @@ const Step2 = () => {
         <select
           data-testid="category-select"
           className="w-full border p-2 rounded"
-          value={data.category || ""}
+          value={data.category || ''}
           onChange={(e) => updateData({ category: e.target.value })}
         >
           <option value="">Select Category</option>
@@ -128,7 +122,7 @@ const Step2 = () => {
       <Input
         data-testid="subcategory-input"
         label="Subcategory"
-        value={data.subcategory || ""}
+        value={data.subcategory || ''}
         onChange={(e) => updateData({ subcategory: e.target.value })}
         disabled={!data.category}
       />
@@ -136,7 +130,7 @@ const Step2 = () => {
       <Input
         data-testid="brand-input"
         label="Brand"
-        value={data.brand || ""}
+        value={data.brand || ''}
         onChange={(e) => updateData({ brand: e.target.value })}
         disabled={!data.subcategory}
       />
@@ -146,7 +140,7 @@ const Step2 = () => {
         <select
           data-testid="shipping-method"
           className="w-full border p-2 rounded"
-          value={data.shippingMethod || ""}
+          value={data.shippingMethod || ''}
           onChange={(e) => updateData({ shippingMethod: e.target.value })}
           disabled={!data.user?.address?.zip}
         >
@@ -172,7 +166,7 @@ const Step3 = () => {
         <select
           data-testid="pricing-type"
           className="w-full border p-2 rounded"
-          value={data.pricingType || ""}
+          value={data.pricingType || ''}
           onChange={(e) => updateData({ pricingType: e.target.value })}
         >
           <option value="">Select Type</option>
@@ -181,18 +175,18 @@ const Step3 = () => {
         </select>
       </div>
 
-      {data.pricingType === "tiered" && (
+      {data.pricingType === 'tiered' && (
         <div className="space-y-2 border-l-2 border-blue-200 pl-4">
           <Input
             data-testid="tier1-price"
             label="Tier 1 Price"
-            value={data.tier1Price || ""}
+            value={data.tier1Price || ''}
             onChange={(e) => updateData({ tier1Price: e.target.value })}
           />
           <Input
             data-testid="tier2-price"
             label="Tier 2 Price"
-            value={data.tier2Price || ""}
+            value={data.tier2Price || ''}
             onChange={(e) => updateData({ tier2Price: e.target.value })}
           />
         </div>
@@ -212,21 +206,21 @@ const Step4 = () => {
       <Input
         data-testid="field-a"
         label="Field A (Root)"
-        value={data.fieldA || ""}
+        value={data.fieldA || ''}
         onChange={(e) => updateData({ fieldA: e.target.value })}
       />
 
       <Input
         data-testid="field-b"
         label="Field B (Depends on A)"
-        value={data.fieldB || ""}
+        value={data.fieldB || ''}
         onChange={(e) => updateData({ fieldB: e.target.value })}
       />
 
       <Input
         data-testid="field-c"
         label="Field C (Depends on B)"
-        value={data.fieldC || ""}
+        value={data.fieldC || ''}
         onChange={(e) => updateData({ fieldC: e.target.value })}
       />
     </div>
@@ -236,8 +230,7 @@ const Step4 = () => {
 // ProductStep, PricingStep, CascadeStep, UserStep removed in favor of Step1-4
 
 const WizardContent = () => {
-  const { currentStep, activeSteps, completedSteps, data } =
-    useWizard<DependencyData>();
+  const { currentStep, activeSteps, completedSteps, data } = useWizard<DependencyData>();
   const { goToNextStep, goToPrevStep, goToStep } = useWizardActions();
 
   return (
@@ -256,14 +249,14 @@ const WizardContent = () => {
               onClick={() => goToStep(s.id)}
               className={`text-xs p-2 whitespace-nowrap rounded transition-colors cursor-pointer ${
                 isActive
-                  ? "font-bold bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200"
+                  ? 'font-bold bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200'
                   : isCompleted
-                    ? "completed bg-green-50 text-green-700"
-                    : "bg-gray-50 text-gray-400"
+                    ? 'completed bg-green-50 text-green-700'
+                    : 'bg-gray-50 text-gray-400'
               }`}
             >
               {s.label}
-              {data.debug && ` (${isCompleted ? "comp" : "not"})`}
+              {data.debug && ` (${isCompleted ? 'comp' : 'not'})`}
             </div>
           );
         })}
@@ -271,24 +264,16 @@ const WizardContent = () => {
 
       <Card>
         <CardContent className="pt-6">
-          {currentStep?.id === "step-1" && <Step1 />}
-          {currentStep?.id === "step-2" && <Step2 />}
-          {currentStep?.id === "step-3" && <Step3 />}
-          {currentStep?.id === "step-4" && <Step4 />}
+          {currentStep?.id === 'step-1' && <Step1 />}
+          {currentStep?.id === 'step-2' && <Step2 />}
+          {currentStep?.id === 'step-3' && <Step3 />}
+          {currentStep?.id === 'step-4' && <Step4 />}
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button
-            data-testid="prev-button"
-            onClick={goToPrevStep}
-            variant="secondary"
-          >
+          <Button data-testid="prev-button" onClick={goToPrevStep} variant="secondary">
             Back
           </Button>
-          <Button
-            data-testid="next-button"
-            onClick={goToNextStep}
-            variant="primary"
-          >
+          <Button data-testid="next-button" onClick={goToNextStep} variant="primary">
             Next
           </Button>
         </CardFooter>
@@ -313,35 +298,35 @@ const WizardContent = () => {
 };
 
 const config: IWizardConfig<DependencyData> = {
-  persistence: { mode: "onStepChange", adapter: new MemoryAdapter() },
+  persistence: { mode: 'onStepChange', adapter: new MemoryAdapter() },
   steps: [
-    { id: "step-1", label: "Root" },
+    { id: 'step-1', label: 'Root' },
     {
-      id: "step-2",
-      label: "Dependents A",
-      dependsOn: ["country", "user.address.zip"],
-      clearData: ["state", "shippingMethod"],
+      id: 'step-2',
+      label: 'Dependents A',
+      dependsOn: ['country', 'user.address.zip'],
+      clearData: ['state', 'shippingMethod'],
     },
     {
-      id: "step-3",
-      label: "Dependents B",
-      dependsOn: ["category", "pricingType"],
-      clearData: ["subcategory", "brand", "tier1Price", "tier2Price"],
+      id: 'step-3',
+      label: 'Dependents B',
+      dependsOn: ['category', 'pricingType'],
+      clearData: ['subcategory', 'brand', 'tier1Price', 'tier2Price'],
     },
     {
-      id: "step-4",
-      label: "Cascade",
-      dependsOn: ["fieldA", "fieldB"],
+      id: 'step-4',
+      label: 'Cascade',
+      dependsOn: ['fieldA', 'fieldB'],
       clearData: (_, changedFields) => {
         // If fieldA changed - clear fieldB and fieldC
-        if (changedFields.includes("fieldA")) {
+        if (changedFields.includes('fieldA')) {
           return {
             fieldB: undefined,
             fieldC: undefined,
           };
         }
         // If fieldB changed - clear only fieldC
-        else if (changedFields.includes("fieldB")) {
+        else if (changedFields.includes('fieldB')) {
           return {
             fieldC: undefined,
           };
@@ -354,8 +339,8 @@ const config: IWizardConfig<DependencyData> = {
 
 export default function TestDependency() {
   const searchParams = new URLSearchParams(window.location.search);
-  const mode = searchParams.get("mode");
-  const debug = searchParams.get("debug") === "true";
+  const mode = searchParams.get('mode');
+  const debug = searchParams.get('debug') === 'true';
 
   return (
     <WizardProvider

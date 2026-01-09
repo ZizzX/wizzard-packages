@@ -1,10 +1,6 @@
-import { useState, useMemo } from "react";
-import type {
-  IWizardConfig,
-  IValidatorAdapter,
-  ValidationResult,
-} from "wizzard-stepper-react";
-import { LocalStorageAdapter } from "wizzard-stepper-react";
+import { useState, useMemo } from 'react';
+import type { IWizardConfig, IValidatorAdapter, ValidationResult } from 'wizzard-stepper-react';
+import { LocalStorageAdapter } from 'wizzard-stepper-react';
 import {
   WizardProvider,
   useWizard,
@@ -13,11 +9,11 @@ import {
   useWizardSelector,
   type ArrayDataSchema,
   type Product,
-} from "../../wizards/array-data-wizard";
-import { Card, CardContent, CardFooter } from "../../components/ui/Card";
-import { Button } from "../../components/ui/Button";
-import { Input } from "../../components/ui/Input";
-import { useLocation } from "react-router-dom";
+} from '../../wizards/array-data-wizard';
+import { Card, CardContent, CardFooter } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { useLocation } from 'react-router-dom';
 
 /**
  * TestArrayData
@@ -40,11 +36,11 @@ class ArrayValidator implements IValidatorAdapter<ArrayDataSchema> {
     const errors: Record<string, string> = {};
 
     if (!data.products || data.products.length === 0) {
-      errors.products = "At least one product is required";
+      errors.products = 'At least one product is required';
     }
 
     if (data.products && data.products.length > 3) {
-      errors.products = "Maximum 3 products allowed";
+      errors.products = 'Maximum 3 products allowed';
     }
 
     return {
@@ -57,29 +53,29 @@ class ArrayValidator implements IValidatorAdapter<ArrayDataSchema> {
 // Step 1: Product List Management
 const ProductListStep = () => {
   const [newProduct, setNewProduct] = useState({
-    name: "",
-    price: "",
-    category: "electronics",
+    name: '',
+    price: '',
+    category: 'electronics',
   });
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({
-    name: "",
-    price: "",
-    category: "",
+    name: '',
+    price: '',
+    category: '',
   });
 
   const { updateData } = useWizardActions();
   const products =
     useWizardSelector((state) => {
-      console.log("SELECTOR CALLED, full state:", state);
-      console.log("data:", state.data);
-      console.log("products from state:", state.data?.products);
+      console.log('SELECTOR CALLED, full state:', state);
+      console.log('data:', state.data);
+      console.log('products from state:', state.data?.products);
       return state.data?.products;
     }) || [];
-  const errors = useWizardError("products");
+  const errors = useWizardError('products');
 
-  console.log("RENDER: products=", products);
-  console.log("RENDER: errors=", errors);
+  console.log('RENDER: products=', products);
+  console.log('RENDER: errors=', errors);
 
   const addProduct = () => {
     if (!newProduct.name) return;
@@ -97,7 +93,7 @@ const ProductListStep = () => {
     };
 
     updateData({ products: [...products, product] });
-    setNewProduct({ name: "", price: "", category: "electronics" });
+    setNewProduct({ name: '', price: '', category: 'electronics' });
   };
 
   const removeProduct = (index: number) => {
@@ -110,7 +106,7 @@ const ProductListStep = () => {
     setEditForm({
       name: product.name,
       price: product.price.toString(),
-      category: product.category || "",
+      category: product.category || '',
     });
     setEditingIndex(index);
   };
@@ -146,9 +142,7 @@ const ProductListStep = () => {
             data-testid="item-name-input"
             label="Product Name"
             value={newProduct.name}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, name: e.target.value })
-            }
+            onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
             placeholder="Product name"
           />
           <Input
@@ -156,9 +150,7 @@ const ProductListStep = () => {
             label="Price"
             type="number"
             value={newProduct.price}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, price: e.target.value })
-            }
+            onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
             placeholder="0.00"
           />
         </div>
@@ -167,9 +159,7 @@ const ProductListStep = () => {
           <select
             data-testid="item-category-select"
             value={newProduct.category}
-            onChange={(e) =>
-              setNewProduct({ ...newProduct, category: e.target.value })
-            }
+            onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
             className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
           >
             <option value="electronics">Electronics</option>
@@ -207,18 +197,14 @@ const ProductListStep = () => {
                       data-testid="update-name-input"
                       label="Name"
                       value={editForm.name}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, name: e.target.value })
-                      }
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                     />
                     <Input
                       data-testid="update-price-input"
                       label="Price"
                       type="number"
                       value={editForm.price}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, price: e.target.value })
-                      }
+                      onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
                     />
                     <div className="flex gap-2">
                       <Button
@@ -229,11 +215,7 @@ const ProductListStep = () => {
                       >
                         Save
                       </Button>
-                      <Button
-                        onClick={cancelEdit}
-                        variant="secondary"
-                        className="flex-1"
-                      >
+                      <Button onClick={cancelEdit} variant="secondary" className="flex-1">
                         Cancel
                       </Button>
                     </div>
@@ -275,10 +257,7 @@ const ProductListStep = () => {
 
       {/* Error Display */}
       {errors && (
-        <div
-          data-testid="array-error"
-          className="text-sm text-red-600 font-medium"
-        >
+        <div data-testid="array-error" className="text-sm text-red-600 font-medium">
           {errors}
         </div>
       )}
@@ -299,8 +278,7 @@ const ReviewStep = () => {
         <div className="space-y-2">
           {products.map((product) => (
             <div key={product.id} className="text-sm">
-              <span className="font-medium">{product.name}</span> - $
-              {product.price.toFixed(2)}
+              <span className="font-medium">{product.name}</span> - ${product.price.toFixed(2)}
             </div>
           ))}
         </div>
@@ -326,15 +304,12 @@ const WizardContent = () => {
       <Card className="shadow-lg">
         <CardContent className="pt-8">
           {/* Current Step Indicator for E2E tests */}
-          <div
-            data-testid="current-step"
-            className="mb-4 text-sm font-medium text-gray-700"
-          >
+          <div data-testid="current-step" className="mb-4 text-sm font-medium text-gray-700">
             Step {activeSteps.findIndex((s) => s.id === currentStep.id) + 1}
           </div>
 
-          {currentStep.id === "products-step" && <ProductListStep />}
-          {currentStep.id === "review" && <ReviewStep />}
+          {currentStep.id === 'products-step' && <ProductListStep />}
+          {currentStep.id === 'review' && <ReviewStep />}
         </CardContent>
 
         <CardFooter className="pb-8 flex justify-between border-t pt-4 mt-6">
@@ -347,21 +322,17 @@ const WizardContent = () => {
             >
               Previous
             </Button>
-            <Button
-              data-testid="reset-button"
-              variant="secondary"
-              onClick={handleReset}
-            >
+            <Button data-testid="reset-button" variant="secondary" onClick={handleReset}>
               Reset
             </Button>
           </div>
 
           <Button
-            data-testid={isLastStep ? "submit-button" : "next-button"}
+            data-testid={isLastStep ? 'submit-button' : 'next-button'}
             variant="primary"
-            onClick={isLastStep ? () => alert("Products saved!") : goToNextStep}
+            onClick={isLastStep ? () => alert('Products saved!') : goToNextStep}
           >
-            {isLastStep ? "Complete" : "Next"}
+            {isLastStep ? 'Complete' : 'Next'}
           </Button>
         </CardFooter>
       </Card>
@@ -374,18 +345,16 @@ function getWizardConfig(isInitial: boolean): IWizardConfig<ArrayDataSchema> {
   return {
     steps: [
       {
-        id: "products-step",
-        label: "Products",
+        id: 'products-step',
+        label: 'Products',
         validationAdapter: new ArrayValidator(),
       },
-      { id: "review", label: "Review" },
+      { id: 'review', label: 'Review' },
     ],
     persistence: {
-      mode: "onStepChange",
+      mode: 'onStepChange',
       // Use different key for initial data test to avoid pollution
-      adapter: new LocalStorageAdapter(
-        isInitial ? "array_wizard_init_" : "array_wizard_"
-      ),
+      adapter: new LocalStorageAdapter(isInitial ? 'array_wizard_init_' : 'array_wizard_'),
     },
   };
 }
@@ -397,7 +366,7 @@ export default function TestArrayData() {
 
   // Parse query params from location.search (HashRouter parses hash search into this)
   const searchParams = new URLSearchParams(location.search);
-  const initial = searchParams.get("initial") === "true";
+  const initial = searchParams.get('initial') === 'true';
 
   // Re-create config when initial changes
   const config = useMemo(() => getWizardConfig(initial), [initial]);
@@ -408,16 +377,16 @@ export default function TestArrayData() {
         ? {
             products: [
               {
-                id: "1",
-                name: "Initial Product 1",
+                id: '1',
+                name: 'Initial Product 1',
                 price: 10.99,
-                category: "electronics",
+                category: 'electronics',
               },
               {
-                id: "2",
-                name: "Initial Product 2",
+                id: '2',
+                name: 'Initial Product 2',
                 price: 20.99,
-                category: "clothing",
+                category: 'clothing',
               },
             ],
           }
@@ -427,11 +396,7 @@ export default function TestArrayData() {
 
   return (
     // Force remount when initial mode changes to ensure clean store init
-    <WizardProvider
-      key={initial ? "init" : "normal"}
-      config={config}
-      initialData={initialData}
-    >
+    <WizardProvider key={initial ? 'init' : 'normal'} config={config} initialData={initialData}>
       <WizardContent />
     </WizardProvider>
   );

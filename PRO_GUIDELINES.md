@@ -40,8 +40,11 @@ Yes, users **can and should** write their own middleware. It uses a standard Cur
 ```typescript
 import { WizardMiddleware, MiddlewareAPI } from 'wizzard-stepper-react';
 
-export const segmentAnalytics = (options: { writeKey: string }): WizardMiddleware => 
-  ({ getState }) => (next) => (action) => {
+export const segmentAnalytics =
+  (options: { writeKey: string }): WizardMiddleware =>
+  ({ getState }) =>
+  (next) =>
+  (action) => {
     // 1. Perform logic before the state update
     if (action.type === 'GO_TO_STEP') {
       console.log(`Navigating to ${action.payload.stepId}`);
@@ -82,7 +85,7 @@ const DemoRoot = () => {
   return (
     <div>
       <VersionSelect value={version} onChange={setVersion} />
-      
+
       {version === 'v2' ? (
         <WizardProvider middlewares={[...]} config={...}>
           <NewModernWizard />

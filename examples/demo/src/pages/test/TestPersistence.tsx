@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   WizardProvider,
   useWizard,
@@ -7,7 +7,7 @@ import {
   useWizardState,
   LocalStorageAdapter,
   type PersistenceMode,
-} from "wizzard-stepper-react";
+} from 'wizzard-stepper-react';
 
 // --- Components ---
 
@@ -27,7 +27,7 @@ const Input = ({
     <input
       data-testid={testId}
       className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-      value={value || ""}
+      value={value || ''}
       onChange={(e) => onChange(e.target.value)}
     />
   </div>
@@ -42,13 +42,13 @@ const Step1 = () => {
         label="Name"
         testId="name-input"
         value={data.name}
-        onChange={(val) => handleStepChange("name", val)}
+        onChange={(val) => handleStepChange('name', val)}
       />
       <Input
         label="Email"
         testId="email-input"
         value={data.email}
-        onChange={(val) => handleStepChange("email", val)}
+        onChange={(val) => handleStepChange('email', val)}
       />
     </div>
   );
@@ -63,7 +63,7 @@ const Step2 = () => {
         label="Address"
         testId="address-input"
         value={data.address}
-        onChange={(val) => handleStepChange("address", val)}
+        onChange={(val) => handleStepChange('address', val)}
       />
     </div>
   );
@@ -117,8 +117,7 @@ const WizardControls = () => {
 };
 
 const WizardInfo = () => {
-  const { currentStepIndex, activeSteps, visitedSteps, completedSteps } =
-    useWizardState();
+  const { currentStepIndex, activeSteps, visitedSteps, completedSteps } = useWizardState();
 
   return (
     <div className="mb-6">
@@ -127,9 +126,9 @@ const WizardInfo = () => {
       </div>
       <div className="flex gap-2 mt-2">
         {activeSteps.map((step) => {
-          let status = "";
-          if (visitedSteps.has(step.id)) status += " visited";
-          if (completedSteps.has(step.id)) status += " completed";
+          let status = '';
+          if (visitedSteps.has(step.id)) status += ' visited';
+          if (completedSteps.has(step.id)) status += ' completed';
 
           return (
             <div
@@ -158,9 +157,9 @@ const PersistenceContent = () => {
     >
       <WizardInfo />
 
-      {currentStep.id === "step1" && <Step1 />}
-      {currentStep.id === "step2" && <Step2 />}
-      {currentStep.id === "step3" && <Step3 />}
+      {currentStep.id === 'step1' && <Step1 />}
+      {currentStep.id === 'step2' && <Step2 />}
+      {currentStep.id === 'step3' && <Step3 />}
 
       <WizardControls />
     </div>
@@ -172,12 +171,12 @@ export default function TestPersistence() {
 
   // Dynamic configuration based on URL params
   const config = useMemo(() => {
-    const modeParam = searchParams.get("mode") as PersistenceMode | null;
-    const keyParam = searchParams.get("key");
-    const storageKey = keyParam ? `${keyParam}_` : "wizard_persistence_test_";
+    const modeParam = searchParams.get('mode') as PersistenceMode | null;
+    const keyParam = searchParams.get('key');
+    const storageKey = keyParam ? `${keyParam}_` : 'wizard_persistence_test_';
 
     const persistenceConfig = {
-      mode: modeParam || "onStepChange",
+      mode: modeParam || 'onStepChange',
       debounceTime: 100, // Short debounce for tests
       storageKey: storageKey,
       adapter: new LocalStorageAdapter(storageKey),
@@ -186,9 +185,9 @@ export default function TestPersistence() {
     return {
       persistence: persistenceConfig,
       steps: [
-        { id: "step1", label: "Step 1" },
-        { id: "step2", label: "Step 2" },
-        { id: "step3", label: "Step 3" },
+        { id: 'step1', label: 'Step 1' },
+        { id: 'step2', label: 'Step 2' },
+        { id: 'step3', label: 'Step 3' },
       ],
     };
   }, [searchParams]);

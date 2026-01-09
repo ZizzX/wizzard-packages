@@ -1,6 +1,6 @@
 [**wizzard-stepper-react**](../README.md)
 
-***
+---
 
 [wizzard-stepper-react](../README.md) / IWizardState
 
@@ -18,7 +18,7 @@ Full state of the wizard.
 
 ### StepId
 
-`StepId` *extends* `string` = `string`
+`StepId` _extends_ `string` = `string`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: [types.ts:34](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 List of steps that currently meet their visibility conditions
 
-***
+---
 
 ### activeStepsCount
 
@@ -40,7 +40,7 @@ Defined in: [types.ts:52](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 Number of active steps
 
-***
+---
 
 ### breadcrumbs
 
@@ -50,7 +50,7 @@ Defined in: [types.ts:60](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 Breadcrumb items for navigation UI
 
-***
+---
 
 ### busySteps
 
@@ -60,7 +60,7 @@ Defined in: [types.ts:40](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 Set of step IDs that are currently performing async work
 
-***
+---
 
 ### completedSteps
 
@@ -70,7 +70,7 @@ Defined in: [types.ts:44](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 Set of step IDs that have passed validation
 
-***
+---
 
 ### config
 
@@ -80,7 +80,7 @@ Defined in: [types.ts:48](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 Current wizard configuration
 
-***
+---
 
 ### currentStep
 
@@ -90,7 +90,7 @@ Defined in: [types.ts:22](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 Active step configuration (if any)
 
-***
+---
 
 ### currentStepId
 
@@ -100,7 +100,7 @@ Defined in: [types.ts:36](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 String ID of the current step
 
-***
+---
 
 ### currentStepIndex
 
@@ -110,7 +110,7 @@ Defined in: [types.ts:24](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 Numeric index of current step in active steps list
 
-***
+---
 
 ### data
 
@@ -120,7 +120,7 @@ Defined in: [types.ts:18](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 Global wizard data object
 
-***
+---
 
 ### dirtyFields
 
@@ -130,7 +130,7 @@ Defined in: [types.ts:58](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 Set of paths to fields that have been modified
 
-***
+---
 
 ### errors
 
@@ -140,7 +140,7 @@ Defined in: [types.ts:20](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 Current errors map by step and field
 
-***
+---
 
 ### errorSteps
 
@@ -150,7 +150,7 @@ Defined in: [types.ts:46](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 Set of step IDs that currently have active validation errors
 
-***
+---
 
 ### history
 
@@ -160,7 +160,7 @@ Defined in: [types.ts:38](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 History of visited steps (navigation path)
 
-***
+---
 
 ### isBusy
 
@@ -170,7 +170,7 @@ Defined in: [types.ts:54](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 Alias for isPending
 
-***
+---
 
 ### isDirty
 
@@ -180,7 +180,7 @@ Defined in: [types.ts:56](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 True if any field has been modified since initialization
 
-***
+---
 
 ### isFirstStep
 
@@ -190,7 +190,7 @@ Defined in: [types.ts:26](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 True if currently on the first active step
 
-***
+---
 
 ### isLastStep
 
@@ -200,7 +200,7 @@ Defined in: [types.ts:28](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 True if currently on the last active step
 
-***
+---
 
 ### isLoading
 
@@ -210,7 +210,7 @@ Defined in: [types.ts:30](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 True if the wizard is in an initial loading/hydrating state
 
-***
+---
 
 ### isPending
 
@@ -220,7 +220,7 @@ Defined in: [types.ts:32](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 True if an async action (like navigation or validation) is in progress
 
-***
+---
 
 ### progress
 
@@ -230,7 +230,7 @@ Defined in: [types.ts:50](https://github.com/ZizzX/wizzard-stepper-react/blob/37
 
 Percentage of completion (0-100)
 
-***
+---
 
 ### visitedSteps
 

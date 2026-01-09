@@ -1,6 +1,6 @@
 [**wizzard-stepper-react**](../README.md)
 
-***
+---
 
 [wizzard-stepper-react](../README.md) / useWizardActions
 
@@ -17,7 +17,7 @@ Use this hook if you only need setters/navigation methods to avoid re-renders.
 
 ### StepId
 
-`StepId` *extends* `string` = `string`
+`StepId` _extends_ `string` = `string`
 
 ## Returns
 

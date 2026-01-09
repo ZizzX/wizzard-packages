@@ -1,6 +1,6 @@
 [**wizzard-stepper-react**](../README.md)
 
-***
+---
 
 [wizzard-stepper-react](../README.md) / createWizardFactory
 
@@ -19,13 +19,13 @@ This ensures full type safety across your entire wizard implementation without m
 
 ### TSchema
 
-`TSchema` *extends* `Record`\<`string`, `any`\>
+`TSchema` _extends_ `Record`\<`string`, `any`\>
 
 The shape of your wizard's global data state
 
 ### StepId
 
-`StepId` *extends* `string` = `string`
+`StepId` _extends_ `string` = `string`
 
 ## Returns
 
@@ -43,11 +43,11 @@ By using this helper, TypeScript can infer TStepData from the validationAdapter 
 
 ##### TSchema
 
-`TSchema` *extends* `Record`\<`string`, `any`\>
+`TSchema` _extends_ `Record`\<`string`, `any`\>
 
 ##### TStepId
 
-`TStepId` *extends* `string` = `string`
+`TStepId` _extends_ `string` = `string`
 
 #### Parameters
 
@@ -125,7 +125,7 @@ Typed useWizardError
 
 ##### P
 
-`P` *extends* `string`
+`P` _extends_ `string`
 
 #### Parameters
 
@@ -183,7 +183,7 @@ Function to select data
 #### Example
 
 ```ts
-const isCompleted = useWizardSelector(s => s.completedSteps.size === 5);
+const isCompleted = useWizardSelector((s) => s.completedSteps.size === 5);
 ```
 
 ### useWizardState()
@@ -213,7 +213,7 @@ Typed useWizardValue
 
 ##### P
 
-`P` *extends* `string`
+`P` _extends_ `string`
 
 #### Parameters
 

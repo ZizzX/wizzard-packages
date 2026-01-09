@@ -1,14 +1,13 @@
-import { useWizardState, useWizardActions } from "wizzard-stepper-react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "./ui/Button";
+import { useWizardState, useWizardActions } from 'wizzard-stepper-react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from './ui/Button';
 
 interface StepperControlsProps {
   onComplete?: () => void | Promise<void>;
 }
 
 export const StepperControls = ({ onComplete }: StepperControlsProps) => {
-  const { currentStepIndex, isFirstStep, isLastStep, activeSteps, isLoading } =
-    useWizardState();
+  const { currentStepIndex, isFirstStep, isLastStep, activeSteps, isLoading } = useWizardState();
 
   const { goToNextStep, goToPrevStep, clearStorage } = useWizardActions();
   const navigate = useNavigate();
@@ -19,7 +18,7 @@ export const StepperControls = ({ onComplete }: StepperControlsProps) => {
         await onComplete();
       } else {
         clearStorage();
-        navigate("/examples");
+        navigate('/examples');
       }
     } else {
       await goToNextStep();
@@ -38,21 +37,18 @@ export const StepperControls = ({ onComplete }: StepperControlsProps) => {
         Previous
       </Button>
 
-      <div
-        data-testid="current-step"
-        className="text-sm font-medium text-gray-500"
-      >
+      <div data-testid="current-step" className="text-sm font-medium text-gray-500">
         Step {currentStepIndex + 1} of {activeSteps.length}
       </div>
 
       <Button
-        data-testid={isLastStep ? "submit-button" : "next-button"}
+        data-testid={isLastStep ? 'submit-button' : 'next-button'}
         type="button"
         variant="primary"
         onClick={handleNext}
         disabled={isLoading}
       >
-        {isLastStep ? "Complete" : "Next"}
+        {isLastStep ? 'Complete' : 'Next'}
       </Button>
     </div>
   );

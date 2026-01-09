@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   WizardProvider as BaseWizardProvider,
   useWizardContext as useBaseWizardContext,
@@ -7,15 +7,15 @@ import {
   useWizardError as useBaseWizardError,
   useWizardActions as useBaseWizardActions,
   useWizardState as useBaseWizardState,
-} from "./context/WizardContext";
-import { useWizard as useBaseWizard } from "./hooks/useWizard";
-import type { IWizardConfig, IWizardContext, IStepConfig, Path, PathValue } from "@wizzard/core";
+} from './context/WizardContext';
+import { useWizard as useBaseWizard } from './hooks/useWizard';
+import type { IWizardConfig, IWizardContext, IStepConfig, Path, PathValue } from '@wizzard/core';
 
 /**
  * createWizardFactory
  *
  * Creates a strongly-typed set of Wizard components and hooks for a specific data schema.
- * 
+ *
  * @template TSchema The shape of your wizard's global data state
  */
 export function createWizardFactory<
@@ -32,10 +32,7 @@ export function createWizardFactory<
     children: React.ReactNode;
   }) => {
     return (
-      <BaseWizardProvider<TSchema, StepId>
-        config={config}
-        initialData={initialData as TSchema}
-      >
+      <BaseWizardProvider<TSchema, StepId> config={config} initialData={initialData as TSchema}>
         {children}
       </BaseWizardProvider>
     );
@@ -65,9 +62,7 @@ export function createWizardFactory<
     return useBaseWizardSelector<TSelected>(selector as any, options);
   };
 
-  const useWizardError = <P extends Path<TSchema>>(
-    path: P
-  ): string | undefined => {
+  const useWizardError = <P extends Path<TSchema>>(path: P): string | undefined => {
     return useBaseWizardError(path as string);
   };
 
@@ -83,9 +78,7 @@ export function createWizardFactory<
     return useBaseWizardState<TSchema, StepId>().breadcrumbs;
   };
 
-  const createStep = (
-    config: IStepConfig<TSchema, StepId>
-  ) => config;
+  const createStep = (config: IStepConfig<TSchema, StepId>) => config;
 
   return {
     WizardProvider,

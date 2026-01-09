@@ -1,6 +1,6 @@
 [**wizzard-stepper-react**](../README.md)
 
-***
+---
 
 [wizzard-stepper-react](../README.md) / WizardEventPayloads
 
@@ -16,13 +16,13 @@ Event Payloads
 
 ### StepId
 
-`StepId` *extends* `string` = `string`
+`StepId` _extends_ `string` = `string`
 
 ## Properties
 
-### step\_change
+### step_change
 
-> **step\_change**: `object`
+> **step_change**: `object`
 
 Defined in: [types.ts:430](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L430)
 
@@ -38,11 +38,11 @@ Defined in: [types.ts:430](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 > **to**: `StepId`
 
-***
+---
 
-### validation\_error
+### validation_error
 
-> **validation\_error**: `object`
+> **validation_error**: `object`
 
 Defined in: [types.ts:435](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L435)
 
@@ -58,11 +58,11 @@ Defined in: [types.ts:435](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 > **timestamp**: `number`
 
-***
+---
 
-### wizard\_reset
+### wizard_reset
 
-> **wizard\_reset**: `object`
+> **wizard_reset**: `object`
 
 Defined in: [types.ts:440](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L440)
 

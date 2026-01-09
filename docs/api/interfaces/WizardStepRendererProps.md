@@ -1,6 +1,6 @@
 [**wizzard-stepper-react**](../README.md)
 
-***
+---
 
 [wizzard-stepper-react](../README.md) / WizardStepRendererProps
 
@@ -18,7 +18,7 @@ Defined in: [components/WizardStepRenderer.tsx:13](https://github.com/ZizzX/wizz
 
 Optional fallback to show while lazy-loading a step component.
 
-***
+---
 
 ### wrapper?
 

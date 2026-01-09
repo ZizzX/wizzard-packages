@@ -213,7 +213,7 @@ const step: IStepConfig = {
     const isEmailVerified = data.emailVerified === true;
     const hasCompletedProfile = data.name && data.email && data.phone;
     const hasNoErrors = !metadata.errorSteps || metadata.errorSteps.size === 0;
-    
+
     return isEmailVerified && hasCompletedProfile && hasNoErrors;
   },
 };
@@ -297,7 +297,7 @@ const enableFreeNavigation = () => {
 
 #### 1. Clear on logout
 
-```typescript
+````typescript
 const { clearStorage } = useWizardActions();
 
 const handleLogout = () => {
@@ -315,7 +315,7 @@ const handleResetForm = () => {
   clearStorage(); // Clear storage
   reset(); // Reset wizard state
 };
-```
+````
 
 #### 3. Clear on error
 
@@ -341,7 +341,9 @@ Types of actions for managing wizard state:
 ```typescript
 {
   type: 'SET_VISITED_STEPS';
-  payload: { steps: Set<StepId> };
+  payload: {
+    steps: Set<StepId>;
+  }
 }
 ```
 
@@ -362,7 +364,9 @@ dispatch({
 ```typescript
 {
   type: 'SET_COMPLETED_STEPS';
-  payload: { steps: Set<StepId> };
+  payload: {
+    steps: Set<StepId>;
+  }
 }
 ```
 
@@ -383,7 +387,9 @@ dispatch({
 ```typescript
 {
   type: 'SET_ERROR_STEPS';
-  payload: { steps: Set<StepId> };
+  payload: {
+    steps: Set<StepId>;
+  }
 }
 ```
 
@@ -404,7 +410,9 @@ dispatch({
 ```typescript
 {
   type: 'UPDATE_META';
-  payload: { meta: Partial<IWizardState<T, StepId>> };
+  payload: {
+    meta: Partial<IWizardState<T, StepId>>;
+  }
 }
 ```
 
@@ -430,7 +438,9 @@ dispatch({
 ```typescript
 {
   type: 'RESTORE_SNAPSHOT';
-  payload: { snapshot: any };
+  payload: {
+    snapshot: any;
+  }
 }
 ```
 
@@ -485,7 +495,7 @@ const stepData = adapter.getStepWithMeta('step-1');
 
 if (stepData) {
   const age = Date.now() - stepData.timestamp;
-  
+
   // Check if data is older than 24 hours
   if (age > 24 * 60 * 60 * 1000) {
     console.log('Data is older than 24 hours');
@@ -511,7 +521,7 @@ interface RegistrationData {
 const config: IWizardConfig<RegistrationData> = {
   navigationMode: 'visited',
   validationMode: 'onStepChange',
-  
+
   steps: [
     {
       id: 'account-type',
@@ -575,10 +585,10 @@ const CheckoutWizard = () => {
   const handleCancel = () => {
     // Clear all saved data
     clearStorage();
-    
+
     // Reset wizard state
     reset();
-    
+
     // Redirect to home
     navigate('/');
   };
@@ -603,6 +613,7 @@ const CheckoutWizard = () => {
 ### When to Use
 
 Use `WizardStepRenderer` when you want:
+
 - **Declarative step rendering** - Define components in config, not in JSX
 - **Lazy loading** - Load step components only when needed
 - **Animations** - Wrap steps with animation components (e.g., Framer Motion)
@@ -665,7 +676,7 @@ const MyWizard = () => {
 Show a loader while lazy-loading components:
 
 ```tsx
-<WizardStepRenderer 
+<WizardStepRenderer
   fallback={
     <div className="loading">
       <Spinner />
@@ -694,7 +705,7 @@ const AnimatedWrapper = ({ children, key }) => (
   </motion.div>
 );
 
-<WizardStepRenderer wrapper={AnimatedWrapper} />
+<WizardStepRenderer wrapper={AnimatedWrapper} />;
 ```
 
 #### 3. Complete Example with All Features
@@ -727,14 +738,11 @@ const MyWizard = () => {
     <WizardProvider config={config}>
       <div className="max-w-2xl mx-auto p-6">
         <h1>Registration Wizard</h1>
-        
+
         <AnimatePresence mode="wait">
-          <WizardStepRenderer 
-            wrapper={StepWrapper}
-            fallback={<LoadingFallback />}
-          />
+          <WizardStepRenderer wrapper={StepWrapper} fallback={<LoadingFallback />} />
         </AnimatePresence>
-        
+
         <NavigationButtons />
       </div>
     </WizardProvider>
@@ -757,6 +765,7 @@ const MyWizard = () => {
 ### When to Create Custom Renderer
 
 Create a custom renderer when you need:
+
 - **Custom layout logic** - Different layouts for different step types
 - **Additional wrappers** - Add breadcrumbs, progress bars, etc.
 - **Step-specific styling** - Apply different styles based on step metadata
@@ -796,7 +805,7 @@ const AdvancedStepRenderer = () => {
   if (!currentStep?.component) return null;
 
   const StepComponent = currentStep.component;
-  
+
   // Determine step status
   const isVisited = visitedSteps.has(currentStep.id);
   const isCompleted = completedSteps.has(currentStep.id);
@@ -887,6 +896,7 @@ const MultiLayoutRenderer = () => {
 **Signature:** `<R>(selector: (state: IWizardState) => R) => R`
 
 **When to Use:**
+
 - When you need derived state
 - When you want to avoid unnecessary re-renders
 - When working with complex state transformations
@@ -899,7 +909,7 @@ const MultiLayoutRenderer = () => {
 const { useWizardSelector } = createWizardFactory<MyData>();
 
 // ✅ GOOD: Only re-renders when total changes
-const total = useWizardSelector(state => 
+const total = useWizardSelector((state) =>
   state.data.items.reduce((sum, item) => sum + item.price, 0)
 );
 
@@ -912,7 +922,7 @@ const total = data.items.reduce((sum, item) => sum + item.price, 0);
 
 ```typescript
 // ✅ GOOD: Single selector, single re-render
-const formData = useWizardSelector(state => ({
+const formData = useWizardSelector((state) => ({
   name: state.data.name,
   email: state.data.email,
   isValid: !state.errorSteps.has('personal-info'),
@@ -927,7 +937,7 @@ const { errorSteps } = useWizard();
 #### 3. Complex Transformations
 
 ```typescript
-const validationSummary = useWizardSelector(state => {
+const validationSummary = useWizardSelector((state) => {
   const totalSteps = state.activeSteps.length;
   const completedSteps = state.completedSteps.size;
   const errorSteps = state.errorSteps.size;
@@ -951,16 +961,13 @@ const validationSummary = useWizardSelector(state => {
 const userId = '123';
 
 // ❌ BAD: Creates new selector on every render
-const userOrders = useWizardSelector(state => 
-  state.data.orders.filter(o => o.userId === userId)
+const userOrders = useWizardSelector((state) =>
+  state.data.orders.filter((o) => o.userId === userId)
 );
 
 // ✅ GOOD: Stable selector
 const userOrders = useWizardSelector(
-  useCallback(
-    state => state.data.orders.filter(o => o.userId === userId),
-    [userId]
-  )
+  useCallback((state) => state.data.orders.filter((o) => o.userId === userId), [userId])
 );
 ```
 
@@ -968,11 +975,11 @@ const userOrders = useWizardSelector(
 
 ```typescript
 // ❌ BAD: Returns new array every time
-const items = useWizardSelector(state => state.data.items.map(i => i.name));
+const items = useWizardSelector((state) => state.data.items.map((i) => i.name));
 
 // ✅ GOOD: Use useMemo for derived arrays
-const items = useWizardSelector(state => state.data.items);
-const itemNames = useMemo(() => items.map(i => i.name), [items]);
+const items = useWizardSelector((state) => state.data.items);
+const itemNames = useMemo(() => items.map((i) => i.name), [items]);
 ```
 
 ---
@@ -984,6 +991,7 @@ const itemNames = useMemo(() => items.map(i => i.name), [items]);
 **Signature:** `(field: keyof T) => string | undefined`
 
 **When to Use:**
+
 - Displaying field-specific error messages
 - Conditional styling based on errors
 - Form validation feedback
@@ -1000,13 +1008,8 @@ const EmailInput = () => {
 
   return (
     <div>
-      <input 
-        type="email"
-        className={emailError ? 'input-error' : 'input-valid'}
-      />
-      {emailError && (
-        <span className="error-message">{emailError}</span>
-      )}
+      <input type="email" className={emailError ? 'input-error' : 'input-valid'} />
+      {emailError && <span className="error-message">{emailError}</span>}
     </div>
   );
 };
@@ -1024,12 +1027,8 @@ const PersonalInfoStep = () => {
 
   return (
     <div>
-      {hasAnyError && (
-        <div className="alert alert-error">
-          Please fix the errors below
-        </div>
-      )}
-      
+      {hasAnyError && <div className="alert alert-error">Please fix the errors below</div>}
+
       <Input name="name" error={nameError} />
       <Input name="email" error={emailError} />
       <Input name="phone" error={phoneError} />
@@ -1063,6 +1062,7 @@ const firstItemError = useWizardError('items[0].name');
 **Signature:** `(field: keyof T) => T[field]`
 
 **When to Use:**
+
 - Reading single field values
 - Optimizing component re-renders
 - Building controlled inputs
@@ -1078,12 +1078,7 @@ const NameInput = () => {
   const name = useWizardValue('name');
   const { setData } = useWizardActions();
 
-  return (
-    <input
-      value={name || ''}
-      onChange={(e) => setData('name', e.target.value)}
-    />
-  );
+  return <input value={name || ''} onChange={(e) => setData('name', e.target.value)} />;
 };
 ```
 
@@ -1110,7 +1105,7 @@ const PremiumFeatures = () => {
 const email = useWizardValue('user.email'); // Type error!
 
 // ✅ GOOD: Use selector for nested data
-const email = useWizardSelector(state => state.data.user?.email);
+const email = useWizardSelector((state) => state.data.user?.email);
 ```
 
 2. **Default Values:** Handle undefined values:
@@ -1134,6 +1129,7 @@ const displayName = name ?? 'Guest';
 **Signature:** `() => Omit<IWizardState, 'data'>`
 
 **When to Use:**
+
 - Building progress indicators
 - Displaying step information
 - Conditional UI based on wizard state
@@ -1150,10 +1146,7 @@ const ProgressBar = () => {
 
   return (
     <div className="progress-bar">
-      <div 
-        className="progress-fill" 
-        style={{ width: `${progress}%` }}
-      />
+      <div className="progress-fill" style={{ width: `${progress}%` }} />
       <span>{Math.round(progress)}% Complete</span>
     </div>
   );
@@ -1170,8 +1163,7 @@ const StepIndicator = () => {
     <div className="step-indicator">
       <h2>{currentStep?.label}</h2>
       <p>
-        Visited: {visitedSteps.size} | 
-        Completed: {completedSteps.size}
+        Visited: {visitedSteps.size} | Completed: {completedSteps.size}
       </p>
     </div>
   );

@@ -1,13 +1,13 @@
-import type { IStepConfig, IWizardConfig } from "wizzard-stepper-react";
+import type { IStepConfig, IWizardConfig } from 'wizzard-stepper-react';
 import {
   WizardProvider,
   useWizardState,
   useWizardActions,
   type BasicNavigationSchema,
-} from "../../wizards/basic-navigation-wizard";
-import { Card, CardContent, CardFooter } from "../../components/ui/Card";
-import { Button } from "../../components/ui/Button";
-import { useEffect } from "react";
+} from '../../wizards/basic-navigation-wizard';
+import { Card, CardContent, CardFooter } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { useEffect } from 'react';
 
 /**
  * TestBasicNavigation
@@ -72,10 +72,10 @@ const BreadcrumbNav = () => {
             disabled={!isClickable}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               isCurrent
-                ? "bg-indigo-600 text-white"
+                ? 'bg-indigo-600 text-white'
                 : isVisited
-                  ? "bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
-                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
             }`}
           >
             {crumb.label}
@@ -120,14 +120,9 @@ const NavigationHistory = () => {
   if (history.length === 0) return null;
 
   return (
-    <div
-      data-testid="wizard-history"
-      className="mt-4 p-3 bg-gray-50 rounded-lg"
-    >
-      <div className="text-xs font-medium text-gray-500 mb-1">
-        Navigation History:
-      </div>
-      <div className="text-xs text-gray-700">{history.join(" → ")}</div>
+    <div data-testid="wizard-history" className="mt-4 p-3 bg-gray-50 rounded-lg">
+      <div className="text-xs font-medium text-gray-500 mb-1">Navigation History:</div>
+      <div className="text-xs text-gray-700">{history.join(' → ')}</div>
     </div>
   );
 };
@@ -143,7 +138,7 @@ const StepIndicators = () => {
           key={index}
           data-testid="step-indicator"
           className={`h-2 w-2 rounded-full ${
-            index === currentStepIndex ? "bg-indigo-600" : "bg-gray-300"
+            index === currentStepIndex ? 'bg-indigo-600' : 'bg-gray-300'
           }`}
         />
       ))}
@@ -153,18 +148,12 @@ const StepIndicators = () => {
 
 // Main Wizard Content
 const WizardContent = () => {
-  const {
-    currentStep,
-    isFirstStep,
-    isLastStep,
-    currentStepIndex,
-    activeSteps,
-  } = useWizardState();
+  const { currentStep, isFirstStep, isLastStep, currentStepIndex, activeSteps } = useWizardState();
   const { goToNextStep, goToPrevStep } = useWizardActions();
 
   // Scroll to top on step change
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentStepIndex]);
 
   if (!currentStep) return null;
@@ -187,9 +176,9 @@ const WizardContent = () => {
 
           {/* Step Content */}
           <div className="min-h-[200px]">
-            {currentStep.id === "step1" && <Step1 />}
-            {currentStep.id === "step2" && <Step2 />}
-            {currentStep.id === "step3" && <Step3 />}
+            {currentStep.id === 'step1' && <Step1 />}
+            {currentStep.id === 'step2' && <Step2 />}
+            {currentStep.id === 'step3' && <Step3 />}
           </div>
 
           <NavigationHistory />
@@ -206,7 +195,7 @@ const WizardContent = () => {
           </Button>
 
           <Button
-            data-testid={isLastStep ? "submit-button" : "next-button"}
+            data-testid={isLastStep ? 'submit-button' : 'next-button'}
             variant="primary"
             onClick={
               isLastStep
@@ -216,7 +205,7 @@ const WizardContent = () => {
                 : goToNextStep
             }
           >
-            {isLastStep ? "Complete" : "Next"}
+            {isLastStep ? 'Complete' : 'Next'}
           </Button>
         </CardFooter>
       </Card>
@@ -227,9 +216,9 @@ const WizardContent = () => {
 // Wizard Config
 const wizardConfig: IWizardConfig<BasicNavigationSchema> = {
   steps: [
-    { id: "step1", label: "Step 1" },
-    { id: "step2", label: "Step 2" },
-    { id: "step3", label: "Step 3" },
+    { id: 'step1', label: 'Step 1' },
+    { id: 'step2', label: 'Step 2' },
+    { id: 'step3', label: 'Step 3' },
   ],
 };
 

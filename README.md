@@ -12,10 +12,10 @@ A flexible, headless, and strictly typed multi-step wizard library for React. Bu
 
 Try the library in the browser with these standalone templates on StackBlitz:
 
-| Example | Template |
-| :--- | :--- |
-| **Basic** | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-blue?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-stepper-react/tree/main/.stackblitz/basic) |
-| **Validation** | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-red?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-stepper-react/tree/main/.stackblitz/validation) |
+| Example         | Template                                                                                                                                                                      |
+| :-------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Basic**       | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-blue?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-stepper-react/tree/main/.stackblitz/basic)        |
+| **Validation**  | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-red?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-stepper-react/tree/main/.stackblitz/validation)    |
 | **Persistence** | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-green?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-stepper-react/tree/main/.stackblitz/persistence) |
 
 ## 🚀 Quick Start (v2.0.0 Modern)
@@ -35,12 +35,8 @@ interface AuthSchema {
   preferences: { theme: 'light' | 'dark' };
 }
 
-export const { 
-  WizardProvider, 
-  useWizard, 
-  useWizardValue, 
-  useWizardActions 
-} = createWizardFactory<AuthSchema>();
+export const { WizardProvider, useWizard, useWizardValue, useWizardActions } =
+  createWizardFactory<AuthSchema>();
 ```
 
 ### 2. Wrap your App
@@ -65,7 +61,7 @@ const EmailInput = () => {
   const email = useWizardValue('email');
   const { setData } = useWizardActions();
 
-  return <input value={email} onChange={e => setData('email', e.target.value)} />;
+  return <input value={email} onChange={(e) => setData('email', e.target.value)} />;
 };
 ```
 
@@ -122,8 +118,8 @@ const config = {
   persistence: {
     // 🛡️ Always use a unique prefix for isolation
     adapter: new LocalStorageAdapter('auth_wizard_v2'),
-    mode: 'onStepChange' 
-  }
+    mode: 'onStepChange',
+  },
 };
 ```
 
@@ -167,14 +163,8 @@ const PersonalInfoStep = () => {
 
   return (
     <div>
-      <input 
-        value={name} 
-        onChange={(e) => handleStepChange('name', e.target.value)}
-      />
-      <input 
-        value={email} 
-        onChange={(e) => handleStepChange('email', e.target.value)}
-      />
+      <input value={name} onChange={(e) => handleStepChange('name', e.target.value)} />
+      <input value={email} onChange={(e) => handleStepChange('email', e.target.value)} />
     </div>
   );
 };
@@ -182,12 +172,12 @@ const PersonalInfoStep = () => {
 
 ## 🛠️ Performance Tuning
 
-| Hook | Returns | Re-renders | Best For |
-| :--- | :--- | :--- | :--- |
-| `useWizardActions` | Navigation/Setters | **Zero** | Buttons, Handlers |
-| `useWizardValue` | Specific Field | **Atomic** | Inputs, Labels |
-| `useWizardState` | UI Meta (Progress) | **Minimal** | Progress Bars |
-| `useWizard` | Everything | **Full** | Orchestration |
+| Hook               | Returns            | Re-renders  | Best For          |
+| :----------------- | :----------------- | :---------- | :---------------- |
+| `useWizardActions` | Navigation/Setters | **Zero**    | Buttons, Handlers |
+| `useWizardValue`   | Specific Field     | **Atomic**  | Inputs, Labels    |
+| `useWizardState`   | UI Meta (Progress) | **Minimal** | Progress Bars     |
+| `useWizard`        | Everything         | **Full**    | Orchestration     |
 
 ---
 

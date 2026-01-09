@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } from 'react';
 import {
   type IWizardConfig,
   type IValidatorAdapter,
@@ -8,12 +8,12 @@ import {
   WizardDevTools,
   devToolsMiddleware,
   useWizardError,
-} from "wizzard-stepper-react";
-import { Card, CardContent, CardFooter } from "../../components/ui/Card";
-import { Button } from "../../components/ui/Button";
-import { Input } from "../../components/ui/Input";
-import { cn } from "../../lib/utils";
-import { useSearchParams } from "react-router-dom";
+} from 'wizzard-stepper-react';
+import { Card, CardContent, CardFooter } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { cn } from '../../lib/utils';
+import { useSearchParams } from 'react-router-dom';
 
 // Advanced validation demo with 10 steps
 interface AdvancedValidationData {
@@ -85,13 +85,11 @@ class SimpleAdapter implements IValidatorAdapter<AdvancedValidationData> {
     const errors: Record<string, string> = {};
 
     // ⚡ Parallel validation - all validators run simultaneously
-    const validationPromises = Object.entries(this.rules).map(
-      async ([field, validator]) => {
-        const val = data[field as keyof AdvancedValidationData];
-        const error = await validator(val, data);
-        return { field, error };
-      }
-    );
+    const validationPromises = Object.entries(this.rules).map(async ([field, validator]) => {
+      const val = data[field as keyof AdvancedValidationData];
+      const error = await validator(val, data);
+      return { field, error };
+    });
 
     // Wait for all validations to complete
     const results = await Promise.all(validationPromises);
@@ -113,44 +111,42 @@ class SimpleAdapter implements IValidatorAdapter<AdvancedValidationData> {
 const checkEmailExists = async (email: string) => {
   // Reduced delay for better UX (was 1000ms)
   await new Promise((resolve) => setTimeout(resolve, 300));
-  if (email === "taken@example.com") return "Email already exists";
+  if (email === 'taken@example.com') return 'Email already exists';
   return null;
 };
 
 const checkUsernameAvailable = async (username: string) => {
   // Reduced delay for better UX (was 800ms)
   await new Promise((resolve) => setTimeout(resolve, 300));
-  if (username === "admin") return "Username not available";
+  if (username === 'admin') return 'Username not available';
   return null;
 };
 
 const getFilledAllFields = (): Partial<AdvancedValidationData> => {
   return {
-    name: "Auto Generated Name",
-    email: "auto@example.com",
-    username: "autouser123",
-    password: "SecurePass123!",
+    name: 'Auto Generated Name',
+    email: 'auto@example.com',
+    username: 'autouser123',
+    password: 'SecurePass123!',
     age: 30,
-    country: "US",
-    phone: "+1234567890",
-    company: "Auto Corp",
-    address: "123 Auto Street",
-    city: "Auto City",
-    zipCode: "12345",
-    state: "CA",
-    accountType: "premium",
-    subscription: "yearly",
-    paymentMethod: "credit_card",
-    cardNumber: "4111111111111111",
+    country: 'US',
+    phone: '+1234567890',
+    company: 'Auto Corp',
+    address: '123 Auto Street',
+    city: 'Auto City',
+    zipCode: '12345',
+    state: 'CA',
+    accountType: 'premium',
+    subscription: 'yearly',
+    paymentMethod: 'credit_card',
+    cardNumber: '4111111111111111',
     terms: true,
     newsletter: true,
   };
 };
 
 // Auto-fill function (async)
-const autoFillAllFields = async (): Promise<
-  Partial<AdvancedValidationData>
-> => {
+const autoFillAllFields = async (): Promise<Partial<AdvancedValidationData>> => {
   await new Promise((resolve) => setTimeout(resolve, 2000));
 
   return getFilledAllFields();
@@ -169,8 +165,8 @@ const ErrorModal = ({
   const errorSteps = Object.keys(errors)
     .filter((stepId) => Object.keys(errors[stepId]).length > 0)
     .sort((a, b) => {
-      const stepA = parseInt(a.replace("step-", ""));
-      const stepB = parseInt(b.replace("step-", ""));
+      const stepA = parseInt(a.replace('step-', ''));
+      const stepB = parseInt(b.replace('step-', ''));
       return stepA - stepB;
     });
 
@@ -180,12 +176,9 @@ const ErrorModal = ({
       data-testid="error-modal"
     >
       <div className="bg-white rounded-lg p-6 max-w-md w-full max-h-96 overflow-y-auto position-sticky top-0">
-        <h2 className="text-xl font-bold mb-4 text-red-600">
-          Validation Errors
-        </h2>
+        <h2 className="text-xl font-bold mb-4 text-red-600">Validation Errors</h2>
         <p className="mb-4">
-          Found <span data-testid="error-count">{errorSteps.length}</span>{" "}
-          step(s) with errors:
+          Found <span data-testid="error-count">{errorSteps.length}</span> step(s) with errors:
         </p>
 
         <div className="space-y-2 mb-6">
@@ -194,10 +187,10 @@ const ErrorModal = ({
               key={stepId}
               data-testid={`error-${stepId}`}
               className={cn(
-                "p-3 bg-red-50 border border-red-200 rounded cursor-pointer hover:bg-red-100",
+                'p-3 bg-red-50 border border-red-200 rounded cursor-pointer hover:bg-red-100',
                 {
-                  "opacity-50": index > 0,
-                  "cursor-not-allowed": index > 0,
+                  'opacity-50': index > 0,
+                  'cursor-not-allowed': index > 0,
                 }
               )}
               onClick={() => {
@@ -230,7 +223,7 @@ const ErrorModal = ({
 const Step1 = () => {
   const { data, allErrors } = useWizard();
   const { handleStepChange } = useWizard();
-  const stepErrors = allErrors["step-1"] || {};
+  const stepErrors = allErrors['step-1'] || {};
 
   return (
     <div className="space-y-4">
@@ -239,20 +232,20 @@ const Step1 = () => {
       <Input
         data-testid="name-input"
         label="Name"
-        value={data.name || ""}
-        onChange={(e) => handleStepChange("name", e.target.value)}
+        value={data.name || ''}
+        onChange={(e) => handleStepChange('name', e.target.value)}
         error={stepErrors.name}
-        className={stepErrors.name ? "error invalid border-red-500" : ""}
+        className={stepErrors.name ? 'error invalid border-red-500' : ''}
       />
 
       <Input
         data-testid="email-input"
         label="Email"
         type="email"
-        value={data.email || ""}
-        onChange={(e) => handleStepChange("email", e.target.value)}
+        value={data.email || ''}
+        onChange={(e) => handleStepChange('email', e.target.value)}
         error={stepErrors.email}
-        className={stepErrors.email ? "error invalid border-red-500" : ""}
+        className={stepErrors.email ? 'error invalid border-red-500' : ''}
       />
     </div>
   );
@@ -260,7 +253,7 @@ const Step1 = () => {
 
 const Step2 = () => {
   const { data, allErrors, handleStepChange } = useWizard();
-  const stepErrors = allErrors["step-2"] || {};
+  const stepErrors = allErrors['step-2'] || {};
 
   return (
     <div className="space-y-4">
@@ -269,20 +262,20 @@ const Step2 = () => {
       <Input
         data-testid="username-input"
         label="Username"
-        value={data.username || ""}
-        onChange={(e) => handleStepChange("username", e.target.value)}
+        value={data.username || ''}
+        onChange={(e) => handleStepChange('username', e.target.value)}
         error={stepErrors.username}
-        className={stepErrors.username ? "error invalid border-red-500" : ""}
+        className={stepErrors.username ? 'error invalid border-red-500' : ''}
       />
 
       <Input
         data-testid="password-input"
         label="Password"
         type="password"
-        value={data.password || ""}
-        onChange={(e) => handleStepChange("password", e.target.value)}
+        value={data.password || ''}
+        onChange={(e) => handleStepChange('password', e.target.value)}
         error={stepErrors.password}
-        className={stepErrors.password ? "error invalid border-red-500" : ""}
+        className={stepErrors.password ? 'error invalid border-red-500' : ''}
       />
     </div>
   );
@@ -291,7 +284,7 @@ const Step2 = () => {
 const Step3 = () => {
   const { data, allErrors, handleStepChange } = useWizard();
 
-  const stepErrors = allErrors["step-3"] || {};
+  const stepErrors = allErrors['step-3'] || {};
 
   return (
     <div className="space-y-4">
@@ -301,15 +294,15 @@ const Step3 = () => {
         data-testid="age-input"
         label="Age"
         type="number"
-        value={data.age?.toString() || ""}
-        onChange={(e) => handleStepChange("age", parseInt(e.target.value))}
+        value={data.age?.toString() || ''}
+        onChange={(e) => handleStepChange('age', parseInt(e.target.value))}
         error={stepErrors.age}
       />
 
       <select
         data-testid="country-select"
-        value={data.country || ""}
-        onChange={(e) => handleStepChange("country", e.target.value)}
+        value={data.country || ''}
+        onChange={(e) => handleStepChange('country', e.target.value)}
         className="w-full p-2 border rounded"
       >
         <option value="">Select Country</option>
@@ -329,7 +322,7 @@ const Step3 = () => {
 // Steps 4-10 (simplified for brevity)
 const Step4 = () => {
   const { data, allErrors, handleStepChange } = useWizard();
-  const stepErrors = allErrors["step-4"] || {};
+  const stepErrors = allErrors['step-4'] || {};
 
   return (
     <div className="space-y-4">
@@ -337,16 +330,16 @@ const Step4 = () => {
       <Input
         data-testid="phone-input"
         label="Phone"
-        value={data.phone || ""}
-        onChange={(e) => handleStepChange("phone", e.target.value)}
+        value={data.phone || ''}
+        onChange={(e) => handleStepChange('phone', e.target.value)}
         error={stepErrors.phone}
-        className={stepErrors.phone ? "error invalid border-red-500" : ""}
+        className={stepErrors.phone ? 'error invalid border-red-500' : ''}
       />
       <Input
         data-testid="company-input"
         label="Company"
-        value={data.company || ""}
-        onChange={(e) => handleStepChange("company", e.target.value)}
+        value={data.company || ''}
+        onChange={(e) => handleStepChange('company', e.target.value)}
         error={stepErrors.company}
       />
     </div>
@@ -355,7 +348,7 @@ const Step4 = () => {
 
 const Step5 = () => {
   const { data, allErrors, handleStepChange } = useWizard();
-  const stepErrors = allErrors["step-5"] || {};
+  const stepErrors = allErrors['step-5'] || {};
 
   return (
     <div className="space-y-4">
@@ -363,16 +356,16 @@ const Step5 = () => {
       <Input
         data-testid="address-input"
         label="Address"
-        value={data.address || ""}
-        onChange={(e) => handleStepChange("address", e.target.value)}
+        value={data.address || ''}
+        onChange={(e) => handleStepChange('address', e.target.value)}
         error={stepErrors.address}
-        className={stepErrors.address ? "error invalid border-red-500" : ""}
+        className={stepErrors.address ? 'error invalid border-red-500' : ''}
       />
       <Input
         data-testid="city-input"
         label="City"
-        value={data.city || ""}
-        onChange={(e) => handleStepChange("city", e.target.value)}
+        value={data.city || ''}
+        onChange={(e) => handleStepChange('city', e.target.value)}
         error={stepErrors.city}
       />
     </div>
@@ -381,7 +374,7 @@ const Step5 = () => {
 
 const Step6 = () => {
   const { data, allErrors, handleStepChange } = useWizard();
-  const stepErrors = allErrors["step-6"] || {};
+  const stepErrors = allErrors['step-6'] || {};
 
   return (
     <div className="space-y-4">
@@ -389,15 +382,15 @@ const Step6 = () => {
       <Input
         data-testid="zipcode-input"
         label="Zip Code"
-        value={data.zipCode || ""}
-        onChange={(e) => handleStepChange("zipCode", e.target.value)}
+        value={data.zipCode || ''}
+        onChange={(e) => handleStepChange('zipCode', e.target.value)}
         error={stepErrors.zipCode}
       />
       <Input
         data-testid="state-input"
         label="State"
-        value={data.state || ""}
-        onChange={(e) => handleStepChange("state", e.target.value)}
+        value={data.state || ''}
+        onChange={(e) => handleStepChange('state', e.target.value)}
         error={stepErrors.state}
       />
     </div>
@@ -406,15 +399,15 @@ const Step6 = () => {
 
 const Step7 = () => {
   const { data, allErrors, handleStepChange } = useWizard();
-  const stepErrors = allErrors["step-7"] || {};
+  const stepErrors = allErrors['step-7'] || {};
 
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-bold">Step 7: Account Type</h2>
       <select
         data-testid="account-type-select"
-        value={data.accountType || ""}
-        onChange={(e) => handleStepChange("accountType", e.target.value)}
+        value={data.accountType || ''}
+        onChange={(e) => handleStepChange('accountType', e.target.value)}
         className="w-full p-2 border rounded"
       >
         <option value="">Select Type</option>
@@ -424,8 +417,8 @@ const Step7 = () => {
       <Input
         data-testid="subscription-input"
         label="Subscription"
-        value={data.subscription || ""}
-        onChange={(e) => handleStepChange("subscription", e.target.value)}
+        value={data.subscription || ''}
+        onChange={(e) => handleStepChange('subscription', e.target.value)}
         error={stepErrors.subscription}
       />
     </div>
@@ -434,7 +427,7 @@ const Step7 = () => {
 
 const Step8 = () => {
   const { data, allErrors, handleStepChange } = useWizard();
-  const stepErrors = allErrors["step-8"] || {};
+  const stepErrors = allErrors['step-8'] || {};
 
   return (
     <div className="space-y-4">
@@ -442,15 +435,15 @@ const Step8 = () => {
       <Input
         data-testid="payment-method-input"
         label="Payment Method"
-        value={data.paymentMethod || ""}
-        onChange={(e) => handleStepChange("paymentMethod", e.target.value)}
+        value={data.paymentMethod || ''}
+        onChange={(e) => handleStepChange('paymentMethod', e.target.value)}
         error={stepErrors.paymentMethod}
       />
       <Input
         data-testid="card-number-input"
         label="Card Number"
-        value={data.cardNumber || ""}
-        onChange={(e) => handleStepChange("cardNumber", e.target.value)}
+        value={data.cardNumber || ''}
+        onChange={(e) => handleStepChange('cardNumber', e.target.value)}
         error={stepErrors.cardNumber}
       />
     </div>
@@ -459,7 +452,7 @@ const Step8 = () => {
 
 const Step9 = () => {
   const { data, handleStepChange } = useWizard();
-  const termsError = useWizardError("terms");
+  const termsError = useWizardError('terms');
 
   return (
     <div className="space-y-4">
@@ -469,7 +462,7 @@ const Step9 = () => {
           data-testid="terms-checkbox"
           type="checkbox"
           checked={data.terms || false}
-          onChange={(e) => handleStepChange("terms", e.target.checked)}
+          onChange={(e) => handleStepChange('terms', e.target.checked)}
         />
         Accept Terms
       </label>
@@ -483,7 +476,7 @@ const Step9 = () => {
           data-testid="newsletter-checkbox"
           type="checkbox"
           checked={data.newsletter || false}
-          onChange={(e) => handleStepChange("newsletter", e.target.checked)}
+          onChange={(e) => handleStepChange('newsletter', e.target.checked)}
         />
         Subscribe to Newsletter
       </label>
@@ -507,14 +500,13 @@ const Step10 = () => {
 // Main Wizard Content
 const WizardContent = () => {
   const { currentStep, activeSteps, allErrors, isBusy } = useWizard();
-  const { goToNextStep, goToPrevStep, updateData, reset, validateAll } =
-    useWizardActions();
+  const { goToNextStep, goToPrevStep, updateData, reset, validateAll } = useWizardActions();
   const [isAutoFilling, setIsAutoFilling] = useState(false);
   const [showNavigationError] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<
-    Record<string, Record<string, string>>
-  >({});
+  const [validationErrors, setValidationErrors] = useState<Record<string, Record<string, string>>>(
+    {}
+  );
   const { goToStep } = useWizardActions();
 
   const handleAutoFillAsync = async () => {
@@ -542,23 +534,23 @@ const WizardContent = () => {
   const handleClearCurrent = () => {
     // Clear only current step fields
     const currentStepId = currentStep?.id;
-    if (currentStepId === "step-1") {
+    if (currentStepId === 'step-1') {
       updateData({ name: undefined, email: undefined });
-    } else if (currentStepId === "step-2") {
+    } else if (currentStepId === 'step-2') {
       updateData({ username: undefined, password: undefined });
-    } else if (currentStepId === "step-3") {
+    } else if (currentStepId === 'step-3') {
       updateData({ age: undefined, country: undefined });
-    } else if (currentStepId === "step-4") {
+    } else if (currentStepId === 'step-4') {
       updateData({ phone: undefined, company: undefined });
-    } else if (currentStepId === "step-5") {
+    } else if (currentStepId === 'step-5') {
       updateData({ address: undefined, city: undefined });
-    } else if (currentStepId === "step-6") {
+    } else if (currentStepId === 'step-6') {
       updateData({ zipCode: undefined, state: undefined });
-    } else if (currentStepId === "step-7") {
+    } else if (currentStepId === 'step-7') {
       updateData({ accountType: undefined, subscription: undefined });
-    } else if (currentStepId === "step-8") {
+    } else if (currentStepId === 'step-8') {
       updateData({ paymentMethod: undefined, cardNumber: undefined });
-    } else if (currentStepId === "step-9") {
+    } else if (currentStepId === 'step-9') {
       updateData({ terms: undefined, newsletter: undefined });
     }
   };
@@ -566,7 +558,6 @@ const WizardContent = () => {
   const handleClearAll = () => {
     reset();
   };
-
 
   return (
     <div data-testid="wizard-container" className="max-w-2xl mx-auto py-8">
@@ -587,7 +578,7 @@ const WizardContent = () => {
           size="sm"
           disabled={isAutoFilling}
         >
-          {isAutoFilling ? "Filling..." : "Auto-Fill (Async)"}
+          {isAutoFilling ? 'Filling...' : 'Auto-Fill (Async)'}
         </Button>
         <Button
           data-testid="clear-current-step-button"
@@ -647,10 +638,8 @@ const WizardContent = () => {
               data-testid={`breadcrumb-${s.id}`}
               onClick={() => goToStep(s.id)}
               className={`text-xs p-2 whitespace-nowrap rounded cursor-pointer ${
-                s.id === currentStep?.id
-                  ? "font-bold bg-blue-100"
-                  : "bg-gray-100"
-              } ${hasError ? "bg-red-100 text-red-600 error invalid" : ""}`}
+                s.id === currentStep?.id ? 'font-bold bg-blue-100' : 'bg-gray-100'
+              } ${hasError ? 'bg-red-100 text-red-600 error invalid' : ''}`}
             >
               {s.label}
             </div>
@@ -667,8 +656,7 @@ const WizardContent = () => {
             width: `${((activeSteps.findIndex((s) => s.id === currentStep?.id) + 1) / activeSteps.length) * 100}%`,
           }}
           aria-valuenow={
-            ((activeSteps.findIndex((s) => s.id === currentStep?.id) + 1) /
-              activeSteps.length) *
+            ((activeSteps.findIndex((s) => s.id === currentStep?.id) + 1) / activeSteps.length) *
             100
           }
         />
@@ -686,24 +674,21 @@ const WizardContent = () => {
 
       <Card>
         <CardContent className="pt-6">
-          <div
-            data-testid="current-step"
-            className="text-sm text-gray-500 mb-4"
-          >
-            Step {activeSteps.findIndex((s) => s.id === currentStep?.id) + 1} of{" "}
+          <div data-testid="current-step" className="text-sm text-gray-500 mb-4">
+            Step {activeSteps.findIndex((s) => s.id === currentStep?.id) + 1} of{' '}
             {activeSteps.length}
           </div>
 
-          {currentStep?.id === "step-1" && <Step1 />}
-          {currentStep?.id === "step-2" && <Step2 />}
-          {currentStep?.id === "step-3" && <Step3 />}
-          {currentStep?.id === "step-4" && <Step4 />}
-          {currentStep?.id === "step-5" && <Step5 />}
-          {currentStep?.id === "step-6" && <Step6 />}
-          {currentStep?.id === "step-7" && <Step7 />}
-          {currentStep?.id === "step-8" && <Step8 />}
-          {currentStep?.id === "step-9" && <Step9 />}
-          {currentStep?.id === "step-10" && <Step10 />}
+          {currentStep?.id === 'step-1' && <Step1 />}
+          {currentStep?.id === 'step-2' && <Step2 />}
+          {currentStep?.id === 'step-3' && <Step3 />}
+          {currentStep?.id === 'step-4' && <Step4 />}
+          {currentStep?.id === 'step-5' && <Step5 />}
+          {currentStep?.id === 'step-6' && <Step6 />}
+          {currentStep?.id === 'step-7' && <Step7 />}
+          {currentStep?.id === 'step-8' && <Step8 />}
+          {currentStep?.id === 'step-9' && <Step9 />}
+          {currentStep?.id === 'step-10' && <Step10 />}
 
           {showErrorModal && (
             <ErrorModal
@@ -715,19 +700,11 @@ const WizardContent = () => {
         </CardContent>
 
         <CardFooter className="flex justify-between">
-          <Button
-            data-testid="prev-button"
-            onClick={goToPrevStep}
-            variant="secondary"
-          >
+          <Button data-testid="prev-button" onClick={goToPrevStep} variant="secondary">
             Previous
           </Button>
-          <Button
-            data-testid="next-button"
-            onClick={goToNextStep}
-            variant="primary"
-          >
-            {currentStep?.id === "step-10" ? "Submit" : "Next"}
+          <Button data-testid="next-button" onClick={goToNextStep} variant="primary">
+            {currentStep?.id === 'step-10' ? 'Submit' : 'Next'}
           </Button>
         </CardFooter>
       </Card>
@@ -745,111 +722,114 @@ const WizardContent = () => {
 };
 
 const config: IWizardConfig<AdvancedValidationData> = {
-  persistence: { mode: "onStepChange", adapter: new MemoryAdapter() },
-  validationMode: "onChange",
+  persistence: { mode: 'onStepChange', adapter: new MemoryAdapter() },
+  validationMode: 'onChange',
   middlewares: [devToolsMiddleware],
   steps: [
     {
-      id: "step-1",
-      label: "Personal",
+      id: 'step-1',
+      label: 'Personal',
       validationAdapter: new SimpleAdapter({
         name: (val) =>
           !val
-            ? "Name is required"
+            ? 'Name is required'
             : String(val).length < 3
-              ? "Name must be at least 3 chars"
+              ? 'Name must be at least 3 chars'
               : null,
         email: (val) => {
           return !val
-            ? "Email is required"
-            : !String(val).includes("@")
-              ? "Invalid email"
+            ? 'Email is required'
+            : !String(val).includes('@')
+              ? 'Invalid email'
               : checkEmailExists(val as string);
         },
       }),
     },
     {
-      id: "step-2",
-      label: "Account",
+      id: 'step-2',
+      label: 'Account',
       validationAdapter: new SimpleAdapter({
         username: (val) =>
           !val
-            ? "Username is required"
+            ? 'Username is required'
             : String(val).length < 3
-              ? "Username too short"
+              ? 'Username too short'
               : checkUsernameAvailable(val as string),
         password: (val) =>
           !val
-            ? "Password is required"
+            ? 'Password is required'
             : String(val).length < 8
-              ? "Password must be at least 8 chars"
+              ? 'Password must be at least 8 chars'
               : null,
       }),
     },
     {
-      id: "step-3",
-      label: "Demographics",
+      id: 'step-3',
+      label: 'Demographics',
       validationAdapter: new SimpleAdapter({
-        age: (val) => (!val || Number(val) < 18 ? "Must be 18 or older" : null),
-        country: (val) => (!val ? "Country is required" : null),
+        age: (val) => (!val || Number(val) < 18 ? 'Must be 18 or older' : null),
+        country: (val) => (!val ? 'Country is required' : null),
       }),
     },
     {
-      id: "step-4",
-      label: "Contact",
+      id: 'step-4',
+      label: 'Contact',
       validationAdapter: new SimpleAdapter({
-        phone: (val) => (!val ? "Phone is required" : null),
+        phone: (val) => (!val ? 'Phone is required' : null),
       }),
     },
     {
-      id: "step-5",
-      label: "Address",
+      id: 'step-5',
+      label: 'Address',
       validationAdapter: new SimpleAdapter({
-        address: (val) => (!val ? "Address is required" : null),
-        city: (val) => (!val ? "City is required" : null),
+        address: (val) => (!val ? 'Address is required' : null),
+        city: (val) => (!val ? 'City is required' : null),
       }),
     },
     {
-      id: "step-6",
-      label: "Location",
+      id: 'step-6',
+      label: 'Location',
       validationAdapter: new SimpleAdapter({
-        zipCode: (val) => (!val ? "Zip code is required" : null),
+        zipCode: (val) => (!val ? 'Zip code is required' : null),
       }),
     },
     {
-      id: "step-7",
-      label: "Account Type",
+      id: 'step-7',
+      label: 'Account Type',
       validationAdapter: new SimpleAdapter({
-        accountType: (val) => (!val ? "Account type is required" : null),
+        accountType: (val) => (!val ? 'Account type is required' : null),
       }),
     },
     {
-      id: "step-8",
-      label: "Payment",
+      id: 'step-8',
+      label: 'Payment',
       validationAdapter: new SimpleAdapter({
-        paymentMethod: (val) => (!val ? "Payment method is required" : null),
+        paymentMethod: (val) => (!val ? 'Payment method is required' : null),
       }),
     },
     {
-      id: "step-9",
-      label: "Preferences",
+      id: 'step-9',
+      label: 'Preferences',
       validationAdapter: new SimpleAdapter({
-        terms: (val) => (!val ? "You must accept terms" : null),
+        terms: (val) => (!val ? 'You must accept terms' : null),
       }),
     },
     {
-      id: "step-10",
-      label: "Review",
+      id: 'step-10',
+      label: 'Review',
     },
   ],
 };
 
 export default function TestAdvancedValidation() {
-    const searchParams = useSearchParams();
-    const navigationMode = searchParams[0].get("navigationMode") as IWizardConfig<AdvancedValidationData>["navigationMode"] || "onStepChange";
- 
+  const searchParams = useSearchParams();
+  const navigationMode =
+    (searchParams[0].get(
+      'navigationMode'
+    ) as IWizardConfig<AdvancedValidationData>['navigationMode']) || 'onStepChange';
+
   return (
-    <WizardProvider config={{...config, navigationMode: navigationMode as any}}>
+    <WizardProvider config={{ ...config, navigationMode: navigationMode as any }}>
       <WizardContent />
       <WizardDevTools />
     </WizardProvider>

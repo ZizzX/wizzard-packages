@@ -1,5 +1,5 @@
-import React, { useMemo, Suspense } from "react";
-import { useWizardContext } from "../context/WizardContext";
+import React, { useMemo, Suspense } from 'react';
+import { useWizardContext } from '../context/WizardContext';
 
 export interface WizardStepRendererProps {
   wrapper?: React.ComponentType<{ children: React.ReactNode; key: string }>;

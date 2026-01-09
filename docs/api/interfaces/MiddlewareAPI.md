@@ -1,6 +1,6 @@
 [**wizzard-stepper-react**](../README.md)
 
-***
+---
 
 [wizzard-stepper-react](../README.md) / MiddlewareAPI
 
@@ -18,7 +18,7 @@ Middleware API
 
 ### StepId
 
-`StepId` *extends* `string` = `string`
+`StepId` _extends_ `string` = `string`
 
 ## Properties
 
@@ -38,7 +38,7 @@ Defined in: [types.ts:405](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 `void`
 
-***
+---
 
 ### getSnapshot()
 
@@ -50,7 +50,7 @@ Defined in: [types.ts:407](https://github.com/ZizzX/wizzard-stepper-react/blob/3
 
 `any`
 
-***
+---
 
 ### getState()
 

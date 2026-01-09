@@ -1,19 +1,13 @@
-import { describe, it, expect } from "vitest";
-import {
-  render,
-  screen,
-  act,
-  waitFor,
-  renderHook,
-} from "@testing-library/react";
+import { describe, it, expect } from 'vitest';
+import { render, screen, act, waitFor, renderHook } from '@testing-library/react';
 import {
   WizardProvider,
   useWizardActions,
   useWizardState,
   useWizardError,
-} from "./context/WizardContext";
-import { WizardStepRenderer } from "./components/WizardStepRenderer";
-import { IStepConfig, IWizardConfig } from "@wizzard/core";
+} from './context/WizardContext';
+import { WizardStepRenderer } from './components/WizardStepRenderer';
+import { IStepConfig, IWizardConfig } from '@wizzard/core';
 
 // Helper component to interact with wizard in tests
 const WizardConsumer = () => {
@@ -25,39 +19,33 @@ const WizardConsumer = () => {
       <div data-testid="current-step">{currentStep?.id}</div>
       <div data-testid="progress">{progress}</div>
       <div data-testid="steps-count">{activeStepsCount}</div>
-      <div data-testid="history">{history.join(",")}</div>
+      <div data-testid="history">{history.join(',')}</div>
       <button onClick={() => goToNextStep()} data-testid="next-btn">
         Next
       </button>
       <button onClick={() => reset()} data-testid="reset-btn">
         Reset
       </button>
-      <button
-        onClick={() => setData("showStep2", true)}
-        data-testid="show-2-btn"
-      >
+      <button onClick={() => setData('showStep2', true)} data-testid="show-2-btn">
         Show 2
       </button>
-      <button
-        onClick={() => setData("blockNext", true)}
-        data-testid="block-btn"
-      >
+      <button onClick={() => setData('blockNext', true)} data-testid="block-btn">
         Block
       </button>
     </div>
   );
 };
 
-describe("Wizard Pro Features", () => {
+describe('Wizard Pro Features', () => {
   const steps: IStepConfig<any, any>[] = [
     {
-      id: "step1",
-      label: "Step 1",
+      id: 'step1',
+      label: 'Step 1',
       component: () => <div>Step 1 Content</div>,
     },
     {
-      id: "step2",
-      label: "Step 2",
+      id: 'step2',
+      label: 'Step 2',
       condition: async (data: any) => {
         await new Promise((r) => setTimeout(r, 20));
         return !!data.showStep2;
@@ -65,17 +53,17 @@ describe("Wizard Pro Features", () => {
       component: () => <div>Step 2 Content</div>,
     },
     {
-      id: "step3",
-      label: "Step 3",
+      id: 'step3',
+      label: 'Step 3',
       beforeLeave: async (data: any, dir: string) => {
-        if (dir === "next" && data.blockNext) return false;
+        if (dir === 'next' && data.blockNext) return false;
         return true;
       },
       component: () => <div>Step 3 Content</div>,
     },
   ];
 
-  it("should calculate progress and activeStepsCount correctly", async () => {
+  it('should calculate progress and activeStepsCount correctly', async () => {
     render(
       <WizardProvider config={{ steps }}>
         <WizardConsumer />
@@ -83,15 +71,15 @@ describe("Wizard Pro Features", () => {
     );
 
     // Initial state
-    expect(screen.getByTestId("current-step")).toHaveTextContent("step1");
+    expect(screen.getByTestId('current-step')).toHaveTextContent('step1');
     // Initially only 2 steps active (step1, step3) because step2 condition is async and defaults to false
     await waitFor(() => {
-      expect(screen.getByTestId("steps-count")).toHaveTextContent("2");
+      expect(screen.getByTestId('steps-count')).toHaveTextContent('2');
     });
-    expect(screen.getByTestId("progress")).toHaveTextContent("50"); // (1/2) * 100
+    expect(screen.getByTestId('progress')).toHaveTextContent('50'); // (1/2) * 100
   });
 
-  it("should handle async step conditions dynamically", async () => {
+  it('should handle async step conditions dynamically', async () => {
     render(
       <WizardProvider config={{ steps }}>
         <WizardConsumer />
@@ -99,24 +87,24 @@ describe("Wizard Pro Features", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("steps-count")).toHaveTextContent("2");
+      expect(screen.getByTestId('steps-count')).toHaveTextContent('2');
     });
 
     // Show step 2
     await act(async () => {
-      screen.getByTestId("show-2-btn").click();
+      screen.getByTestId('show-2-btn').click();
     });
 
     // Wait for async condition to resolve
     await waitFor(
       () => {
-        expect(screen.getByTestId("steps-count")).toHaveTextContent("3");
+        expect(screen.getByTestId('steps-count')).toHaveTextContent('3');
       },
       { timeout: 1000 }
     );
   });
 
-  it("should respect beforeLeave guards", async () => {
+  it('should respect beforeLeave guards', async () => {
     render(
       <WizardProvider config={{ steps }}>
         <WizardConsumer />
@@ -126,38 +114,32 @@ describe("Wizard Pro Features", () => {
 
     // Enable step 2 first so we can reach step 3
     await act(async () => {
-      screen.getByTestId("show-2-btn").click();
+      screen.getByTestId('show-2-btn').click();
     });
 
-    await waitFor(() =>
-      expect(screen.getByTestId("steps-count")).toHaveTextContent("3")
-    );
+    await waitFor(() => expect(screen.getByTestId('steps-count')).toHaveTextContent('3'));
 
     // Go to step 2
     await act(async () => {
-      screen.getByTestId("next-btn").click();
+      screen.getByTestId('next-btn').click();
     });
-    await waitFor(() =>
-      expect(screen.getByTestId("current-step")).toHaveTextContent("step2")
-    );
+    await waitFor(() => expect(screen.getByTestId('current-step')).toHaveTextContent('step2'));
 
     // Go to step 3
     await act(async () => {
-      screen.getByTestId("next-btn").click();
+      screen.getByTestId('next-btn').click();
     });
-    await waitFor(() =>
-      expect(screen.getByTestId("current-step")).toHaveTextContent("step3")
-    );
+    await waitFor(() => expect(screen.getByTestId('current-step')).toHaveTextContent('step3'));
 
     // Block movement from step 3
     await act(async () => {
-      screen.getByTestId("block-btn").click();
+      screen.getByTestId('block-btn').click();
     });
 
     // Try to go next from step 3 (currently last, but guard still called if next logic triggered or if we had step 4)
   });
 
-  it("should reset wizard state", async () => {
+  it('should reset wizard state', async () => {
     render(
       <WizardProvider config={{ steps }}>
         <WizardConsumer />
@@ -166,45 +148,43 @@ describe("Wizard Pro Features", () => {
 
     // Go to next step to change state
     await act(async () => {
-      screen.getByTestId("show-2-btn").click();
+      screen.getByTestId('show-2-btn').click();
     });
 
-    await waitFor(() =>
-      expect(screen.getByTestId("steps-count")).toHaveTextContent("3")
-    );
+    await waitFor(() => expect(screen.getByTestId('steps-count')).toHaveTextContent('3'));
 
     await act(async () => {
-      await screen.getByTestId("next-btn").click();
+      await screen.getByTestId('next-btn').click();
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("history")).toHaveTextContent("step2");
+      expect(screen.getByTestId('history')).toHaveTextContent('step2');
     });
 
     // Reset
     await act(async () => {
-      screen.getByTestId("reset-btn").click();
+      screen.getByTestId('reset-btn').click();
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("current-step")).toHaveTextContent("step1");
-      expect(screen.getByTestId("history")).toHaveTextContent("step1");
+      expect(screen.getByTestId('current-step')).toHaveTextContent('step1');
+      expect(screen.getByTestId('history')).toHaveTextContent('step1');
     });
   });
 
-  it("should validate all active steps even after immediate data update", async () => {
+  it('should validate all active steps even after immediate data update', async () => {
     const config: IWizardConfig<any> = {
       steps: [
-        { id: "step1", label: "Step 1" },
+        { id: 'step1', label: 'Step 1' },
         {
-          id: "step2",
-          label: "Step 2",
+          id: 'step2',
+          label: 'Step 2',
           condition: (data: any) => data.showStep2 === true,
           validationAdapter: {
             validate: (data: any) =>
               ({
                 isValid: !!data.step2Data,
-                errors: !data.step2Data ? { someField: "Required" } : {},
+                errors: !data.step2Data ? { someField: 'Required' } : {},
               }) as any,
           },
         },
@@ -212,9 +192,7 @@ describe("Wizard Pro Features", () => {
     };
 
     const { result } = renderHook(() => useWizardActions(), {
-      wrapper: ({ children }) => (
-        <WizardProvider config={config}>{children}</WizardProvider>
-      ),
+      wrapper: ({ children }) => <WizardProvider config={config}>{children}</WizardProvider>,
     });
 
     // 1. Initially only step1 is active.
@@ -230,12 +208,12 @@ describe("Wizard Pro Features", () => {
     expect(validationResult.errors.step2).toBeDefined();
   });
 
-  it("should record history when using goToStep directly", async () => {
+  it('should record history when using goToStep directly', async () => {
     const config: IWizardConfig<any> = {
       steps: [
-        { id: "step1", label: "Step 1" },
-        { id: "step2", label: "Step 2" },
-        { id: "step3", label: "Step 3" },
+        { id: 'step1', label: 'Step 1' },
+        { id: 'step2', label: 'Step 2' },
+        { id: 'step3', label: 'Step 3' },
       ],
     };
 
@@ -246,31 +224,29 @@ describe("Wizard Pro Features", () => {
         return { state, actions };
       },
       {
-        wrapper: ({ children }) => (
-          <WizardProvider config={config}>{children}</WizardProvider>
-        ),
+        wrapper: ({ children }) => <WizardProvider config={config}>{children}</WizardProvider>,
       }
     );
 
     await act(async () => {
-      await result.current.actions.goToStep("step2");
+      await result.current.actions.goToStep('step2');
     });
-    expect(result.current.state.history).toEqual(["step1", "step2"]);
+    expect(result.current.state.history).toEqual(['step1', 'step2']);
 
     await act(async () => {
-      await result.current.actions.goToStep("step3");
+      await result.current.actions.goToStep('step3');
     });
-    expect(result.current.state.history).toEqual(["step1", "step2", "step3"]);
+    expect(result.current.state.history).toEqual(['step1', 'step2', 'step3']);
   });
 
-  it("should toggle isBusy during async conditions", async () => {
+  it('should toggle isBusy during async conditions', async () => {
     let resolveCondition: (val: boolean) => void = () => {};
     const config: IWizardConfig<any> = {
       steps: [
-        { id: "step1", label: "Step 1" },
+        { id: 'step1', label: 'Step 1' },
         {
-          id: "step2",
-          label: "Step 2",
+          id: 'step2',
+          label: 'Step 2',
           condition: () =>
             new Promise((resolve) => {
               resolveCondition = resolve;
@@ -280,9 +256,7 @@ describe("Wizard Pro Features", () => {
     };
 
     const { result } = renderHook(() => useWizardState(), {
-      wrapper: ({ children }) => (
-        <WizardProvider config={config}>{children}</WizardProvider>
-      ),
+      wrapper: ({ children }) => <WizardProvider config={config}>{children}</WizardProvider>,
     });
 
     // During async check it should be busy
@@ -295,16 +269,16 @@ describe("Wizard Pro Features", () => {
     await waitFor(() => expect(result.current.isBusy).toBe(false));
   });
 
-  it("should correctly find errors using useWizardError with prefixed paths", async () => {
+  it('should correctly find errors using useWizardError with prefixed paths', async () => {
     const config: IWizardConfig<any> = {
       steps: [
         {
-          id: "security",
-          label: "Security",
+          id: 'security',
+          label: 'Security',
           validationAdapter: {
             validate: async () => ({
               isValid: false,
-              errors: { "security.password": "min length 6" },
+              errors: { 'security.password': 'min length 6' },
             }),
           },
         },
@@ -313,26 +287,24 @@ describe("Wizard Pro Features", () => {
 
     const { result } = renderHook(
       () => ({
-        error: useWizardError("security.password"),
+        error: useWizardError('security.password'),
         actions: useWizardActions(),
       }),
       {
-        wrapper: ({ children }) => (
-          <WizardProvider config={config}>{children}</WizardProvider>
-        ),
+        wrapper: ({ children }) => <WizardProvider config={config}>{children}</WizardProvider>,
       }
     );
 
     await act(async () => {
-      await result.current.actions.validateStep("security");
+      await result.current.actions.validateStep('security');
     });
 
-    expect(result.current.error).toBe("min length 6");
+    expect(result.current.error).toBe('min length 6');
   });
 
-  it("should setData and getData correctly for nested paths", async () => {
+  it('should setData and getData correctly for nested paths', async () => {
     const config: IWizardConfig<any> = {
-      steps: [{ id: "step1", label: "Step 1" }],
+      steps: [{ id: 'step1', label: 'Step 1' }],
     };
 
     const { result } = renderHook(
@@ -341,27 +313,21 @@ describe("Wizard Pro Features", () => {
         actions: useWizardActions(),
       }),
       {
-        wrapper: ({ children }) => (
-          <WizardProvider config={config}>{children}</WizardProvider>
-        ),
+        wrapper: ({ children }) => <WizardProvider config={config}>{children}</WizardProvider>,
       }
     );
 
     await act(() => {
-      result.current.actions.setData("user.address.city", "New York");
+      result.current.actions.setData('user.address.city', 'New York');
     });
 
     expect(result.current.state.data).toEqual({
-      user: { address: { city: "New York" } },
+      user: { address: { city: 'New York' } },
     });
-    expect(result.current.actions.getData("user.address.city")).toBe(
-      "New York"
-    );
-    expect(result.current.actions.getData("user.address")).toEqual({
-      city: "New York",
+    expect(result.current.actions.getData('user.address.city')).toBe('New York');
+    expect(result.current.actions.getData('user.address')).toEqual({
+      city: 'New York',
     });
-    expect(result.current.actions.getData("user.name", "Unknown")).toBe(
-      "Unknown"
-    );
+    expect(result.current.actions.getData('user.name', 'Unknown')).toBe('Unknown');
   });
 });

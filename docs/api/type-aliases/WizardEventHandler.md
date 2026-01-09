@@ -1,6 +1,6 @@
 [**wizzard-stepper-react**](../README.md)
 
-***
+---
 
 [wizzard-stepper-react](../README.md) / WizardEventHandler
 
@@ -16,13 +16,13 @@ Generic Event Handler Type
 
 ### StepId
 
-`StepId` *extends* `string` = `string`
+`StepId` _extends_ `string` = `string`
 
 ## Type Parameters
 
 ### E
 
-`E` *extends* [`WizardEventName`](WizardEventName.md)
+`E` _extends_ [`WizardEventName`](WizardEventName.md)
 
 ## Parameters
 

@@ -1,6 +1,6 @@
 [**wizzard-stepper-react**](../README.md)
 
-***
+---
 
 [wizzard-stepper-react](../README.md) / IWizardHandle
 
@@ -18,7 +18,7 @@ Handle returned by components for imperative access to the wizard.
 
 ### StepId
 
-`StepId` *extends* `string` = `string`
+`StepId` _extends_ `string` = `string`
 
 ## Properties
 
@@ -28,7 +28,7 @@ Handle returned by components for imperative access to the wizard.
 
 Defined in: [types.ts:10](https://github.com/ZizzX/wizzard-stepper-react/blob/3737e6f397efcf35b1868087f7c6e769d30b689f/src/types.ts#L10)
 
-***
+---
 
 ### state
 
