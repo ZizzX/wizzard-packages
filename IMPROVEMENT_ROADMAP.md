@@ -88,10 +88,7 @@ playwright.config.ts
 "test:all": "pnpm test:run && pnpm test:e2e"
 ```
 
-**Следующие шаги:**
-
-> [!NOTE]
-> Тесты написаны, но для их запуска требуется обновить demo приложение (`examples/demo`) с необходимыми `data-testid` атрибутами. См. `e2e/SETUP_CHECKLIST.md` для деталей.
+**Статус интеграции:** ✅ E2E тесты интегрированы и запускаются на demo app.
 
 <details>
 <summary>📝 Реализация</summary>
@@ -234,7 +231,7 @@ export function useWizardValue<TValue = any>(...)
 
 ### 2.1 Переход на Monorepo (pnpm workspaces)
 
-**Статус:** `[ ]`
+**Статус:** `[/]`
 
 **Зачем:**
 
@@ -259,8 +256,8 @@ export function useWizardValue<TValue = any>(...)
 
 **Фаза 1: Подготовка (1 день)**
 
-- [ ] Создать `pnpm-workspace.yaml`
-- [ ] Создать структуру `/packages`
+- [x] Создать `pnpm-workspace.yaml`
+- [x] Создать структуру `/packages`
 - [ ] Настроить TypeScript project references
 
 **Фаза 2: Разделение кода (3-5 дней)**
@@ -531,15 +528,15 @@ npx storybook@latest init
 
 ### Overall Completion
 
-**Priority 1 (Critical):** `1/3` (33%) 🎯
+**Priority 1 (Critical):** `3/3` (100%) 🎯
 
 - [x] E2E Testing ✅
-- [ ] API Documentation
-- [ ] Interactive Playground
+- [x] API Documentation ✅
+- [x] Interactive Playground ✅
 
 **Priority 2 (High):** `0/3` (0%)
 
-- [ ] Monorepo Migration
+- [/] Monorepo Migration
 - [ ] Performance Benchmarks
 - [ ] Storybook
 
