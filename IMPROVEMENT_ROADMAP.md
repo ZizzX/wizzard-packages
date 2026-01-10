@@ -264,42 +264,42 @@ export function useWizardValue<TValue = any>(...)
 
 **Фаза 0: Стратегия и split (0.5 дня)**
 
-- [ ] Зафиксировать deprecation policy для `wizzard-stepper-react`
+- [/] Зафиксировать deprecation policy для `wizzard-stepper-react`
 - [ ] Решить стратегию совместимости (meta-пакет или legacy-only)
-- [ ] Подготовить новый репозиторий для `@wizzard/*`
+- [x] Подготовить новый репозиторий для `@wizzard/*`
 
 **Фаза 1: Подготовка (1 день)**
 
 - [x] Создать `pnpm-workspace.yaml`
 - [x] Создать структуру `/packages`
-- [ ] Настроить TypeScript project references
+- [x] Настроить TypeScript project references
 
 **Фаза 2: Разделение кода (3-5 дней)**
 
-- [ ] Выделить core пакет
-- [ ] Выделить react пакет
-- [ ] Выделить адаптеры
-- [ ] Выделить devtools
+- [x] Выделить core пакет
+- [x] Выделить react пакет
+- [x] Выделить адаптеры
+- [x] Выделить devtools
 - [ ] Выделить ui пакет (docs site)
 
 **Фаза 3: Build конфигурация (2 дня)**
 
-- [ ] Настроить tsup для каждого пакета
-- [ ] Настроить exports в package.json
+- [x] Настроить tsup для каждого пакета
+- [x] Настроить exports в package.json
 - [ ] Проверить tree-shaking
-- [ ] Проверить точечные импорты @wizzard/* в docs/examples
+- [x] Проверить точечные импорты @wizzard/* в docs/examples
 
 **Фаза 4: Тестирование (2 дня)**
 
-- [ ] Обновить все тесты
-- [ ] Проверить все сценарии использования
+- [x] Обновить все тесты
+- [/] Проверить все сценарии использования
 - [ ] Обновить examples
 
 **Фаза 5: Документация (1 день)**
 
-- [ ] Обновить README
+- [x] Обновить README
 - [ ] Создать MIGRATION_SCOPED.md (legacy -> @wizzard/*)
-- [ ] Обновить docs
+- [/] Обновить docs
 
 **Фаза 6: Публикация (1 день)**
 
@@ -657,6 +657,7 @@ gantt
 ### 2026-01-04: E2E Testing Implemented ✅
 ### 2026-01-10: E2E demo alias fix for @wizzard/react ✅
 ### 2026-01-10: Decision: scoped packages @wizzard/* + новый репозиторий ✅
+### 2026-01-10: Repo moved to wizzard-packages; GitHub Pages deferred ✅
 
 - Реализован полный E2E testing pipeline с Playwright
 - Создано 8 test suites с 57 тестами

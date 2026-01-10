@@ -1,11 +1,17 @@
-﻿# PR Checklist + Next-Session Guide (dmk epic)
+# PR Checklist + Next-Session Guide (dmk epic)
+
+## Session Update (2026-01-10 14:29)
+- Moved repo to `wizzard-packages` (origin updated).
+- Scoped docs/examples aligned to `@wizzard/*`; demo base set to `/`.
+- Closed dmk.1 + dmk.5; CI/CD + npm publish epic created.
+- Tests: `pnpm test:run` PASS (commit hook).
 
 ## Purpose
 This file is the single source of truth for continuing work without session context. Update it at the end of each work session or whenever scope changes.
 
 ## Current Focus (dmk epic)
-- Goal: monorepo regrouping for middleware/persistence/adapters with clean workspace wiring and docs/tests aligned.
-- Status: code changes in progress; tests currently green after alias fix.
+- Goal: close out remaining dmk tasks (adapters) and confirm scoped migration notes are consistent.
+- Status: dmk.1/3/4/5 closed; only adapters task remains before epic wrap-up.
 
 ## PR Checklist (do in order)
 1) Verify workspace builds
@@ -25,6 +31,7 @@ This file is the single source of truth for continuing work without session cont
    - Middleware imported from `@wizzard/middleware`
    - DevTools UI only in `@wizzard/devtools`
    - Adapters remain separate packages (`@wizzard/adapter-zod`, `@wizzard/adapter-yup`)
+   - Repo links point to `wizzard-packages`
 
 5) Update docs/migration
    - `README.md` imports/snippets updated
@@ -49,36 +56,17 @@ This file is the single source of truth for continuing work without session cont
    - `pnpm -r build`
    - `pnpm test:run`
    - `pnpm test:e2e`
-4) Finish docs alignment:
-   - Replace any legacy imports in docs
-   - Add short migration notes for new package names
-5) Verify workspace wiring:
-   - `tsconfig.json` references
-   - `tsup.config.ts` externals
-   - `package.json` deps/peerDeps
-6) Update bd notes (do not close tasks):
+4) Close remaining dmk adapters task if ready:
+   - `wizzard-stepper-react-dmk.2`
+5) Review CI/CD epic readiness:
+   - `wizzard-stepper-react-sgf` tasks and dependencies
+6) Update bd notes (do not close tasks here):
    - `bd update <id> --notes "..."`
 7) Prepare PR
 
 ## dmk Task Map (what remains)
-- dmk.1 / dmk.1.1 / dmk.1.2 (middleware)
-  - Ensure no old imports remain in code/docs
-  - Confirm devtools package is UI-only
-
-- dmk.3 / dmk.3.1 / dmk.3.2 (persistence)
-  - Ensure all imports use `@wizzard/persistence`
-  - Remove any docs references to persistence-local
-
-- dmk.4 (workspace wiring)
-  - Confirm builds/tsconfig/exports are consistent
-
-- dmk.5 (docs/examples/tests)
-  - Finish README/MIGRATION updates
-  - Keep tests green
-
 - dmk.2 (adapters)
-  - Keep adapters separate; document this decision
-  - Ensure docs/examples use `@wizzard/adapter-*`
+  - Verify adapters remain separate; close task if no work left
 
 ## Update Rules for tasks files
 - Always append a short "Session Update" block at the top with date/time and key changes.
