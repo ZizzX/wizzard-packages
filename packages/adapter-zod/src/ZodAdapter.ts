@@ -1,5 +1,5 @@
-import type { IValidatorAdapter, ValidationResult } from '../../types';
-import type { ZodLikeSchema } from './internal-types';
+import type { IValidatorAdapter, ValidationResult } from '@wizzard/core';
+import type { ZodLikeSchema } from './types';
 
 /**
  * Validation adapter for Zod-like schemas.

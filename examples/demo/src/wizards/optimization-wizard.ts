@@ -1,5 +1,6 @@
-import { createWizardFactory, devToolsMiddleware } from 'wizzard-stepper-react';
-import type { IWizardConfig } from 'wizzard-stepper-react';
+import { createWizardFactory } from '@wizzard/react';
+import { devToolsMiddleware } from '@wizzard/middleware';
+import type { IWizardConfig } from '@wizzard/react';
 
 export interface IOptimizationWizardData {
   firstName: string;

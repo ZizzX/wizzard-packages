@@ -72,6 +72,16 @@ export interface IWizardStore<T, StepId extends string = string> {
   save(stepId?: StepId): void;
   hydrate(): void;
   errorsMap: Map<string, Map<string, string>>;
+  resolveActiveSteps(data?: T): Promise<IStepConfig<T, StepId>[]>;
+  goToStep(
+    stepId: StepId,
+    options?: { validate?: boolean; providedActiveSteps?: IStepConfig<T, StepId>[] }
+  ): Promise<boolean>;
+  validateStep: (stepId: StepId) => Promise<boolean>;
+  validateAll: () => Promise<{
+    isValid: boolean;
+    errors: Record<string, Record<string, string>>;
+  }>;
 }
 
 /**

@@ -5,9 +5,9 @@ import {
   useWizard,
   useWizardActions,
   useWizardState,
-  LocalStorageAdapter,
   type PersistenceMode,
-} from 'wizzard-stepper-react';
+} from '@wizzard/react';
+import { LocalStorageAdapter } from '@wizzard/persistence';
 
 // --- Components ---
 

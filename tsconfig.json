@@ -17,5 +17,13 @@
     "esModuleInterop": true,
   },
   "files": [],
-  "references": [{ "path": "./packages/core" }, { "path": "./packages/react" }],
+  "references": [
+    { "path": "./packages/core" },
+    { "path": "./packages/react" },
+    { "path": "./packages/adapter-zod" },
+    { "path": "./packages/adapter-yup" },
+    { "path": "./packages/devtools" },
+    { "path": "./packages/middleware" },
+    { "path": "./packages/persistence" },
+  ],
 }

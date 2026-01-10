@@ -22,7 +22,9 @@
     "react-dom": ">=18.0.0"
   },
   "dependencies": {
-    "@wizzard/core": "workspace:*"
+    "@wizzard/core": "workspace:*",
+    "@wizzard/middleware": "workspace:*",
+    "@wizzard/persistence": "workspace:*"
   },
   "devDependencies": {
     "react": "^19.2.0",

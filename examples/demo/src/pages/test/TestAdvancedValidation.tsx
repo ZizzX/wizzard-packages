@@ -3,12 +3,12 @@ import {
   type IWizardConfig,
   type IValidatorAdapter,
   type ValidationResult,
-  MemoryAdapter,
   createWizardFactory,
-  WizardDevTools,
-  devToolsMiddleware,
   useWizardError,
-} from 'wizzard-stepper-react';
+} from '@wizzard/react';
+import { devToolsMiddleware } from '@wizzard/middleware';
+import { WizardDevTools } from '@wizzard/devtools';
+import { MemoryAdapter } from '@wizzard/persistence';
 import { Card, CardContent, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -725,6 +725,7 @@ const config: IWizardConfig<AdvancedValidationData> = {
   persistence: { mode: 'onStepChange', adapter: new MemoryAdapter() },
   validationMode: 'onChange',
   middlewares: [devToolsMiddleware],
+  navigationMode: 'sequential',
   steps: [
     {
       id: 'step-1',
@@ -826,7 +827,7 @@ export default function TestAdvancedValidation() {
   const navigationMode =
     (searchParams[0].get(
       'navigationMode'
-    ) as IWizardConfig<AdvancedValidationData>['navigationMode']) || 'onStepChange';
+    ) as IWizardConfig<AdvancedValidationData>['navigationMode']) || 'sequential';
 
   return (
     <WizardProvider config={{ ...config, navigationMode: navigationMode as any }}>

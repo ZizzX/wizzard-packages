@@ -1,5 +1,5 @@
-import type { IValidatorAdapter, ValidationResult } from '../../types';
-import type { YupLikeSchema, YupLikeError } from './internal-types';
+import type { IValidatorAdapter, ValidationResult } from '@wizzard/core';
+import type { YupLikeSchema, YupLikeError } from './types';
 
 /**
  * Validation adapter for Yup-like schemas.

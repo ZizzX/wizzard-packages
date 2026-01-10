@@ -1,4 +1,6 @@
-import type { WizardMiddleware } from '../types';
+import type { WizardMiddleware } from '@wizzard/core';
+
+declare const window: any;
 
 /**
  * Helper to sanitize data for Redux DevTools.

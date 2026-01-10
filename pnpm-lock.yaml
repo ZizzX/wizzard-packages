@@ -108,9 +108,24 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.2.2(react-hook-form@7.69.0(react@19.2.3))
+      '@wizzard/adapter-yup':
+        specifier: workspace:*
+        version: link:../../packages/adapter-yup
+      '@wizzard/adapter-zod':
+        specifier: workspace:*
+        version: link:../../packages/adapter-zod
       '@wizzard/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@wizzard/devtools':
+        specifier: workspace:*
+        version: link:../../packages/devtools
+      '@wizzard/middleware':
+        specifier: workspace:*
+        version: link:../../packages/middleware
+      '@wizzard/persistence':
+        specifier: workspace:*
+        version: link:../../packages/persistence
       '@wizzard/react':
         specifier: workspace:*
         version: link:../../packages/react
@@ -197,6 +212,44 @@ importers:
         specifier: ^7.2.4
         version: 7.3.0(@types/node@24.10.4)(jiti@2.6.1)(lightningcss@1.30.2)(yaml@2.8.2)
 
+  packages/adapter-yup:
+    dependencies:
+      '@wizzard/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@25.0.3)(@vitest/ui@4.0.16(vitest@4.0.16))(jsdom@27.4.0)(lightningcss@1.30.2)
+      yup:
+        specifier: ^1.7.1
+        version: 1.7.1
+
+  packages/adapter-zod:
+    dependencies:
+      '@wizzard/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@25.0.3)(@vitest/ui@4.0.16(vitest@4.0.16))(jsdom@27.4.0)(lightningcss@1.30.2)
+      zod:
+        specifier: ^4.2.1
+        version: 4.2.1
+
   packages/core:
     devDependencies:
       tsup:
@@ -215,11 +268,74 @@ importers:
         specifier: ^3.24.1
         version: 3.25.76
 
+  packages/devtools:
+    dependencies:
+      '@wizzard/react':
+        specifier: workspace:*
+        version: link:../react
+    devDependencies:
+      '@wizzard/core':
+        specifier: workspace:*
+        version: link:../core
+      react:
+        specifier: ^19.2.0
+        version: 19.2.3
+      react-dom:
+        specifier: ^19.2.0
+        version: 19.2.3(react@19.2.3)
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@25.0.3)(@vitest/ui@4.0.16(vitest@4.0.16))(jsdom@27.4.0)(lightningcss@1.30.2)
+
+  packages/middleware:
+    dependencies:
+      '@wizzard/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@25.0.3)(@vitest/ui@4.0.16(vitest@4.0.16))(jsdom@27.4.0)(lightningcss@1.30.2)
+
+  packages/persistence:
+    dependencies:
+      '@wizzard/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      tsup:
+        specifier: ^8.3.5
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.6)(typescript@5.9.3)(yaml@2.8.2)
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@25.0.3)(@vitest/ui@4.0.16(vitest@4.0.16))(jsdom@27.4.0)(lightningcss@1.30.2)
+
   packages/react:
     dependencies:
       '@wizzard/core':
         specifier: workspace:*
         version: link:../core
+      '@wizzard/middleware':
+        specifier: workspace:*
+        version: link:../middleware
+      '@wizzard/persistence':
+        specifier: workspace:*
+        version: link:../persistence
     devDependencies:
       '@testing-library/jest-dom':
         specifier: ^6.6.3

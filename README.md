@@ -1,10 +1,12 @@
-# wizzard-stepper-react 🧙‍♂️
+# Wizzard Stepper (scoped packages) 🧙‍♂️
 
-[![npm version](https://img.shields.io/npm/v/wizzard-stepper-react.svg)](https://www.npmjs.com/package/wizzard-stepper-react)
-[![license](https://img.shields.io/npm/l/wizzard-stepper-react.svg)](https://github.com/ZizzX/wizzard-stepper-react/blob/main/LICENSE)
-[![bundle size](https://img.shields.io/bundlephobia/minzip/wizzard-stepper-react)](https://bundlephobia.com/package/wizzard-stepper-react)
+[![npm version](https://img.shields.io/npm/v/@wizzard/react.svg)](https://www.npmjs.com/package/@wizzard/react)
+[![license](https://img.shields.io/npm/l/@wizzard/react.svg)](https://github.com/ZizzX/wizzard-stepper-react/blob/main/LICENSE)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/@wizzard/react)](https://bundlephobia.com/package/@wizzard/react)
 
 A flexible, headless, and strictly typed multi-step wizard library for React. Built with adapter patterns in mind to support any form library (React Hook Form, Formik, etc.) and any validation schema (Zod, Yup).
+
+> Scoped packages are the primary distribution (`@wizzard/*`). The legacy `wizzard-stepper-react` package remains on v2.x and is being deprecated in favor of the scoped packages.
 
 ---
 
@@ -18,7 +20,7 @@ Try the library in the browser with these standalone templates on StackBlitz:
 | **Validation**  | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-red?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-stepper-react/tree/main/.stackblitz/validation)    |
 | **Persistence** | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-green?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-stepper-react/tree/main/.stackblitz/persistence) |
 
-## 🚀 Quick Start (v2.0.0 Modern)
+## 🚀 Quick Start (Scoped Packages)
 
 Version 2.0.0 introduces the **Factory Pattern**, providing 100% type safety and optimized performance out of the box.
 
@@ -28,7 +30,7 @@ Define your data schema and generate typed hooks.
 
 ```typescript
 // wizards/auth-wizard.ts
-import { createWizardFactory } from 'wizzard-stepper-react';
+import { createWizardFactory } from '@wizzard/react';
 
 interface AuthSchema {
   email: string;
@@ -88,7 +90,7 @@ const EmailInput = () => {
 We are library-agnostic. Use our pre-built adapters or write your own.
 
 ```tsx
-import { ZodAdapter } from 'wizzard-stepper-react';
+import { ZodAdapter } from '@wizzard/adapter-zod';
 import { z } from 'zod';
 
 const schema = z.object({ age: z.number().min(18) });
@@ -112,7 +114,7 @@ const step = { id: 'age', validationAdapter: adapter };
 Isolate your wizard data to prevent collisions when using multiple instances.
 
 ```typescript
-import { LocalStorageAdapter } from 'wizzard-stepper-react';
+import { LocalStorageAdapter } from '@wizzard/persistence';
 
 const config = {
   persistence: {
@@ -181,21 +183,9 @@ const PersonalInfoStep = () => {
 
 ---
 
-## ⚠️ Legacy Support (v1.x)
+## ⚠️ Legacy Support (wizzard-stepper-react v2.x)
 
-If you are maintaining an older project, you can still use the classic Context-based provider. Note that this mode does not support the new performance-optimized hooks.
-
-```tsx
-import { WizardProvider, useWizard } from 'wizzard-stepper-react';
-
-const OldApp = () => (
-  <WizardProvider>
-    <MyComponents />
-  </WizardProvider>
-);
-```
-
-For migration steps, see [MIGRATION.md](./MIGRATION.md).
+If you are maintaining an older project, the legacy `wizzard-stepper-react` package stays on v2.x and will be deprecated after the scoped packages are published. For migration steps, see [MIGRATION.md](./MIGRATION.md).
 
 ---
 
@@ -203,7 +193,7 @@ For migration steps, see [MIGRATION.md](./MIGRATION.md).
 
 - 📚 **Full Docs**: [Interactive Documentation Portal](https://ZizzX.github.io/wizzard-stepper-react/)
 - 📖 **API Reference**: [Advanced Types & Methods](./docs/API_REFERENCE.md)
-- 🚀 **NPMS**: [View on npm](https://www.npmjs.com/package/wizzard-stepper-react)
+- 🚀 **NPMS**: [View on npm](https://www.npmjs.com/package/@wizzard/react)
 - 🧪 **E2E Testing**: [Testing Guide](./e2e/README.md)
 
 ---

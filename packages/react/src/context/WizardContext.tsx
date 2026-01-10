@@ -8,18 +8,21 @@ import React, {
   useSyncExternalStore,
   useRef,
 } from 'react';
-import type {
-  IWizardConfig,
-  IPersistenceAdapter,
-  IStepConfig,
-  IWizardContext,
-  IWizardState,
-  IWizardActions,
-  IWizardStore,
-  WizardEventHandler,
-  WizardEventName,
+import {
+  type IWizardConfig,
+  type IPersistenceAdapter,
+  type IStepConfig,
+  type IWizardContext,
+  type IWizardState,
+  type IWizardActions,
+  type IWizardStore,
+  type WizardEventHandler,
+  type WizardEventName,
+  WizardStore,
+  getByPath,
+  setByPath,
 } from '@wizzard/core';
-import { WizardStore, MemoryAdapter, getByPath, setByPath } from '@wizzard/core';
+import { MemoryAdapter } from '@wizzard/persistence';
 
 const WizardStateContext = createContext<IWizardState<any, any> | undefined>(undefined);
 const WizardActionsContext = createContext<IWizardActions<any> | undefined>(undefined);
@@ -46,7 +49,7 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
 }: WizardProviderProps<T, StepId>) {
   const [localConfig, setLocalConfig] = useState<IWizardConfig<T, StepId>>(config);
 
-  const storeRef = useRef<WizardStore<T, StepId>>(null as unknown as WizardStore<T, StepId>);
+  const storeRef = useRef<IWizardStore<T, StepId>>(null as unknown as IWizardStore<T, StepId>);
 
   if (!storeRef.current) {
     storeRef.current = new WizardStore<T, StepId>((initialData || {}) as T, config.middlewares);

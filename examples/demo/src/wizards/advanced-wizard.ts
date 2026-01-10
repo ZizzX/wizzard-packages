@@ -1,6 +1,7 @@
 import { z } from 'zod';
-import { createWizardFactory, ZodAdapter, MemoryAdapter } from 'wizzard-stepper-react';
-import { LocalStorageAdapter } from 'wizzard-stepper-react';
+import { createWizardFactory } from '@wizzard/react';
+import { ZodAdapter } from '@wizzard/adapter-zod';
+import { LocalStorageAdapter, MemoryAdapter } from '@wizzard/persistence';
 
 // 1. Schema
 const demoSchema = z.object({

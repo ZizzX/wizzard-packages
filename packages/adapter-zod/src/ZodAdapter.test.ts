@@ -20,8 +20,8 @@ describe('ZodAdapter', () => {
     const invalidResult = await adapter.validate({ name: 'Jo', age: 15 } as any);
     expect(invalidResult.isValid).toBe(false);
     expect(invalidResult.errors).toEqual({
-      name: 'String must contain at least 3 character(s)',
-      age: 'Number must be greater than or equal to 18',
+      name: 'Too small: expected string to have >=3 characters',
+      age: 'Too small: expected number to be >=18',
     });
   });
 
@@ -39,7 +39,7 @@ describe('ZodAdapter', () => {
 
     expect(result.isValid).toBe(false);
     expect(result.errors).toEqual({
-      'user.profile.bio': 'String must contain at least 10 character(s)',
+      'user.profile.bio': 'Too small: expected string to have >=10 characters',
     });
   });
 });

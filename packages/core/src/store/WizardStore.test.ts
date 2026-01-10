@@ -1,5 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { devToolsMiddleware } from '../middlewares/devToolsMiddleware';
+import { beforeEach, describe, expect, test } from 'vitest';
 import type { IWizardConfig } from '../types';
 import { WizardStore } from './WizardStore';
 
@@ -78,38 +77,5 @@ describe('WizardStore', () => {
       },
     });
     expect(store.getSnapshot().busySteps.has('step1')).toBe(false);
-  });
-
-  test('DevTools Middleware Serialization', () => {
-    const mockDevTools = {
-      init: vi.fn(),
-      send: vi.fn(),
-      subscribe: vi.fn(),
-      unsubscribe: vi.fn(),
-      error: vi.fn(),
-    };
-    const globalContext = (typeof window !== 'undefined' ? window : globalThis) as any;
-    globalContext.__REDUX_DEVTOOLS_EXTENSION__ = {
-      connect: () => mockDevTools,
-    };
-
-    const storeWithDevTools = new WizardStore(initialData, [devToolsMiddleware]);
-
-    const tempSet = new Set(['step1']);
-    storeWithDevTools.dispatch({
-      type: 'SET_VISITED_STEPS',
-      payload: { steps: tempSet },
-    });
-
-    expect(mockDevTools.send).toHaveBeenCalled();
-    const sendCall = mockDevTools.send.mock.calls.find(
-      (call) => call[0].type === 'SET_VISITED_STEPS'
-    );
-    expect(sendCall).toBeDefined();
-
-    // Check snapshot in the send call
-    const snapshot = sendCall?.[1];
-    expect(Array.isArray(snapshot?.visitedSteps)).toBe(true);
-    expect(snapshot?.visitedSteps).toContain('step1');
   });
 });

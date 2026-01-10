@@ -1,20 +1,12 @@
 export * from './factory';
 export * from './context/WizardContext';
 export * from './components/WizardStepRenderer';
-export * from './components/WizardDevTools';
 export * from './hooks/useWizard';
 export * from './types';
 
 // Re-export core for convenience and backward compatibility
-export {
-  WizardStore,
-  LocalStorageAdapter,
-  MemoryAdapter,
-  ZodAdapter,
-  YupAdapter,
-  loggerMiddleware,
-  devToolsMiddleware,
-} from '@wizzard/core';
+export { WizardStore } from '@wizzard/core';
+export { loggerMiddleware } from '@wizzard/middleware';
 export type {
   IWizardState,
   IWizardActions,

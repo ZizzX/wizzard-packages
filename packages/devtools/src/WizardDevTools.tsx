@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useWizardContext } from '../context/WizardContext';
+import { useWizardContext } from '@wizzard/react';
 import type { WizardAction, IWizardStore } from '@wizzard/core';
 
 interface IActionLog {

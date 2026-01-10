@@ -25,7 +25,8 @@
 Так же следует все задачи вести в bd! Планировать все таски в bd!
 И всегда ссылаться на этот документ и bd при обсуждении приоритетов.
 Инструкция по использованию bd: AGENTS.md
-
+Никогда не закрывай сам таски в bd, только через PR.
+Прежде чем что-то делать сначала напиши мне план что будешь делать!
 ---
 
 ## 🎯 Priority 1: Critical (Срок: 1-2 недели)
@@ -111,6 +112,8 @@ playwright.config.ts
 
 - **Проблема:** pnpm требовал флаг `-w` для установки в workspace root
 - **Решение:** Использован `pnpm add -D -w @playwright/test`
+- **Проблема:** E2E падали из-за двух инстансов контекста (`@wizzard/react` vs `wizzard-stepper-react`)
+- **Решение:** В demo Vite alias добавлен `@wizzard/react` → `packages/react/src` (единый источник)
 
 **Метрики:**
 
@@ -231,7 +234,7 @@ export function useWizardValue<TValue = any>(...)
 
 ## 🔥 Priority 2: High (Срок: 1-2 месяца)
 
-### 2.1 Переход на Monorepo (pnpm workspaces)
+### 2.1 Переход на Monorepo (pnpm workspaces) + Scoped packages
 
 **Статус:** `[/]`
 
@@ -241,21 +244,29 @@ export function useWizardValue<TValue = any>(...)
 - Tree-shaking на уровне пакетов
 - Изоляция зависимостей
 - Упростить добавление новых адаптеров
+- Перейти на scoped пакеты `@wizzard/*` с отдельной публикацией
+- Подготовить депрекейт legacy пакета `wizzard-stepper-react`
 
-**Целевая структура:**
+**Целевая структура (scoped packages, новый репозиторий):**
 
 ```
-/packages
-  /core              # 5-8kB - WizardStore, types, utils
-  /react             # 3-5kB - WizardProvider, hooks, context
-  /adapter-zod       # 2kB   - ZodAdapter + types
-  /adapter-yup       # 2kB   - YupAdapter + types
-  /devtools          # 5kB   - WizardDevTools, middleware
-  /persistence-local # 1kB   - LocalStorageAdapter
-  /ui                # docs site + interactive examples
+@wizzard/core        # 5-8kB - WizardStore, types, utils
+@wizzard/react       # 3-5kB - WizardProvider, hooks, context
+@wizzard/adapter-zod # 2kB   - ZodAdapter + types
+@wizzard/adapter-yup # 2kB   - YupAdapter + types
+@wizzard/devtools    # 5kB   - DevTools UI (middleware отдельно)
+@wizzard/middleware  # 1kB   - logger/devtools middleware
+@wizzard/persistence # 1kB   - LocalStorageAdapter/MemoryAdapter
+@wizzard/ui          # docs site + interactive examples
 ```
 
 **План миграции:**
+
+**Фаза 0: Стратегия и split (0.5 дня)**
+
+- [ ] Зафиксировать deprecation policy для `wizzard-stepper-react`
+- [ ] Решить стратегию совместимости (meta-пакет или legacy-only)
+- [ ] Подготовить новый репозиторий для `@wizzard/*`
 
 **Фаза 1: Подготовка (1 день)**
 
@@ -276,6 +287,7 @@ export function useWizardValue<TValue = any>(...)
 - [ ] Настроить tsup для каждого пакета
 - [ ] Настроить exports в package.json
 - [ ] Проверить tree-shaking
+- [ ] Проверить точечные импорты @wizzard/* в docs/examples
 
 **Фаза 4: Тестирование (2 дня)**
 
@@ -286,14 +298,21 @@ export function useWizardValue<TValue = any>(...)
 **Фаза 5: Документация (1 день)**
 
 - [ ] Обновить README
-- [ ] Создать MIGRATION_v3.md
+- [ ] Создать MIGRATION_SCOPED.md (legacy -> @wizzard/*)
 - [ ] Обновить docs
+
+**Фаза 6: Публикация (1 день)**
+
+- [ ] Настроить публикацию scoped пакетов
+- [ ] Выпустить @wizzard/* версии **0.1.0**
+- [ ] Депрекейт `wizzard-stepper-react` (ссылка на миграцию)
 
 **Критерии завершения:**
 
 - [ ] Core пакет < 10kB gzipped
 - [ ] Все тесты проходят
-- [ ] Backward compatibility сохранена
+- [ ] Scoped пакеты опубликованы (0.1.0)
+- [ ] Legacy пакет помечен deprecated и ведет на миграцию
 - [ ] Документация обновлена
 
 <details>
@@ -308,10 +327,12 @@ export function useWizardValue<TValue = any>(...)
 
 **Размеры пакетов (после):**
 
-- @wizzard/core: **\_**
-- @wizzard/react: **\_**
-- @wizzard/adapter-zod: **\_**
-- @wizzard/adapter-yup: **\_**
+  - @wizzard/core: **\_**
+  - @wizzard/react: **\_**
+  - @wizzard/adapter-zod: **\_**
+  - @wizzard/adapter-yup: **\_**
+  - @wizzard/middleware: **\_**
+  - @wizzard/persistence: **\_**
 
 **Breaking changes:** **\_**
 
@@ -615,7 +636,7 @@ gantt
 
 ## 🎯 Success Metrics
 
-### Цель v3.0.0 (после всех Priority 1-2 улучшений)
+### Цель v0.1.0 (@wizzard/* после всех Priority 1-2 улучшений)
 
 | Метрика                      | Текущее  | Целевое    | Статус                |
 | ---------------------------- | -------- | ---------- | --------------------- |
@@ -627,17 +648,23 @@ gantt
 | **GitHub Stars**             | -        | 1000+      | 🎯 Goal               |
 | **NPM Downloads**            | -        | 10k+/month | 🎯 Goal               |
 
+> Legacy пакет `wizzard-stepper-react` остается на ветке v2.x и будет помечен deprecated после релиза scoped пакетов.
+
 ---
 
 ## 📝 Notes & Decisions
 
 ### 2026-01-04: E2E Testing Implemented ✅
+### 2026-01-10: E2E demo alias fix for @wizzard/react ✅
+### 2026-01-10: Decision: scoped packages @wizzard/* + новый репозиторий ✅
 
 - Реализован полный E2E testing pipeline с Playwright
 - Создано 8 test suites с 57 тестами
 - Покрытие превысило целевое значение (57 vs 8+ тестов)
 - Тесты готовы, но требуют обновления demo app с testid атрибутами
 - Следующий шаг: интеграция тестов с CI/CD
+- Исправлен конфликт контекста: алиас `@wizzard/react` в demo указывает на `packages/react/src`
+- После правки E2E снова проходят (Playwright)
 
 ### 2026-01-04: Roadmap Created
 
@@ -659,5 +686,5 @@ _Здесь записывать важные решения и изменени
 
 ---
 
-**Last Updated:** 2026-01-04 (E2E Testing completed)  
+**Last Updated:** 2026-01-10 (E2E demo alias fix)  
 **Next Review:** 2026-01-11

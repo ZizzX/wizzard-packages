@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { ZodAdapter, createWizardFactory } from 'wizzard-stepper-react'; // Using local source
+import { createWizardFactory } from '@wizzard/react'; // Using local source
+import { ZodAdapter } from '@wizzard/adapter-zod';
 
 // Schemas
 export const PersonalInfoSchema = z.object({

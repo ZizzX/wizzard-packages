@@ -1,14 +1,10 @@
 import { useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import type { IWizardConfig, WizardMiddleware } from 'wizzard-stepper-react';
-import {
-  devToolsMiddleware,
-  loggerMiddleware,
-  MemoryAdapter,
-  useWizard,
-  WizardDevTools,
-  WizardProvider,
-} from 'wizzard-stepper-react';
+import type { IWizardConfig, WizardMiddleware } from '@wizzard/react';
+import { useWizard, WizardProvider } from '@wizzard/react';
+import { devToolsMiddleware, loggerMiddleware } from '@wizzard/middleware';
+import { WizardDevTools } from '@wizzard/devtools';
+import { MemoryAdapter } from '@wizzard/persistence';
 import { StepperControls } from '../../components/StepperControls';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';

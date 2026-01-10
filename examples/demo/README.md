@@ -1,8 +1,8 @@
-# wizzard-stepper-react Demo
+# Wizzard Stepper Demo
 
-[**🔴 Live Demo**](https://ZizzX.github.io/wizzard-stepper-react-demo/) | [Source Code](https://github.com/ZizzX/wizzard-stepper-react)
+[Source Code](https://github.com/ZizzX/wizzard-stepper-react)
 
-This is the official demonstration application for the [wizzard-stepper-react](https://github.com/ZizzX/wizzard-stepper-react) library. It showcases various integration patterns, validation strategies, and a modern UI/UX implementation.
+This demo exists to support local development and E2E testing of the scoped `@wizzard/*` packages.
 
 ## 🎨 Features & Tech Stack
 

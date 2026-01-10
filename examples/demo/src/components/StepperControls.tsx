@@ -1,4 +1,4 @@
-import { useWizardState, useWizardActions } from 'wizzard-stepper-react';
+import { useWizardState, useWizardActions } from '@wizzard/react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/Button';
 

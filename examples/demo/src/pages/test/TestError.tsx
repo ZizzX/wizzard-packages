@@ -5,9 +5,9 @@ import {
   type IWizardConfig,
   type IValidatorAdapter,
   type ValidationResult,
-  MemoryAdapter,
-  WizardDevTools,
-} from 'wizzard-stepper-react';
+} from '@wizzard/react';
+import { WizardDevTools } from '@wizzard/devtools';
+import { MemoryAdapter } from '@wizzard/persistence';
 import { Card, CardContent, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -224,9 +224,9 @@ const WizardContent = () => {
             <div
               key={s.id}
               data-testid={`breadcrumb-${s.id}`}
-              className={`text-xs p-1 whitespace-nowrap 
+              className={`text-xs p-1 whitespace-nowrap
                             ${s.id === currentStep?.id ? 'font-bold bg-gray-100 rounded' : ''}
-                            ${hasError ? 'text-red-600 font-bold error invalid' : ''} 
+                            ${hasError ? 'text-red-600 font-bold error invalid' : ''}
                             ${isCompleted ? 'text-green-600 completed' : ''}
                         `}
             >
