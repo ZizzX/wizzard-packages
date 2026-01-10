@@ -1,7 +1,7 @@
 # Wizzard Stepper (scoped packages) 🧙‍♂️
 
 [![npm version](https://img.shields.io/npm/v/@wizzard/react.svg)](https://www.npmjs.com/package/@wizzard/react)
-[![license](https://img.shields.io/npm/l/@wizzard/react.svg)](https://github.com/ZizzX/wizzard-stepper-react/blob/main/LICENSE)
+[![license](https://img.shields.io/npm/l/@wizzard/react.svg)](https://github.com/ZizzX/wizzard-packages/blob/main/LICENSE)
 [![bundle size](https://img.shields.io/bundlephobia/minzip/@wizzard/react)](https://bundlephobia.com/package/@wizzard/react)
 
 A flexible, headless, and strictly typed multi-step wizard library for React. Built with adapter patterns in mind to support any form library (React Hook Form, Formik, etc.) and any validation schema (Zod, Yup).
@@ -16,9 +16,9 @@ Try the library in the browser with these standalone templates on StackBlitz:
 
 | Example         | Template                                                                                                                                                                      |
 | :-------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Basic**       | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-blue?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-stepper-react/tree/main/.stackblitz/basic)        |
-| **Validation**  | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-red?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-stepper-react/tree/main/.stackblitz/validation)    |
-| **Persistence** | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-green?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-stepper-react/tree/main/.stackblitz/persistence) |
+| **Basic**       | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-blue?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-packages/tree/main/.stackblitz/basic)        |
+| **Validation**  | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-red?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-packages/tree/main/.stackblitz/validation)    |
+| **Persistence** | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-green?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-packages/tree/main/.stackblitz/persistence) |
 
 ## 🚀 Quick Start (Scoped Packages)
 
@@ -191,7 +191,7 @@ If you are maintaining an older project, the legacy `wizzard-stepper-react` pack
 
 ## 📄 Documentation & Demos
 
-- 📚 **Full Docs**: [Interactive Documentation Portal](https://ZizzX.github.io/wizzard-stepper-react/)
+- 📚 **Full Docs**: coming soon (Docs UI will ship under the new repo)
 - 📖 **API Reference**: [Advanced Types & Methods](./docs/API_REFERENCE.md)
 - 🚀 **NPMS**: [View on npm](https://www.npmjs.com/package/@wizzard/react)
 - 🧪 **E2E Testing**: [Testing Guide](./e2e/README.md)
