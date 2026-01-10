@@ -1,12 +1,12 @@
 # Wizzard Stepper (scoped packages) 🧙‍♂️
 
-[![npm version](https://img.shields.io/npm/v/@wizzard-packages/react.svg)](https://www.npmjs.com/package/@wizzard-packages/react)
-[![license](https://img.shields.io/npm/l/@wizzard-packages/react.svg)](https://github.com/ZizzX/wizzard-packages/blob/main/LICENSE)
-[![bundle size](https://img.shields.io/bundlephobia/minzip/@wizzard-packages/react)](https://bundlephobia.com/package/@wizzard-packages/react)
+[![npm version](https://img.shields.io/npm/v/@wizzard/react.svg)](https://www.npmjs.com/package/@wizzard/react)
+[![license](https://img.shields.io/npm/l/@wizzard/react.svg)](https://github.com/ZizzX/wizzard-packages/blob/main/LICENSE)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/@wizzard/react)](https://bundlephobia.com/package/@wizzard/react)
 
 A flexible, headless, and strictly typed multi-step wizard library for React. Built with adapter patterns in mind to support any form library (React Hook Form, Formik, etc.) and any validation schema (Zod, Yup).
 
-> Scoped packages are the primary distribution (`@wizzard-packages/*`). The legacy `wizzard-stepper-react` package remains on v2.x and is being deprecated in favor of the scoped packages.
+> Scoped packages are the primary distribution (`@wizzard/*`). The legacy `wizzard-stepper-react` package remains on v2.x and is being deprecated in favor of the scoped packages.
 
 ---
 
@@ -30,7 +30,7 @@ Define your data schema and generate typed hooks.
 
 ```typescript
 // wizards/auth-wizard.ts
-import { createWizardFactory } from '@wizzard-packages/react';
+import { createWizardFactory } from '@wizzard/react';
 
 interface AuthSchema {
   email: string;
@@ -90,7 +90,7 @@ const EmailInput = () => {
 We are library-agnostic. Use our pre-built adapters or write your own.
 
 ```tsx
-import { ZodAdapter } from '@wizzard-packages/adapter-zod';
+import { ZodAdapter } from '@wizzard/adapter-zod';
 import { z } from 'zod';
 
 const schema = z.object({ age: z.number().min(18) });
@@ -109,21 +109,12 @@ const step = { id: 'age', validationAdapter: adapter };
 
 ---
 
-## 📦 Release Strategy
-
-- Scoped packages (`@wizzard-packages/*`) are versioned in lockstep starting at `0.1.0`.
-- Releases are cut from `main` with git tags `vX.Y.Z` and GitHub releases.
-- Pre-releases use `-next.N` and publish with npm dist-tag `next`.
-- Legacy `wizzard-stepper-react` stays on v2.x for critical fixes only.
-
----
-
 ## 💾 State Persistence
 
 Isolate your wizard data to prevent collisions when using multiple instances.
 
 ```typescript
-import { LocalStorageAdapter } from '@wizzard-packages/persistence';
+import { LocalStorageAdapter } from '@wizzard/persistence';
 
 const config = {
   persistence: {
@@ -202,7 +193,7 @@ If you are maintaining an older project, the legacy `wizzard-stepper-react` pack
 
 - 📚 **Full Docs**: coming soon (Docs UI will ship under the new repo)
 - 📖 **API Reference**: [Advanced Types & Methods](./docs/API_REFERENCE.md)
-- 🚀 **NPMS**: [View on npm](https://www.npmjs.com/package/@wizzard-packages/react)
+- 🚀 **NPMS**: [View on npm](https://www.npmjs.com/package/@wizzard/react)
 - 🧪 **E2E Testing**: [Testing Guide](./e2e/README.md)
 
 ---
@@ -210,4 +201,3 @@ If you are maintaining an older project, the legacy `wizzard-stepper-react` pack
 ## License
 
 MIT © [ZizzX](https://github.com/ZizzX)
-
