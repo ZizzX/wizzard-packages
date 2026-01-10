@@ -109,15 +109,6 @@ const step = { id: 'age', validationAdapter: adapter };
 
 ---
 
-## 📦 Release Strategy
-
-- Scoped packages (`@wizzard/*`) are versioned in lockstep starting at `0.1.0`.
-- Releases are cut from `main` with git tags `vX.Y.Z` and GitHub releases.
-- Pre-releases use `-next.N` and publish with npm dist-tag `next`.
-- Legacy `wizzard-stepper-react` stays on v2.x for critical fixes only.
-
----
-
 ## 💾 State Persistence
 
 Isolate your wizard data to prevent collisions when using multiple instances.

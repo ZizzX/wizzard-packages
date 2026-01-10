@@ -658,12 +658,6 @@ gantt
 ### 2026-01-10: E2E demo alias fix for @wizzard/react ✅
 ### 2026-01-10: Decision: scoped packages @wizzard/* + новый репозиторий ✅
 ### 2026-01-10: Repo moved to wizzard-packages; GitHub Pages deferred ✅
-### 2026-01-10: Release strategy defined ✅
-
-- All scoped packages release in lockstep starting at 0.1.0
-- Releases cut from main with git tags vX.Y.Z + GitHub releases
-- Pre-releases use -next.N with npm dist-tag next
-- Legacy package stays on v2.x for critical fixes only
 
 - Реализован полный E2E testing pipeline с Playwright
 - Создано 8 test suites с 57 тестами
@@ -693,5 +687,5 @@ _Здесь записывать важные решения и изменени
 
 ---
 
-**Last Updated:** 2026-01-10 (release strategy)  
+**Last Updated:** 2026-01-10 (E2E demo alias fix)  
 **Next Review:** 2026-01-11
