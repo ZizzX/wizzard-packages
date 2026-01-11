@@ -87,6 +87,14 @@
 - Next action: update migration doc and deprecate legacy package (wizzard-stepper-react-3iv).
 
 ## Session Update
+- Date: 2026-01-11 20:31
+- Scope: Reprioritize open bd tasks
+- Key changes: Set wizzard-stepper-react-866 to P1, wizzard-stepper-react-4zl to P2, kept h0b/j1c at P3.
+- Tests run: none
+- Open questions: none
+- Next action: implement dev preview Pages workflow (wizzard-stepper-react-866).
+
+## Session Update
 - Date: 2026-01-11 20:28
 - Scope: Add dev Pages preview task
 - Key changes: Created bd task wizzard-stepper-react-866 for dev GitHub Pages preview deploy for Docs UI.
