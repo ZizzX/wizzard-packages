@@ -87,6 +87,14 @@
 - Next action: update migration doc and deprecate legacy package (wizzard-stepper-react-3iv).
 
 ## Session Update
+- Date: 2026-01-12 01:30
+- Scope: Node 18 CI diagnostics
+- Key changes: Re-enabled Node 18 unit tests with diagnostics (hanging-process reporter, forks pool, single worker) and added timeout to avoid hangs.
+- Tests run: none
+- Open questions: analyze Node 18 hanging-process output after CI run.
+- Next action: rerun CI and inspect Node 18 unit test diagnostics.
+
+## Session Update
 - Date: 2026-01-12 01:26
 - Scope: Track Node 18 CI hang investigation
 - Key changes: Created bd task wizzard-stepper-react-868 to investigate Node 18 matrix hang.

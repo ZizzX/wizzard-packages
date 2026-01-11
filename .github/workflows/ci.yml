@@ -40,7 +40,12 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      - name: Unit tests
+      - name: Unit tests (Node 18 diagnostics)
+        if: matrix.node == 18
+        timeout-minutes: 10
+        run: pnpm test:run --pool=forks --maxWorkers=1 --reporter=hanging-process
+
+      - name: Unit tests (Node 20)
         if: matrix.node == 20
         run: pnpm test:run
 
