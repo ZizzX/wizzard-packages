@@ -25,5 +25,6 @@
     { "path": "./packages/devtools" },
     { "path": "./packages/middleware" },
     { "path": "./packages/persistence" },
+    { "path": "./packages/ui" },
   ],
 }

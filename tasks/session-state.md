@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-11 17:30
+- Scope: UI package scaffold
+- Key changes: Added packages/ui Vite + React scaffold (index.html, App, main, styles, tsconfig, vite config, package.json); updated root tsconfig references; closed wizzard-stepper-react-4zl.1.
+- Tests run: none
+- Open questions: none
+- Next action: proceed with UI routing/layout (wizzard-stepper-react-4zl.2).
+
+## Session Update
 - Date: 2026-01-11 17:10
 - Scope: Close legacy deprecation task in this repo
 - Key changes: Closed wizzard-stepper-react-3iv here per user request; legacy deprecation will be handled in the legacy repo.
