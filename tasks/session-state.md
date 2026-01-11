@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-11 17:10
+- Scope: Close legacy deprecation task in this repo
+- Key changes: Closed wizzard-stepper-react-3iv here per user request; legacy deprecation will be handled in the legacy repo.
+- Tests run: none
+- Open questions: none
+- Next action: promote dev to main when ready.
+
+## Session Update
 - Date: 2026-01-11 16:55
 - Scope: Legacy deprecation checklist updates
 - Key changes: Updated deprecation-tasks/LEGACY_REPO_DEPRECATION.md with scoped migration link and deprecate command message; noted OTP requirement and that npm deprecate can run from any directory.
