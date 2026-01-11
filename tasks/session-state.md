@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-11 15:30
+- Scope: Publish verification
+- Key changes: Reran publish workflow; it failed with E403 because versions already existed. Verified npm registry shows @wizzard-packages/* all at 0.1.0; closed wizzard-stepper-react-abc.
+- Tests run: npm view @wizzard-packages/* version (registry check)
+- Open questions: none
+- Next action: proceed to next task in bd (eh3/4zl/etc).
+
+## Session Update
 - Date: 2026-01-11 15:20
 - Scope: Retry CI release; fix npm provenance repo metadata
 - Key changes: Triggered publish workflow; failed with E422 provenance because package.json repository.url was empty. Added repository metadata to all package package.json files to match https://github.com/ZizzX/wizzard-packages.
