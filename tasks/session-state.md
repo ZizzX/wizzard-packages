@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-11 16:25
+- Scope: Add per-package READMEs
+- Key changes: Added README.md for core, react, adapter-zod, adapter-yup, middleware, persistence, devtools; closed wizzard-stepper-react-rd1.
+- Tests run: none
+- Open questions: none
+- Next action: start dv1 (dev branch workflow) or sb1 (.stackblitz audit).
+
+## Session Update
 - Date: 2026-01-11 16:05
 - Scope: bd state recovery + new tasks
 - Key changes: Stopped bd daemon, reconciled .beads/issues.jsonl and sync_base.jsonl with closed eh3/sgf/6dq/abc; added tasks rd1 (package READMEs), dv1 (dev branch workflow), sb1 (.stackblitz audit); ensured JSONL is UTF-8 without BOM so bd no-db works.
