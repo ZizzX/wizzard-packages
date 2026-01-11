@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-11 14:17
+- Scope: Restrict bd to tasks-only storage.
+- Key changes: Set .beads/config.yaml to no-db + no-daemon + no-auto-import; sync branch disabled to avoid bd sync impacts.
+- Tests run: none
+- Open questions: none.
+- Next action: use bd commands without sync; keep issues.jsonl as source of truth.
+
+## Session Update
 - Date: 2026-01-11 14:13
 - Scope: Lock bd usage to tasks only.
 - Key changes: Removed bd sync from AGENTS workflow; documented bd-only-for-tasks policy in roadmap and session rules.
