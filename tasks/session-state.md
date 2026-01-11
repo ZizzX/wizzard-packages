@@ -15,6 +15,14 @@
 - Next action: commit and push to main, then run GitHub Actions Release workflow.
 
 ## Session Update
+- Date: 2026-01-11 13:44
+- Scope: Commit + push release prep for v0.1.0.
+- Key changes: Committed and pushed release prep + docs updates; bd sync completed; CI publish path ready (workflow_dispatch + environment secret).
+- Tests run: pnpm test:run PASS (git commit hook, 2026-01-11 13:43)
+- Open questions: trigger Release workflow to publish v0.1.0 via GitHub Actions.
+- Next action: run the Release workflow in GitHub Actions for @wizzard-packages/*.
+
+## Session Update
 - Date: 2026-01-11 12:59
 - Scope: Release publish attempt (abc).
 - Key changes: Ran pnpm release:publish; publish failed for all packages due to npm token expired/revoked (E404 on PUT). Logged blocker in bd.
