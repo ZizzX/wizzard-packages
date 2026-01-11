@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-11 16:45
+- Scope: Audit StackBlitz templates
+- Key changes: Reviewed .stackblitz basic/validation/persistence; imports and links are already scoped to @wizzard-packages/*; closed wizzard-stepper-react-sb1.
+- Tests run: none
+- Open questions: none
+- Next action: proceed with wizzard-stepper-react-3iv (legacy deprecation).
+
+## Session Update
 - Date: 2026-01-11 16:35
 - Scope: Dev branch workflow
 - Key changes: Added dev branch CI in .github/workflows/ci.yml; documented dev promotion flow; created dev branch and pushed to origin; closed wizzard-stepper-react-dv1.
