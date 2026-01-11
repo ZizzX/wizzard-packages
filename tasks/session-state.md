@@ -256,3 +256,4 @@
 - Keep tests status current
 - Add/remove blockers immediately
 - Always update this file after bd task changes (create/update/close)
+- Do not run `bd sync` until a safe workflow is defined (it reverted local changes)
