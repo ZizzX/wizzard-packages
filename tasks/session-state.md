@@ -87,6 +87,14 @@
 - Next action: update migration doc and deprecate legacy package (wizzard-stepper-react-3iv).
 
 ## Session Update
+- Date: 2026-01-11 17:43
+- Scope: Docs UI publish workflow pushed to dev (9i4)
+- Key changes: Committed and pushed Docs UI GitHub Pages workflow to dev; UI build output ready for deploy.
+- Tests run: pnpm test:run PASS (git commit hook, 2026-01-11 17:43)
+- Open questions: none
+- Next action: promote dev to main to trigger GitHub Pages deploy, then close wizzard-stepper-react-9i4.
+
+## Session Update
 - Date: 2026-01-11 17:42
 - Scope: Docs UI GitHub Pages publish workflow (9i4)
 - Key changes: Added GitHub Actions workflow to build API docs + Docs UI and deploy `packages/ui/dist` to GitHub Pages.
