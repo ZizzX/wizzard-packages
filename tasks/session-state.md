@@ -87,6 +87,14 @@
 - Next action: update migration doc and deprecate legacy package (wizzard-stepper-react-3iv).
 
 ## Session Update
+- Date: 2026-01-12 02:24
+- Scope: Close Docs UI Pages deploy task (9i4)
+- Key changes: Closed wizzard-stepper-react-9i4 after verifying GitHub Pages dev preview works and gh-pages source configured.
+- Tests run: none
+- Open questions: confirm prod Pages deploy after dev→main promotion.
+- Next action: decide whether to promote dev to main; then close wizzard-stepper-react-4zl epic.
+
+## Session Update
 - Date: 2026-01-12 02:17
 - Scope: Add Docs UI redesign task
 - Key changes: Created bd task wizzard-stepper-react-869 for modern UI redesign of Docs UI.
