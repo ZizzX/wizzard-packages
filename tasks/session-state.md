@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-11 16:35
+- Scope: Dev branch workflow
+- Key changes: Added dev branch CI in .github/workflows/ci.yml; documented dev promotion flow; created dev branch and pushed to origin; closed wizzard-stepper-react-dv1.
+- Tests run: pnpm test:run (git hook)
+- Open questions: none
+- Next action: audit .stackblitz templates (sb1).
+
+## Session Update
 - Date: 2026-01-11 16:25
 - Scope: Add per-package READMEs
 - Key changes: Added README.md for core, react, adapter-zod, adapter-yup, middleware, persistence, devtools; closed wizzard-stepper-react-rd1.
