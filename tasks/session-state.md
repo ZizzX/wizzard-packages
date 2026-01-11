@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-11 14:13
+- Scope: Lock bd usage to tasks only.
+- Key changes: Removed bd sync from AGENTS workflow; documented bd-only-for-tasks policy in roadmap and session rules.
+- Tests run: none
+- Open questions: none.
+- Next action: follow task-only bd policy and avoid bd sync.
+
+## Session Update
 - Date: 2026-01-11 14:00
 - Scope: Revert bd sync fallout and lock policy.
 - Key changes: In-progress revert of bd sync commits to restore local changes; decision logged to stop using bd sync until it is safe.
@@ -211,7 +219,7 @@
 2) Add release workflow (wizzard-stepper-react-g5k) and publish pipeline (wizzard-stepper-react-dp9).
 3) Run dry-run publish checks (wizzard-stepper-react-68u).
 4) Regenerate docs and update migration notes (fdl, zy1).
-5) Close/advance tasks in bd as each step is completed; bd sync at end of session.
+5) Close/advance tasks in bd as each step is completed.
 
 ## Session Update
 - Date: 2026-01-10 14:29
