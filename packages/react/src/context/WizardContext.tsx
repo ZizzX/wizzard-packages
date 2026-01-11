@@ -21,8 +21,8 @@ import {
   WizardStore,
   getByPath,
   setByPath,
-} from '@wizzard/core';
-import { MemoryAdapter } from '@wizzard/persistence';
+} from '@wizzard-packages/core';
+import { MemoryAdapter } from '@wizzard-packages/persistence';
 
 const WizardStateContext = createContext<IWizardState<any, any> | undefined>(undefined);
 const WizardActionsContext = createContext<IWizardActions<any> | undefined>(undefined);

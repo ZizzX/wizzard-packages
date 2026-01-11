@@ -4,7 +4,7 @@ import type {
   IWizardContext as ICoreContext,
   IStepConfig,
   IWizardConfig,
-} from '@wizzard/core';
+} from '@wizzard-packages/core';
 
 /**
  * Re-export core config types for convenience.

@@ -6,8 +6,8 @@ import {
   useWizardActions,
   useWizardState,
   type PersistenceMode,
-} from '@wizzard/react';
-import { LocalStorageAdapter } from '@wizzard/persistence';
+} from '@wizzard-packages/react';
+import { LocalStorageAdapter } from '@wizzard-packages/persistence';
 
 // --- Components ---
 
