@@ -87,6 +87,14 @@
 - Next action: update migration doc and deprecate legacy package (wizzard-stepper-react-3iv).
 
 ## Session Update
+- Date: 2026-01-12 02:17
+- Scope: Add Docs UI redesign task
+- Key changes: Created bd task wizzard-stepper-react-869 for modern UI redesign of Docs UI.
+- Tests run: none
+- Open questions: none
+- Next action: define visual direction and implement redesign.
+
+## Session Update
 - Date: 2026-01-12 02:13
 - Scope: Fix Docs UI API page local routing
 - Key changes: Defaulted UI base to `/` for dev, allowed repo root in Vite dev server, fixed docs glob path, and guarded empty API docs to prevent crash.
