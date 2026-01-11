@@ -87,6 +87,14 @@
 - Next action: update migration doc and deprecate legacy package (wizzard-stepper-react-3iv).
 
 ## Session Update
+- Date: 2026-01-12 02:13
+- Scope: Fix Docs UI API page local routing
+- Key changes: Defaulted UI base to `/` for dev, allowed repo root in Vite dev server, fixed docs glob path, and guarded empty API docs to prevent crash.
+- Tests run: none
+- Open questions: none
+- Next action: restart UI dev server and verify `/api` loads.
+
+## Session Update
 - Date: 2026-01-12 02:10
 - Scope: Fix Docs UI routing base
 - Key changes: Added React Router basename from Vite base URL to support GitHub Pages subpath.

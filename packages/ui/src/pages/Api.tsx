@@ -7,6 +7,19 @@ export default function Api() {
   const slug = params['*'] || 'README';
   const active = apiDocs.find((entry) => entry.slug === slug) || apiDocs[0];
 
+  if (!active) {
+    return (
+      <section className="section api-layout">
+        <article className="api-content">
+          <h2>API Reference</h2>
+          <p>
+            API docs are not available. Run <code>pnpm docs:api</code> first.
+          </p>
+        </article>
+      </section>
+    );
+  }
+
   return (
     <section className="section api-layout">
       <aside className="api-sidebar">
