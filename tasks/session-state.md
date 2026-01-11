@@ -87,6 +87,38 @@
 - Next action: update migration doc and deprecate legacy package (wizzard-stepper-react-3iv).
 
 ## Session Update
+- Date: 2026-01-11 17:42
+- Scope: Docs UI GitHub Pages publish workflow (9i4)
+- Key changes: Added GitHub Actions workflow to build API docs + Docs UI and deploy `packages/ui/dist` to GitHub Pages.
+- Tests run: none
+- Open questions: none
+- Next action: commit and push to dev, then promote to main to trigger Pages deploy.
+
+## Session Update
+- Date: 2026-01-11 17:41
+- Scope: Start Docs UI publish task (9i4)
+- Key changes: Marked wizzard-stepper-react-9i4 in progress in bd.
+- Tests run: none
+- Open questions: none
+- Next action: configure Docs UI publish to GitHub Pages (workflow + build output path).
+
+## Session Update
+- Date: 2026-01-11 17:41
+- Scope: Close UI build output task (4zl.4)
+- Key changes: Closed wizzard-stepper-react-4zl.4 in bd; verified UI build output is ready for Docs UI publish task.
+- Tests run: none
+- Open questions: none
+- Next action: start wizzard-stepper-react-9i4 (Docs UI publish to GitHub Pages).
+
+## Session Update
+- Date: 2026-01-11 17:40
+- Scope: Docs UI build output (4zl.4)
+- Key changes: Added UI build scripts, set GitHub Pages base, fixed API docs glob raw import, verified `pnpm -C packages/ui build` output; roadmap updated for UI docs package completion.
+- Tests run: pnpm -C packages/ui build PASS
+- Open questions: none
+- Next action: close wizzard-stepper-react-4zl.4 in bd, then proceed to wizzard-stepper-react-9i4 (Docs UI publish).
+
+## Session Update
 - Date: 2026-01-11 15:30
 - Scope: Publish verification
 - Key changes: Reran publish workflow; it failed with E403 because versions already existed. Verified npm registry shows @wizzard-packages/* all at 0.1.0; closed wizzard-stepper-react-abc.

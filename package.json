@@ -39,6 +39,8 @@
     "type-check": "pnpm -r type-check",
     "docs:api": "typedoc",
     "docs:watch": "typedoc --watch",
+    "docs:ui": "pnpm --filter @wizzard-packages/ui dev",
+    "docs:ui:build": "pnpm --filter @wizzard-packages/ui build",
     "changeset": "changeset",
     "release": "changeset version",
     "release:publish": "changeset publish",
