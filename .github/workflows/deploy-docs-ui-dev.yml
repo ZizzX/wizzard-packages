@@ -1,8 +1,8 @@
-name: Deploy Docs UI
+name: Deploy Docs UI (Dev Preview)
 
 on:
   push:
-    branches: [main]
+    branches: [dev]
     paths:
       - 'packages/ui/**'
       - 'docs/api/**'
@@ -37,14 +37,15 @@ jobs:
       - name: Build API Docs
         run: pnpm docs:api
 
-      - name: Build Docs UI
+      - name: Build Docs UI (Dev)
         run: pnpm -C packages/ui build
         env:
-          UI_BASE: /wizzard-packages/
+          UI_BASE: /wizzard-packages/dev/
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages (Dev)
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: packages/ui/dist
+          destination_dir: dev

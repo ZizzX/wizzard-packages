@@ -2,8 +2,10 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
 
+const uiBase = process.env.UI_BASE || '/wizzard-packages/';
+
 export default defineConfig({
-  base: '/wizzard-packages/',
+  base: uiBase,
   plugins: [react()],
   resolve: {
     alias: {

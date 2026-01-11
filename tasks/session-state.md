@@ -87,6 +87,14 @@
 - Next action: update migration doc and deprecate legacy package (wizzard-stepper-react-3iv).
 
 ## Session Update
+- Date: 2026-01-11 20:40
+- Scope: Dev preview Pages workflow (866)
+- Key changes: Added dev Pages workflow for Docs UI preview on `dev`; switched prod Docs UI deploy to gh-pages via peaceiris; added UI_BASE support in Vite config; documented dev/prod preview URLs.
+- Tests run: none
+- Open questions: none
+- Next action: close wizzard-stepper-react-866 after verifying Pages settings, then promote dev to main when ready.
+
+## Session Update
 - Date: 2026-01-11 20:31
 - Scope: Reprioritize open bd tasks
 - Key changes: Set wizzard-stepper-react-866 to P1, wizzard-stepper-react-4zl to P2, kept h0b/j1c at P3.
