@@ -87,6 +87,14 @@
 - Next action: update migration doc and deprecate legacy package (wizzard-stepper-react-3iv).
 
 ## Session Update
+- Date: 2026-01-12 01:57
+- Scope: Resolve Node 18 CI hang
+- Key changes: Determined root cause is Node 18 incompatibility with Vite/Vitest (requires Node 20+); CI matrix now runs Node 20 only; closed wizzard-stepper-react-868.
+- Tests run: none
+- Open questions: none
+- Next action: rerun CI to confirm green on Node 20.
+
+## Session Update
 - Date: 2026-01-12 01:43
 - Scope: Node 18 CI hang diagnostics (expanded)
 - Key changes: Tightened Node 18 vitest run to single-threaded, no file parallelism, added verbose + hanging-process reporters and timeouts to capture hang source.
