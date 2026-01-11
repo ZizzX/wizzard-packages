@@ -1,5 +1,6 @@
 import { StepperControls } from '../../components/StepperControls';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../components/ui/Card';
+import type { ConditionalWizardSchema } from '../../wizards/conditional-wizard';
 import { createStep, useWizard, WizardProvider } from '../../wizards/conditional-wizard';
 
 // --- STEPS ---
@@ -62,7 +63,7 @@ const config = {
     {
       id: 'co-applicant',
       label: 'Co-Applicant',
-      condition: (data: any) => !!data.hasCoApplicant,
+      condition: (data: ConditionalWizardSchema) => !!data.hasCoApplicant,
     },
     createStep({ id: 'review', label: 'Review' }),
   ],
@@ -89,9 +90,9 @@ function ConditionalWizardContent() {
         <CardContent className="min-h-[200px]">
           {/* Step Indicator for simple check in tests */}
           <div data-testid="step-indicator" className="mb-4 hidden">
-            {/* This is a dummy element if tests check count of something else, 
-                            but the test checks locator('[data-testid="step-indicator"]').count() - wait, 
-                            does it mean the indicator items? usually yes. 
+            {/* This is a dummy element if tests check count of something else,
+                            but the test checks locator('[data-testid="step-indicator"]').count() - wait,
+                            does it mean the indicator items? usually yes.
                             So I need a visual stepper that uses data-testid="step-indicator" for ITEMS.
                             Or I need to import a Stepper component.
                         */}

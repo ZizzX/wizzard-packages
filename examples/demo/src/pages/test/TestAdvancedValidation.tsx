@@ -827,10 +827,10 @@ export default function TestAdvancedValidation() {
   const navigationMode =
     (searchParams[0].get(
       'navigationMode'
-    ) as IWizardConfig<AdvancedValidationData>['navigationMode']) || 'visited';
+    ) as IWizardConfig<AdvancedValidationData>['navigationMode']) ?? 'visited';
 
   return (
-    <WizardProvider config={{ ...config, navigationMode: navigationMode as any }}>
+    <WizardProvider config={{ ...config, navigationMode }}>
       <WizardContent />
       <WizardDevTools />
     </WizardProvider>

@@ -87,6 +87,14 @@
 - Next action: update migration doc and deprecate legacy package (wizzard-stepper-react-3iv).
 
 ## Session Update
+- Date: 2026-01-12 00:33
+- Scope: Fix CI lint failures (867)
+- Key changes: Resolved lint errors in demo and packages; ref usage refactored, explicit any removed, logger middleware uses console.warn, persistence catch uses _error. Closed wizzard-stepper-react-867.
+- Tests run: pnpm lint PASS
+- Open questions: none
+- Next action: rerun dev preview workflow and verify gh-pages branch appears.
+
+## Session Update
 - Date: 2026-01-12 00:27
 - Scope: CI lint failures tracking
 - Key changes: Created bd task wizzard-stepper-react-867 to investigate and fix GitHub Actions lint errors.
