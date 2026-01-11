@@ -87,6 +87,14 @@
 - Next action: update migration doc and deprecate legacy package (wizzard-stepper-react-3iv).
 
 ## Session Update
+- Date: 2026-01-12 02:10
+- Scope: Fix Docs UI routing base
+- Key changes: Added React Router basename from Vite base URL to support GitHub Pages subpath.
+- Tests run: none
+- Open questions: none
+- Next action: restart local UI and verify routes, then rerun dev preview deploy.
+
+## Session Update
 - Date: 2026-01-12 01:57
 - Scope: Resolve Node 18 CI hang
 - Key changes: Determined root cause is Node 18 incompatibility with Vite/Vitest (requires Node 20+); CI matrix now runs Node 20 only; closed wizzard-stepper-react-868.
