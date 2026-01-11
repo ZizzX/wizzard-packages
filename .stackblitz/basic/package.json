@@ -11,7 +11,7 @@
     "dependencies": {
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
-        "wizzard-stepper-react": "latest",
+        "@wizzard-packages/react": "latest",
         "lucide-react": "^0.471.0",
         "clsx": "^2.1.1",
         "tailwind-merge": "^3.0.1"

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useWizardContext } from '@wizzard/react';
-import type { WizardAction, IWizardStore } from '@wizzard/core';
+import { useWizardContext } from '@wizzard-packages/react';
+import type { WizardAction, IWizardStore } from '@wizzard-packages/core';
 
 interface IActionLog {
   timestamp: number;

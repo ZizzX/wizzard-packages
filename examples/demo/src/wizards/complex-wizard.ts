@@ -1,4 +1,4 @@
-import { createWizardFactory } from '@wizzard/react';
+import { createWizardFactory } from '@wizzard-packages/react';
 import { z } from 'zod';
 
 // 1. Define Schema with nested arrays

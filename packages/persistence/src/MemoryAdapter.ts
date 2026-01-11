@@ -1,4 +1,4 @@
-import type { IPersistenceAdapter } from '@wizzard/core';
+import type { IPersistenceAdapter } from '@wizzard-packages/core';
 
 /**
  * In-memory persistence adapter for tests or ephemeral sessions.

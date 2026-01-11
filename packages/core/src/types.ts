@@ -178,7 +178,7 @@ export interface IStepConfig<TStepData = unknown, StepId extends string = string
   /** @deprecated Use validationMode instead */
   autoValidate?: boolean;
   validationMode?: ValidationMode;
-  component?: any; // Framework agnostic, will be cast to React.ComponentType in @wizzard/react
+  component?: any; // Framework agnostic, will be cast to React.ComponentType in @wizzard-packages/react
   persistenceAdapter?: IPersistenceAdapter;
   persistenceMode?: PersistenceMode;
   dependsOn?: string[];

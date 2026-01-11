@@ -1,4 +1,4 @@
-import { createWizardFactory } from 'wizzard-stepper-react';
+import { createWizardFactory } from '@wizzard-packages/react';
 import { ChevronRight, ChevronLeft, CheckCircle2 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -15,11 +15,11 @@ interface BasicSchema {
 }
 
 // 2. Create typed wizard factory
-const { 
-  WizardProvider, 
-  useWizardActions, 
-  useWizardValue, 
-  useWizardState 
+const {
+  WizardProvider,
+  useWizardActions,
+  useWizardValue,
+  useWizardState
 } = createWizardFactory<BasicSchema>();
 
 // 3. Components for steps
@@ -90,7 +90,7 @@ const MyWizard = () => {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
         {/* Progress Bar */}
         <div className="h-2 bg-gray-100">
-          <div 
+          <div
             className="h-full bg-indigo-600 transition-all duration-300 ease-out"
             style={{ width: `${progress}%` }}
           />
@@ -131,9 +131,9 @@ const MyWizard = () => {
           </div>
         </div>
       </div>
-      
+
       <p className="mt-8 text-sm text-gray-400">
-        Demo of wizzard-stepper-react basic usage
+        Demo of @wizzard-packages/react basic usage
       </p>
     </div>
   );
