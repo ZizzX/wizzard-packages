@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-11 18:30
+- Scope: UI API docs integration
+- Key changes: Rendered docs/api markdown inside UI via react-markdown + import.meta.glob; added API sidebar and route handling; updated UI styles; added react-markdown dependency and updated pnpm-lock.yaml; closed wizzard-stepper-react-4zl.3.
+- Tests run: pnpm install (workspace)
+- Open questions: none
+- Next action: proceed with UI build output (wizzard-stepper-react-4zl.4).
+
+## Session Update
 - Date: 2026-01-11 18:05
 - Scope: UI routing + layout
 - Key changes: Added react-router layout and routes (Home/API/Examples) in packages/ui; added UI pages and nav styles; added react-router-dom to UI package and refreshed pnpm-lock.yaml; closed wizzard-stepper-react-4zl.2.

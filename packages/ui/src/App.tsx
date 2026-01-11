@@ -10,7 +10,7 @@ const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       { index: true, element: <Home /> },
-      { path: 'api', element: <Api /> },
+      { path: 'api/*', element: <Api /> },
       { path: 'examples', element: <Examples /> },
     ],
   },
