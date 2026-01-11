@@ -87,6 +87,14 @@
 - Next action: update migration doc and deprecate legacy package (wizzard-stepper-react-3iv).
 
 ## Session Update
+- Date: 2026-01-12 00:23
+- Scope: Fix Docs UI workflows for typedoc
+- Key changes: Added `pnpm -r build` step before `docs:api` in Docs UI deploy workflows to resolve @wizzard-packages/* types during CI.
+- Tests run: none
+- Open questions: none
+- Next action: re-run dev preview workflow and verify gh-pages branch appears.
+
+## Session Update
 - Date: 2026-01-11 20:56
 - Scope: Roadmap instructions for Docs UI deploy
 - Key changes: Added step-by-step GitHub Pages dev/prod deployment instructions to IMPROVEMENT_ROADMAP.md.
