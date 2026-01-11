@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { createWizardFactory } from '@wizzard-packages/react';
-import { ZodAdapter } from '@wizzard-packages/adapter-zod';
-import { LocalStorageAdapter, MemoryAdapter } from '@wizzard-packages/persistence';
+import { createWizardFactory } from '@wizzard/react';
+import { ZodAdapter } from '@wizzard/adapter-zod';
+import { LocalStorageAdapter, MemoryAdapter } from '@wizzard/persistence';
 
 // 1. Schema
 const demoSchema = z.object({

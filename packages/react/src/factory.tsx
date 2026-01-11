@@ -9,7 +9,7 @@ import {
   useWizardState as useBaseWizardState,
 } from './context/WizardContext';
 import { useWizard as useBaseWizard } from './hooks/useWizard';
-import type { IWizardConfig, IWizardContext, IStepConfig, Path, PathValue } from '@wizzard-packages/core';
+import type { IWizardConfig, IWizardContext, IStepConfig, Path, PathValue } from '@wizzard/core';
 
 /**
  * createWizardFactory

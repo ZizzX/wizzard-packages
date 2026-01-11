@@ -7,7 +7,7 @@ import {
   useWizardError,
 } from './context/WizardContext';
 import { WizardStepRenderer } from './components/WizardStepRenderer';
-import { IStepConfig, IWizardConfig } from '@wizzard-packages/core';
+import { IStepConfig, IWizardConfig } from '@wizzard/core';
 
 // Helper component to interact with wizard in tests
 const WizardConsumer = () => {
