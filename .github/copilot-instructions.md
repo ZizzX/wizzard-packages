@@ -1,4 +1,4 @@
-# Copilot Instructions for @wizzard-packages/react
+# Copilot Instructions for wizzard-stepper-react
 
 This library is a flexible, headless, and strictly typed multi-step wizard for React.
 

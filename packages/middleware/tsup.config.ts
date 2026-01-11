@@ -9,7 +9,7 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   minify: false,
-  external: ['@wizzard-packages/core'],
+  external: ['@wizzard/core'],
   tsconfig: resolve(__dirname, 'tsconfig.build.json'),
   treeshake: true,
 });

@@ -7,7 +7,7 @@ To align with **Google/MAANG** best practices, the library should transition fro
 ### Why?
 
 - **Tree-shaking**: Users only download the core logic (10kb) and and pick only the adapters they need (Zod, Yup, etc).
-- **Dependency Isolation**: The core remains dependency-free. Only `@wizzard-packages/adapter-zod` depends on `zod`.
+- **Dependency Isolation**: The core remains dependency-free. Only `@wizzard/adapter-zod` depends on `zod`.
 - **Scalability**: New community-driven adapters or middlewares won't bloat the main package.
 
 ### Recommended Structure

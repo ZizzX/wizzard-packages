@@ -1,6 +1,6 @@
 # E2E Testing Guide
 
-This directory contains end-to-end tests for the scoped `@wizzard-packages/*` packages using Playwright.
+This directory contains end-to-end tests for the scoped `@wizzard/*` packages using Playwright.
 
 ## 📁 Structure
 
