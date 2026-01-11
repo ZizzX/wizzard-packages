@@ -1,4 +1,4 @@
-import type { IValidatorAdapter, ValidationResult } from '@wizzard/core';
+import type { IValidatorAdapter, ValidationResult } from '@wizzard-packages/core';
 import type { YupLikeSchema, YupLikeError } from './types';
 
 /**

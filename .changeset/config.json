@@ -1,0 +1,25 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.0.3/schema.json",
+  "changelog": "@changesets/cli/changelog",
+  "commit": false,
+  "fixed": [
+    [
+      "@wizzard-packages/core",
+      "@wizzard-packages/react",
+      "@wizzard-packages/adapter-zod",
+      "@wizzard-packages/adapter-yup",
+      "@wizzard-packages/devtools",
+      "@wizzard-packages/middleware",
+      "@wizzard-packages/persistence"
+    ]
+  ],
+  "linked": [],
+  "access": "public",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": [],
+  "privatePackages": {
+    "version": false,
+    "tag": false
+  }
+}

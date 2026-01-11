@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
-import type { IWizardConfig, IValidatorAdapter, ValidationResult } from '@wizzard/react';
-import { LocalStorageAdapter } from '@wizzard/persistence';
+import type { IWizardConfig, IValidatorAdapter, ValidationResult } from '@wizzard-packages/react';
+import { LocalStorageAdapter } from '@wizzard-packages/persistence';
 import {
   WizardProvider,
   useWizard,

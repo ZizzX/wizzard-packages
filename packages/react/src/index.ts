@@ -5,8 +5,8 @@ export * from './hooks/useWizard';
 export * from './types';
 
 // Re-export core for convenience and backward compatibility
-export { WizardStore } from '@wizzard/core';
-export { loggerMiddleware } from '@wizzard/middleware';
+export { WizardStore } from '@wizzard-packages/core';
+export { loggerMiddleware } from '@wizzard-packages/middleware';
 export type {
   IWizardState,
   IWizardActions,
@@ -17,4 +17,4 @@ export type {
   IValidatorAdapter,
   PersistenceMode,
   WizardMiddleware,
-} from '@wizzard/core';
+} from '@wizzard-packages/core';

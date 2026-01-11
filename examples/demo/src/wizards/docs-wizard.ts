@@ -1,4 +1,4 @@
-import { createWizardFactory } from '@wizzard/react';
+import { createWizardFactory } from '@wizzard-packages/react';
 
 export interface TechWizardSchema {
   userName?: string;

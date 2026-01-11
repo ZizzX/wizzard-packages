@@ -9,6 +9,6 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   minify: false,
-  external: ['react', 'react-dom', '@wizzard/core', '@wizzard/middleware', '@wizzard/persistence'],
+  external: ['react', 'react-dom', '@wizzard-packages/core', '@wizzard-packages/middleware', '@wizzard-packages/persistence'],
   tsconfig: resolve(__dirname, 'tsconfig.build.json'),
 });

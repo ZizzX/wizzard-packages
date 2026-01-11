@@ -9,7 +9,7 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   minify: false,
-  external: ['react', 'react-dom', '@wizzard/react'],
+  external: ['react', 'react-dom', '@wizzard-packages/react'],
   tsconfig: resolve(__dirname, 'tsconfig.build.json'),
   treeshake: true,
 });
