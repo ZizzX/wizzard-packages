@@ -87,6 +87,14 @@
 - Next action: update migration doc and deprecate legacy package (wizzard-stepper-react-3iv).
 
 ## Session Update
+- Date: 2026-01-12 01:24
+- Scope: Fix E2E logger middleware test
+- Key changes: Adjusted E2E middleware test to capture console warnings (logger uses warn); middleware spec now passes locally.
+- Tests run: pnpm test:e2e -- e2e/tests/middleware.spec.ts PASS
+- Open questions: none
+- Next action: rerun CI to confirm E2E passes.
+
+## Session Update
 - Date: 2026-01-12 01:18
 - Scope: CI stability for Node matrix
 - Key changes: Limited unit tests to Node 20 in CI matrix to avoid Node 18 vitest hang; build/lint still run on both nodes.
