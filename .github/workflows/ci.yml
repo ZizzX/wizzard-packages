@@ -43,7 +43,7 @@ jobs:
       - name: Unit tests (Node 18 diagnostics)
         if: matrix.node == 18
         timeout-minutes: 10
-        run: pnpm test:run --pool=forks --maxWorkers=1 --reporter=hanging-process
+        run: pnpm test:run --pool=threads --maxWorkers=1 --no-file-parallelism --sequence.concurrent=false --reporter=verbose --reporter=hanging-process --testTimeout=10000 --hookTimeout=20000 --teardownTimeout=20000 --logHeapUsage
 
       - name: Unit tests (Node 20)
         if: matrix.node == 20
