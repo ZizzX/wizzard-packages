@@ -87,6 +87,14 @@
 - Next action: update migration doc and deprecate legacy package (wizzard-stepper-react-3iv).
 
 ## Session Update
+- Date: 2026-01-11 20:54
+- Scope: Dev preview Pages deploy (handoff)
+- Key changes: Dev/prod Docs UI deploy workflows use gh-pages; dev publishes to `/dev` and prod to root; UI base is configurable via UI_BASE env.
+- Tests run: pnpm test:run PASS (git commit hook, 2026-01-11 20:41)
+- Open questions: Decide what to do with demo Pages workflow (deploy-demo.yml) after switching Pages source to gh-pages.
+- Next action: Switch GitHub Pages source to `gh-pages` branch, run dev workflow, verify `/wizzard-packages/dev/`, then close wizzard-stepper-react-866.
+
+## Session Update
 - Date: 2026-01-11 20:40
 - Scope: Dev preview Pages workflow (866)
 - Key changes: Added dev Pages workflow for Docs UI preview on `dev`; switched prod Docs UI deploy to gh-pages via peaceiris; added UI_BASE support in Vite config; documented dev/prod preview URLs.
