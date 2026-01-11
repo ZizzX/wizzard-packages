@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-11 14:00
+- Scope: Revert bd sync fallout and lock policy.
+- Key changes: In-progress revert of bd sync commits to restore local changes; decision logged to stop using bd sync until it is safe.
+- Tests run: none
+- Open questions: identify safe bd sync workflow or remove from routine?
+- Next action: finish revert, verify repo state, and update guidance on bd usage.
+
+## Session Update
 - Date: 2026-01-11 12:54
 - Scope: Release task readiness check (abc).
 - Key changes: Found package versions at 2.1.0; noted that releasing v0.1.0 requires explicit version reset/downgrade; added bd note for wizzard-stepper-react-abc.
@@ -13,6 +21,14 @@
 - Tests run: none
 - Open questions: trigger publish workflow on main after commit/push?
 - Next action: commit and push to main, then run GitHub Actions Release workflow.
+
+## Session Update
+- Date: 2026-01-11 13:44
+- Scope: Commit + push release prep for v0.1.0.
+- Key changes: Committed and pushed release prep + docs updates; bd sync completed; CI publish path ready (workflow_dispatch + environment secret).
+- Tests run: pnpm test:run PASS (git commit hook, 2026-01-11 13:43)
+- Open questions: trigger Release workflow to publish v0.1.0 via GitHub Actions.
+- Next action: run the Release workflow in GitHub Actions for @wizzard-packages/*.
 
 ## Session Update
 - Date: 2026-01-11 12:59

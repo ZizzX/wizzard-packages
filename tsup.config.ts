@@ -10,6 +10,6 @@ export default defineConfig({
   minify: true,
   external: ['react', 'react-dom', 'zod', 'yup'],
   env: {
-    VERSION: process.env.npm_package_version || '2.0.0', // Fallback for safety
+    VERSION: process.env.npm_package_version || '0.1.0',
   },
 });
