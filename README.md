@@ -6,7 +6,7 @@
 
 A flexible, headless, and strictly typed multi-step wizard library for React. Built with adapter patterns in mind to support any form library (React Hook Form, Formik, etc.) and any validation schema (Zod, Yup).
 
-> Scoped packages are the primary distribution (`@wizzard-packages/*`). The legacy `wizzard-stepper-react` package remains on v2.x and is being deprecated in favor of the scoped packages.
+> Scoped packages are the primary distribution (`@wizzard-packages/*`) in the new repo (`wizzard-packages`). The legacy `wizzard-stepper-react` package is deprecated and stays on v2.x for critical fixes only.
 
 ---
 
@@ -114,6 +114,7 @@ const step = { id: 'age', validationAdapter: adapter };
 - Scoped packages (`@wizzard-packages/*`) are versioned in lockstep starting at `0.1.0`.
 - Releases are cut from `main` with git tags `vX.Y.Z` and GitHub releases.
 - Pre-releases use `-next.N` and publish with npm dist-tag `next`.
+- Versioning is managed via Changesets with a fixed group for all `@wizzard-packages/*` packages.
 - Legacy `wizzard-stepper-react` stays on v2.x for critical fixes only.
 
 ---
@@ -194,7 +195,7 @@ const PersonalInfoStep = () => {
 
 ## ⚠️ Legacy Support (wizzard-stepper-react v2.x)
 
-If you are maintaining an older project, the legacy `wizzard-stepper-react` package stays on v2.x and will be deprecated after the scoped packages are published. For migration steps, see [MIGRATION.md](./MIGRATION.md).
+The legacy `wizzard-stepper-react` package is deprecated. It stays on v2.x for critical fixes only. New work, releases, and docs live in the `wizzard-packages` repo. For migration steps, see [MIGRATION.md](./MIGRATION.md).
 
 ---
 
@@ -210,4 +211,3 @@ If you are maintaining an older project, the legacy `wizzard-stepper-react` pack
 ## License
 
 MIT © [ZizzX](https://github.com/ZizzX)
-

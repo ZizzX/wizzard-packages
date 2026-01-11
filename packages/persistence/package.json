@@ -1,6 +1,6 @@
 {
-  "name": "@wizzard/persistence",
-  "version": "2.1.0",
+  "name": "@wizzard-packages/persistence",
+  "version": "0.1.0",
   "description": "Persistence adapters for Wizzard Stepper.",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -9,6 +9,9 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -25,11 +28,11 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@wizzard/core": "workspace:*"
+    "@wizzard-packages/core": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "vitest": "^4.0.16"
   }
 }

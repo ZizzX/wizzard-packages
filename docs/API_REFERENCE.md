@@ -1,6 +1,6 @@
 # API Reference - Advanced Types & Methods
 
-Complete guide to advanced types and methods of the `@wizzard/react` library.
+Complete guide to advanced types and methods of the `@wizzard-packages/react` library.
 
 ---
 
@@ -655,7 +655,7 @@ const config: IWizardConfig = {
 #### Step 2: Use WizardStepRenderer
 
 ```tsx
-import { WizardStepRenderer } from '@wizzard/react';
+import { WizardStepRenderer } from '@wizzard-packages/react';
 
 const MyWizard = () => {
   return (
@@ -711,7 +711,7 @@ const AnimatedWrapper = ({ children, key }) => (
 #### 3. Complete Example with All Features
 
 ```tsx
-import { WizardStepRenderer } from '@wizzard/react';
+import { WizardStepRenderer } from '@wizzard-packages/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Suspense } from 'react';
 
@@ -774,7 +774,7 @@ Create a custom renderer when you need:
 ### Basic Custom Renderer
 
 ```tsx
-import { useWizardContext } from '@wizzard/react';
+import { useWizardContext } from '@wizzard-packages/react';
 
 const CustomStepRenderer = () => {
   const { currentStep } = useWizardContext();
@@ -796,7 +796,7 @@ const CustomStepRenderer = () => {
 ### Advanced Custom Renderer with Metadata
 
 ```tsx
-import { useWizardContext } from '@wizzard/react';
+import { useWizardContext } from '@wizzard-packages/react';
 import { motion } from 'framer-motion';
 
 const AdvancedStepRenderer = () => {

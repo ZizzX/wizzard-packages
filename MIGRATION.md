@@ -2,7 +2,7 @@
 
 ## Migrating to scoped packages (@wizzard-packages/*)
 
-The modern distribution is now split into scoped packages. The legacy `wizzard-stepper-react` package stays on v2.x and will be deprecated after the scoped packages ship.
+The modern distribution lives in the `wizzard-packages` repo and is split into scoped packages. The legacy `wizzard-stepper-react` package is deprecated and stays on v2.x for critical fixes only.
 
 ### Install
 
@@ -42,6 +42,8 @@ pnpm add @wizzard-packages/adapter-zod @wizzard-packages/adapter-yup @wizzard-pa
 ```
 
 ---
+
+> Note: The sections below about v1.8.0/v2.0 apply to the legacy `wizzard-stepper-react` package. For the modern scoped packages, use `@wizzard-packages/*` imports as shown above.
 
 ## Upgrading to v1.8.0 (Internal Refactoring & Analytics)
 
@@ -154,4 +156,3 @@ class MyValidator implements IValidatorAdapter<MySchema> {
   }
 }
 ```
-

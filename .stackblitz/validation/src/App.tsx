@@ -1,4 +1,5 @@
-import { createWizardFactory, ZodAdapter } from 'wizzard-stepper-react';
+import { createWizardFactory } from '@wizzard-packages/react';
+import { ZodAdapter } from '@wizzard-packages/adapter-zod';
 import { z } from 'zod';
 import { ChevronRight, ChevronLeft, CheckCircle2, AlertCircle } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
@@ -17,12 +18,12 @@ const userSchema = z.object({
 type UserSchema = z.infer<typeof userSchema>;
 
 // 2. Factory
-const { 
-  WizardProvider, 
-  useWizardActions, 
-  useWizardValue, 
+const {
+  WizardProvider,
+  useWizardActions,
+  useWizardValue,
   useWizardError,
-  useWizardState 
+  useWizardState
 } = createWizardFactory<UserSchema>();
 
 // 3. Step Components
@@ -87,15 +88,15 @@ const Step2 = () => {
 // 4. Wizard Config
 const config = {
   steps: [
-    { 
-      id: 'info', 
-      label: 'Info', 
-      validationAdapter: new ZodAdapter(userSchema.pick({ username: true })) 
+    {
+      id: 'info',
+      label: 'Info',
+      validationAdapter: new ZodAdapter(userSchema.pick({ username: true }))
     },
-    { 
-      id: 'age', 
-      label: 'Age', 
-      validationAdapter: new ZodAdapter(userSchema.pick({ age: true })) 
+    {
+      id: 'age',
+      label: 'Age',
+      validationAdapter: new ZodAdapter(userSchema.pick({ age: true }))
     },
   ]
 };
@@ -118,8 +119,8 @@ const MyWizard = () => {
           <button onClick={goToPrevStep} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-800">
             Back
           </button>
-          <button 
-            onClick={goToNextStep} 
+          <button
+            onClick={goToNextStep}
             disabled={isPending}
             className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
           >

@@ -5,9 +5,9 @@ import {
   type IWizardConfig,
   type IValidatorAdapter,
   type ValidationResult,
-} from '@wizzard/react';
-import { WizardDevTools } from '@wizzard/devtools';
-import { MemoryAdapter } from '@wizzard/persistence';
+} from '@wizzard-packages/react';
+import { WizardDevTools } from '@wizzard-packages/devtools';
+import { MemoryAdapter } from '@wizzard-packages/persistence';
 import { Card, CardContent, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
