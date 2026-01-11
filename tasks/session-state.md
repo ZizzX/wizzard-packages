@@ -1,4 +1,20 @@
 ## Session Update
+- Date: 2026-01-11 15:20
+- Scope: Retry CI release; fix npm provenance repo metadata
+- Key changes: Triggered publish workflow; failed with E422 provenance because package.json repository.url was empty. Added repository metadata to all package package.json files to match https://github.com/ZizzX/wizzard-packages.
+- Tests run: none
+- Open questions: rerun publish workflow after commit/push.
+- Next action: commit and push changes; rerun publish workflow; verify npm versions.
+
+## Session Update
+- Date: 2026-01-11 15:00
+- Scope: Attempt package publish for missing @wizzard-packages/*
+- Key changes: Set .beads/config.yaml issue-prefix; ran pnpm -r build; attempted npm publish @wizzard-packages/core but blocked by OTP (EOTP).
+- Tests run: pnpm -r build (not tests)
+- Open questions: need OTP to continue npm publish.
+- Next action: provide OTP; publish core, persistence, adapter-zod, react; re-check npm registry.
+
+## Session Update
 - Date: 2026-01-11 14:23
 - Scope: Add hard guard against bd sync.
 - Key changes: Added tools/bd.cmd and tools/bd.ps1 wrappers that block bd sync; documented in AGENTS and .beads/README.

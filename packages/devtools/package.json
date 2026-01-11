@@ -2,6 +2,11 @@
   "name": "@wizzard-packages/devtools",
   "version": "0.1.0",
   "description": "DevTools UI for Wizzard Stepper.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ZizzX/wizzard-packages.git",
+    "directory": "packages/devtools"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
