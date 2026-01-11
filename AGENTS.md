@@ -9,6 +9,8 @@ bd ready              # Find available work
 bd show <id>          # View issue details
 bd update <id> --status in_progress  # Claim work
 bd close <id>         # Complete work
+tools/bd.cmd          # Windows wrapper (blocks bd sync)
+tools/bd.ps1          # PowerShell wrapper (blocks bd sync)
 ```
 
 ## Landing the Plane (Session Completion)

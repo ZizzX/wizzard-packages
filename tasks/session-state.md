@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-11 14:23
+- Scope: Add hard guard against bd sync.
+- Key changes: Added tools/bd.cmd and tools/bd.ps1 wrappers that block bd sync; documented in AGENTS and .beads/README.
+- Tests run: none
+- Open questions: none.
+- Next action: use tools/bd.* wrappers for task tracking.
+
+## Session Update
 - Date: 2026-01-11 14:17
 - Scope: Restrict bd to tasks-only storage.
 - Key changes: Set .beads/config.yaml to no-db + no-daemon + no-auto-import; sync branch disabled to avoid bd sync impacts.

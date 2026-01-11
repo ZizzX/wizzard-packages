@@ -27,7 +27,8 @@ bd update <issue-id> --status in_progress
 bd update <issue-id> --status done
 
 # Sync with git remote
-bd sync
+# Disabled in this repo to avoid touching project files.
+# Use tools/bd.cmd or tools/bd.ps1 which blocks bd sync.
 ```
 
 ### Working with Issues
