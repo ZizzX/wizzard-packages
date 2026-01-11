@@ -117,6 +117,14 @@ const step = { id: 'age', validationAdapter: adapter };
 - Versioning is managed via Changesets with a fixed group for all `@wizzard-packages/*` packages.
 - Legacy `wizzard-stepper-react` stays on v2.x for critical fixes only.
 
+## 🌿 Development Workflow
+
+- Work lands in `dev` first; CI validates `dev` and `main`.
+- Promote `dev` to `main` when ready to release.
+- Publishing runs from `main` only.
+
+See `docs/DEV_WORKFLOW.md` for the full flow.
+
 ---
 
 ## 💾 State Persistence
