@@ -491,6 +491,18 @@ npx storybook@latest init
 - [x] API docs отображаются внутри UI
 - [x] Документационный сайт собирается локально без ошибок
 
+**Инструкция: деплой Docs UI (dev/prod)**
+
+1. В GitHub → Settings → Pages выставить Source = `gh-pages` branch.
+2. Запустить workflow `Deploy Docs UI (Dev Preview)` и проверить превью:
+   - `https://zizzx.github.io/wizzard-packages/dev/`
+3. После готовности — промоутить `dev` → `main`, запустить `Deploy Docs UI`:
+   - `https://zizzx.github.io/wizzard-packages/`
+4. Проверить `docs/DEV_WORKFLOW.md` на актуальность URL.
+5. Решить конфликт с `deploy-demo.yml`:
+   - либо перевести demo на `gh-pages` (например, `/demo/`),
+   - либо отключить demo workflow, чтобы не затирал Pages.
+
 <details>
 <summary>📝 Реализация</summary>
 

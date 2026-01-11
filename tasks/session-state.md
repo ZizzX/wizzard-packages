@@ -87,6 +87,14 @@
 - Next action: update migration doc and deprecate legacy package (wizzard-stepper-react-3iv).
 
 ## Session Update
+- Date: 2026-01-11 20:56
+- Scope: Roadmap instructions for Docs UI deploy
+- Key changes: Added step-by-step GitHub Pages dev/prod deployment instructions to IMPROVEMENT_ROADMAP.md.
+- Tests run: none
+- Open questions: none
+- Next action: run dev preview workflow and verify Pages URLs, then close wizzard-stepper-react-866.
+
+## Session Update
 - Date: 2026-01-11 20:54
 - Scope: Dev preview Pages deploy (handoff)
 - Key changes: Dev/prod Docs UI deploy workflows use gh-pages; dev publishes to `/dev` and prod to root; UI base is configurable via UI_BASE env.
