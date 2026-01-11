@@ -203,7 +203,7 @@ const PersonalInfoStep = () => {
 
 ## ⚠️ Legacy Support (wizzard-stepper-react v2.x)
 
-The legacy `wizzard-stepper-react` package is deprecated. It stays on v2.x for critical fixes only. New work, releases, and docs live in the `wizzard-packages` repo. For migration steps, see [MIGRATION.md](./MIGRATION.md).
+The legacy `wizzard-stepper-react` package is deprecated. It stays on v2.x for critical fixes only. New work, releases, and docs live in the `wizzard-packages` repo. For migration steps, see [MIGRATION.md](./MIGRATION.md) and [MIGRATION_SCOPED.md](./MIGRATION_SCOPED.md).
 
 ---
 

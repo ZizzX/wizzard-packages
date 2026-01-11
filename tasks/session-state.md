@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-11 16:55
+- Scope: Legacy deprecation checklist updates
+- Key changes: Updated deprecation-tasks/LEGACY_REPO_DEPRECATION.md with scoped migration link and deprecate command message; noted OTP requirement and that npm deprecate can run from any directory.
+- Tests run: none
+- Open questions: awaiting legacy repo updates + npm deprecate execution.
+- Next action: complete legacy repo checklist and run npm deprecate, then close wizzard-stepper-react-3iv.
+
+## Session Update
 - Date: 2026-01-11 16:45
 - Scope: Audit StackBlitz templates
 - Key changes: Reviewed .stackblitz basic/validation/persistence; imports and links are already scoped to @wizzard-packages/*; closed wizzard-stepper-react-sb1.

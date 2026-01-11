@@ -4,6 +4,8 @@
 
 The modern distribution lives in the `wizzard-packages` repo and is split into scoped packages. The legacy `wizzard-stepper-react` package is deprecated and stays on v2.x for critical fixes only.
 
+For a focused migration checklist, see `MIGRATION_SCOPED.md`.
+
 ### Install
 
 ```bash

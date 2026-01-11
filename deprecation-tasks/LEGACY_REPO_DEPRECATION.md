@@ -23,15 +23,18 @@ Suggested banner text:
   - `pnpm add @wizzard-packages/adapter-zod @wizzard-packages/adapter-yup @wizzard-packages/persistence @wizzard-packages/middleware`
 - Add import mapping examples (old -> new).
 - Clarify that any v1.x/v2.x upgrade notes apply to legacy only.
+- Link to the scoped migration guide in the new repo:
+  - `https://github.com/ZizzX/wizzard-packages/blob/main/MIGRATION_SCOPED.md`
 
 ## 3) Deprecate the npm package
 - Run this once with a clear message:
 ```
-npm deprecate wizzard-stepper-react@"<range>" "Deprecated: use @wizzard-packages/react (repo: https://github.com/ZizzX/wizzard-packages). Legacy stays on v2.x for critical fixes only."
+npm deprecate wizzard-stepper-react@"<range>" "Deprecated: use @wizzard-packages/react and related scoped packages. Migration: https://github.com/ZizzX/wizzard-packages/blob/main/MIGRATION_SCOPED.md"
 ```
 Notes:
 - Choose `<range>` as appropriate (e.g., "*" or ">=2.0.0").
 - This does not delete the package; it just shows a warning to users.
+- Command can be run from any directory; npm auth + 2FA/OTP are what matter.
 
 ## 4) Update GitHub repo metadata
 - GitHub "About" description: mention deprecation and new repo link.
@@ -52,4 +55,3 @@ Notes:
 - MIGRATION instructions point to `@wizzard-packages/*`.
 - npm deprecation warning shows on install.
 - GitHub metadata updated.
-
