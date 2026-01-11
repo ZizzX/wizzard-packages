@@ -1,49 +1,47 @@
 # Migration Guide
 
-## Migrating to scoped packages (@wizzard-packages/*)
+## Migrating to scoped packages (@wizzard/*)
 
-The modern distribution lives in the `wizzard-packages` repo and is split into scoped packages. The legacy `wizzard-stepper-react` package is deprecated and stays on v2.x for critical fixes only.
+The modern distribution is now split into scoped packages. The legacy `wizzard-stepper-react` package stays on v2.x and will be deprecated after the scoped packages ship.
 
 ### Install
 
 ```bash
-pnpm add @wizzard-packages/react @wizzard-packages/core
-pnpm add @wizzard-packages/adapter-zod @wizzard-packages/adapter-yup @wizzard-packages/persistence @wizzard-packages/middleware
+pnpm add @wizzard/react @wizzard/core
+pnpm add @wizzard/adapter-zod @wizzard/adapter-yup @wizzard/persistence @wizzard/middleware
 ```
 
 ### Import mapping (common cases)
 
 ```diff
 - import { createWizardFactory } from 'wizzard-stepper-react';
-+ import { createWizardFactory } from '@wizzard-packages/react';
++ import { createWizardFactory } from '@wizzard/react';
 
 - import { ZodAdapter } from 'wizzard-stepper-react';
-+ import { ZodAdapter } from '@wizzard-packages/adapter-zod';
++ import { ZodAdapter } from '@wizzard/adapter-zod';
 
 - import { YupAdapter } from 'wizzard-stepper-react';
-+ import { YupAdapter } from '@wizzard-packages/adapter-yup';
++ import { YupAdapter } from '@wizzard/adapter-yup';
 
 - import { LocalStorageAdapter } from 'wizzard-stepper-react';
-+ import { LocalStorageAdapter } from '@wizzard-packages/persistence';
++ import { LocalStorageAdapter } from '@wizzard/persistence';
 ```
 
 ### Middleware imports
 
 ```diff
 - import { loggerMiddleware, devToolsMiddleware } from 'wizzard-stepper-react';
-+ import { loggerMiddleware, devToolsMiddleware } from '@wizzard-packages/middleware';
++ import { loggerMiddleware, devToolsMiddleware } from '@wizzard/middleware';
 ```
 
 ### Core types
 
 ```diff
 - import type { IWizardConfig, IWizardState } from 'wizzard-stepper-react';
-+ import type { IWizardConfig, IWizardState } from '@wizzard-packages/core';
++ import type { IWizardConfig, IWizardState } from '@wizzard/core';
 ```
 
 ---
-
-> Note: The sections below about v1.8.0/v2.0 apply to the legacy `wizzard-stepper-react` package. For the modern scoped packages, use `@wizzard-packages/*` imports as shown above.
 
 ## Upgrading to v1.8.0 (Internal Refactoring & Analytics)
 

@@ -1,6 +1,6 @@
 {
-  "name": "@wizzard-packages/devtools",
-  "version": "0.1.0",
+  "name": "@wizzard/devtools",
+  "version": "2.1.0",
   "description": "DevTools UI for Wizzard Stepper.",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -9,9 +9,6 @@
   "files": [
     "dist"
   ],
-  "publishConfig": {
-    "access": "public"
-  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -28,19 +25,19 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@wizzard-packages/react": "workspace:*"
+    "@wizzard/react": "workspace:*"
   },
   "peerDependencies": {
-    "@wizzard-packages/core": "workspace:*",
+    "@wizzard/core": "workspace:*",
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0"
   },
   "devDependencies": {
-    "@wizzard-packages/core": "workspace:*",
+    "@wizzard/core": "workspace:*",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
-    "vitest": "^4.0.16"
+    "vitest": "^2.1.8"
   }
 }

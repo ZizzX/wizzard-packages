@@ -6,7 +6,7 @@ trigger: always_on
 
 ## 🎯 Core Principles
 
-This guide defines the **correct** way to use the `@wizzard-packages/react` library with full type safety and best practices.
+This guide defines the **correct** way to use the `wizzard-stepper-react` library with full type safety and best practices.
 
 ---
 
@@ -28,7 +28,7 @@ export interface MyWizardSchema {
 ### Step 2: Create Typed Hooks
 
 ```typescript
-import { createWizardFactory } from '@wizzard-packages/react';
+import { createWizardFactory } from 'wizzard-stepper-react';
 
 export const {
   WizardProvider,
@@ -141,7 +141,7 @@ const products = useWizardSelector((state) => state.data.products);
 
 ```tsx
 // ❌ WRONG - no type inference
-import { useWizard, WizardProvider } from '@wizzard-packages/react';
+import { useWizard, WizardProvider } from 'wizzard-stepper-react';
 
 // ✅ CORRECT - typed hooks from factory
 import { useWizard, WizardProvider } from '../wizards/my-wizard';
@@ -254,11 +254,11 @@ const CartStep = () => {
 
 **Remember:** The factory pattern exists to provide full TypeScript support and optimal performance. Always use it! 🚀
 
-# @wizzard-packages/react 🧙‍♂️
+# wizzard-stepper-react 🧙‍♂️
 
-[![npm version](https://img.shields.io/npm/v/@wizzard-packages/react.svg)](https://www.npmjs.com/package/@wizzard-packages/react)
-[![license](https://img.shields.io/npm/l/@wizzard-packages/react.svg)](https://github.com/ZizzX/wizzard-packages/blob/main/LICENSE)
-[![bundle size](https://img.shields.io/bundlephobia/minzip/@wizzard-packages/react)](https://bundlephobia.com/package/@wizzard-packages/react)
+[![npm version](https://img.shields.io/npm/v/wizzard-stepper-react.svg)](https://www.npmjs.com/package/wizzard-stepper-react)
+[![license](https://img.shields.io/npm/l/wizzard-stepper-react.svg)](https://github.com/ZizzX/wizzard-stepper-react/blob/main/LICENSE)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/wizzard-stepper-react)](https://bundlephobia.com/package/wizzard-stepper-react)
 
 A flexible, headless, and strictly typed multi-step wizard library for React. Built with adapter patterns in mind to support any form library (React Hook Form, Formik, etc.) and any validation schema (Zod, Yup).
 
@@ -274,7 +274,7 @@ Define your data schema and generate typed hooks.
 
 ```typescript
 // wizards/auth-wizard.ts
-import { createWizardFactory } from '@wizzard-packages/react';
+import { createWizardFactory } from 'wizzard-stepper-react';
 
 interface AuthSchema {
   email: string;
@@ -331,7 +331,7 @@ const EmailInput = () => {
 We are library-agnostic. Use our pre-built adapters or write your own.
 
 ```tsx
-import { ZodAdapter } from '@wizzard-packages/adapter-zod';
+import { ZodAdapter } from 'wizzard-stepper-react';
 import { z } from 'zod';
 
 const schema = z.object({ age: z.number().min(18) });
@@ -355,7 +355,7 @@ const step = { id: 'age', validationAdapter: adapter };
 Isolate your wizard data to prevent collisions when using multiple instances.
 
 ```typescript
-import { LocalStorageAdapter } from '@wizzard-packages/persistence';
+import { LocalStorageAdapter } from 'wizzard-stepper-react';
 
 const config = {
   persistence: {
@@ -384,7 +384,7 @@ const config = {
 If you are maintaining an older project, you can still use the classic Context-based provider. Note that this mode does not support the new performance-optimized hooks.
 
 ```tsx
-import { WizardProvider, useWizard } from '@wizzard-packages/react';
+import { WizardProvider, useWizard } from 'wizzard-stepper-react';
 
 const OldApp = () => (
   <WizardProvider>
@@ -399,8 +399,8 @@ For migration steps, see [MIGRATION.md](./MIGRATION.md).
 
 ## 📄 Documentation & Demos
 
-- 🧪 **Enterprise Demo**: [Google-quality complex wizard implementation](https://ZizzX.github.io/wizzard-packages/docs/introduction)
-- 🚀 **NPMS**: [View on npm](https://www.npmjs.com/package/@wizzard-packages/react)
+- 🧪 **Enterprise Demo**: [Google-quality complex wizard implementation](https://ZizzX.github.io/wizzard-stepper-react/docs/introduction)
+- 🚀 **NPMS**: [View on npm](https://www.npmjs.com/package/wizzard-stepper-react)
 
 ---
 

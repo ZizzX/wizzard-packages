@@ -1,4 +1,4 @@
-import { createWizardFactory } from '@wizzard-packages/react';
+import { createWizardFactory } from '@wizzard/react';
 
 // Define the schema type
 export interface ConditionalWizardSchema {

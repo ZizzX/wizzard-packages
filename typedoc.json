@@ -1,13 +1,5 @@
 {
-  "entryPoints": [
-    "packages/core/src/index.ts",
-    "packages/react/src/index.ts",
-    "packages/adapter-zod/src/index.ts",
-    "packages/adapter-yup/src/index.ts",
-    "packages/middleware/src/index.ts",
-    "packages/persistence/src/index.ts",
-    "packages/devtools/src/index.ts"
-  ],
+  "entryPoints": ["src/index.ts"],
   "out": "docs/api",
   "plugin": ["typedoc-plugin-markdown"],
   "readme": "none",

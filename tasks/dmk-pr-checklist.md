@@ -1,12 +1,8 @@
 # PR Checklist + Next-Session Guide (dmk epic)
 
-## Session Update (2026-01-11 01:31)
-- Confirmed `wizzard-stepper-react-dmk.2` closed in bd; dmk epic fully complete.
-- No remaining dmk tasks; this file now serves as reference only.
-
 ## Session Update (2026-01-10 14:29)
 - Moved repo to `wizzard-packages` (origin updated).
-- Scoped docs/examples aligned to `@wizzard-packages/*`; demo base set to `/`.
+- Scoped docs/examples aligned to `@wizzard/*`; demo base set to `/`.
 - Closed dmk.1 + dmk.5; CI/CD + npm publish epic created.
 - Tests: `pnpm test:run` PASS (commit hook).
 
@@ -14,8 +10,8 @@
 This file is the single source of truth for continuing work without session context. Update it at the end of each work session or whenever scope changes.
 
 ## Current Focus (dmk epic)
-- Goal: dmk epic completed; no remaining tasks.
-- Status: dmk epic closed, including adapters task `wizzard-stepper-react-dmk.2`.
+- Goal: close out remaining dmk tasks (adapters) and confirm scoped migration notes are consistent.
+- Status: dmk.1/3/4/5 closed; only adapters task remains before epic wrap-up.
 
 ## PR Checklist (do in order)
 1) Verify workspace builds
@@ -31,10 +27,10 @@ This file is the single source of truth for continuing work without session cont
    - Expect: all Playwright tests green
 
 4) Sanity check imports/docs
-   - No `@wizzard-packages/persistence-local` anywhere
-   - Middleware imported from `@wizzard-packages/middleware`
-   - DevTools UI only in `@wizzard-packages/devtools`
-   - Adapters remain separate packages (`@wizzard-packages/adapter-zod`, `@wizzard-packages/adapter-yup`)
+   - No `@wizzard/persistence-local` anywhere
+   - Middleware imported from `@wizzard/middleware`
+   - DevTools UI only in `@wizzard/devtools`
+   - Adapters remain separate packages (`@wizzard/adapter-zod`, `@wizzard/adapter-yup`)
    - Repo links point to `wizzard-packages`
 
 5) Update docs/migration
@@ -53,12 +49,24 @@ This file is the single source of truth for continuing work without session cont
 
 ## Next-Session Step-by-Step (dmk)
 1) Run `bd prime` and `bd list --status=open`
-2) Focus on epics `wizzard-stepper-react-eh3` and `wizzard-stepper-react-sgf`
-3) Update bd notes as work progresses:
+2) Read this file, then review:
+   - `IMPROVEMENT_ROADMAP.md`
+   - `README.md` and `MIGRATION.md`
+3) Confirm current build/test status:
+   - `pnpm -r build`
+   - `pnpm test:run`
+   - `pnpm test:e2e`
+4) Close remaining dmk adapters task if ready:
+   - `wizzard-stepper-react-dmk.2`
+5) Review CI/CD epic readiness:
+   - `wizzard-stepper-react-sgf` tasks and dependencies
+6) Update bd notes (do not close tasks here):
    - `bd update <id> --notes "..."`
+7) Prepare PR
 
 ## dmk Task Map (what remains)
-- None (dmk epic complete)
+- dmk.2 (adapters)
+  - Verify adapters remain separate; close task if no work left
 
 ## Update Rules for tasks files
 - Always append a short "Session Update" block at the top with date/time and key changes.

@@ -1,4 +1,4 @@
-import type { WizardMiddleware } from '@wizzard-packages/core';
+import type { WizardMiddleware } from '@wizzard/core';
 
 declare const window: any;
 

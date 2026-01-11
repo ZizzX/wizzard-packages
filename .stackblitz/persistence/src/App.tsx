@@ -1,12 +1,11 @@
-import { createWizardFactory } from '@wizzard-packages/react';
-import { LocalStorageAdapter } from '@wizzard-packages/persistence';
+import { createWizardFactory, LocalStorageAdapter } from 'wizzard-stepper-react';
 import { Save, RefreshCcw } from 'lucide-react';
 
-const {
-  WizardProvider,
-  useWizardActions,
-  useWizardValue,
-  useWizardState
+const { 
+  WizardProvider, 
+  useWizardActions, 
+  useWizardValue, 
+  useWizardState 
 } = createWizardFactory<{ note: string }>();
 
 const StepNote = () => {
@@ -41,7 +40,7 @@ const MyWizard = () => {
             <Save className="mr-2 h-5 w-5" />
             <span className="font-semibold">Persistence</span>
           </div>
-          <button
+          <button 
             onClick={reset}
             className="p-2 text-gray-400 hover:text-red-500 transition-colors"
             title="Clear Storage"
