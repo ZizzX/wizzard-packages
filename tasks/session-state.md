@@ -87,6 +87,14 @@
 - Next action: update migration doc and deprecate legacy package (wizzard-stepper-react-3iv).
 
 ## Session Update
+- Date: 2026-01-11 20:28
+- Scope: Add dev Pages preview task
+- Key changes: Created bd task wizzard-stepper-react-866 for dev GitHub Pages preview deploy for Docs UI.
+- Tests run: none
+- Open questions: none
+- Next action: implement dev preview Pages workflow and decide preview URL strategy.
+
+## Session Update
 - Date: 2026-01-11 17:43
 - Scope: Docs UI publish workflow pushed to dev (9i4)
 - Key changes: Committed and pushed Docs UI GitHub Pages workflow to dev; UI build output ready for deploy.
