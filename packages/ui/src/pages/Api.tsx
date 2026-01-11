@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { apiDocs } from '../data/apiDocs';
 
