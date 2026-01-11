@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-11 16:05
+- Scope: bd state recovery + new tasks
+- Key changes: Stopped bd daemon, reconciled .beads/issues.jsonl and sync_base.jsonl with closed eh3/sgf/6dq/abc; added tasks rd1 (package READMEs), dv1 (dev branch workflow), sb1 (.stackblitz audit); ensured JSONL is UTF-8 without BOM so bd no-db works.
+- Tests run: none
+- Open questions: none
+- Next action: tackle rd1 (package READMEs) or dv1 (dev branch workflow).
+
+## Session Update
 - Date: 2026-01-11 15:55
 - Scope: Close scoped migration epic in bd
 - Key changes: Closed wizzard-stepper-react-6dq, wizzard-stepper-react-sgf, and wizzard-stepper-react-eh3 in bd after publish completion.
