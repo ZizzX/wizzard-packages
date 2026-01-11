@@ -1,37 +1,21 @@
-import { createWizardFactory } from '@wizzard-packages/react';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import RootLayout from './layouts/RootLayout';
+import Home from './pages/Home';
+import Api from './pages/Api';
+import Examples from './pages/Examples';
 
-const { WizardProvider } = createWizardFactory<{ hello: string }>();
-
-const config = {
-  steps: [{ id: 'intro', label: 'Intro' }],
-};
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <RootLayout />,
+    children: [
+      { index: true, element: <Home /> },
+      { path: 'api', element: <Api /> },
+      { path: 'examples', element: <Examples /> },
+    ],
+  },
+]);
 
 export default function App() {
-  return (
-    <WizardProvider config={config} initialData={{ hello: 'Docs UI' }}>
-      <div className="page">
-        <header className="hero">
-          <p className="eyebrow">Wizzard Packages</p>
-          <h1>Docs UI</h1>
-          <p className="subtitle">
-            Scaffold for the interactive documentation site.
-          </p>
-        </header>
-        <section className="card-grid">
-          <article className="card">
-            <h2>API Reference</h2>
-            <p>Coming next: render TypeDoc output inside the UI.</p>
-          </article>
-          <article className="card">
-            <h2>Examples</h2>
-            <p>Curated recipes and live demos for common flows.</p>
-          </article>
-          <article className="card">
-            <h2>Status</h2>
-            <p>UI package scaffold is live and ready for routing.</p>
-          </article>
-        </section>
-      </div>
-    </WizardProvider>
-  );
+  return <RouterProvider router={router} />;
 }

@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-11 18:05
+- Scope: UI routing + layout
+- Key changes: Added react-router layout and routes (Home/API/Examples) in packages/ui; added UI pages and nav styles; added react-router-dom to UI package and refreshed pnpm-lock.yaml; closed wizzard-stepper-react-4zl.2.
+- Tests run: pnpm install (workspace)
+- Open questions: none
+- Next action: proceed with API docs integration (wizzard-stepper-react-4zl.3).
+
+## Session Update
 - Date: 2026-01-11 17:30
 - Scope: UI package scaffold
 - Key changes: Added packages/ui Vite + React scaffold (index.html, App, main, styles, tsconfig, vite config, package.json); updated root tsconfig references; closed wizzard-stepper-react-4zl.1.
