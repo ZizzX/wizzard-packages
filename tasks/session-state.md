@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-11 15:55
+- Scope: Close scoped migration epic in bd
+- Key changes: Closed wizzard-stepper-react-6dq, wizzard-stepper-react-sgf, and wizzard-stepper-react-eh3 in bd after publish completion.
+- Tests run: none
+- Open questions: proceed with legacy deprecation (wizzard-stepper-react-3iv).
+- Next action: update MIGRATION_SCOPED.md and deprecate legacy package.
+
+## Session Update
 - Date: 2026-01-11 15:45
 - Scope: Update roadmap and session log for publish status
 - Key changes: Marked scoped packages publish complete in IMPROVEMENT_ROADMAP; clarified legacy deprecation pending MIGRATION_SCOPED.md; updated notes and review dates.
