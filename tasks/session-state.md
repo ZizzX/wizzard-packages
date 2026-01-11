@@ -87,6 +87,14 @@
 - Next action: update migration doc and deprecate legacy package (wizzard-stepper-react-3iv).
 
 ## Session Update
+- Date: 2026-01-12 01:26
+- Scope: Track Node 18 CI hang investigation
+- Key changes: Created bd task wizzard-stepper-react-868 to investigate Node 18 matrix hang.
+- Tests run: none
+- Open questions: none
+- Next action: diagnose Node 18 vitest hang and restore full matrix testing.
+
+## Session Update
 - Date: 2026-01-12 01:24
 - Scope: Fix E2E logger middleware test
 - Key changes: Adjusted E2E middleware test to capture console warnings (logger uses warn); middleware spec now passes locally.
