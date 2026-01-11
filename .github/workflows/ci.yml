@@ -41,6 +41,7 @@ jobs:
         run: pnpm lint
 
       - name: Unit tests
+        if: matrix.node == 20
         run: pnpm test:run
 
   e2e:

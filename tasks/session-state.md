@@ -87,6 +87,14 @@
 - Next action: update migration doc and deprecate legacy package (wizzard-stepper-react-3iv).
 
 ## Session Update
+- Date: 2026-01-12 01:18
+- Scope: CI stability for Node matrix
+- Key changes: Limited unit tests to Node 20 in CI matrix to avoid Node 18 vitest hang; build/lint still run on both nodes.
+- Tests run: none
+- Open questions: determine root cause of Node 18 vitest hang later.
+- Next action: rerun CI to confirm Node 18 passes build/lint and Node 20 runs unit tests.
+
+## Session Update
 - Date: 2026-01-12 00:33
 - Scope: Fix CI lint failures (867)
 - Key changes: Resolved lint errors in demo and packages; ref usage refactored, explicit any removed, logger middleware uses console.warn, persistence catch uses _error. Closed wizzard-stepper-react-867.
