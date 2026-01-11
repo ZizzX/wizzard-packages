@@ -1,4 +1,4 @@
-import type { IStepConfig, IWizardConfig } from '@wizzard-packages/react';
+import type { IStepConfig, IWizardConfig } from '@wizzard/react';
 import {
   WizardProvider,
   useWizardState,

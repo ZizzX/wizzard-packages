@@ -1,6 +1,6 @@
 {
-  "name": "@wizzard-packages/middleware",
-  "version": "0.1.0",
+  "name": "@wizzard/middleware",
+  "version": "2.1.0",
   "description": "Middleware for Wizzard Stepper (logger + devtools).",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -9,9 +9,6 @@
   "files": [
     "dist"
   ],
-  "publishConfig": {
-    "access": "public"
-  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -28,11 +25,11 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@wizzard-packages/core": "workspace:*"
+    "@wizzard/core": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.3.5",
     "typescript": "^5.7.2",
-    "vitest": "^4.0.16"
+    "vitest": "^2.1.8"
   }
 }

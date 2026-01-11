@@ -3,8 +3,8 @@ import {
   useWizard,
   useWizardActions,
   type IWizardConfig,
-} from '@wizzard-packages/react';
-import { MemoryAdapter } from '@wizzard-packages/persistence';
+} from '@wizzard/react';
+import { MemoryAdapter } from '@wizzard/persistence';
 import { Card, CardContent, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
