@@ -2,7 +2,7 @@
 
 [Source Code](https://github.com/ZizzX/wizzard-packages)
 
-This demo exists to support local development and E2E testing of the scoped `@wizzard/*` packages.
+This demo exists to support local development and E2E testing of the scoped `@wizzard-packages/*` packages.
 
 ## 🎨 Features & Tech Stack
 

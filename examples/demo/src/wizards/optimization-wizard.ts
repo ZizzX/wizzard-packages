@@ -1,6 +1,6 @@
-import { createWizardFactory } from '@wizzard/react';
-import { devToolsMiddleware } from '@wizzard/middleware';
-import type { IWizardConfig } from '@wizzard/react';
+import { createWizardFactory } from '@wizzard-packages/react';
+import { devToolsMiddleware } from '@wizzard-packages/middleware';
+import type { IWizardConfig } from '@wizzard-packages/react';
 
 export interface IOptimizationWizardData {
   firstName: string;

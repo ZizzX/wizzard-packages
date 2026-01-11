@@ -5,10 +5,10 @@ import {
   type ValidationResult,
   createWizardFactory,
   useWizardError,
-} from '@wizzard/react';
-import { devToolsMiddleware } from '@wizzard/middleware';
-import { WizardDevTools } from '@wizzard/devtools';
-import { MemoryAdapter } from '@wizzard/persistence';
+} from '@wizzard-packages/react';
+import { devToolsMiddleware } from '@wizzard-packages/middleware';
+import { WizardDevTools } from '@wizzard-packages/devtools';
+import { MemoryAdapter } from '@wizzard-packages/persistence';
 import { Card, CardContent, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -827,7 +827,7 @@ export default function TestAdvancedValidation() {
   const navigationMode =
     (searchParams[0].get(
       'navigationMode'
-    ) as IWizardConfig<AdvancedValidationData>['navigationMode']) || 'sequential';
+    ) as IWizardConfig<AdvancedValidationData>['navigationMode']) || 'visited';
 
   return (
     <WizardProvider config={{ ...config, navigationMode: navigationMode as any }}>

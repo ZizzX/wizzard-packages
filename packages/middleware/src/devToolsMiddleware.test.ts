@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { WizardStore } from '@wizzard/core';
+import { WizardStore } from '@wizzard-packages/core';
 import { devToolsMiddleware } from './devToolsMiddleware';
 
 const initialData = { name: 'Alice', age: 30 };

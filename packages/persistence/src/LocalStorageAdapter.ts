@@ -1,4 +1,4 @@
-import type { IPersistenceAdapter } from '@wizzard/core';
+import type { IPersistenceAdapter } from '@wizzard-packages/core';
 
 /**
  * Browser persistence adapter backed by localStorage.

@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { createWizardFactory } from '@wizzard/react'; // Using local source
-import { ZodAdapter } from '@wizzard/adapter-zod';
+import { createWizardFactory } from '@wizzard-packages/react'; // Using local source
+import { ZodAdapter } from '@wizzard-packages/adapter-zod';
 
 // Schemas
 export const PersonalInfoSchema = z.object({
