@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-11 15:45
+- Scope: Update roadmap and session log for publish status
+- Key changes: Marked scoped packages publish complete in IMPROVEMENT_ROADMAP; clarified legacy deprecation pending MIGRATION_SCOPED.md; updated notes and review dates.
+- Tests run: none
+- Open questions: finalize MIGRATION_SCOPED.md and legacy deprecation step.
+- Next action: update migration doc and deprecate legacy package (wizzard-stepper-react-3iv).
+
+## Session Update
 - Date: 2026-01-11 15:30
 - Scope: Publish verification
 - Key changes: Reran publish workflow; it failed with E403 because versions already existed. Verified npm registry shows @wizzard-packages/* all at 0.1.0; closed wizzard-stepper-react-abc.

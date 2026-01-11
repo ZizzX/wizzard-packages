@@ -265,8 +265,8 @@ export function useWizardValue<TValue = any>(...)
 
 **Фаза 0: Стратегия и split (0.5 дня)**
 
-- [/] Зафиксировать deprecation policy для `wizzard-stepper-react`
-- [ ] Решить стратегию совместимости (meta-пакет или legacy-only)
+- [x] Зафиксировать deprecation policy для `wizzard-stepper-react`
+- [x] Решить стратегию совместимости (meta-пакет или legacy-only)
 - [x] Подготовить новый репозиторий для `@wizzard-packages/*`
 
 **Фаза 1: Подготовка (1 день)**
@@ -304,15 +304,15 @@ export function useWizardValue<TValue = any>(...)
 
 **Фаза 6: Публикация (1 день)**
 
-- [ ] Настроить публикацию scoped пакетов
-- [ ] Выпустить @wizzard-packages/* версии **0.1.0**
+- [x] Настроить публикацию scoped пакетов
+- [x] Выпустить @wizzard-packages/* версии **0.1.0**
 - [ ] Депрекейт `wizzard-stepper-react` (ссылка на миграцию)
 
 **Критерии завершения:**
 
 - [ ] Core пакет < 10kB gzipped
 - [ ] Все тесты проходят
-- [ ] Scoped пакеты опубликованы (0.1.0)
+- [x] Scoped пакеты опубликованы (0.1.0)
 - [ ] Legacy пакет помечен deprecated и ведет на миграцию
 - [ ] Документация обновлена
 
@@ -649,7 +649,7 @@ gantt
 | **GitHub Stars**             | -        | 1000+      | 🎯 Goal               |
 | **NPM Downloads**            | -        | 10k+/month | 🎯 Goal               |
 
-> Legacy пакет `wizzard-stepper-react` остается на ветке v2.x и будет помечен deprecated после релиза scoped пакетов.
+> Legacy пакет `wizzard-stepper-react` остается на ветке v2.x и будет помечен deprecated после готовности MIGRATION_SCOPED.md.
 
 ---
 
@@ -660,6 +660,7 @@ gantt
 ### 2026-01-10: Decision: scoped packages @wizzard-packages/* + новый репозиторий ✅
 ### 2026-01-10: Repo moved to wizzard-packages; GitHub Pages deferred ✅
 ### 2026-01-10: Release strategy defined ✅
+### 2026-01-11: Published @wizzard-packages/* v0.1.0 ✅
 
 - All scoped packages release in lockstep starting at 0.1.0
 - Releases cut from main with git tags vX.Y.Z + GitHub releases
@@ -694,5 +695,5 @@ _Здесь записывать важные решения и изменени
 
 ---
 
-**Last Updated:** 2026-01-10 (release strategy)  
-**Next Review:** 2026-01-11
+**Last Updated:** 2026-01-11 (v0.1.0 published)  
+**Next Review:** 2026-01-18
