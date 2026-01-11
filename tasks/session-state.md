@@ -87,6 +87,14 @@
 - Next action: update migration doc and deprecate legacy package (wizzard-stepper-react-3iv).
 
 ## Session Update
+- Date: 2026-01-12 00:27
+- Scope: CI lint failures tracking
+- Key changes: Created bd task wizzard-stepper-react-867 to investigate and fix GitHub Actions lint errors.
+- Tests run: none
+- Open questions: none
+- Next action: inspect CI logs and fix lint issues.
+
+## Session Update
 - Date: 2026-01-12 00:23
 - Scope: Fix Docs UI workflows for typedoc
 - Key changes: Added `pnpm -r build` step before `docs:api` in Docs UI deploy workflows to resolve @wizzard-packages/* types during CI.
