@@ -87,6 +87,14 @@
 - Next action: update migration doc and deprecate legacy package (wizzard-stepper-react-3iv).
 
 ## Session Update
+- Date: 2026-01-12 02:26
+- Scope: Hold main promotion until redesign
+- Key changes: Updated wizzard-stepper-react-4zl notes to require user approval of Docs UI redesign before asking to promote dev to main.
+- Tests run: none
+- Open questions: none
+- Next action: complete Docs UI redesign (wizzard-stepper-react-869) and get user approval before main promotion.
+
+## Session Update
 - Date: 2026-01-12 02:24
 - Scope: Close Docs UI Pages deploy task (9i4)
 - Key changes: Closed wizzard-stepper-react-9i4 after verifying GitHub Pages dev preview works and gh-pages source configured.
