@@ -4,6 +4,7 @@ const navItems = [
   { to: '/', label: 'Home', end: true },
   { to: '/api', label: 'API' },
   { to: '/examples', label: 'Examples' },
+  { to: '/learn', label: 'Learn' },
 ];
 
 export default function RootLayout() {
@@ -22,9 +23,7 @@ export default function RootLayout() {
                 key={item.to}
                 to={item.to}
                 end={item.end}
-                className={({ isActive }) =>
-                  `nav-link${isActive ? ' nav-link--active' : ''}`
-                }
+                className={({ isActive }) => `nav-link${isActive ? ' nav-link--active' : ''}`}
               >
                 {item.label}
               </NavLink>
@@ -36,8 +35,7 @@ export default function RootLayout() {
             <p className="eyebrow">Documentation Hub</p>
             <h1>Docs UI</h1>
             <p className="subtitle">
-              Interactive documentation experience for the
-              @wizzard-packages/* ecosystem.
+              Interactive documentation experience for the @wizzard-packages/* ecosystem.
             </p>
             <div className="hero-actions">
               <NavLink to="/api" className="button button--primary">
@@ -52,8 +50,8 @@ export default function RootLayout() {
             <p className="panel-label">Now live</p>
             <h2>Typedoc + Live Recipes</h2>
             <p className="panel-copy">
-              Browse generated API markdown, then jump straight into example
-              flows that match your use case.
+              Browse generated API markdown, then jump straight into example flows that match your
+              use case.
             </p>
             <div className="panel-meta">
               <span>Design refresh</span>

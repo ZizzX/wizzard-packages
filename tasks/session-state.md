@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-12 22:02
+- Scope: Learning page (874)
+- Key changes: Added Learn page with custom adapter/middleware/persistence examples and hooked it into Docs UI navigation; closed wizzard-stepper-react-874.
+- Tests run: none
+- Open questions: none
+- Next action: proceed to wizzard-stepper-react-875 (best-practice Docs UI).
+
+## Session Update
 - Date: 2026-01-12 21:53
 - Scope: Repo README refresh
 - Key changes: Rewrote root README as a multi-package overview with stack options, updated StackBlitz links to main, and clarified package matrix.

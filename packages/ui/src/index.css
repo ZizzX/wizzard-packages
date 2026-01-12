@@ -458,6 +458,37 @@ h1 {
   line-height: 1.6;
 }
 
+.learn-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.learn-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+}
+
+.learn-panel {
+  gap: 16px;
+}
+
+.learn-panel code {
+  font-size: 12px;
+}
+
+.learn-code {
+  margin: 0;
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(17, 24, 39, 0.95);
+  color: #e2e8f0;
+  overflow-x: auto;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
 @keyframes fadeUp {
   from {
     opacity: 0;

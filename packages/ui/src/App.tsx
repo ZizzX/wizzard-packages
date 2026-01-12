@@ -3,6 +3,7 @@ import RootLayout from './layouts/RootLayout';
 import Home from './pages/Home';
 import Api from './pages/Api';
 import Examples from './pages/Examples';
+import Learn from './pages/Learn';
 
 const router = createBrowserRouter(
   [
@@ -13,6 +14,7 @@ const router = createBrowserRouter(
         { index: true, element: <Home /> },
         { path: 'api/*', element: <Api /> },
         { path: 'examples', element: <Examples /> },
+        { path: 'learn', element: <Learn /> },
       ],
     },
   ],
