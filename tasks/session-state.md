@@ -1,4 +1,76 @@
 ## Session Update
+- Date: 2026-01-12 20:38
+- Scope: StackBlitz template assets
+- Key changes: Added shared Tailwind index.css and wired it into validation/persistence entrypoints to match basic template styling.
+- Tests run: none
+- Open questions: re-test StackBlitz links after push to dev.
+- Next action: finish wizzard-stepper-react-872 verification; then proceed to 873.
+
+## Session Update
+- Date: 2026-01-12 20:33
+- Scope: StackBlitz template parity
+- Key changes: Added Vite React config + tsconfig for validation and persistence templates to match basic setup.
+- Tests run: none
+- Open questions: verify StackBlitz dev links after push.
+- Next action: continue wizzard-stepper-react-872 validation sweep, then proceed to 873.
+
+## Session Update
+- Date: 2026-01-12 20:32
+- Scope: StackBlitz examples hotfix
+- Key changes: Added missing `main.tsx` entrypoints for validation and persistence StackBlitz templates; marked wizzard-stepper-react-872 in progress.
+- Tests run: none
+- Open questions: verify StackBlitz dev links after pushing to origin/dev.
+- Next action: complete wizzard-stepper-react-872 validation sweep, then proceed to 873.
+
+## Session Update
+- Date: 2026-01-12 20:22
+- Scope: Docs UI Examples links (871)
+- Key changes: Made Examples cards clickable and wired to StackBlitz templates (validation/persistence/basic); closed wizzard-stepper-react-871.
+- Tests run: none
+- Open questions: confirm StackBlitz URLs/branch or replace with other targets later.
+- Next action: start wizzard-stepper-react-873 (curate API Reference surface).
+
+## Session Update
+- Date: 2026-01-12 20:19
+- Scope: Add docs follow-up tasks
+- Key changes: Added bd tasks for curating API Reference to user-facing types (wizzard-stepper-react-873) and creating a learning page (wizzard-stepper-react-874); linked priorities/order with 871/872.
+- Tests run: none
+- Open questions: none
+- Next action: continue with wizzard-stepper-react-871 (Examples cards links).
+
+## Session Update
+- Date: 2026-01-12 20:14
+- Scope: Docs UI API sidebar fixes (870)
+- Key changes: Normalized API route slugs (strip .md), rewrote markdown links to internal /api routes when possible, hid README entries from sidebar while keeping content accessible; closed wizzard-stepper-react-870.
+- Tests run: none
+- Open questions: none
+- Next action: start wizzard-stepper-react-871 (Examples cards links).
+
+## Session Update
+- Date: 2026-01-12 20:11
+- Scope: New Docs UI follow-up tasks
+- Key changes: Logged API sidebar bug (404 module links + README entries), Examples page actions, and StackBlitz example verification as bd tasks wizzard-stepper-react-870/871/872 with priority order 870 -> 871 -> 872.
+- Tests run: none
+- Open questions: none
+- Next action: start wizzard-stepper-react-870 (API sidebar fixes).
+
+## Session Update
+- Date: 2026-01-12 19:58
+- Scope: Docs UI modern redesign
+- Key changes: Redesigned Docs UI layout, hero, and cards; refreshed typography, color system, background, and motion; updated API page visuals and section headers; closed wizzard-stepper-react-869.
+- Tests run: none
+- Open questions: none
+- Next action: review UI in dev preview and decide on any tweaks before promoting dev to main.
+
+## Session Update
+- Date: 2026-01-12 19:52
+- Scope: Verify Docs UI dev preview task (866)
+- Key changes: Confirmed dev/prod Docs UI workflows and UI_BASE config; closed wizzard-stepper-react-866 in bd.
+- Tests run: none
+- Open questions: none
+- Next action: start Docs UI redesign (wizzard-stepper-react-869).
+
+## Session Update
 - Date: 2026-01-11 18:30
 - Scope: UI API docs integration
 - Key changes: Rendered docs/api markdown inside UI via react-markdown + import.meta.glob; added API sidebar and route handling; updated UI styles; added react-markdown dependency and updated pnpm-lock.yaml; closed wizzard-stepper-react-4zl.3.
