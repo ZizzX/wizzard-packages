@@ -22,8 +22,6 @@ Try the library in the browser with these standalone templates on StackBlitz:
 
 ## 🚀 Quick Start (Scoped Packages)
 
-Version 2.0.0 introduces the **Factory Pattern**, providing 100% type safety and optimized performance out of the box.
-
 ### 1. Create your Wizard Kit
 
 Define your data schema and generate typed hooks.
