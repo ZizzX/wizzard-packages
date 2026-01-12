@@ -309,27 +309,45 @@ h1 {
   gap: 10px;
   max-height: 60vh;
   overflow-y: auto;
-  padding-right: 6px;
+  padding: 8px 10px 8px 4px;
 }
 
 .api-link {
   text-decoration: none;
   color: var(--ink-soft);
   font-size: 14px;
-  padding: 8px 12px;
-  border-radius: 12px;
-  border: 1px solid transparent;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(27, 31, 36, 0.08);
+  background: rgba(255, 255, 255, 0.6);
   transition: all 0.2s ease;
 }
 
 .api-link:hover {
-  border-color: rgba(27, 31, 36, 0.2);
-  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(28, 124, 120, 0.35);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ink-strong);
+  transform: translateX(2px);
 }
 
 .api-link--active {
-  background: var(--ink-strong);
+  background: linear-gradient(135deg, rgba(27, 31, 36, 0.95), rgba(28, 124, 120, 0.8));
   color: #f8f5f0;
+  border-color: transparent;
+  box-shadow: 0 10px 18px rgba(27, 31, 36, 0.2);
+}
+
+.api-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.api-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.api-list::-webkit-scrollbar-thumb {
+  background: rgba(27, 31, 36, 0.18);
+  border-radius: 999px;
 }
 
 .api-content {
