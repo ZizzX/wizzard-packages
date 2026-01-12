@@ -4,6 +4,7 @@ import {
   useWizardActions,
   useWizardValue,
   useWizardError,
+  type ValidationWizardSchema,
   wizardConfig,
 } from '../../wizards/validation-wizard';
 import { Button } from '../../components/ui/Button';
@@ -141,7 +142,13 @@ export default function TestValidation() {
     <WizardProvider
       key="validation-test"
       config={wizardConfig}
-      initialData={{ personal: {}, account: {} } as any}
+      initialData={
+        {
+          personal: { fullName: '', email: '' },
+          account: { username: '', password: '' },
+          review: {},
+        } satisfies ValidationWizardSchema
+      }
     >
       <WizardContent />
     </WizardProvider>

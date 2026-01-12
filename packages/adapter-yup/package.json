@@ -32,6 +32,15 @@
     "test:run": "vitest run",
     "type-check": "tsc --noEmit"
   },
+  "keywords": [
+    "wizard",
+    "stepper",
+    "validation",
+    "yup",
+    "adapter",
+    "form"
+  ],
+  "license": "MIT",
   "dependencies": {
     "@wizzard-packages/core": "workspace:*"
   },

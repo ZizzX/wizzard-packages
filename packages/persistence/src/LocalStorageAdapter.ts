@@ -52,7 +52,7 @@ export class LocalStorageAdapter implements IPersistenceAdapter {
         return parsed as { data: T; timestamp: number };
       }
       return { data: parsed as T, timestamp: 0 };
-    } catch (error) {
+    } catch (_error) {
       return undefined;
     }
   }

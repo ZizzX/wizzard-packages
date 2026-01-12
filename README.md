@@ -4,9 +4,25 @@
 [![license](https://img.shields.io/npm/l/@wizzard-packages/react.svg)](https://github.com/ZizzX/wizzard-packages/blob/main/LICENSE)
 [![bundle size](https://img.shields.io/bundlephobia/minzip/@wizzard-packages/react)](https://bundlephobia.com/package/@wizzard-packages/react)
 
-A flexible, headless, and strictly typed multi-step wizard library for React. Built with adapter patterns in mind to support any form library (React Hook Form, Formik, etc.) and any validation schema (Zod, Yup).
+Headless, typed wizard engine for building multi-step flows with React or any UI. The repo ships a core engine plus React bindings, adapters, middleware, persistence, and devtools.
 
 > Scoped packages are the primary distribution (`@wizzard-packages/*`) in the new repo (`wizzard-packages`). The legacy `wizzard-stepper-react` package is deprecated and stays on v2.x for critical fixes only.
+
+---
+
+## 📦 Packages at a glance
+
+| Package | Purpose |
+| --- | --- |
+| `@wizzard-packages/core` | Framework-agnostic engine (state, actions, types) |
+| `@wizzard-packages/react` | React provider + hooks built on core |
+| `@wizzard-packages/adapter-zod` | Zod validation adapter |
+| `@wizzard-packages/adapter-yup` | Yup validation adapter |
+| `@wizzard-packages/persistence` | LocalStorage and memory persistence |
+| `@wizzard-packages/middleware` | Logger + Redux DevTools middleware |
+| `@wizzard-packages/devtools` | DevTools UI for inspection |
+
+For detailed docs and usage, see each package README in `packages/*`.
 
 ---
 
@@ -14,96 +30,117 @@ A flexible, headless, and strictly typed multi-step wizard library for React. Bu
 
 Try the library in the browser with these standalone templates on StackBlitz:
 
-| Example         | Template                                                                                                                                                                      |
-| :-------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Basic**       | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-blue?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-packages/tree/main/.stackblitz/basic)        |
-| **Validation**  | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-red?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-packages/tree/main/.stackblitz/validation)    |
+| Example | Template |
+| :-- | :-- |
+| **Basic** | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-blue?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-packages/tree/main/.stackblitz/basic) |
+| **Validation** | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-red?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-packages/tree/main/.stackblitz/validation) |
 | **Persistence** | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-green?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-packages/tree/main/.stackblitz/persistence) |
 
-## 🚀 Quick Start (Scoped Packages)
+---
 
-### 1. Create your Wizard Kit
+## 🚀 Quick Start
 
-Define your data schema and generate typed hooks.
+### Option A: React bindings
 
-```typescript
-// wizards/auth-wizard.ts
+```tsx
 import { createWizardFactory } from '@wizzard-packages/react';
 
-interface AuthSchema {
-  email: string;
-  preferences: { theme: 'light' | 'dark' };
+type Data = { name: string };
+type StepId = 'name' | 'review';
+
+const { WizardProvider, createStep, useWizardActions } =
+  createWizardFactory<Data, StepId>();
+
+const steps = [
+  createStep({ id: 'name', label: 'Name', component: NameStep }),
+  createStep({ id: 'review', label: 'Review', component: ReviewStep }),
+];
+
+export function App() {
+  return (
+    <WizardProvider config={{ steps }} initialData={{ name: '' }}>
+      <WizardUI />
+    </WizardProvider>
+  );
 }
 
-export const { WizardProvider, useWizard, useWizardValue, useWizardActions } =
-  createWizardFactory<AuthSchema>();
+function WizardUI() {
+  const { goToNextStep } = useWizardActions();
+  return <button onClick={goToNextStep}>Next</button>;
+}
 ```
 
-### 2. Wrap your App
+Optional add-ons:
 
-```tsx
-import { WizardProvider } from './wizards/auth-wizard';
-
-const App = () => (
-  <WizardProvider>
-    <MyWizardComponents />
-  </WizardProvider>
-);
+```bash
+pnpm add @wizzard-packages/persistence @wizzard-packages/middleware
+pnpm add @wizzard-packages/adapter-zod zod
+pnpm add @wizzard-packages/adapter-yup yup
 ```
 
-### 3. Use Granular Hooks
+### Option B: Headless core only
 
-```tsx
-import { useWizardValue, useWizardActions } from './wizards/auth-wizard';
+```ts
+import { WizardStore, type IWizardConfig } from '@wizzard-packages/core';
 
-const EmailInput = () => {
-  // ⚡ Atomic re-render: component only updates if 'email' changes
-  const email = useWizardValue('email');
-  const { setData } = useWizardActions();
+type Data = { name: string };
+type StepId = 'name' | 'review';
 
-  return <input value={email} onChange={(e) => setData('email', e.target.value)} />;
+const config: IWizardConfig<Data, StepId> = {
+  steps: [
+    { id: 'name', label: 'Name', component: null },
+    { id: 'review', label: 'Review', component: null },
+  ],
 };
+
+const store = new WizardStore<Data, StepId>({ name: '' });
+
+store.dispatch({
+  type: 'INIT',
+  payload: { data: { name: '' }, config },
+});
 ```
 
 ---
 
 ## ✨ Key Features
 
-- 🧠 **Headless Architecture**: Full control over UI. You bring the components, we provide the logic.
-- 💅 **Modern First**: Optimized for React 18 with selective rendering and external state store.
-- � **Type Safety**: Full TypeScript support with `keyof T` for field updates and `handleStepChange`.
-- ⚡ **Performance**: 10x faster async validation through parallel execution with Promise.all.
-- �🔌 **Adapter Pattern**: Zero-dependency adapters for **Zod**, **Yup** validation.
-- 🏗️ **Complex Data**: Built-in support for nested objects using dot notation (`user.address.zip`).
-- 💾 **Advanced Persistence**: Auto-save to LocalStorage, SessionStorage, or Custom API adapters.
-- 🛠️ **Developer Tools**: High-performance debugging overlay and **Redux DevTools** integration.
-- 🧪 **Enterprise Testing**: 86 E2E tests with Playwright ensuring production-ready quality.
+- 🧠 Headless architecture: bring your own UI
+- ⚡ Typed factory and granular hooks for performance
+- 🔌 Validation adapters for Zod/Yup
+- 💾 Persistence adapters for localStorage/memory
+- 🛠️ Middleware + Redux DevTools integration
 
 ---
 
-## 🏗️ Core Concepts
+## 🧭 How the stack fits together
 
-### Validation Adapters
+Typical React setup:
 
-We are library-agnostic. Use our pre-built adapters or write your own.
-
-```tsx
-import { ZodAdapter } from '@wizzard-packages/adapter-zod';
-import { z } from 'zod';
-
-const schema = z.object({ age: z.number().min(18) });
-const adapter = new ZodAdapter(schema);
-
-// In your config:
-const step = { id: 'age', validationAdapter: adapter };
+```
+@wizzard-packages/react
+  ├─ @wizzard-packages/core
+  ├─ @wizzard-packages/persistence (optional)
+  ├─ @wizzard-packages/middleware (optional)
+  ├─ @wizzard-packages/adapter-zod or adapter-yup (optional)
+  └─ @wizzard-packages/devtools (optional)
 ```
 
-### Navigation Lifecycle
+Core-only setup:
 
-1. **Validation**: Current step is checked. Navigation stops if invalid.
-2. **Resolution**: Next step conditions (dynamic branching) are evaluated.
-3. **Guards**: `beforeLeave` hooks run (e.g., for "Unsaved Changes" modals).
-4. **Commit**: State updates and navigation completes.
+```
+@wizzard-packages/core
+  └─ Your UI layer (React/Vue/custom)
+```
+
+---
+
+## 📄 Documentation & Demos
+
+- Docs UI: https://zizzx.github.io/wizzard-packages/
+- API Reference: `docs/API_REFERENCE.md`
+- E2E Testing: `e2e/README.md`
+- Local StackBlitz templates: `.stackblitz/README.md`
 
 ---
 
@@ -122,95 +159,6 @@ const step = { id: 'age', validationAdapter: adapter };
 - Publishing runs from `main` only.
 
 See `docs/DEV_WORKFLOW.md` for the full flow.
-
----
-
-## 💾 State Persistence
-
-Isolate your wizard data to prevent collisions when using multiple instances.
-
-```typescript
-import { LocalStorageAdapter } from '@wizzard-packages/persistence';
-
-const config = {
-  persistence: {
-    // 🛡️ Always use a unique prefix for isolation
-    adapter: new LocalStorageAdapter('auth_wizard_v2'),
-    mode: 'onStepChange',
-  },
-};
-```
-
----
-
-## 🎯 Type-Safe Data Management
-
-### Typed Field Updates
-
-The library now provides **full type safety** for field updates using `keyof T`:
-
-```typescript
-interface UserData {
-  name: string;
-  email: string;
-  age: number;
-}
-
-const { WizardProvider, useWizardActions } = createWizardFactory<UserData>();
-
-// In your component:
-const { setData, handleStepChange } = useWizardActions();
-
-// ✅ Type-safe: TypeScript knows these fields exist
-setData('name', 'John');
-handleStepChange('email', 'john@example.com');
-
-// ❌ TypeScript error: 'invalid' is not a key of UserData
-setData('invalid', 'value'); // Error!
-```
-
-### handleStepChange Helper
-
-Convenient helper for form inputs with automatic type inference:
-
-```tsx
-const PersonalInfoStep = () => {
-  const { handleStepChange } = useWizardActions();
-  const name = useWizardValue('name');
-  const email = useWizardValue('email');
-
-  return (
-    <div>
-      <input value={name} onChange={(e) => handleStepChange('name', e.target.value)} />
-      <input value={email} onChange={(e) => handleStepChange('email', e.target.value)} />
-    </div>
-  );
-};
-```
-
-## 🛠️ Performance Tuning
-
-| Hook               | Returns            | Re-renders  | Best For          |
-| :----------------- | :----------------- | :---------- | :---------------- |
-| `useWizardActions` | Navigation/Setters | **Zero**    | Buttons, Handlers |
-| `useWizardValue`   | Specific Field     | **Atomic**  | Inputs, Labels    |
-| `useWizardState`   | UI Meta (Progress) | **Minimal** | Progress Bars     |
-| `useWizard`        | Everything         | **Full**    | Orchestration     |
-
----
-
-## ⚠️ Legacy Support (wizzard-stepper-react v2.x)
-
-The legacy `wizzard-stepper-react` package is deprecated. It stays on v2.x for critical fixes only. New work, releases, and docs live in the `wizzard-packages` repo. For migration steps, see [MIGRATION.md](./MIGRATION.md).
-
----
-
-## 📄 Documentation & Demos
-
-- 📚 **Full Docs**: coming soon (Docs UI will ship under the new repo)
-- 📖 **API Reference**: [Advanced Types & Methods](./docs/API_REFERENCE.md)
-- 🚀 **NPMS**: [View on npm](https://www.npmjs.com/package/@wizzard-packages/react)
-- 🧪 **E2E Testing**: [Testing Guide](./e2e/README.md)
 
 ---
 

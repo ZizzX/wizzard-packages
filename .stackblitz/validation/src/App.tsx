@@ -124,7 +124,7 @@ const MyWizard = () => {
             disabled={isPending}
             className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
           >
-            {isPending ? 'Validating...' : 'Next'}
+            {isPending ? 'Validating...' : isLastStep ? 'Complete' : 'Next'}
           </button>
         </div>
       </div>

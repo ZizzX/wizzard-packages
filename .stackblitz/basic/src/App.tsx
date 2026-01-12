@@ -110,8 +110,8 @@ const MyWizard = () => {
               onClick={goToPrevStep}
               disabled={isFirstStep}
               className={cn(
-                "flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors",
-                isFirstStep ? "text-gray-300 cursor-not-allowed" : "text-gray-600 hover:bg-gray-50"
+                "flex items-center px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors",
+                isFirstStep && "hidden"
               )}
             >
               <ChevronLeft className="mr-2 h-4 w-4" />

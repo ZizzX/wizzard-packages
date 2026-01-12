@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import type { IWizardConfig, WizardMiddleware } from '@wizzard-packages/react';
 import { useWizard, WizardProvider } from '@wizzard-packages/react';
@@ -166,15 +166,12 @@ export default function MiddlewareDemo() {
   const isDebug = search.get('debug') === 'true';
   const isCustom = search.get('custom') === 'true';
 
-  // Use ref to ensure addLog never changes reference
-  const addLogRef = useRef<(msg: string) => void>(() => {});
-  addLogRef.current = (msg: string) => {
+  const addLog = useCallback((msg: string) => {
     setLogs((prev) => [msg, ...prev].slice(0, 5));
-  };
+  }, []);
 
   const config: IWizardConfig<DemoData, DemoSteps> = useMemo(() => {
-    // Create a stable getter function that always returns the current addLog ref
-    const getLogger = () => addLogRef.current!;
+    const getLogger = () => addLog;
 
     const middlewares: WizardMiddleware<DemoData, DemoSteps>[] = [
       loggerMiddleware,
@@ -203,7 +200,7 @@ export default function MiddlewareDemo() {
         { id: 'finish', label: 'Finish' },
       ],
     };
-  }, [isBlocking, isCustom]);
+  }, [addLog, isBlocking, isCustom]);
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto">

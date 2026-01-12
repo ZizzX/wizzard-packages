@@ -4,14 +4,13 @@ import type { WizardMiddleware } from '@wizzard-packages/core';
  * Simple logger middleware for Wizard actions
  */
 export const loggerMiddleware: WizardMiddleware<any, any> = (api) => (next) => (action) => {
-  console.group(`Wizard Action: ${action.type}`);
-  console.log('Action payload:', action.payload);
-  console.log('State before:', api.getSnapshot());
+  console.warn(`Wizard Action: ${action.type}`);
+  console.warn('Action payload:', action.payload);
+  console.warn('State before:', api.getSnapshot());
 
   const result = next(action);
 
-  console.log('State after:', api.getSnapshot());
-  console.groupEnd();
+  console.warn('State after:', api.getSnapshot());
 
   return result;
 };

@@ -25,6 +25,16 @@
     "test:run": "vitest run",
     "type-check": "tsc --noEmit"
   },
+  "keywords": [
+    "wizard",
+    "stepper",
+    "react",
+    "form",
+    "multi-step",
+    "headless",
+    "workflow"
+  ],
+  "license": "MIT",
   "peerDependencies": {
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0"

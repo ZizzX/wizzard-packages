@@ -1,6 +1,10 @@
 # @wizzard-packages/react
 
-React bindings for Wizzard Stepper: provider, hooks, and typed factory.
+![npm](https://img.shields.io/npm/v/@wizzard-packages/react)
+![downloads](https://img.shields.io/npm/dm/@wizzard-packages/react)
+![license](https://img.shields.io/npm/l/@wizzard-packages/react)
+
+React bindings for Wizzard Stepper: provider, hooks, and typed factory built on top of @wizzard-packages/core.
 
 ## Install
 
@@ -8,28 +12,38 @@ React bindings for Wizzard Stepper: provider, hooks, and typed factory.
 pnpm add @wizzard-packages/react
 ```
 
-## Usage
+Optional add-ons:
+
+```bash
+pnpm add @wizzard-packages/persistence @wizzard-packages/middleware
+pnpm add @wizzard-packages/adapter-zod zod
+pnpm add @wizzard-packages/adapter-yup yup
+```
+
+## Quickstart
 
 ```tsx
-import React from 'react';
 import { createWizardFactory } from '@wizzard-packages/react';
 
 type Data = { name: string };
+
 type StepId = 'name' | 'review';
 
-const { WizardProvider, createStep, useWizardActions } =
-  createWizardFactory<Data, StepId>();
+const {
+  WizardProvider,
+  createStep,
+  useWizardActions,
+  useWizardState,
+} = createWizardFactory<Data, StepId>();
 
 const steps = [
   createStep({ id: 'name', label: 'Name', component: NameStep }),
   createStep({ id: 'review', label: 'Review', component: ReviewStep }),
 ];
 
-const config = { steps, navigationMode: 'visited' };
-
 export function App() {
   return (
-    <WizardProvider config={config} initialData={{ name: '' }}>
+    <WizardProvider config={{ steps }} initialData={{ name: '' }}>
       <WizardUI />
     </WizardProvider>
   );
@@ -37,11 +51,22 @@ export function App() {
 
 function WizardUI() {
   const { goToNextStep } = useWizardActions();
-  return <button onClick={goToNextStep}>Next</button>;
+  const { currentStepId } = useWizardState();
+
+  return (
+    <button onClick={goToNextStep}>Next ({currentStepId})</button>
+  );
 }
 ```
+
+## How it fits
+
+- Core engine: @wizzard-packages/core
+- Optional persistence: @wizzard-packages/persistence
+- Optional middleware: @wizzard-packages/middleware
+- Optional validation: @wizzard-packages/adapter-zod or @wizzard-packages/adapter-yup
 
 ## Links
 
 - Repo: https://github.com/ZizzX/wizzard-packages
-- Docs: https://github.com/ZizzX/wizzard-packages#readme
+- Docs UI: https://zizzx.github.io/wizzard-packages/

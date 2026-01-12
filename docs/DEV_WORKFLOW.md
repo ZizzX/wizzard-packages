@@ -13,3 +13,5 @@ This repo uses a `dev` branch for integration and a `main` branch for releases.
 
 - CI runs on pushes and PRs targeting `dev` and `main`.
 - Publishing workflows are restricted to `main`.
+- Docs UI preview deploys from `dev` to GitHub Pages at `/wizzard-packages/dev/`.
+- Docs UI production deploys from `main` to `/wizzard-packages/` (Pages source must be `gh-pages` branch).

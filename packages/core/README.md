@@ -1,7 +1,16 @@
 # @wizzard-packages/core
 
-Headless wizard state store, types, and utilities. Use this package if you need
-the core logic without React.
+![npm](https://img.shields.io/npm/v/@wizzard-packages/core)
+![downloads](https://img.shields.io/npm/dm/@wizzard-packages/core)
+![license](https://img.shields.io/npm/l/@wizzard-packages/core)
+
+Framework-agnostic wizard engine: state, actions, and types. Use this package to build your own UI layer or plug it into another framework.
+
+## Why core
+
+- Headless state store and typed actions
+- Works in any UI (React, Vue, custom, CLI)
+- Small surface area with predictable behavior
 
 ## Install
 
@@ -9,20 +18,22 @@ the core logic without React.
 pnpm add @wizzard-packages/core
 ```
 
-## Usage
+## Quickstart
 
 ```ts
 import { WizardStore, type IWizardConfig } from '@wizzard-packages/core';
 
 type Data = { name: string };
+
 type StepId = 'name' | 'review';
 
-const steps = [
-  { id: 'name', label: 'Name', component: null },
-  { id: 'review', label: 'Review', component: null },
-];
+const config: IWizardConfig<Data, StepId> = {
+  steps: [
+    { id: 'name', label: 'Name', component: null },
+    { id: 'review', label: 'Review', component: null },
+  ],
+};
 
-const config: IWizardConfig<Data, StepId> = { steps };
 const store = new WizardStore<Data, StepId>({ name: '' });
 
 store.dispatch({
@@ -31,7 +42,16 @@ store.dispatch({
 });
 ```
 
+## Related packages
+
+- @wizzard-packages/react - React provider + hooks on top of core
+- @wizzard-packages/persistence - save/load wizard state
+- @wizzard-packages/middleware - logger and devtools middleware
+- @wizzard-packages/adapter-zod - validation with Zod
+- @wizzard-packages/adapter-yup - validation with Yup
+- @wizzard-packages/devtools - DevTools UI (React)
+
 ## Links
 
 - Repo: https://github.com/ZizzX/wizzard-packages
-- Docs: https://github.com/ZizzX/wizzard-packages#readme
+- Docs UI: https://zizzx.github.io/wizzard-packages/

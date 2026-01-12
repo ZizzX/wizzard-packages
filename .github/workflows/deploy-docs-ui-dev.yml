@@ -1,0 +1,54 @@
+name: Deploy Docs UI (Dev Preview)
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - 'packages/ui/**'
+      - 'docs/api/**'
+      - 'typedoc.json'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm -r build
+
+      - name: Build API Docs
+        run: pnpm docs:api
+
+      - name: Build Docs UI (Dev)
+        run: pnpm -C packages/ui build
+        env:
+          UI_BASE: /wizzard-packages/dev/
+
+      - name: Deploy to GitHub Pages (Dev)
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: packages/ui/dist
+          destination_dir: dev
