@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-12 21:53
+- Scope: Repo README refresh
+- Key changes: Rewrote root README as a multi-package overview with stack options, updated StackBlitz links to main, and clarified package matrix.
+- Tests run: none
+- Open questions: none
+- Next action: continue with wizzard-stepper-react-874 (learning page).
+
+## Session Update
 - Date: 2026-01-12 21:41
 - Scope: License metadata for packages
 - Key changes: Added MIT license field to package.json files for published packages so npm license badge resolves.
