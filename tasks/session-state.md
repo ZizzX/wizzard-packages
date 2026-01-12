@@ -1,4 +1,20 @@
 ## Session Update
+- Date: 2026-01-12 21:10
+- Scope: Add LICENSE file (878)
+- Key changes: Added MIT LICENSE and closed wizzard-stepper-react-878.
+- Tests run: none
+- Open questions: none
+- Next action: proceed to wizzard-stepper-react-876 (marketing READMEs).
+
+## Session Update
+- Date: 2026-01-12 21:06
+- Scope: New documentation/marketing tasks
+- Key changes: Added bd tasks for best-practice Docs UI (875), marketing-grade package READMEs + relationships (876), growth/discoverability plan (877), and adding LICENSE file (878); recorded suggested order 878 -> 876 -> 874 -> 875 -> 877.
+- Tests run: none
+- Open questions: none
+- Next action: decide which of 878/876 to tackle next.
+
+## Session Update
 - Date: 2026-01-12 20:54
 - Scope: Curate API Reference (873)
 - Key changes: Added user-facing allowlist for API docs and defaulted /api to the first curated entry; closed wizzard-stepper-react-873.
