@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-12 21:41
+- Scope: License metadata for packages
+- Key changes: Added MIT license field to package.json files for published packages so npm license badge resolves.
+- Tests run: none
+- Open questions: none
+- Next action: refresh npm metadata after next publish if needed.
+
+## Session Update
 - Date: 2026-01-12 21:22
 - Scope: Marketing READMEs + package relationships (876)
 - Key changes: Rewrote package READMEs with badges, positioning, usage, and relationship context; added keywords/tags to package.json files; added README for Docs UI package; closed wizzard-stepper-react-876.

@@ -15,6 +15,7 @@
     "stepper",
     "react"
   ],
+  "license": "MIT",
   "dependencies": {
     "@wizzard-packages/core": "workspace:*",
     "@wizzard-packages/react": "workspace:*",

@@ -40,6 +40,7 @@
     "state",
     "form"
   ],
+  "license": "MIT",
   "dependencies": {
     "@wizzard-packages/core": "workspace:*"
   },
