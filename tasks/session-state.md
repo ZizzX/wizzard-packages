@@ -7,6 +7,14 @@
 - Next action: decide when to start wizzard-stepper-react-880.
 
 ## Session Update
+- Date: 2026-01-12 23:42
+- Scope: Release process attempt
+- Key changes: Generated changeset, bumped versions to 0.1.1, and attempted `pnpm release:publish`; publish failed due to npm token expired/revoked (E404).
+- Tests run: pnpm test:run -- --exclude "**/.git/**" PASS (to avoid worktree test discovery).
+- Open questions: need a valid npm token or GitHub Actions publish.
+- Next action: re-run publish after npm auth is restored.
+
+## Session Update
 - Date: 2026-01-12 23:15
 - Scope: StackBlitz local install docs
 - Key changes: Documented pnpm `--ignore-workspace` requirement for running .stackblitz templates locally.
