@@ -1,0 +1,32 @@
+{
+    "name": "wizzard-stepper-advanced-flow",
+    "private": true,
+    "version": "1.0.0",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc && vite build",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "react": "^19.2.0",
+        "react-dom": "^19.2.0",
+        "@wizzard-packages/react": "latest",
+        "@wizzard-packages/adapter-zod": "latest",
+        "@wizzard-packages/persistence": "latest",
+        "zod": "^3.24.1",
+        "lucide-react": "^0.471.0",
+        "clsx": "^2.1.1",
+        "tailwind-merge": "^3.0.1"
+    },
+    "devDependencies": {
+        "@types/react": "^19.0.7",
+        "@types/react-dom": "^19.0.3",
+        "@vitejs/plugin-react": "^4.3.4",
+        "autoprefixer": "^10.4.20",
+        "postcss": "^8.5.1",
+        "tailwindcss": "^3.4.17",
+        "typescript": "~5.7.2",
+        "vite": "^6.0.7"
+    }
+}

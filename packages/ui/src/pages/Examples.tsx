@@ -16,6 +16,26 @@ const exampleCards = [
     description: 'Sequential, visited, and free navigation modes.',
     href: `${stackblitzBase}/basic`,
   },
+  {
+    title: 'Custom Adapter',
+    description: 'Bring your own validation adapter.',
+    href: `${stackblitzBase}/custom-adapter`,
+  },
+  {
+    title: 'Custom Middleware',
+    description: 'Analytics, logging, and guardrails.',
+    href: `${stackblitzBase}/middleware`,
+  },
+  {
+    title: 'Advanced Flow',
+    description: 'Branching, guards, and async conditions.',
+    href: `${stackblitzBase}/advanced-flow`,
+  },
+  {
+    title: 'Core Engine',
+    description: 'Use @wizzard-packages/core without React bindings.',
+    href: `${stackblitzBase}/core-engine`,
+  },
 ];
 
 export default function Examples() {

@@ -1,4 +1,20 @@
 ## Session Update
+- Date: 2026-01-12 22:24
+- Scope: Examples expansion (879)
+- Key changes: Added new StackBlitz templates (custom adapter, custom middleware, advanced flow, core engine), expanded Docs UI Examples list, and fixed Learn adapter snippet to use isValid.
+- Tests run: none
+- Open questions: verify StackBlitz links after push.
+- Next action: close wizzard-stepper-react-879 after verification.
+
+## Session Update
+- Date: 2026-01-12 22:13
+- Scope: New examples expansion task
+- Key changes: Added bd task wizzard-stepper-react-879 to expand examples for custom adapters, middleware, core-only usage, branching, guards, and advanced flows.
+- Tests run: none
+- Open questions: none
+- Next action: decide when to start wizzard-stepper-react-879.
+
+## Session Update
 - Date: 2026-01-12 22:09
 - Scope: Learn page navigation
 - Key changes: Added direct buttons from Learn page to Examples and API.

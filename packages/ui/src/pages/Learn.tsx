@@ -6,8 +6,8 @@ class CustomAdapter implements IValidatorAdapter {
   constructor(private schema: unknown) {}
 
   async validate(values: unknown): Promise<ValidationResult> {
-    // return { valid: boolean, errors?: Record<string, string> }
-    return { valid: true };
+    // return { isValid: boolean, errors?: Record<string, string> }
+    return { isValid: true };
   }
 }
 `;
