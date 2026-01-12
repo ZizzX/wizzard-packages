@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 const adapterExample = `import type { IValidatorAdapter, ValidationResult } from '@wizzard-packages/core';
 
 class CustomAdapter implements IValidatorAdapter {
@@ -45,8 +47,8 @@ export default function Learn() {
         <p className="section-eyebrow">Extend</p>
         <h2>Build your own adapters, middleware, and persistence</h2>
         <p className="section-lead">
-          Wizzard Stepper is designed for extension. Bring your own validation,
-          tracking, and storage without changing the core engine.
+          Wizzard Stepper is designed for extension. Bring your own validation, tracking, and
+          storage without changing the core engine.
         </p>
       </div>
 
@@ -54,8 +56,7 @@ export default function Learn() {
         <article className="card learn-panel">
           <h3>Custom validation adapter</h3>
           <p>
-            Implement <code>IValidatorAdapter</code> to connect any schema or
-            rules engine.
+            Implement <code>IValidatorAdapter</code> to connect any schema or rules engine.
           </p>
           <pre className="learn-code">
             <code>{adapterExample}</code>
@@ -65,8 +66,7 @@ export default function Learn() {
         <article className="card learn-panel">
           <h3>Custom middleware</h3>
           <p>
-            Implement <code>WizardMiddleware</code> for logging, analytics, or
-            guardrails.
+            Implement <code>WizardMiddleware</code> for logging, analytics, or guardrails.
           </p>
           <pre className="learn-code">
             <code>{middlewareExample}</code>
@@ -76,13 +76,22 @@ export default function Learn() {
         <article className="card learn-panel">
           <h3>Custom persistence</h3>
           <p>
-            Implement <code>IPersistenceAdapter</code> to save wizard state to
-            any backend or storage.
+            Implement <code>IPersistenceAdapter</code> to save wizard state to any backend or
+            storage.
           </p>
           <pre className="learn-code">
             <code>{persistenceExample}</code>
           </pre>
         </article>
+      </div>
+
+      <div className="learn-actions">
+        <Link to="/examples" className="button button--primary">
+          Open examples
+        </Link>
+        <Link to="/api" className="button button--ghost">
+          Browse API
+        </Link>
       </div>
     </section>
   );

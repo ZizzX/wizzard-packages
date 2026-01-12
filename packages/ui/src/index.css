@@ -489,6 +489,12 @@ h1 {
   line-height: 1.6;
 }
 
+.learn-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 @keyframes fadeUp {
   from {
     opacity: 0;

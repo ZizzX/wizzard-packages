@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-12 22:09
+- Scope: Learn page navigation
+- Key changes: Added direct buttons from Learn page to Examples and API.
+- Tests run: none
+- Open questions: none
+- Next action: continue wizzard-stepper-react-875.
+
+## Session Update
 - Date: 2026-01-12 22:02
 - Scope: Learning page (874)
 - Key changes: Added Learn page with custom adapter/middleware/persistence examples and hooked it into Docs UI navigation; closed wizzard-stepper-react-874.
