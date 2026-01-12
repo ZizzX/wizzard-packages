@@ -36,6 +36,11 @@ const exampleCards = [
     description: 'Use @wizzard-packages/core without React bindings.',
     href: `${stackblitzBase}/core-engine`,
   },
+  {
+    title: 'Vue + Core',
+    description: 'Wire the core engine into a Vue 3 UI.',
+    href: `${stackblitzBase}/vue-core`,
+  },
 ];
 
 export default function Examples() {

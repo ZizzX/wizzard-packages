@@ -1,4 +1,20 @@
 ## Session Update
+- Date: 2026-01-12 22:40
+- Scope: Vue example task
+- Key changes: Added bd task wizzard-stepper-react-880 for Vue usage example via core.
+- Tests run: none
+- Open questions: none
+- Next action: decide when to start wizzard-stepper-react-880.
+
+## Session Update
+- Date: 2026-01-12 22:45
+- Scope: Vue core example (880)
+- Key changes: Added Vue StackBlitz template using @wizzard-packages/core and linked it from Docs UI Examples.
+- Tests run: none
+- Open questions: verify StackBlitz Vue example after push.
+- Next action: close wizzard-stepper-react-880 after verification.
+
+## Session Update
 - Date: 2026-01-12 22:26
 - Scope: Examples verification (879)
 - Key changes: Verified new StackBlitz templates return 200 and closed wizzard-stepper-react-879.
