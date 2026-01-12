@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-12 22:26
+- Scope: Examples verification (879)
+- Key changes: Verified new StackBlitz templates return 200 and closed wizzard-stepper-react-879.
+- Tests run: pnpm test:run (git hook)
+- Open questions: none
+- Next action: proceed to wizzard-stepper-react-875 (best-practice Docs UI).
+
+## Session Update
 - Date: 2026-01-12 22:24
 - Scope: Examples expansion (879)
 - Key changes: Added new StackBlitz templates (custom adapter, custom middleware, advanced flow, core engine), expanded Docs UI Examples list, and fixed Learn adapter snippet to use isValid.
