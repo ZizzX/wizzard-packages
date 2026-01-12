@@ -89,6 +89,10 @@ store.dispatch({
   payload: { data: { name: '', plan: 'basic' }, config },
 });
 
+if (!store.getSnapshot().currentStepId) {
+  void store.goToStep('intro', { validate: false });
+}
+
 const snapshot = ref(store.getSnapshot());
 let unsubscribe: (() => void) | null = null;
 

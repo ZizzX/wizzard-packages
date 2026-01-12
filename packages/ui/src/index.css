@@ -118,6 +118,8 @@ body {
 .nav-link:hover {
   border-color: rgba(27, 31, 36, 0.32);
   color: var(--ink-strong);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 16px rgba(27, 31, 36, 0.12);
 }
 
 .nav-link--active {
