@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-12 20:54
+- Scope: Curate API Reference (873)
+- Key changes: Added user-facing allowlist for API docs and defaulted /api to the first curated entry; closed wizzard-stepper-react-873.
+- Tests run: none
+- Open questions: confirm curated list matches desired user-facing surface.
+- Next action: start wizzard-stepper-react-874 (learning page).
+
+## Session Update
 - Date: 2026-01-12 20:42
 - Scope: StackBlitz verification
 - Key changes: Pushed StackBlitz template fixes to origin/dev; verified StackBlitz URLs return 200; closed wizzard-stepper-react-872.

@@ -7,14 +7,16 @@ const isReadme = (slug: string) => slug === 'README' || slug.endsWith('/README')
 const normalizeSlug = (slug: string) => slug.replace(/\.md$/, '').replace(/\/$/, '') || 'README';
 
 const docSlugs = new Set(apiDocs.map((entry) => entry.slug));
+const userFacingDocs = apiDocs.filter((entry) => entry.isUserFacing);
 
 const toDocSlug = (href: string) => normalizeSlug(href.replace(/^\.\//, '').replace(/^\//, ''));
 
 export default function Api() {
   const params = useParams();
-  const slug = normalizeSlug(params['*'] || 'README');
-  const active = apiDocs.find((entry) => entry.slug === slug) || apiDocs[0];
-  const visibleDocs = apiDocs.filter((entry) => !isReadme(entry.slug));
+  const defaultSlug = userFacingDocs.find((entry) => !isReadme(entry.slug))?.slug || 'README';
+  const slug = normalizeSlug(params['*'] || defaultSlug);
+  const active = apiDocs.find((entry) => entry.slug === slug) || userFacingDocs[0] || apiDocs[0];
+  const visibleDocs = userFacingDocs.filter((entry) => !isReadme(entry.slug));
 
   if (!active) {
     return (
