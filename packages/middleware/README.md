@@ -1,6 +1,10 @@
 # @wizzard-packages/middleware
 
-Built-in middlewares for Wizzard Stepper, including logger and Redux DevTools.
+![npm](https://img.shields.io/npm/v/@wizzard-packages/middleware)
+![downloads](https://img.shields.io/npm/dm/@wizzard-packages/middleware)
+![license](https://img.shields.io/npm/l/@wizzard-packages/middleware)
+
+Built-in middleware for Wizzard Stepper (logger + Redux DevTools).
 
 ## Install
 
@@ -8,10 +12,10 @@ Built-in middlewares for Wizzard Stepper, including logger and Redux DevTools.
 pnpm add @wizzard-packages/middleware
 ```
 
-## Usage
+## Usage with React
 
 ```ts
-import { loggerMiddleware, devToolsMiddleware } from '@wizzard-packages/middleware';
+import { devToolsMiddleware, loggerMiddleware } from '@wizzard-packages/middleware';
 
 const config = {
   steps,
@@ -19,7 +23,13 @@ const config = {
 };
 ```
 
+## Fits in the stack
+
+- Core engine: @wizzard-packages/core
+- React bindings: @wizzard-packages/react
+- Optional persistence: @wizzard-packages/persistence
+
 ## Links
 
 - Repo: https://github.com/ZizzX/wizzard-packages
-- Docs: https://github.com/ZizzX/wizzard-packages#readme
+- Docs UI: https://zizzx.github.io/wizzard-packages/

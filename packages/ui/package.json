@@ -8,6 +8,13 @@
     "build": "vite build",
     "preview": "vite preview"
   },
+  "keywords": [
+    "docs",
+    "documentation",
+    "wizard",
+    "stepper",
+    "react"
+  ],
   "dependencies": {
     "@wizzard-packages/core": "workspace:*",
     "@wizzard-packages/react": "workspace:*",

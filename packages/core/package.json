@@ -36,7 +36,9 @@
     "wizard",
     "stepper",
     "state-management",
-    "headless"
+    "headless",
+    "workflow",
+    "state-machine"
   ],
   "author": "ZizzX",
   "license": "MIT",

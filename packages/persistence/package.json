@@ -32,6 +32,14 @@
     "test:run": "vitest run",
     "type-check": "tsc --noEmit"
   },
+  "keywords": [
+    "wizard",
+    "stepper",
+    "persistence",
+    "localstorage",
+    "state",
+    "form"
+  ],
   "dependencies": {
     "@wizzard-packages/core": "workspace:*"
   },

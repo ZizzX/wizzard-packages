@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-12 21:22
+- Scope: Marketing READMEs + package relationships (876)
+- Key changes: Rewrote package READMEs with badges, positioning, usage, and relationship context; added keywords/tags to package.json files; added README for Docs UI package; closed wizzard-stepper-react-876.
+- Tests run: none
+- Open questions: confirm wording/positioning for each package.
+- Next action: proceed to wizzard-stepper-react-874 (learning page) or 875 (Docs UI best practices).
+
+## Session Update
 - Date: 2026-01-12 21:10
 - Scope: Add LICENSE file (878)
 - Key changes: Added MIT LICENSE and closed wizzard-stepper-react-878.

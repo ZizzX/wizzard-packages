@@ -32,6 +32,14 @@
     "test:run": "vitest run",
     "type-check": "tsc --noEmit"
   },
+  "keywords": [
+    "wizard",
+    "stepper",
+    "devtools",
+    "react",
+    "debug",
+    "form"
+  ],
   "dependencies": {
     "@wizzard-packages/react": "workspace:*"
   },

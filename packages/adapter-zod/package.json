@@ -32,6 +32,14 @@
     "test:run": "vitest run",
     "type-check": "tsc --noEmit"
   },
+  "keywords": [
+    "wizard",
+    "stepper",
+    "validation",
+    "zod",
+    "adapter",
+    "form"
+  ],
   "dependencies": {
     "@wizzard-packages/core": "workspace:*"
   },
