@@ -7,6 +7,14 @@
 - Next action: decide when to start wizzard-stepper-react-880.
 
 ## Session Update
+- Date: 2026-01-12 23:15
+- Scope: StackBlitz local install docs
+- Key changes: Documented pnpm `--ignore-workspace` requirement for running .stackblitz templates locally.
+- Tests run: none
+- Open questions: none
+- Next action: continue wizzard-stepper-react-875.
+
+## Session Update
 - Date: 2026-01-12 23:05
 - Scope: Local StackBlitz docs
 - Key changes: Added `.stackblitz/README.md` with local run instructions and linked it from root README.
