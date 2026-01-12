@@ -7,6 +7,14 @@
 - Next action: decide when to start wizzard-stepper-react-880.
 
 ## Session Update
+- Date: 2026-01-12 23:05
+- Scope: Local StackBlitz docs
+- Key changes: Added `.stackblitz/README.md` with local run instructions and linked it from root README.
+- Tests run: none
+- Open questions: none
+- Next action: continue wizzard-stepper-react-875 when ready.
+
+## Session Update
 - Date: 2026-01-12 23:01
 - Scope: Vue example fix
 - Key changes: Initialized current step in Vue StackBlitz example to avoid navigation lock on first render.

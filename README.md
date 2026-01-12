@@ -140,6 +140,7 @@ Core-only setup:
 - Docs UI: https://zizzx.github.io/wizzard-packages/
 - API Reference: `docs/API_REFERENCE.md`
 - E2E Testing: `e2e/README.md`
+- Local StackBlitz templates: `.stackblitz/README.md`
 
 ---
 
