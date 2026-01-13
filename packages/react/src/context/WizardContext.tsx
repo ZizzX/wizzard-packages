@@ -12,6 +12,8 @@ import {
   type IWizardConfig,
   type IPersistenceAdapter,
   type IStepConfig,
+  type Path,
+  type PathValue,
   type IWizardContext,
   type IWizardState,
   type IWizardActions,
@@ -23,6 +25,7 @@ import {
   setByPath,
 } from '@wizzard-packages/core';
 import { MemoryAdapter } from '@wizzard-packages/persistence';
+import { applyStepDependencies } from '../internal/dependencies';
 
 const UNSET = Symbol('wizard_unset');
 
@@ -218,87 +221,6 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
     if (idx > 0) await goToStep(activeSteps[idx - 1].id as any);
   }, [goToStep]);
 
-  const handleStepDependencies = useCallback(
-    (paths: string[], initialData: any) => {
-      let currentData = { ...initialData };
-      const allClearedPaths = new Set<string>();
-      const { completedSteps, visitedSteps } = storeRef.current.getSnapshot();
-      const nextComp = new Set(completedSteps);
-      const nextVis = new Set(visitedSteps);
-      let statusChanged = false;
-
-      const processDependencies = (changedPaths: string[]) => {
-        const newlyClearedPaths: string[] = [];
-
-        localConfig.steps.forEach((step: IStepConfig<T, StepId>) => {
-          const isDependent = step.dependsOn?.some((p: string) =>
-            changedPaths.some(
-              (path) => path === p || p.startsWith(path + '.') || path.startsWith(p + '.')
-            )
-          );
-
-          if (isDependent) {
-            if (nextComp.delete(step.id as StepId)) {
-              statusChanged = true;
-            }
-            if (nextVis.delete(step.id as StepId)) {
-              statusChanged = true;
-            }
-
-            if (step.clearData) {
-              if (typeof step.clearData === 'function') {
-                const patch = step.clearData(currentData, changedPaths);
-                Object.keys(patch).forEach((key) => {
-                  if (currentData[key] !== patch[key]) {
-                    currentData[key] = patch[key];
-                    newlyClearedPaths.push(key);
-                    allClearedPaths.add(key);
-                  }
-                });
-              } else {
-                const pathsToClear = Array.isArray(step.clearData)
-                  ? step.clearData
-                  : [step.clearData];
-                pathsToClear.forEach((p: string) => {
-                  const val = getByPath(currentData, p);
-                  if (val !== undefined) {
-                    currentData = setByPath(currentData, p, undefined);
-                    newlyClearedPaths.push(p);
-                    allClearedPaths.add(p);
-                  }
-                });
-              }
-            }
-          }
-        });
-
-        if (newlyClearedPaths.length > 0) {
-          processDependencies(newlyClearedPaths);
-        }
-      };
-
-      processDependencies(paths);
-
-      if (statusChanged) {
-        storeRef.current.dispatch({
-          type: 'SET_COMPLETED_STEPS',
-          payload: { steps: nextComp },
-        });
-        storeRef.current.dispatch({
-          type: 'SET_VISITED_STEPS',
-          payload: { steps: nextVis },
-        });
-      }
-
-      return {
-        newData: currentData,
-        hasClearing: allClearedPaths.size > 0,
-        clearedPaths: Array.from(allClearedPaths),
-      };
-    },
-    [localConfig.steps]
-  );
-
   const setData = useCallback(
     (path: string, value: any, options?: { debounceValidation?: number }) => {
       const { stepsMap, currentStepId } = stateRef.current;
@@ -306,7 +228,19 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
       if (getByPath(prevData, path) === value) return;
 
       const baseData = setByPath(prevData, path, value);
-      const { newData, hasClearing } = handleStepDependencies([path], baseData);
+      const { newData, hasClearing, statusChanged, nextCompletedSteps, nextVisitedSteps } =
+        applyStepDependencies(localConfig, storeRef.current, baseData, [path]);
+
+      if (statusChanged) {
+        storeRef.current.dispatch({
+          type: 'SET_COMPLETED_STEPS',
+          payload: { steps: nextCompletedSteps },
+        });
+        storeRef.current.dispatch({
+          type: 'SET_VISITED_STEPS',
+          payload: { steps: nextVisitedSteps },
+        });
+      }
 
       if (!hasClearing) {
         storeRef.current.dispatch({
@@ -344,7 +278,7 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
         }
       }
     },
-    [localConfig, validateStep, handleStepDependencies]
+    [localConfig, validateStep]
   );
 
   const updateData = useCallback(
@@ -352,7 +286,19 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
       const prev = storeRef.current.getSnapshot().data;
       const baseData = (options?.replace ? (data as T) : { ...prev, ...data }) as T;
 
-      const { newData } = handleStepDependencies(Object.keys(data), baseData);
+      const { newData, statusChanged, nextCompletedSteps, nextVisitedSteps } =
+        applyStepDependencies(localConfig, storeRef.current, baseData, Object.keys(data));
+
+      if (statusChanged) {
+        storeRef.current.dispatch({
+          type: 'SET_COMPLETED_STEPS',
+          payload: { steps: nextCompletedSteps },
+        });
+        storeRef.current.dispatch({
+          type: 'SET_VISITED_STEPS',
+          payload: { steps: nextVisitedSteps },
+        });
+      }
 
       storeRef.current.update(newData as T, Object.keys(data));
       if (options?.persist) {
@@ -361,7 +307,7 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
         }
       }
     },
-    [handleStepDependencies]
+    [localConfig]
   );
 
   const reset = useCallback(() => {
@@ -641,6 +587,25 @@ export function useWizardValue<TValue = any>(
     return value;
   }, [store, path, options?.isEqual]);
   return useSyncExternalStore(store.subscribe, getSnapshot, getSnapshot);
+}
+
+/**
+ * Returns a value and setter for a path (useState-like API).
+ */
+export function useWizardField<T, P extends Path<T>>(
+  path: P,
+  options?: { isEqual?: (a: PathValue<T, P>, b: PathValue<T, P>) => boolean }
+): [PathValue<T, P>, (value: PathValue<T, P>) => void] {
+  const value = useWizardValue<PathValue<T, P>>(path as string, options);
+  const { setData } = useWizardActions();
+  const setValue = useCallback(
+    (next: PathValue<T, P>) => {
+      setData(path as string, next);
+    },
+    [setData, path]
+  );
+
+  return [value, setValue];
 }
 
 /**

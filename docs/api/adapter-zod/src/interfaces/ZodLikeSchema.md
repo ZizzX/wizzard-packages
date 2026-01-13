@@ -6,7 +6,7 @@
 
 # Interface: ZodLikeSchema\<T\>
 
-Defined in: [adapter-zod/src/types.ts:4](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/adapter-zod/src/types.ts#L4)
+Defined in: [adapter-zod/src/types.ts:4](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/adapter-zod/src/types.ts#L4)
 
 Minimal structural interface for Zod-like schemas.
 
@@ -22,7 +22,7 @@ Minimal structural interface for Zod-like schemas.
 
 > **safeParseAsync**: (`data`) => `Promise`\<\{ `data?`: `T`; `error?`: \{ `issues`: `object`[]; \}; `success`: `boolean`; \}\>
 
-Defined in: [adapter-zod/src/types.ts:5](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/adapter-zod/src/types.ts#L5)
+Defined in: [adapter-zod/src/types.ts:5](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/adapter-zod/src/types.ts#L5)
 
 #### Parameters
 

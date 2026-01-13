@@ -6,7 +6,7 @@
 
 # Interface: WizardProviderProps\<T, StepId\>
 
-Defined in: [react/src/context/WizardContext.tsx:34](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/react/src/context/WizardContext.tsx#L34)
+Defined in: [react/src/context/WizardContext.tsx:49](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/react/src/context/WizardContext.tsx#L49)
 
 Props for WizardProvider.
 
@@ -26,7 +26,7 @@ Props for WizardProvider.
 
 > **children**: `ReactNode`
 
-Defined in: [react/src/context/WizardContext.tsx:38](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/react/src/context/WizardContext.tsx#L38)
+Defined in: [react/src/context/WizardContext.tsx:53](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/react/src/context/WizardContext.tsx#L53)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [react/src/context/WizardContext.tsx:38](https://github.com/ZizzX/wi
 
 > **config**: [`IWizardConfig`](IWizardConfig.md)\<`T`, `StepId`\>
 
-Defined in: [react/src/context/WizardContext.tsx:35](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/react/src/context/WizardContext.tsx#L35)
+Defined in: [react/src/context/WizardContext.tsx:50](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/react/src/context/WizardContext.tsx#L50)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [react/src/context/WizardContext.tsx:35](https://github.com/ZizzX/wi
 
 > `optional` **initialData**: `T`
 
-Defined in: [react/src/context/WizardContext.tsx:36](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/react/src/context/WizardContext.tsx#L36)
+Defined in: [react/src/context/WizardContext.tsx:51](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/react/src/context/WizardContext.tsx#L51)
 
 ***
 
@@ -50,4 +50,4 @@ Defined in: [react/src/context/WizardContext.tsx:36](https://github.com/ZizzX/wi
 
 > `optional` **initialStepId**: `StepId`
 
-Defined in: [react/src/context/WizardContext.tsx:37](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/react/src/context/WizardContext.tsx#L37)
+Defined in: [react/src/context/WizardContext.tsx:52](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/react/src/context/WizardContext.tsx#L52)

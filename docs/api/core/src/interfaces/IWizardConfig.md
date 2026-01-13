@@ -6,7 +6,7 @@
 
 # Interface: IWizardConfig\<T, StepId\>
 
-Defined in: [core/src/types.ts:201](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L201)
+Defined in: [core/src/types.ts:201](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L201)
 
 Global Wizard Configuration.
 
@@ -26,7 +26,7 @@ Global Wizard Configuration.
 
 > `optional` **analytics**: `object`
 
-Defined in: [core/src/types.ts:214](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L214)
+Defined in: [core/src/types.ts:214](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L214)
 
 #### onEvent
 
@@ -38,7 +38,7 @@ Defined in: [core/src/types.ts:214](https://github.com/ZizzX/wizzard-packages/bl
 
 > `optional` **autoValidate**: `boolean`
 
-Defined in: [core/src/types.ts:204](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L204)
+Defined in: [core/src/types.ts:204](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L204)
 
 #### Deprecated
 
@@ -50,7 +50,7 @@ Use validationMode instead
 
 > `optional` **middlewares**: [`WizardMiddleware`](../type-aliases/WizardMiddleware.md)\<`T`, `StepId`\>[]
 
-Defined in: [core/src/types.ts:217](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L217)
+Defined in: [core/src/types.ts:217](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L217)
 
 ***
 
@@ -58,7 +58,7 @@ Defined in: [core/src/types.ts:217](https://github.com/ZizzX/wizzard-packages/bl
 
 > `optional` **navigationMode**: `"sequential"` \| `"visited"` \| `"free"`
 
-Defined in: [core/src/types.ts:218](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L218)
+Defined in: [core/src/types.ts:218](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L218)
 
 ***
 
@@ -66,7 +66,7 @@ Defined in: [core/src/types.ts:218](https://github.com/ZizzX/wizzard-packages/bl
 
 > `optional` **onConflict**: `"merge"` \| `"replace"` \| `"keep-local"`
 
-Defined in: [core/src/types.ts:213](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L213)
+Defined in: [core/src/types.ts:213](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L213)
 
 ***
 
@@ -74,7 +74,7 @@ Defined in: [core/src/types.ts:213](https://github.com/ZizzX/wizzard-packages/bl
 
 > `optional` **onStepChange**: (`fromStep`, `toStep`, `data`) => `void`
 
-Defined in: [core/src/types.ts:219](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L219)
+Defined in: [core/src/types.ts:219](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L219)
 
 #### Parameters
 
@@ -100,7 +100,7 @@ Defined in: [core/src/types.ts:219](https://github.com/ZizzX/wizzard-packages/bl
 
 > `optional` **persistence**: `object`
 
-Defined in: [core/src/types.ts:207](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L207)
+Defined in: [core/src/types.ts:207](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L207)
 
 #### adapter?
 
@@ -124,7 +124,7 @@ Defined in: [core/src/types.ts:207](https://github.com/ZizzX/wizzard-packages/bl
 
 > **steps**: [`IStepConfig`](IStepConfig.md)\<`T`, `StepId`\>[]
 
-Defined in: [core/src/types.ts:202](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L202)
+Defined in: [core/src/types.ts:202](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L202)
 
 ***
 
@@ -132,7 +132,7 @@ Defined in: [core/src/types.ts:202](https://github.com/ZizzX/wizzard-packages/bl
 
 > `optional` **validationDebounceTime**: `number`
 
-Defined in: [core/src/types.ts:206](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L206)
+Defined in: [core/src/types.ts:206](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L206)
 
 ***
 
@@ -140,4 +140,4 @@ Defined in: [core/src/types.ts:206](https://github.com/ZizzX/wizzard-packages/bl
 
 > `optional` **validationMode**: [`ValidationMode`](../type-aliases/ValidationMode.md)
 
-Defined in: [core/src/types.ts:205](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L205)
+Defined in: [core/src/types.ts:205](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L205)

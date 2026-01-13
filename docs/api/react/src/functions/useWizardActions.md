@@ -8,7 +8,7 @@
 
 > **useWizardActions**\<`StepId`\>(): [`IWizardActions`](../interfaces/IWizardActions.md)\<`StepId`\>
 
-Defined in: [react/src/context/WizardContext.tsx:679](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/react/src/context/WizardContext.tsx#L679)
+Defined in: [react/src/context/WizardContext.tsx:640](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/react/src/context/WizardContext.tsx#L640)
 
 Returns the wizard actions API.
 

@@ -67,6 +67,7 @@ function WizardUI() {
 
 - Memoize `steps` and `config` (`useMemo`) to avoid unnecessary recalculations.
 - Prefer granular hooks (`useWizardValue`, `useWizardSelector`, `useWizardMeta`) over `useWizardContext` for performance.
+- For form fields, use `useWizardField(path)` to get `[value, setValue]` without extra boilerplate.
 - SSR is supported via `useSyncExternalStore`. Avoid persistence adapters that touch `window` during module init.
 
 ## Context-free store (without Provider)
@@ -92,15 +93,16 @@ const { store, actions } = createWizardStore<Data, StepId>({
   initialStepId: 'name',
 });
 
-const { useWizardState, useWizardValue } = createWizardHooks(store);
+const { useWizardState, useWizardValue, useWizardField } = createWizardHooks(store, actions);
 
 function WizardUI() {
   const state = useWizardState();
   const name = useWizardValue('name');
+  const [nameField, setNameField] = useWizardField('name');
 
   return (
     <button onClick={actions.goToNextStep}>
-      Next ({state.currentStepId}) {name}
+      Next ({state.currentStepId}) {name} {nameField}
     </button>
   );
 }
@@ -109,7 +111,7 @@ function WizardUI() {
 ### Example: selector + derived UI
 
 ```tsx
-const { useWizardSelector } = createWizardHooks(store);
+const { useWizardSelector } = createWizardHooks(store, actions);
 
 function Progress() {
   const { progress, isBusy } = useWizardSelector((s) => ({

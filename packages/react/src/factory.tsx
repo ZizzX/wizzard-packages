@@ -68,6 +68,17 @@ export function createWizardFactory<
     return useBaseWizardValue<PathValue<TSchema, P>>(path as string, options);
   };
 
+  const useWizardField = <P extends Path<TSchema>>(
+    path: P,
+    options?: {
+      isEqual?: (a: PathValue<TSchema, P>, b: PathValue<TSchema, P>) => boolean;
+    }
+  ): [PathValue<TSchema, P>, (value: PathValue<TSchema, P>) => void] => {
+    const value = useWizardValue(path, options);
+    const { setData } = useWizardActions();
+    return [value, (next) => setData(path, next)];
+  };
+
   const useWizardSelector = <TSelected,>(
     selector: (state: IWizardContext<TSchema, StepId>) => TSelected,
     options?: { isEqual?: (a: TSelected, b: TSelected) => boolean }
@@ -98,6 +109,7 @@ export function createWizardFactory<
     useWizard,
     useWizardContext,
     useWizardValue,
+    useWizardField,
     useWizardSelector,
     useWizardError,
     useWizardActions,

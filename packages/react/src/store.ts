@@ -13,6 +13,7 @@ import {
 } from '@wizzard-packages/core';
 import { MemoryAdapter } from '@wizzard-packages/persistence';
 import type { IWizardActionsTyped } from './types';
+import { applyStepDependencies } from './internal/dependencies';
 
 const UNSET = Symbol('wizard_store_unset');
 const META_KEY = '__wizzard_meta__';
@@ -134,84 +135,6 @@ const createWizardActions = <T extends Record<string, any>, StepId extends strin
   const resolveActiveStepsHelper = (data: T) => store.resolveActiveSteps(data);
   const validateStep = (stepId: StepId) => store.validateStep(stepId);
 
-  const handleStepDependencies = (paths: string[], baseData: T) => {
-    let currentData = { ...baseData };
-    const allClearedPaths = new Set<string>();
-    const { completedSteps, visitedSteps } = store.getSnapshot();
-    const nextComp = new Set(completedSteps);
-    const nextVis = new Set(visitedSteps);
-    let statusChanged = false;
-
-    const processDependencies = (changedPaths: string[]) => {
-      const newlyClearedPaths: string[] = [];
-
-      currentConfig.steps.forEach((step) => {
-        const isDependent = step.dependsOn?.some((p) =>
-          changedPaths.some(
-            (path) => path === p || p.startsWith(path + '.') || path.startsWith(p + '.')
-          )
-        );
-
-        if (isDependent) {
-          if (nextComp.delete(step.id as StepId)) {
-            statusChanged = true;
-          }
-          if (nextVis.delete(step.id as StepId)) {
-            statusChanged = true;
-          }
-
-          if (step.clearData) {
-            if (typeof step.clearData === 'function') {
-              const patch = step.clearData(currentData, changedPaths);
-              Object.keys(patch).forEach((key) => {
-                if ((currentData as any)[key] !== (patch as any)[key]) {
-                  (currentData as any)[key] = (patch as any)[key];
-                  newlyClearedPaths.push(key);
-                  allClearedPaths.add(key);
-                }
-              });
-            } else {
-              const pathsToClear = Array.isArray(step.clearData)
-                ? step.clearData
-                : [step.clearData];
-              pathsToClear.forEach((p) => {
-                const val = getByPath(currentData, p);
-                if (val !== undefined) {
-                  currentData = setByPath(currentData, p, undefined);
-                  newlyClearedPaths.push(p);
-                  allClearedPaths.add(p);
-                }
-              });
-            }
-          }
-        }
-      });
-
-      if (newlyClearedPaths.length > 0) {
-        processDependencies(newlyClearedPaths);
-      }
-    };
-
-    processDependencies(paths);
-
-    if (statusChanged) {
-      store.dispatch({
-        type: 'SET_COMPLETED_STEPS',
-        payload: { steps: nextComp },
-      });
-      store.dispatch({
-        type: 'SET_VISITED_STEPS',
-        payload: { steps: nextVis },
-      });
-    }
-
-    return {
-      newData: currentData,
-      hasClearing: allClearedPaths.size > 0,
-      clearedPaths: Array.from(allClearedPaths),
-    };
-  };
-
   const setData = <P extends Path<T>>(
     path: P,
     value: PathValue<T, P>,
@@ -221,7 +144,19 @@ const createWizardActions = <T extends Record<string, any>, StepId extends strin
     if (getByPath(prevData, path as string) === value) return;
 
     const baseData = setByPath(prevData, path as string, value);
-    const { newData, hasClearing } = handleStepDependencies([path as string], baseData);
+    const { newData, hasClearing, statusChanged, nextCompletedSteps, nextVisitedSteps } =
+      applyStepDependencies(currentConfig, store, baseData, [path as string]);
+
+    if (statusChanged) {
+      store.dispatch({
+        type: 'SET_COMPLETED_STEPS',
+        payload: { steps: nextCompletedSteps },
+      });
+      store.dispatch({
+        type: 'SET_VISITED_STEPS',
+        payload: { steps: nextVisitedSteps },
+      });
+    }
 
     if (!hasClearing) {
       store.dispatch({
@@ -265,7 +200,23 @@ const createWizardActions = <T extends Record<string, any>, StepId extends strin
   const updateData = (data: Partial<T>, options?: { replace?: boolean; persist?: boolean }) => {
     const prev = store.getSnapshot().data;
     const baseData = (options?.replace ? (data as T) : { ...prev, ...data }) as T;
-    const { newData } = handleStepDependencies(Object.keys(data), baseData);
+    const { newData, statusChanged, nextCompletedSteps, nextVisitedSteps } = applyStepDependencies(
+      currentConfig,
+      store,
+      baseData,
+      Object.keys(data)
+    );
+
+    if (statusChanged) {
+      store.dispatch({
+        type: 'SET_COMPLETED_STEPS',
+        payload: { steps: nextCompletedSteps },
+      });
+      store.dispatch({
+        type: 'SET_VISITED_STEPS',
+        payload: { steps: nextVisitedSteps },
+      });
+    }
 
     store.update(newData as T, Object.keys(data));
     if (options?.persist) {
@@ -496,6 +447,26 @@ export const useWizardStoreValue = <T, P extends Path<T>>(
 };
 
 /**
+ * Hook: value + setter for a path without React Context.
+ */
+export const useWizardStoreField = <T, P extends Path<T>>(
+  store: IWizardStore<T, any>,
+  setData: (path: P, value: PathValue<T, P>) => void,
+  path: P,
+  options?: { isEqual?: (a: PathValue<T, P>, b: PathValue<T, P>) => boolean }
+): [PathValue<T, P>, (value: PathValue<T, P>) => void] => {
+  const value = useWizardStoreValue<T, P>(store, path, options);
+  const setValue = useCallback(
+    (next: PathValue<T, P>) => {
+      setData(path, next);
+    },
+    [setData, path]
+  );
+
+  return [value, setValue];
+};
+
+/**
  * Hook: read the first error for a path without React Context.
  */
 export const useWizardStoreError = (
@@ -546,13 +517,23 @@ export const useWizardStoreSelector = <TSelected>(
  * Helper: build store-bound hooks for a single store instance.
  */
 export const createWizardHooks = <T, StepId extends string = string>(
-  store: IWizardStore<T, StepId>
+  store: IWizardStore<T, StepId>,
+  actions?: IWizardActionsTyped<T, StepId>
 ) => ({
   useWizardState: () => useWizardStoreState<T, StepId>(store),
   useWizardValue: <P extends Path<T>>(
     path: P,
     options?: { isEqual?: (a: PathValue<T, P>, b: PathValue<T, P>) => boolean }
   ) => useWizardStoreValue<T, P>(store, path, options),
+  useWizardField: <P extends Path<T>>(
+    path: P,
+    options?: { isEqual?: (a: PathValue<T, P>, b: PathValue<T, P>) => boolean }
+  ) => {
+    if (!actions) {
+      throw new Error('useWizardField requires actions. Pass actions to createWizardHooks.');
+    }
+    return useWizardStoreField<T, P>(store, actions.setData, path, options);
+  },
   useWizardError: (path: string) => useWizardStoreError(store, path),
   useWizardSelector: <TSelected>(
     selector: (state: IWizardState<T, StepId>) => TSelected,

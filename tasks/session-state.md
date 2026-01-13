@@ -1,4 +1,60 @@
 ## Session Update
+- Date: 2026-01-14 01:33
+- Scope: React field hooks verification
+- Key changes: Ran lint + type-check after adding useWizardField hooks.
+- Tests run: pnpm lint PASS, pnpm type-check PASS
+- Open questions: none
+- Next action: none
+
+## Session Update
+- Date: 2026-01-14 01:29
+- Scope: React field hooks
+- Key changes: Added useWizardField/useWizardStoreField and documented field-level usage with createWizardHooks(actions).
+- Tests run: none
+- Open questions: none
+- Next action: rerun type-check if needed.
+
+## Session Update
+- Date: 2026-01-14 01:19
+- Scope: Docs updates
+- Key changes: Added context-free React example + link in root README; noted TypeDoc regeneration step in DEV_WORKFLOW.
+- Tests run: none
+- Open questions: none
+- Next action: rerun format check if required.
+
+## Session Update
+- Date: 2026-01-14 01:16
+- Scope: Full test + checks run
+- Key changes: Fixed duplicate imports in dependencies helper; ran lint, type-check, unit, and e2e tests. Format check still fails across many pre-existing files.
+- Tests run: pnpm lint PASS, pnpm type-check PASS, pnpm test:run PASS, pnpm test:e2e PASS, pnpm format:check FAIL (pre-existing formatting warnings).
+- Open questions: whether to run Prettier --write across the repo.
+- Next action: decide on formatting strategy.
+
+## Session Update
+- Date: 2026-01-14 01:13
+- Scope: API docs
+- Key changes: Regenerated TypeDoc outputs to include core utilities in docs/api.
+- Tests run: pnpm docs:api
+- Open questions: none
+- Next action: none
+
+## Session Update
+- Date: 2026-01-14 01:11
+- Scope: Core README utilities
+- Key changes: Documented getByPath/setByPath usage in @wizzard-packages/core README.
+- Tests run: none
+- Open questions: none
+- Next action: regenerate API docs if needed.
+
+## Session Update
+- Date: 2026-01-14 01:08
+- Scope: React refactor DRY/SRP
+- Key changes: Extracted shared step-dependency handler, wired into context + store modes; type-check pass after constraint fix.
+- Tests run: pnpm type-check PASS
+- Open questions: none
+- Next action: run lint/format if required.
+
+## Session Update
 - Date: 2026-01-14 00:59
 - Scope: React README production-ready patterns
 - Key changes: Enhanced Zustand/Redux examples with selectors, shallow equality, and added memoized config + middleware pattern.

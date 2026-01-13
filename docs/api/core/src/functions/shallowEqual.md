@@ -8,7 +8,7 @@
 
 > **shallowEqual**(`a`, `b`): `boolean`
 
-Defined in: [core/src/utils/data.ts:99](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/utils/data.ts#L99)
+Defined in: [core/src/utils/data.ts:99](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/utils/data.ts#L99)
 
 Simple shallow equality check.
 
