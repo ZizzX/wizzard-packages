@@ -1,4 +1,20 @@
 ## Session Update
+- Date: 2026-01-14 00:59
+- Scope: React README production-ready patterns
+- Key changes: Enhanced Zustand/Redux examples with selectors, shallow equality, and added memoized config + middleware pattern.
+- Tests run: none
+- Open questions: none
+- Next action: rerun format check if required.
+
+## Session Update
+- Date: 2026-01-14 00:56
+- Scope: React README examples
+- Key changes: Added Zustand and Redux integration examples for context-free wizard store usage.
+- Tests run: none
+- Open questions: none
+- Next action: rerun format check if required.
+
+## Session Update
 - Date: 2026-01-14 00:45
 - Scope: Type-check fix
 - Key changes: Fixed typed actions to avoid TS incompatibility with core actions; reran type-check successfully.
