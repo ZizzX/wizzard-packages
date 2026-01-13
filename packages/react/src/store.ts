@@ -395,7 +395,7 @@ export const createWizardStore = <T extends Record<string, any>, StepId extends 
   });
   store.hydrate();
   applyStoredMeta(store, persistenceAdapter);
-  void resolveAndSetActiveSteps(store, initialData, options.initialStepId);
+  void resolveAndSetActiveSteps(store, store.getSnapshot().data, options.initialStepId);
 
   return {
     store,

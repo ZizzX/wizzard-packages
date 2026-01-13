@@ -1,4 +1,20 @@
 ## Session Update
+- Date: 2026-01-14 01:43
+- Scope: bd task
+- Key changes: Added wizzard-stepper-react-886 to analyze bundle sizes and optimize packages.
+- Tests run: none
+- Open questions: none
+- Next action: prioritize or start wizzard-stepper-react-886.
+
+## Session Update
+- Date: 2026-01-14 01:41
+- Scope: bd task
+- Key changes: Added wizzard-stepper-react-885 to add tests for store-first API in packages/react/src/store.ts.
+- Tests run: none
+- Open questions: none
+- Next action: prioritize or start wizzard-stepper-react-885.
+
+## Session Update
 - Date: 2026-01-14 01:33
 - Scope: React field hooks verification
 - Key changes: Ran lint + type-check after adding useWizardField hooks.
