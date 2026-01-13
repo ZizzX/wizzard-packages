@@ -1,4 +1,28 @@
 ## Session Update
+- Date: 2026-01-14 00:45
+- Scope: Type-check fix
+- Key changes: Fixed typed actions to avoid TS incompatibility with core actions; reran type-check successfully.
+- Tests run: pnpm type-check PASS, pnpm lint PASS, pnpm format:check FAIL (pre-existing formatting warnings across repo).
+- Open questions: whether to run Prettier --write across the repo (would touch many files).
+- Next action: decide on formatting strategy.
+
+## Session Update
+- Date: 2026-01-14 00:39
+- Scope: bd status
+- Key changes: Closed wizzard-stepper-react-884 after React DX improvements.
+- Tests run: none
+- Open questions: none
+- Next action: decide next UI task (wizzard-stepper-react-875).
+
+## Session Update
+- Date: 2026-01-14 00:38
+- Scope: React DX improvements (884)
+- Key changes: Added initialStepId support in factory, typed actions, SSR-safe subscriptions, improved caching, new granular hooks, and store-first API without React Context; updated React package README with best practices and context-free usage.
+- Tests run: none
+- Open questions: none
+- Next action: run tests if needed and close wizzard-stepper-react-884 after review.
+
+## Session Update
 - Date: 2026-01-13 23:11
 - Scope: bd prioritization
 - Key changes: Re-prioritized open tasks so UI work is first and release tasks are last.

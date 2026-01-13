@@ -24,6 +24,20 @@ import {
 } from '@wizzard-packages/core';
 import { MemoryAdapter } from '@wizzard-packages/persistence';
 
+const UNSET = Symbol('wizard_unset');
+
+const shallowEqual = (a: Record<string, any> | null, b: Record<string, any> | null) => {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) return false;
+  for (const key of aKeys) {
+    if (!Object.is(a[key], b[key])) return false;
+  }
+  return true;
+};
+
 const WizardStateContext = createContext<IWizardState<any, any> | undefined>(undefined);
 const WizardActionsContext = createContext<IWizardActions<any> | undefined>(undefined);
 const WizardStoreContext = createContext<IWizardStore<any, any> | undefined>(undefined);
@@ -66,6 +80,7 @@ export function WizardProvider<T extends Record<string, any>, StepId extends str
 
   const snapshot = useSyncExternalStore<IWizardState<T, StepId>>(
     storeRef.current.subscribe,
+    storeRef.current.getSnapshot,
     storeRef.current.getSnapshot
   );
 
@@ -607,13 +622,15 @@ export function useWizardValue<TValue = any>(
   const store = useContext(WizardStoreContext);
   if (!store) throw new Error('useWizardValue must be used within a WizardProvider');
   const lastStateRef = useRef<any>(null);
-  const lastValueRef = useRef<any>(null);
+  const lastValueRef = useRef<any>(UNSET);
   const getSnapshot = useCallback(() => {
     const data = store.getSnapshot().data;
-    if (data === lastStateRef.current) return lastValueRef.current;
+    if (data === lastStateRef.current && lastValueRef.current !== UNSET) {
+      return lastValueRef.current;
+    }
     const value = getByPath(data, path) as TValue;
     if (
-      lastValueRef.current !== undefined &&
+      lastValueRef.current !== UNSET &&
       (options?.isEqual || Object.is)(lastValueRef.current, value)
     ) {
       lastStateRef.current = data;
@@ -623,7 +640,7 @@ export function useWizardValue<TValue = any>(
     lastValueRef.current = value;
     return value;
   }, [store, path, options?.isEqual]);
-  return useSyncExternalStore(store.subscribe, getSnapshot);
+  return useSyncExternalStore(store.subscribe, getSnapshot, getSnapshot);
 }
 
 /**
@@ -640,7 +657,7 @@ export function useWizardError(path: string): string | undefined {
     }
     return undefined;
   }, [store, path]);
-  return useSyncExternalStore(store.subscribe, getSnapshot);
+  return useSyncExternalStore(store.subscribe, getSnapshot, getSnapshot);
 }
 
 /**
@@ -653,14 +670,14 @@ export function useWizardSelector<TSelected = any>(
   const store = useContext(WizardStoreContext);
   if (!store) throw new Error('useWizardSelector must be used within a WizardProvider');
 
-  const lastResultRef = useRef<TSelected | null>(null);
+  const lastResultRef = useRef<TSelected | typeof UNSET>(UNSET);
 
   const getSnapshot = useCallback(() => {
     const full = store.getSnapshot();
     const res = selector(full);
 
     if (
-      lastResultRef.current !== null &&
+      lastResultRef.current !== UNSET &&
       (options?.isEqual || Object.is)(lastResultRef.current, res)
     ) {
       return lastResultRef.current;
@@ -670,7 +687,7 @@ export function useWizardSelector<TSelected = any>(
     return res;
   }, [store, selector, options?.isEqual]);
 
-  return useSyncExternalStore(store.subscribe, getSnapshot);
+  return useSyncExternalStore(store.subscribe, getSnapshot, getSnapshot);
 }
 
 /**
@@ -714,4 +731,62 @@ export function useWizardContext<T = any, StepId extends string = string>(): IWi
     }),
     [stateProps, actions, data, allErrors, errors, store]
   ) as IWizardContext<T, StepId>;
+}
+
+/**
+ * Returns current step config.
+ */
+export function useWizardCurrentStep<T = any, StepId extends string = string>() {
+  return useWizardSelector((s: IWizardState<T, StepId>) => s.currentStep);
+}
+
+/**
+ * Returns active steps list.
+ */
+export function useWizardSteps<T = any, StepId extends string = string>() {
+  return useWizardSelector((s: IWizardState<T, StepId>) => s.activeSteps);
+}
+
+/**
+ * Returns frequently-used meta state with shallow equality.
+ */
+export function useWizardMeta<T = any, StepId extends string = string>() {
+  return useWizardSelector(
+    (s: IWizardState<T, StepId>) => ({
+      currentStepId: s.currentStepId,
+      currentStepIndex: s.currentStepIndex,
+      isFirstStep: s.isFirstStep,
+      isLastStep: s.isLastStep,
+      isLoading: s.isLoading,
+      isBusy: s.isBusy,
+      isDirty: s.isDirty,
+      progress: s.progress,
+      activeStepsCount: s.activeStepsCount,
+      goToStepResult: s.goToStepResult,
+    }),
+    { isEqual: shallowEqual }
+  );
+}
+
+/**
+ * Returns all errors by step (shallow-equal).
+ */
+export function useWizardAllErrors<T = any, StepId extends string = string>() {
+  return useWizardSelector((s: IWizardState<T, StepId>) => s.errors, {
+    isEqual: shallowEqual,
+  });
+}
+
+/**
+ * Returns flattened errors map (path -> message).
+ */
+export function useWizardFlatErrors<T = any, StepId extends string = string>() {
+  const allErrors = useWizardAllErrors<T, StepId>();
+  return useMemo(() => {
+    const flat: Record<string, string> = {};
+    Object.values(allErrors).forEach((stepErrors) => {
+      Object.assign(flat, stepErrors as Record<string, string>);
+    });
+    return flat;
+  }, [allErrors]);
 }

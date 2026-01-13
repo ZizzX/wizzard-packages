@@ -43,7 +43,11 @@ const steps = [
 
 export function App() {
   return (
-    <WizardProvider config={{ steps }} initialData={{ name: '' }}>
+    <WizardProvider
+      config={{ steps }}
+      initialData={{ name: '' }}
+      initialStepId="name"
+    >
       <WizardUI />
     </WizardProvider>
   );
@@ -55,6 +59,47 @@ function WizardUI() {
 
   return (
     <button onClick={goToNextStep}>Next ({currentStepId})</button>
+  );
+}
+```
+
+## Best practices (DX)
+
+- Memoize `steps` and `config` (`useMemo`) to avoid unnecessary recalculations.
+- Prefer granular hooks (`useWizardValue`, `useWizardSelector`, `useWizardMeta`) over `useWizardContext` for performance.
+- SSR is supported via `useSyncExternalStore`. Avoid persistence adapters that touch `window` during module init.
+
+## Context-free store (без Provider)
+
+Если нужен доступ к стору без React Context (подход как в крупных проектах):
+
+```tsx
+import { createWizardStore, createWizardHooks } from '@wizzard-packages/react';
+
+type Data = { name: string };
+type StepId = 'name' | 'review';
+
+const steps = [
+  { id: 'name', label: 'Name', component: NameStep },
+  { id: 'review', label: 'Review', component: ReviewStep },
+];
+
+const { store, actions } = createWizardStore<Data, StepId>({
+  config: { steps },
+  initialData: { name: '' },
+  initialStepId: 'name',
+});
+
+const { useWizardState, useWizardValue } = createWizardHooks(store);
+
+function WizardUI() {
+  const state = useWizardState();
+  const name = useWizardValue('name');
+
+  return (
+    <button onClick={actions.goToNextStep}>
+      Next ({state.currentStepId}) {name}
+    </button>
   );
 }
 ```

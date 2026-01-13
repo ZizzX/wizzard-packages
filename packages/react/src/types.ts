@@ -4,6 +4,8 @@ import type {
   IWizardContext as ICoreContext,
   IStepConfig,
   IWizardConfig,
+  Path,
+  PathValue,
 } from '@wizzard-packages/core';
 
 /**
@@ -23,6 +25,22 @@ export interface IWizardHandle<T = unknown, StepId extends string = string> {
  * React-specific actions
  */
 export interface IWizardActions<StepId extends string = string> extends ICoreActions<StepId> {}
+
+/**
+ * Typed actions for strongly-typed paths.
+ */
+export type IWizardActionsTyped<T, StepId extends string = string> = Omit<
+  ICoreActions<StepId>,
+  'setData' | 'updateData' | 'getData'
+> & {
+  setData: <P extends Path<T>>(
+    path: P,
+    value: PathValue<T, P>,
+    options?: { debounceValidation?: number }
+  ) => void;
+  updateData: (data: Partial<T>, options?: { replace?: boolean; persist?: boolean }) => void;
+  getData: <P extends Path<T>>(path: P, defaultValue?: PathValue<T, P>) => PathValue<T, P>;
+};
 
 /**
  * Core Wizard Context State

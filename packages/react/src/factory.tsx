@@ -9,7 +9,14 @@ import {
   useWizardState as useBaseWizardState,
 } from './context/WizardContext';
 import { useWizard as useBaseWizard } from './hooks/useWizard';
-import type { IWizardConfig, IWizardContext, IStepConfig, Path, PathValue } from '@wizzard-packages/core';
+import type {
+  IWizardConfig,
+  IWizardContext,
+  IStepConfig,
+  Path,
+  PathValue,
+} from '@wizzard-packages/core';
+import type { IWizardActionsTyped } from './types';
 
 /**
  * createWizardFactory
@@ -25,14 +32,20 @@ export function createWizardFactory<
   const WizardProvider = ({
     config,
     initialData,
+    initialStepId,
     children,
   }: {
     config: IWizardConfig<TSchema, StepId>;
     initialData?: Partial<TSchema>;
+    initialStepId?: StepId;
     children: React.ReactNode;
   }) => {
     return (
-      <BaseWizardProvider<TSchema, StepId> config={config} initialData={initialData as TSchema}>
+      <BaseWizardProvider<TSchema, StepId>
+        config={config}
+        initialData={initialData as TSchema}
+        initialStepId={initialStepId}
+      >
         {children}
       </BaseWizardProvider>
     );
@@ -67,7 +80,7 @@ export function createWizardFactory<
   };
 
   const useWizardActions = () => {
-    return useBaseWizardActions<StepId>();
+    return useBaseWizardActions<StepId>() as IWizardActionsTyped<TSchema, StepId>;
   };
 
   const useWizardState = () => {
