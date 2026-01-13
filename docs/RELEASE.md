@@ -6,7 +6,8 @@ This document describes the release workflow for `@wizzard-packages/*`.
 
 - Releases are performed by CI/CD on push to `main` via `.github/workflows/publish.yml`.
 - Versioning is managed by Changesets with a fixed group for all `@wizzard-packages/*`.
-- Release artifacts include npm publish, git tag `vX.Y.Z`, and a GitHub release.
+- CI creates git tags (`vX.Y.Z`) and GitHub releases after publish.
+- CI also publishes the same versions to GitHub Packages so the repo sidebar shows Packages.
 
 ## Preconditions
 
@@ -30,7 +31,9 @@ This document describes the release workflow for `@wizzard-packages/*`.
    - Builds all packages
    - Runs `changesets/action`
    - Either opens a release PR or publishes to npm
-7. Verify release outputs (tags, GitHub release, npm versions).
+   - Tags the release (`vX.Y.Z`) and pushes tags
+   - Publishes the same versions to GitHub Packages
+7. Verify release outputs (tags, GitHub release, npm versions, GitHub Packages).
 
 ## Manual Release Trigger (CI/CD)
 
@@ -77,6 +80,7 @@ pnpm changeset pre exit
 - **No publish happens**: ensure there is at least one changeset in `.changeset/`.
 - **Build fails in CI**: reproduce locally with `pnpm -r build`.
 - **Release PR only**: merge the release PR to trigger publish.
+- **GitHub Packages missing**: confirm `packages: write` permission and that the token can publish to `npm.pkg.github.com`.
 
 ## Verification Checklist
 

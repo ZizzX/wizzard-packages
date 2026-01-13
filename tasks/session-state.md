@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-13 23:05
+- Scope: Release automation + GitHub Packages
+- Key changes: Updated publish workflow to tag releases and publish to GitHub Packages; refreshed release docs and README release notes.
+- Tests run: none
+- Open questions: confirm GitHub Packages publish works for @wizzard-packages scope.
+- Next action: run CI release on main and verify tags + Packages sidebar.
+
+## Session Update
 - Date: 2026-01-13 22:54
 - Scope: Release tracking tasks
 - Key changes: Added bd tasks wizzard-stepper-react-882 (ensure release tags on publish) and wizzard-stepper-react-883 (GitHub Packages sidebar visibility).
