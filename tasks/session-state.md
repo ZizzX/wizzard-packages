@@ -1,4 +1,20 @@
 ## Session Update
+- Date: 2026-01-13 22:54
+- Scope: Release tracking tasks
+- Key changes: Added bd tasks wizzard-stepper-react-882 (ensure release tags on publish) and wizzard-stepper-react-883 (GitHub Packages sidebar visibility).
+- Tests run: none
+- Open questions: none
+- Next action: implement the new release tagging and GitHub Packages tasks.
+
+## Session Update
+- Date: 2026-01-13 22:44
+- Scope: Release documentation + bd closure
+- Key changes: Added docs/RELEASE.md with CI/CD release flow and linked it from README; closed wizzard-stepper-react-881 with note that releases run via CI/CD on push to main.
+- Tests run: none
+- Open questions: none
+- Next action: confirm if any additional release hygiene tasks are needed.
+
+## Session Update
 - Date: 2026-01-12 22:40
 - Scope: Vue example task
 - Key changes: Added bd task wizzard-stepper-react-880 for Vue usage example via core.
