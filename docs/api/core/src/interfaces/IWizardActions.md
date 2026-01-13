@@ -6,7 +6,7 @@
 
 # Interface: IWizardActions\<StepId\>
 
-Defined in: [core/src/types.ts:90](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L90)
+Defined in: [core/src/types.ts:90](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L90)
 
 Public actions available to control the wizard.
 
@@ -26,7 +26,7 @@ Public actions available to control the wizard.
 
 > **clearStorage**: () => `void`
 
-Defined in: [core/src/types.ts:106](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L106)
+Defined in: [core/src/types.ts:106](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L106)
 
 #### Returns
 
@@ -38,7 +38,7 @@ Defined in: [core/src/types.ts:106](https://github.com/ZizzX/wizzard-packages/bl
 
 > **getData**: (`path`, `defaultValue?`) => `unknown`
 
-Defined in: [core/src/types.ts:110](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L110)
+Defined in: [core/src/types.ts:110](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L110)
 
 #### Parameters
 
@@ -60,7 +60,7 @@ Defined in: [core/src/types.ts:110](https://github.com/ZizzX/wizzard-packages/bl
 
 > **goToNextStep**: () => `Promise`\<`void`\>
 
-Defined in: [core/src/types.ts:91](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L91)
+Defined in: [core/src/types.ts:91](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L91)
 
 #### Returns
 
@@ -72,7 +72,7 @@ Defined in: [core/src/types.ts:91](https://github.com/ZizzX/wizzard-packages/blo
 
 > **goToPrevStep**: () => `Promise`\<`void`\>
 
-Defined in: [core/src/types.ts:92](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L92)
+Defined in: [core/src/types.ts:92](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L92)
 
 #### Returns
 
@@ -84,7 +84,7 @@ Defined in: [core/src/types.ts:92](https://github.com/ZizzX/wizzard-packages/blo
 
 > **goToStep**: (`stepId`, `providedActiveSteps?`, `options?`) => `Promise`\<`boolean`\>
 
-Defined in: [core/src/types.ts:93](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L93)
+Defined in: [core/src/types.ts:93](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L93)
 
 #### Parameters
 
@@ -112,7 +112,7 @@ Defined in: [core/src/types.ts:93](https://github.com/ZizzX/wizzard-packages/blo
 
 > **handleStepChange**: (`field`, `value`) => `void`
 
-Defined in: [core/src/types.ts:99](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L99)
+Defined in: [core/src/types.ts:99](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L99)
 
 #### Parameters
 
@@ -134,7 +134,7 @@ Defined in: [core/src/types.ts:99](https://github.com/ZizzX/wizzard-packages/blo
 
 > **reset**: () => `void`
 
-Defined in: [core/src/types.ts:107](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L107)
+Defined in: [core/src/types.ts:107](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L107)
 
 #### Returns
 
@@ -146,7 +146,7 @@ Defined in: [core/src/types.ts:107](https://github.com/ZizzX/wizzard-packages/bl
 
 > **save**: (`stepIds?`) => `void`
 
-Defined in: [core/src/types.ts:105](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L105)
+Defined in: [core/src/types.ts:105](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L105)
 
 #### Parameters
 
@@ -164,7 +164,7 @@ Defined in: [core/src/types.ts:105](https://github.com/ZizzX/wizzard-packages/bl
 
 > **setData**: (`path`, `value`, `options?`) => `void`
 
-Defined in: [core/src/types.ts:108](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L108)
+Defined in: [core/src/types.ts:108](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L108)
 
 #### Parameters
 
@@ -192,7 +192,7 @@ Defined in: [core/src/types.ts:108](https://github.com/ZizzX/wizzard-packages/bl
 
 > **setStepData**: (`stepId`, `data`) => `void`
 
-Defined in: [core/src/types.ts:98](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L98)
+Defined in: [core/src/types.ts:98](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L98)
 
 #### Parameters
 
@@ -214,7 +214,7 @@ Defined in: [core/src/types.ts:98](https://github.com/ZizzX/wizzard-packages/blo
 
 > **updateConfig**: (`config`) => `void`
 
-Defined in: [core/src/types.ts:111](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L111)
+Defined in: [core/src/types.ts:111](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L111)
 
 #### Parameters
 
@@ -232,7 +232,7 @@ Defined in: [core/src/types.ts:111](https://github.com/ZizzX/wizzard-packages/bl
 
 > **updateData**: (`data`, `options?`) => `void`
 
-Defined in: [core/src/types.ts:109](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L109)
+Defined in: [core/src/types.ts:109](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L109)
 
 #### Parameters
 
@@ -260,7 +260,7 @@ Defined in: [core/src/types.ts:109](https://github.com/ZizzX/wizzard-packages/bl
 
 > **validateAll**: () => `Promise`\<\{ `errors`: `Record`\<`string`, `Record`\<`string`, `string`\>\>; `isValid`: `boolean`; \}\>
 
-Defined in: [core/src/types.ts:101](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L101)
+Defined in: [core/src/types.ts:101](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L101)
 
 #### Returns
 
@@ -272,7 +272,7 @@ Defined in: [core/src/types.ts:101](https://github.com/ZizzX/wizzard-packages/bl
 
 > **validateStep**: (`sid`) => `Promise`\<`boolean`\>
 
-Defined in: [core/src/types.ts:100](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L100)
+Defined in: [core/src/types.ts:100](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L100)
 
 #### Parameters
 

@@ -8,7 +8,7 @@
 
 > **createWizardFactory**\<`TSchema`, `StepId`\>(): `object`
 
-Defined in: [react/src/factory.tsx:21](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/react/src/factory.tsx#L21)
+Defined in: [react/src/factory.tsx:28](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/react/src/factory.tsx#L28)
 
 createWizardFactory
 
@@ -62,11 +62,11 @@ The shape of your wizard's global data state
 
 ### useWizardActions()
 
-> **useWizardActions**: () => [`IWizardActions`](../interfaces/IWizardActions.md)\<`StepId`\>
+> **useWizardActions**: () => [`IWizardActionsTyped`](../type-aliases/IWizardActionsTyped.md)\<`TSchema`, `StepId`\>
 
 #### Returns
 
-[`IWizardActions`](../interfaces/IWizardActions.md)\<`StepId`\>
+[`IWizardActionsTyped`](../type-aliases/IWizardActionsTyped.md)\<`TSchema`, `StepId`\>
 
 ### useWizardContext()
 
@@ -175,6 +175,10 @@ The shape of your wizard's global data state
 ###### initialData?
 
 `Partial`\<`TSchema`\>
+
+###### initialStepId?
+
+`StepId`
 
 #### Returns
 

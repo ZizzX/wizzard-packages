@@ -6,7 +6,7 @@
 
 # Interface: IValidatorAdapter\<TData\>
 
-Defined in: [core/src/types.ts:125](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L125)
+Defined in: [core/src/types.ts:125](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L125)
 
 Validator Adapter Interface
 
@@ -22,7 +22,7 @@ Validator Adapter Interface
 
 > **validate**: (`data`) => [`ValidationResult`](../type-aliases/ValidationResult.md) \| `Promise`\<[`ValidationResult`](../type-aliases/ValidationResult.md)\>
 
-Defined in: [core/src/types.ts:126](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L126)
+Defined in: [core/src/types.ts:126](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L126)
 
 #### Parameters
 

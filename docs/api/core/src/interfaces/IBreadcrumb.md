@@ -6,7 +6,7 @@
 
 # Interface: IBreadcrumb\<StepId\>
 
-Defined in: [core/src/types.ts:311](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L311)
+Defined in: [core/src/types.ts:311](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L311)
 
 Breadcrumb Interface
 
@@ -22,7 +22,7 @@ Breadcrumb Interface
 
 > **id**: `StepId`
 
-Defined in: [core/src/types.ts:312](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L312)
+Defined in: [core/src/types.ts:312](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L312)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [core/src/types.ts:312](https://github.com/ZizzX/wizzard-packages/bl
 
 > **label**: `string`
 
-Defined in: [core/src/types.ts:313](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L313)
+Defined in: [core/src/types.ts:313](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L313)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [core/src/types.ts:313](https://github.com/ZizzX/wizzard-packages/bl
 
 > **status**: [`BreadcrumbStatus`](../type-aliases/BreadcrumbStatus.md)
 
-Defined in: [core/src/types.ts:314](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/types.ts#L314)
+Defined in: [core/src/types.ts:314](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L314)

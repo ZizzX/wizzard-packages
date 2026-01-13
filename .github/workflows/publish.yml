@@ -9,6 +9,8 @@ on:
       - 'examples/**'
       - '.github/workflows/deploy-demo.yml'
 
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -17,6 +19,7 @@ jobs:
       contents: write
       pull-requests: write
       id-token: write
+      packages: write
     steps:
       - uses: actions/checkout@v4
 
@@ -26,7 +29,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20.x
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
 
@@ -34,11 +37,79 @@ jobs:
       - run: pnpm -r build
 
       - name: Create release PR or publish
+        id: changesets
         uses: changesets/action@v1
         with:
           version: pnpm release
           publish: pnpm release:publish
+          createGithubReleases: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: 'true'
+
+      - name: Tag release
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          pnpm changeset tag
+          git push --tags
+
+      - name: Publish to GitHub Packages
+        if: steps.changesets.outputs.published == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.publishedPackages }}
+        run: |
+          echo "@wizzard-packages:registry=https://npm.pkg.github.com" >> ~/.npmrc
+          echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" >> ~/.npmrc
+          node - <<'NODE'
+          const { execSync } = require('node:child_process');
+          const { existsSync } = require('node:fs');
+          const path = require('node:path');
+
+          const raw = process.env.PUBLISHED_PACKAGES || '[]';
+          let packages;
+          try {
+            packages = JSON.parse(raw);
+          } catch (error) {
+            console.error('Failed to parse published packages output:', error);
+            process.exit(1);
+          }
+
+          if (!packages.length) {
+            console.log('No packages to publish to GitHub Packages.');
+            process.exit(0);
+          }
+
+          for (const pkg of packages) {
+            const name = pkg.name || '';
+            const version = pkg.version || '';
+            const scopeName = name.split('/')[1];
+            if (!scopeName) {
+              console.warn(`Skipping unknown package name: ${name}`);
+              continue;
+            }
+            const cwd = path.join(process.cwd(), 'packages', scopeName);
+            if (!existsSync(cwd)) {
+              console.warn(`Skipping missing package dir: ${cwd}`);
+              continue;
+            }
+            const fullName = `${name}@${version}`;
+            try {
+              execSync(
+                `npm view ${fullName} --registry=https://npm.pkg.github.com`,
+                { stdio: 'inherit', cwd }
+              );
+              console.log(`Already published to GitHub Packages: ${fullName}`);
+              continue;
+            } catch {
+              // Not published yet, proceed.
+            }
+            execSync(
+              'npm publish --registry=https://npm.pkg.github.com --access public',
+              { stdio: 'inherit', cwd }
+            );
+          }
+          NODE

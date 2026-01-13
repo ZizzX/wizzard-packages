@@ -8,6 +8,6 @@
 
 > `const` **devToolsMiddleware**: [`WizardMiddleware`](../../../react/src/type-aliases/WizardMiddleware.md)\<`any`, `any`\>
 
-Defined in: [middleware/src/devToolsMiddleware.ts:49](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/middleware/src/devToolsMiddleware.ts#L49)
+Defined in: [middleware/src/devToolsMiddleware.ts:49](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/middleware/src/devToolsMiddleware.ts#L49)
 
 Middleware for Redux DevTools integration.

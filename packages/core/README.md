@@ -42,6 +42,16 @@ store.dispatch({
 });
 ```
 
+## Utilities
+
+```ts
+import { getByPath, setByPath } from '@wizzard-packages/core';
+
+const data = { user: { name: 'Ada' } };
+const name = getByPath(data, 'user.name');
+const next = setByPath(data, 'user.name', 'Grace');
+```
+
 ## Related packages
 
 - @wizzard-packages/react - React provider + hooks on top of core

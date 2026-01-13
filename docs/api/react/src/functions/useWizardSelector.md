@@ -8,7 +8,7 @@
 
 > **useWizardSelector**\<`TSelected`\>(`selector`, `options?`): `TSelected`
 
-Defined in: [react/src/context/WizardContext.tsx:649](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/react/src/context/WizardContext.tsx#L649)
+Defined in: [react/src/context/WizardContext.tsx:610](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/react/src/context/WizardContext.tsx#L610)
 
 Selects a derived value from the wizard state with optional equality check.
 

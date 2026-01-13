@@ -1,4 +1,132 @@
 ## Session Update
+- Date: 2026-01-14 01:33
+- Scope: React field hooks verification
+- Key changes: Ran lint + type-check after adding useWizardField hooks.
+- Tests run: pnpm lint PASS, pnpm type-check PASS
+- Open questions: none
+- Next action: none
+
+## Session Update
+- Date: 2026-01-14 01:29
+- Scope: React field hooks
+- Key changes: Added useWizardField/useWizardStoreField and documented field-level usage with createWizardHooks(actions).
+- Tests run: none
+- Open questions: none
+- Next action: rerun type-check if needed.
+
+## Session Update
+- Date: 2026-01-14 01:19
+- Scope: Docs updates
+- Key changes: Added context-free React example + link in root README; noted TypeDoc regeneration step in DEV_WORKFLOW.
+- Tests run: none
+- Open questions: none
+- Next action: rerun format check if required.
+
+## Session Update
+- Date: 2026-01-14 01:16
+- Scope: Full test + checks run
+- Key changes: Fixed duplicate imports in dependencies helper; ran lint, type-check, unit, and e2e tests. Format check still fails across many pre-existing files.
+- Tests run: pnpm lint PASS, pnpm type-check PASS, pnpm test:run PASS, pnpm test:e2e PASS, pnpm format:check FAIL (pre-existing formatting warnings).
+- Open questions: whether to run Prettier --write across the repo.
+- Next action: decide on formatting strategy.
+
+## Session Update
+- Date: 2026-01-14 01:13
+- Scope: API docs
+- Key changes: Regenerated TypeDoc outputs to include core utilities in docs/api.
+- Tests run: pnpm docs:api
+- Open questions: none
+- Next action: none
+
+## Session Update
+- Date: 2026-01-14 01:11
+- Scope: Core README utilities
+- Key changes: Documented getByPath/setByPath usage in @wizzard-packages/core README.
+- Tests run: none
+- Open questions: none
+- Next action: regenerate API docs if needed.
+
+## Session Update
+- Date: 2026-01-14 01:08
+- Scope: React refactor DRY/SRP
+- Key changes: Extracted shared step-dependency handler, wired into context + store modes; type-check pass after constraint fix.
+- Tests run: pnpm type-check PASS
+- Open questions: none
+- Next action: run lint/format if required.
+
+## Session Update
+- Date: 2026-01-14 00:59
+- Scope: React README production-ready patterns
+- Key changes: Enhanced Zustand/Redux examples with selectors, shallow equality, and added memoized config + middleware pattern.
+- Tests run: none
+- Open questions: none
+- Next action: rerun format check if required.
+
+## Session Update
+- Date: 2026-01-14 00:56
+- Scope: React README examples
+- Key changes: Added Zustand and Redux integration examples for context-free wizard store usage.
+- Tests run: none
+- Open questions: none
+- Next action: rerun format check if required.
+
+## Session Update
+- Date: 2026-01-14 00:45
+- Scope: Type-check fix
+- Key changes: Fixed typed actions to avoid TS incompatibility with core actions; reran type-check successfully.
+- Tests run: pnpm type-check PASS, pnpm lint PASS, pnpm format:check FAIL (pre-existing formatting warnings across repo).
+- Open questions: whether to run Prettier --write across the repo (would touch many files).
+- Next action: decide on formatting strategy.
+
+## Session Update
+- Date: 2026-01-14 00:39
+- Scope: bd status
+- Key changes: Closed wizzard-stepper-react-884 after React DX improvements.
+- Tests run: none
+- Open questions: none
+- Next action: decide next UI task (wizzard-stepper-react-875).
+
+## Session Update
+- Date: 2026-01-14 00:38
+- Scope: React DX improvements (884)
+- Key changes: Added initialStepId support in factory, typed actions, SSR-safe subscriptions, improved caching, new granular hooks, and store-first API without React Context; updated React package README with best practices and context-free usage.
+- Tests run: none
+- Open questions: none
+- Next action: run tests if needed and close wizzard-stepper-react-884 after review.
+
+## Session Update
+- Date: 2026-01-13 23:11
+- Scope: bd prioritization
+- Key changes: Re-prioritized open tasks so UI work is first and release tasks are last.
+- Tests run: none
+- Open questions: none
+- Next action: start wizzard-stepper-react-875.
+
+## Session Update
+- Date: 2026-01-13 23:05
+- Scope: Release automation + GitHub Packages
+- Key changes: Updated publish workflow to tag releases and publish to GitHub Packages; refreshed release docs and README release notes.
+- Tests run: none
+- Open questions: confirm GitHub Packages publish works for @wizzard-packages scope.
+- Next action: run CI release on main and verify tags + Packages sidebar.
+
+## Session Update
+- Date: 2026-01-13 22:54
+- Scope: Release tracking tasks
+- Key changes: Added bd tasks wizzard-stepper-react-882 (ensure release tags on publish) and wizzard-stepper-react-883 (GitHub Packages sidebar visibility).
+- Tests run: none
+- Open questions: none
+- Next action: implement the new release tagging and GitHub Packages tasks.
+
+## Session Update
+- Date: 2026-01-13 22:44
+- Scope: Release documentation + bd closure
+- Key changes: Added docs/RELEASE.md with CI/CD release flow and linked it from README; closed wizzard-stepper-react-881 with note that releases run via CI/CD on push to main.
+- Tests run: none
+- Open questions: none
+- Next action: confirm if any additional release hygiene tasks are needed.
+
+## Session Update
 - Date: 2026-01-12 22:40
 - Scope: Vue example task
 - Key changes: Added bd task wizzard-stepper-react-880 for Vue usage example via core.

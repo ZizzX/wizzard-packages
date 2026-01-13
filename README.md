@@ -70,6 +70,28 @@ function WizardUI() {
 }
 ```
 
+Context-free (no React Context) usage:
+
+```tsx
+import { createWizardStore, createWizardHooks } from '@wizzard-packages/react';
+
+type Data = { name: string };
+type StepId = 'name' | 'review';
+
+const { store, actions } = createWizardStore<Data, StepId>({
+  config: { steps },
+  initialData: { name: '' },
+  initialStepId: 'name',
+});
+
+const { useWizardState } = createWizardHooks(store);
+
+function WizardUI() {
+  const { currentStepId } = useWizardState();
+  return <button onClick={actions.goToNextStep}>Next ({currentStepId})</button>;
+}
+```
+
 Optional add-ons:
 
 ```bash
@@ -141,6 +163,7 @@ Core-only setup:
 - API Reference: `docs/API_REFERENCE.md`
 - E2E Testing: `e2e/README.md`
 - Local StackBlitz templates: `.stackblitz/README.md`
+- Context-free React usage: `packages/react/README.md`
 
 ---
 
@@ -151,6 +174,8 @@ Core-only setup:
 - Pre-releases use `-next.N` and publish with npm dist-tag `next`.
 - Versioning is managed via Changesets with a fixed group for all `@wizzard-packages/*` packages.
 - Legacy `wizzard-stepper-react` stays on v2.x for critical fixes only.
+- CI publishes the same versions to GitHub Packages for repo sidebar visibility.
+- Full release steps: `docs/RELEASE.md`.
 
 ## 🌿 Development Workflow
 

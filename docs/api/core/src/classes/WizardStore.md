@@ -6,7 +6,7 @@
 
 # Class: WizardStore\<T, StepId\>
 
-Defined in: [core/src/store/WizardStore.ts:17](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/store/WizardStore.ts#L17)
+Defined in: [core/src/store/WizardStore.ts:17](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/store/WizardStore.ts#L17)
 
 Core event-driven store for managing wizard state, data, and navigation.
 
@@ -34,7 +34,7 @@ String union of valid step IDs
 
 > **new WizardStore**\<`T`, `StepId`\>(`initialData`, `middlewares`): `WizardStore`\<`T`, `StepId`\>
 
-Defined in: [core/src/store/WizardStore.ts:38](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/store/WizardStore.ts#L38)
+Defined in: [core/src/store/WizardStore.ts:38](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/store/WizardStore.ts#L38)
 
 #### Parameters
 
@@ -56,7 +56,7 @@ Defined in: [core/src/store/WizardStore.ts:38](https://github.com/ZizzX/wizzard-
 
 > **errorsMap**: `Map`\<`StepId`, `Map`\<`string`, `string`\>\>
 
-Defined in: [core/src/store/WizardStore.ts:23](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/store/WizardStore.ts#L23)
+Defined in: [core/src/store/WizardStore.ts:23](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/store/WizardStore.ts#L23)
 
 #### Implementation of
 
@@ -68,7 +68,7 @@ Defined in: [core/src/store/WizardStore.ts:23](https://github.com/ZizzX/wizzard-
 
 > **clearStepStorage**(`stepId`): `void`
 
-Defined in: [core/src/store/WizardStore.ts:534](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/store/WizardStore.ts#L534)
+Defined in: [core/src/store/WizardStore.ts:534](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/store/WizardStore.ts#L534)
 
 #### Parameters
 
@@ -86,7 +86,7 @@ Defined in: [core/src/store/WizardStore.ts:534](https://github.com/ZizzX/wizzard
 
 > **deleteError**(`stepId`, `path`): `boolean`
 
-Defined in: [core/src/store/WizardStore.ts:439](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/store/WizardStore.ts#L439)
+Defined in: [core/src/store/WizardStore.ts:439](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/store/WizardStore.ts#L439)
 
 #### Parameters
 
@@ -112,7 +112,7 @@ Defined in: [core/src/store/WizardStore.ts:439](https://github.com/ZizzX/wizzard
 
 > **dispatch**(`action`): `void`
 
-Defined in: [core/src/store/WizardStore.ts:97](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/store/WizardStore.ts#L97)
+Defined in: [core/src/store/WizardStore.ts:97](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/store/WizardStore.ts#L97)
 
 Processes an action through the middleware chain and updates the state.
 This is the primary way to trigger any state change in the wizard.
@@ -139,7 +139,7 @@ The action to perform
 
 > **getSnapshot**(): [`IWizardState`](../interfaces/IWizardState.md)\<`T`, `StepId`\>
 
-Defined in: [core/src/store/WizardStore.ts:285](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/store/WizardStore.ts#L285)
+Defined in: [core/src/store/WizardStore.ts:285](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/store/WizardStore.ts#L285)
 
 Returns the current immutable snapshot of the wizard state.
 
@@ -157,7 +157,7 @@ Returns the current immutable snapshot of the wizard state.
 
 > **goToStep**(`stepId`, `options`): `Promise`\<`boolean`\>
 
-Defined in: [core/src/store/WizardStore.ts:775](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/store/WizardStore.ts#L775)
+Defined in: [core/src/store/WizardStore.ts:775](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/store/WizardStore.ts#L775)
 
 #### Parameters
 
@@ -189,7 +189,7 @@ Defined in: [core/src/store/WizardStore.ts:775](https://github.com/ZizzX/wizzard
 
 > **hydrate**(): `void`
 
-Defined in: [core/src/store/WizardStore.ts:471](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/store/WizardStore.ts#L471)
+Defined in: [core/src/store/WizardStore.ts:471](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/store/WizardStore.ts#L471)
 
 Restores wizard state from persistence storage.
 Implements "latest wins" conflict resolution based on step timestamps.
@@ -208,7 +208,7 @@ Implements "latest wins" conflict resolution based on step timestamps.
 
 > **injectPersistence**(`adapter`): `void`
 
-Defined in: [core/src/store/WizardStore.ts:463](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/store/WizardStore.ts#L463)
+Defined in: [core/src/store/WizardStore.ts:463](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/store/WizardStore.ts#L463)
 
 #### Parameters
 
@@ -230,7 +230,7 @@ Defined in: [core/src/store/WizardStore.ts:463](https://github.com/ZizzX/wizzard
 
 > **resolveActiveSteps**(`data?`): `Promise`\<[`IStepConfig`](../interfaces/IStepConfig.md)\<`T`, `StepId`\>[]\>
 
-Defined in: [core/src/store/WizardStore.ts:616](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/store/WizardStore.ts#L616)
+Defined in: [core/src/store/WizardStore.ts:616](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/store/WizardStore.ts#L616)
 
 Evaluates visibility conditions for all steps and returns only those that should be active.
 Uses memoization to avoid redundant async calls if dependencies haven't changed.
@@ -257,7 +257,7 @@ Optional data override for evaluation
 
 > **save**(`stepId?`): `void`
 
-Defined in: [core/src/store/WizardStore.ts:547](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/store/WizardStore.ts#L547)
+Defined in: [core/src/store/WizardStore.ts:547](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/store/WizardStore.ts#L547)
 
 Manually triggers data persistence for specific steps or the current step.
 
@@ -283,7 +283,7 @@ Optional ID of step to save. If omitted, saves current step.
 
 > **setInitialData**(`data`): `void`
 
-Defined in: [core/src/store/WizardStore.ts:377](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/store/WizardStore.ts#L377)
+Defined in: [core/src/store/WizardStore.ts:377](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/store/WizardStore.ts#L377)
 
 Sets the initial data for the wizard.
 Resets dirty tracking based on this new data.
@@ -308,7 +308,7 @@ Resets dirty tracking based on this new data.
 
 > **setStepErrors**(`stepId`, `errors`): `boolean`
 
-Defined in: [core/src/store/WizardStore.ts:419](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/store/WizardStore.ts#L419)
+Defined in: [core/src/store/WizardStore.ts:419](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/store/WizardStore.ts#L419)
 
 #### Parameters
 
@@ -334,7 +334,7 @@ Defined in: [core/src/store/WizardStore.ts:419](https://github.com/ZizzX/wizzard
 
 > **subscribe**(`listener`): () => `boolean`
 
-Defined in: [core/src/store/WizardStore.ts:458](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/store/WizardStore.ts#L458)
+Defined in: [core/src/store/WizardStore.ts:458](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/store/WizardStore.ts#L458)
 
 #### Parameters
 
@@ -360,7 +360,7 @@ Defined in: [core/src/store/WizardStore.ts:458](https://github.com/ZizzX/wizzard
 
 > **subscribeToActions**(`listener`): () => `boolean`
 
-Defined in: [core/src/store/WizardStore.ts:29](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/store/WizardStore.ts#L29)
+Defined in: [core/src/store/WizardStore.ts:29](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/store/WizardStore.ts#L29)
 
 #### Parameters
 
@@ -386,7 +386,7 @@ Defined in: [core/src/store/WizardStore.ts:29](https://github.com/ZizzX/wizzard-
 
 > **update**(`newData`, `changedPath?`): `void`
 
-Defined in: [core/src/store/WizardStore.ts:296](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/store/WizardStore.ts#L296)
+Defined in: [core/src/store/WizardStore.ts:296](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/store/WizardStore.ts#L296)
 
 Performs a granular data update at a specific path.
 Automatically calculates dirty fields and triggers auto-save if configured.
@@ -419,7 +419,7 @@ Path(s) that were modified
 
 > **updateErrors**(`newErrors`): `void`
 
-Defined in: [core/src/store/WizardStore.ts:406](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/store/WizardStore.ts#L406)
+Defined in: [core/src/store/WizardStore.ts:406](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/store/WizardStore.ts#L406)
 
 #### Parameters
 
@@ -441,7 +441,7 @@ Defined in: [core/src/store/WizardStore.ts:406](https://github.com/ZizzX/wizzard
 
 > **updateMeta**(`newMeta`): `void`
 
-Defined in: [core/src/store/WizardStore.ts:330](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/store/WizardStore.ts#L330)
+Defined in: [core/src/store/WizardStore.ts:330](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/store/WizardStore.ts#L330)
 
 #### Parameters
 
@@ -463,7 +463,7 @@ Defined in: [core/src/store/WizardStore.ts:330](https://github.com/ZizzX/wizzard
 
 > **validateAll**(): `Promise`\<\{ `errors`: `Record`\<`string`, `Record`\<`string`, `string`\>\>; `isValid`: `boolean`; \}\>
 
-Defined in: [core/src/store/WizardStore.ts:751](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/store/WizardStore.ts#L751)
+Defined in: [core/src/store/WizardStore.ts:751](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/store/WizardStore.ts#L751)
 
 #### Returns
 
@@ -479,7 +479,7 @@ Defined in: [core/src/store/WizardStore.ts:751](https://github.com/ZizzX/wizzard
 
 > **validateStep**(`stepId`): `Promise`\<`boolean`\>
 
-Defined in: [core/src/store/WizardStore.ts:692](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/core/src/store/WizardStore.ts#L692)
+Defined in: [core/src/store/WizardStore.ts:692](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/store/WizardStore.ts#L692)
 
 #### Parameters
 

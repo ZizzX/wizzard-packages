@@ -8,7 +8,7 @@
 
 > **WizardProvider**\<`T`, `StepId`\>(`__namedParameters`): `Element`
 
-Defined in: [react/src/context/WizardContext.tsx:44](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/react/src/context/WizardContext.tsx#L44)
+Defined in: [react/src/context/WizardContext.tsx:59](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/react/src/context/WizardContext.tsx#L59)
 
 Component that provides the wizard context to its children.
 

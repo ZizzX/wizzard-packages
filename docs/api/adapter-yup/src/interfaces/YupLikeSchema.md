@@ -6,7 +6,7 @@
 
 # Interface: YupLikeSchema\<T\>
 
-Defined in: [adapter-yup/src/types.ts:4](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/adapter-yup/src/types.ts#L4)
+Defined in: [adapter-yup/src/types.ts:4](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/adapter-yup/src/types.ts#L4)
 
 Minimal structural interface for Yup-like schemas.
 
@@ -22,7 +22,7 @@ Minimal structural interface for Yup-like schemas.
 
 > **validate**: (`data`, `options`) => `Promise`\<`any`\>
 
-Defined in: [adapter-yup/src/types.ts:5](https://github.com/ZizzX/wizzard-packages/blob/334e590eefaffe9234192fb3f674c38674167b0c/packages/adapter-yup/src/types.ts#L5)
+Defined in: [adapter-yup/src/types.ts:5](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/adapter-yup/src/types.ts#L5)
 
 #### Parameters
 

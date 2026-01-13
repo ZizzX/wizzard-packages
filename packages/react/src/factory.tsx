@@ -9,7 +9,14 @@ import {
   useWizardState as useBaseWizardState,
 } from './context/WizardContext';
 import { useWizard as useBaseWizard } from './hooks/useWizard';
-import type { IWizardConfig, IWizardContext, IStepConfig, Path, PathValue } from '@wizzard-packages/core';
+import type {
+  IWizardConfig,
+  IWizardContext,
+  IStepConfig,
+  Path,
+  PathValue,
+} from '@wizzard-packages/core';
+import type { IWizardActionsTyped } from './types';
 
 /**
  * createWizardFactory
@@ -25,14 +32,20 @@ export function createWizardFactory<
   const WizardProvider = ({
     config,
     initialData,
+    initialStepId,
     children,
   }: {
     config: IWizardConfig<TSchema, StepId>;
     initialData?: Partial<TSchema>;
+    initialStepId?: StepId;
     children: React.ReactNode;
   }) => {
     return (
-      <BaseWizardProvider<TSchema, StepId> config={config} initialData={initialData as TSchema}>
+      <BaseWizardProvider<TSchema, StepId>
+        config={config}
+        initialData={initialData as TSchema}
+        initialStepId={initialStepId}
+      >
         {children}
       </BaseWizardProvider>
     );
@@ -55,6 +68,17 @@ export function createWizardFactory<
     return useBaseWizardValue<PathValue<TSchema, P>>(path as string, options);
   };
 
+  const useWizardField = <P extends Path<TSchema>>(
+    path: P,
+    options?: {
+      isEqual?: (a: PathValue<TSchema, P>, b: PathValue<TSchema, P>) => boolean;
+    }
+  ): [PathValue<TSchema, P>, (value: PathValue<TSchema, P>) => void] => {
+    const value = useWizardValue(path, options);
+    const { setData } = useWizardActions();
+    return [value, (next) => setData(path, next)];
+  };
+
   const useWizardSelector = <TSelected,>(
     selector: (state: IWizardContext<TSchema, StepId>) => TSelected,
     options?: { isEqual?: (a: TSelected, b: TSelected) => boolean }
@@ -67,7 +91,7 @@ export function createWizardFactory<
   };
 
   const useWizardActions = () => {
-    return useBaseWizardActions<StepId>();
+    return useBaseWizardActions<StepId>() as IWizardActionsTyped<TSchema, StepId>;
   };
 
   const useWizardState = () => {
@@ -85,6 +109,7 @@ export function createWizardFactory<
     useWizard,
     useWizardContext,
     useWizardValue,
+    useWizardField,
     useWizardSelector,
     useWizardError,
     useWizardActions,
