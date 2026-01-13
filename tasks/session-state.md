@@ -1,4 +1,12 @@
 ## Session Update
+- Date: 2026-01-13 23:11
+- Scope: bd prioritization
+- Key changes: Re-prioritized open tasks so UI work is first and release tasks are last.
+- Tests run: none
+- Open questions: none
+- Next action: start wizzard-stepper-react-875.
+
+## Session Update
 - Date: 2026-01-13 23:05
 - Scope: Release automation + GitHub Packages
 - Key changes: Updated publish workflow to tag releases and publish to GitHub Packages; refreshed release docs and README release notes.
