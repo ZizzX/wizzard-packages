@@ -1,5 +1,11 @@
 # @wizzard-packages/core
 
+## 0.3.0
+
+### Minor Changes
+
+- 7e554ae: feat(react): improve DX with store-first hooks, field setters, SSR-safe subscriptions, and docs
+
 ## 0.2.0
 
 ### Minor Changes

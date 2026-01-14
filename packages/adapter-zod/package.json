@@ -1,6 +1,6 @@
 {
   "name": "@wizzard-packages/adapter-zod",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Zod validation adapter for Wizzard Stepper.",
   "repository": {
     "type": "git",
