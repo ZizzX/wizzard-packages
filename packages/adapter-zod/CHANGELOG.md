@@ -1,5 +1,12 @@
 # @wizzard-packages/adapter-zod
 
+## 0.1.2
+
+### Patch Changes
+
+- Updated dependencies [7e554ae]
+  - @wizzard-packages/core@0.3.0
+
 ## 0.1.1
 
 ### Patch Changes
