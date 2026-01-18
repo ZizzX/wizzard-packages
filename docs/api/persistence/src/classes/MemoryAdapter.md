@@ -6,7 +6,7 @@
 
 # Class: MemoryAdapter
 
-Defined in: [persistence/src/MemoryAdapter.ts:6](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/persistence/src/MemoryAdapter.ts#L6)
+Defined in: [persistence/src/MemoryAdapter.ts:6](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/persistence/src/MemoryAdapter.ts#L6)
 
 In-memory persistence adapter for tests or ephemeral sessions.
 
@@ -30,7 +30,7 @@ In-memory persistence adapter for tests or ephemeral sessions.
 
 > **clear**(): `void`
 
-Defined in: [persistence/src/MemoryAdapter.ts:27](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/persistence/src/MemoryAdapter.ts#L27)
+Defined in: [persistence/src/MemoryAdapter.ts:27](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/persistence/src/MemoryAdapter.ts#L27)
 
 #### Returns
 
@@ -46,7 +46,7 @@ Defined in: [persistence/src/MemoryAdapter.ts:27](https://github.com/ZizzX/wizza
 
 > **clearStep**(`stepId`): `void`
 
-Defined in: [persistence/src/MemoryAdapter.ts:23](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/persistence/src/MemoryAdapter.ts#L23)
+Defined in: [persistence/src/MemoryAdapter.ts:23](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/persistence/src/MemoryAdapter.ts#L23)
 
 #### Parameters
 
@@ -68,7 +68,7 @@ Defined in: [persistence/src/MemoryAdapter.ts:23](https://github.com/ZizzX/wizza
 
 > **getStep**\<`T`\>(`stepId`): `T` \| `undefined`
 
-Defined in: [persistence/src/MemoryAdapter.ts:13](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/persistence/src/MemoryAdapter.ts#L13)
+Defined in: [persistence/src/MemoryAdapter.ts:13](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/persistence/src/MemoryAdapter.ts#L13)
 
 #### Type Parameters
 
@@ -96,7 +96,7 @@ Defined in: [persistence/src/MemoryAdapter.ts:13](https://github.com/ZizzX/wizza
 
 > **getStepWithMeta**\<`T`\>(`stepId`): \{ `data`: `T`; `timestamp`: `number`; \} \| `undefined`
 
-Defined in: [persistence/src/MemoryAdapter.ts:17](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/persistence/src/MemoryAdapter.ts#L17)
+Defined in: [persistence/src/MemoryAdapter.ts:17](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/persistence/src/MemoryAdapter.ts#L17)
 
 #### Type Parameters
 
@@ -124,7 +124,7 @@ Defined in: [persistence/src/MemoryAdapter.ts:17](https://github.com/ZizzX/wizza
 
 > **saveStep**\<`T`\>(`stepId`, `data`): `void`
 
-Defined in: [persistence/src/MemoryAdapter.ts:9](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/persistence/src/MemoryAdapter.ts#L9)
+Defined in: [persistence/src/MemoryAdapter.ts:9](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/persistence/src/MemoryAdapter.ts#L9)
 
 #### Type Parameters
 

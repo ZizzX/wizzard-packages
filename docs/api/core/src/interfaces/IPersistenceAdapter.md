@@ -6,7 +6,7 @@
 
 # Interface: IPersistenceAdapter
 
-Defined in: [core/src/types.ts:141](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L141)
+Defined in: [core/src/types.ts:141](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L141)
 
 Persistence Adapter Interface
 
@@ -16,7 +16,7 @@ Persistence Adapter Interface
 
 > **clear**: () => `void`
 
-Defined in: [core/src/types.ts:146](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L146)
+Defined in: [core/src/types.ts:146](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L146)
 
 #### Returns
 
@@ -28,7 +28,7 @@ Defined in: [core/src/types.ts:146](https://github.com/ZizzX/wizzard-packages/bl
 
 > **clearStep**: (`stepId`) => `void`
 
-Defined in: [core/src/types.ts:145](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L145)
+Defined in: [core/src/types.ts:145](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L145)
 
 #### Parameters
 
@@ -46,7 +46,7 @@ Defined in: [core/src/types.ts:145](https://github.com/ZizzX/wizzard-packages/bl
 
 > **getStep**: \<`T`\>(`stepId`) => `T` \| `undefined`
 
-Defined in: [core/src/types.ts:143](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L143)
+Defined in: [core/src/types.ts:143](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L143)
 
 #### Type Parameters
 
@@ -70,7 +70,7 @@ Defined in: [core/src/types.ts:143](https://github.com/ZizzX/wizzard-packages/bl
 
 > `optional` **getStepWithMeta**: \<`T`\>(`stepId`) => \{ `data`: `T`; `timestamp`: `number`; \} \| `undefined`
 
-Defined in: [core/src/types.ts:144](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L144)
+Defined in: [core/src/types.ts:144](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L144)
 
 #### Type Parameters
 
@@ -94,7 +94,7 @@ Defined in: [core/src/types.ts:144](https://github.com/ZizzX/wizzard-packages/bl
 
 > **saveStep**: \<`T`\>(`stepId`, `data`) => `void`
 
-Defined in: [core/src/types.ts:142](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L142)
+Defined in: [core/src/types.ts:142](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L142)
 
 #### Type Parameters
 

@@ -6,7 +6,7 @@
 
 # Class: ZodAdapter\<T\>
 
-Defined in: [adapter-zod/src/ZodAdapter.ts:7](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/adapter-zod/src/ZodAdapter.ts#L7)
+Defined in: [adapter-zod/src/ZodAdapter.ts:7](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/adapter-zod/src/ZodAdapter.ts#L7)
 
 Validation adapter for Zod-like schemas.
 
@@ -26,7 +26,7 @@ Validation adapter for Zod-like schemas.
 
 > **new ZodAdapter**\<`T`\>(`schema`): `ZodAdapter`\<`T`\>
 
-Defined in: [adapter-zod/src/ZodAdapter.ts:10](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/adapter-zod/src/ZodAdapter.ts#L10)
+Defined in: [adapter-zod/src/ZodAdapter.ts:10](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/adapter-zod/src/ZodAdapter.ts#L10)
 
 #### Parameters
 
@@ -44,7 +44,7 @@ Defined in: [adapter-zod/src/ZodAdapter.ts:10](https://github.com/ZizzX/wizzard-
 
 > **validate**(`data`): `Promise`\<[`ValidationResult`](../../../react/src/type-aliases/ValidationResult.md)\>
 
-Defined in: [adapter-zod/src/ZodAdapter.ts:14](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/adapter-zod/src/ZodAdapter.ts#L14)
+Defined in: [adapter-zod/src/ZodAdapter.ts:14](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/adapter-zod/src/ZodAdapter.ts#L14)
 
 #### Parameters
 

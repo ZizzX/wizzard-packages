@@ -6,7 +6,7 @@
 
 # Class: LocalStorageAdapter
 
-Defined in: [persistence/src/LocalStorageAdapter.ts:6](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/persistence/src/LocalStorageAdapter.ts#L6)
+Defined in: [persistence/src/LocalStorageAdapter.ts:6](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/persistence/src/LocalStorageAdapter.ts#L6)
 
 Browser persistence adapter backed by localStorage.
 
@@ -20,7 +20,7 @@ Browser persistence adapter backed by localStorage.
 
 > **new LocalStorageAdapter**(`prefix`): `LocalStorageAdapter`
 
-Defined in: [persistence/src/LocalStorageAdapter.ts:9](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/persistence/src/LocalStorageAdapter.ts#L9)
+Defined in: [persistence/src/LocalStorageAdapter.ts:9](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/persistence/src/LocalStorageAdapter.ts#L9)
 
 #### Parameters
 
@@ -38,7 +38,7 @@ Defined in: [persistence/src/LocalStorageAdapter.ts:9](https://github.com/ZizzX/
 
 > **clear**(): `void`
 
-Defined in: [persistence/src/LocalStorageAdapter.ts:69](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/persistence/src/LocalStorageAdapter.ts#L69)
+Defined in: [persistence/src/LocalStorageAdapter.ts:69](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/persistence/src/LocalStorageAdapter.ts#L69)
 
 #### Returns
 
@@ -54,7 +54,7 @@ Defined in: [persistence/src/LocalStorageAdapter.ts:69](https://github.com/ZizzX
 
 > **clearStep**(`stepId`): `void`
 
-Defined in: [persistence/src/LocalStorageAdapter.ts:60](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/persistence/src/LocalStorageAdapter.ts#L60)
+Defined in: [persistence/src/LocalStorageAdapter.ts:60](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/persistence/src/LocalStorageAdapter.ts#L60)
 
 #### Parameters
 
@@ -76,7 +76,7 @@ Defined in: [persistence/src/LocalStorageAdapter.ts:60](https://github.com/ZizzX
 
 > **getStep**\<`T`\>(`stepId`): `T` \| `undefined`
 
-Defined in: [persistence/src/LocalStorageAdapter.ts:27](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/persistence/src/LocalStorageAdapter.ts#L27)
+Defined in: [persistence/src/LocalStorageAdapter.ts:27](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/persistence/src/LocalStorageAdapter.ts#L27)
 
 #### Type Parameters
 
@@ -104,7 +104,7 @@ Defined in: [persistence/src/LocalStorageAdapter.ts:27](https://github.com/ZizzX
 
 > **getStepWithMeta**\<`T`\>(`stepId`): \{ `data`: `T`; `timestamp`: `number`; \} \| `undefined`
 
-Defined in: [persistence/src/LocalStorageAdapter.ts:44](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/persistence/src/LocalStorageAdapter.ts#L44)
+Defined in: [persistence/src/LocalStorageAdapter.ts:44](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/persistence/src/LocalStorageAdapter.ts#L44)
 
 #### Type Parameters
 
@@ -132,7 +132,7 @@ Defined in: [persistence/src/LocalStorageAdapter.ts:44](https://github.com/ZizzX
 
 > **saveStep**\<`T`\>(`stepId`, `data`): `void`
 
-Defined in: [persistence/src/LocalStorageAdapter.ts:17](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/persistence/src/LocalStorageAdapter.ts#L17)
+Defined in: [persistence/src/LocalStorageAdapter.ts:17](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/persistence/src/LocalStorageAdapter.ts#L17)
 
 #### Type Parameters
 

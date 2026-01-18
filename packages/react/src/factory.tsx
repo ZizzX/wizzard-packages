@@ -1,21 +1,23 @@
+import {
+  type IStepConfig,
+  type IWizardConfig,
+  type IWizardContext,
+  type IWizardState,
+  type Path,
+  type PathValue,
+  shallowEqual,
+} from '@wizzard-packages/core';
 import React from 'react';
 import {
   WizardProvider as BaseWizardProvider,
-  useWizardContext as useBaseWizardContext,
-  useWizardValue as useBaseWizardValue,
-  useWizardSelector as useBaseWizardSelector,
-  useWizardError as useBaseWizardError,
   useWizardActions as useBaseWizardActions,
+  useWizardContext as useBaseWizardContext,
+  useWizardError as useBaseWizardError,
+  useWizardSelector as useBaseWizardSelector,
   useWizardState as useBaseWizardState,
+  useWizardValue as useBaseWizardValue,
 } from './context/WizardContext';
 import { useWizard as useBaseWizard } from './hooks/useWizard';
-import type {
-  IWizardConfig,
-  IWizardContext,
-  IStepConfig,
-  Path,
-  PathValue,
-} from '@wizzard-packages/core';
 import type { IWizardActionsTyped } from './types';
 
 /**
@@ -61,18 +63,18 @@ export function createWizardFactory<
 
   const useWizardValue = <P extends Path<TSchema>>(
     path: P,
-    options?: {
-      isEqual?: (a: PathValue<TSchema, P>, b: PathValue<TSchema, P>) => boolean;
-    }
+    options?:
+      | { isEqual?: (a: PathValue<TSchema, P>, b: PathValue<TSchema, P>) => boolean }
+      | ((a: PathValue<TSchema, P>, b: PathValue<TSchema, P>) => boolean)
   ): PathValue<TSchema, P> => {
-    return useBaseWizardValue<PathValue<TSchema, P>>(path as string, options);
+    return useBaseWizardValue<PathValue<TSchema, P>>(path as string, options as any);
   };
 
   const useWizardField = <P extends Path<TSchema>>(
     path: P,
-    options?: {
-      isEqual?: (a: PathValue<TSchema, P>, b: PathValue<TSchema, P>) => boolean;
-    }
+    options?:
+      | { isEqual?: (a: PathValue<TSchema, P>, b: PathValue<TSchema, P>) => boolean }
+      | ((a: PathValue<TSchema, P>, b: PathValue<TSchema, P>) => boolean)
   ): [PathValue<TSchema, P>, (value: PathValue<TSchema, P>) => void] => {
     const value = useWizardValue(path, options);
     const { setData } = useWizardActions();
@@ -80,10 +82,18 @@ export function createWizardFactory<
   };
 
   const useWizardSelector = <TSelected,>(
-    selector: (state: IWizardContext<TSchema, StepId>) => TSelected,
-    options?: { isEqual?: (a: TSelected, b: TSelected) => boolean }
+    selector: (state: IWizardState<TSchema, StepId>) => TSelected,
+    options?:
+      | { isEqual?: (a: TSelected, b: TSelected) => boolean }
+      | ((a: TSelected, b: TSelected) => boolean)
   ): TSelected => {
-    return useBaseWizardSelector<TSelected>(selector as any, options);
+    return useBaseWizardSelector<TSelected>(selector as any, options as any);
+  };
+
+  const useWizardShallowSelector = <TSelected,>(
+    selector: (state: IWizardState<TSchema, StepId>) => TSelected
+  ): TSelected => {
+    return useWizardSelector(selector, shallowEqual);
   };
 
   const useWizardError = <P extends Path<TSchema>>(path: P): string | undefined => {
@@ -111,6 +121,7 @@ export function createWizardFactory<
     useWizardValue,
     useWizardField,
     useWizardSelector,
+    useWizardShallowSelector,
     useWizardError,
     useWizardActions,
     useWizardState,

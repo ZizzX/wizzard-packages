@@ -8,7 +8,7 @@
 
 > **createWizardFactory**\<`TSchema`, `StepId`\>(): `object`
 
-Defined in: [react/src/factory.tsx:28](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/react/src/factory.tsx#L28)
+Defined in: [react/src/factory.tsx:30](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/react/src/factory.tsx#L30)
 
 createWizardFactory
 
@@ -96,6 +96,30 @@ The shape of your wizard's global data state
 
 `string` \| `undefined`
 
+### useWizardField()
+
+> **useWizardField**: \<`P`\>(`path`, `options?`) => \[`PathValue`\<`TSchema`, `P`\>, (`value`) => `void`\]
+
+#### Type Parameters
+
+##### P
+
+`P` *extends* `string`
+
+#### Parameters
+
+##### path
+
+`P`
+
+##### options?
+
+\{ `isEqual?`: (`a`, `b`) => `boolean`; \} | (`a`, `b`) => `boolean`
+
+#### Returns
+
+\[`PathValue`\<`TSchema`, `P`\>, (`value`) => `void`\]
+
 ### useWizardSelector()
 
 > **useWizardSelector**: \<`TSelected`\>(`selector`, `options?`) => `TSelected`
@@ -114,9 +138,27 @@ The shape of your wizard's global data state
 
 ##### options?
 
-###### isEqual?
+\{ `isEqual?`: (`a`, `b`) => `boolean`; \} | (`a`, `b`) => `boolean`
 
-(`a`, `b`) => `boolean`
+#### Returns
+
+`TSelected`
+
+### useWizardShallowSelector()
+
+> **useWizardShallowSelector**: \<`TSelected`\>(`selector`) => `TSelected`
+
+#### Type Parameters
+
+##### TSelected
+
+`TSelected`
+
+#### Parameters
+
+##### selector
+
+(`state`) => `TSelected`
 
 #### Returns
 
@@ -148,9 +190,7 @@ The shape of your wizard's global data state
 
 ##### options?
 
-###### isEqual?
-
-(`a`, `b`) => `boolean`
+\{ `isEqual?`: (`a`, `b`) => `boolean`; \} | (`a`, `b`) => `boolean`
 
 #### Returns
 

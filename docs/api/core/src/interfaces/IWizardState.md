@@ -6,7 +6,7 @@
 
 # Interface: IWizardState\<T, StepId\>
 
-Defined in: [core/src/types.ts:8](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L8)
+Defined in: [core/src/types.ts:8](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L8)
 
 Full state of the wizard.
 
@@ -26,7 +26,7 @@ Full state of the wizard.
 
 > **activeSteps**: [`IStepConfig`](IStepConfig.md)\<`T`, `StepId`\>[]
 
-Defined in: [core/src/types.ts:26](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L26)
+Defined in: [core/src/types.ts:26](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L26)
 
 List of steps that currently meet their visibility conditions
 
@@ -36,7 +36,7 @@ List of steps that currently meet their visibility conditions
 
 > **activeStepsCount**: `number`
 
-Defined in: [core/src/types.ts:44](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L44)
+Defined in: [core/src/types.ts:44](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L44)
 
 Number of active steps
 
@@ -46,7 +46,7 @@ Number of active steps
 
 > **breadcrumbs**: [`IBreadcrumb`](IBreadcrumb.md)\<`StepId`\>[]
 
-Defined in: [core/src/types.ts:52](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L52)
+Defined in: [core/src/types.ts:52](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L52)
 
 Breadcrumb items for navigation UI
 
@@ -56,7 +56,7 @@ Breadcrumb items for navigation UI
 
 > **busySteps**: `Set`\<`StepId`\>
 
-Defined in: [core/src/types.ts:32](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L32)
+Defined in: [core/src/types.ts:32](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L32)
 
 Set of step IDs that are currently performing async work
 
@@ -66,7 +66,7 @@ Set of step IDs that are currently performing async work
 
 > **completedSteps**: `Set`\<`StepId`\>
 
-Defined in: [core/src/types.ts:36](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L36)
+Defined in: [core/src/types.ts:36](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L36)
 
 Set of step IDs that have passed validation
 
@@ -76,7 +76,7 @@ Set of step IDs that have passed validation
 
 > **config**: [`IWizardConfig`](IWizardConfig.md)\<`T`, `StepId`\>
 
-Defined in: [core/src/types.ts:40](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L40)
+Defined in: [core/src/types.ts:40](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L40)
 
 Current wizard configuration
 
@@ -86,7 +86,7 @@ Current wizard configuration
 
 > **currentStep**: [`IStepConfig`](IStepConfig.md)\<`T`, `StepId`\> \| `null`
 
-Defined in: [core/src/types.ts:14](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L14)
+Defined in: [core/src/types.ts:14](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L14)
 
 Active step configuration (if any)
 
@@ -96,7 +96,7 @@ Active step configuration (if any)
 
 > **currentStepId**: `""` \| `StepId`
 
-Defined in: [core/src/types.ts:28](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L28)
+Defined in: [core/src/types.ts:28](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L28)
 
 String ID of the current step
 
@@ -106,7 +106,7 @@ String ID of the current step
 
 > **currentStepIndex**: `number`
 
-Defined in: [core/src/types.ts:16](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L16)
+Defined in: [core/src/types.ts:16](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L16)
 
 Numeric index of current step in active steps list
 
@@ -116,7 +116,7 @@ Numeric index of current step in active steps list
 
 > **data**: `T`
 
-Defined in: [core/src/types.ts:10](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L10)
+Defined in: [core/src/types.ts:10](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L10)
 
 Global wizard data object
 
@@ -126,7 +126,7 @@ Global wizard data object
 
 > **dirtyFields**: `Set`\<`string`\>
 
-Defined in: [core/src/types.ts:50](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L50)
+Defined in: [core/src/types.ts:50](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L50)
 
 Set of paths to fields that have been modified
 
@@ -136,7 +136,7 @@ Set of paths to fields that have been modified
 
 > **errors**: `Record`\<`StepId`, `Record`\<`string`, `string`\>\>
 
-Defined in: [core/src/types.ts:12](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L12)
+Defined in: [core/src/types.ts:12](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L12)
 
 Current errors map by step and field
 
@@ -146,7 +146,7 @@ Current errors map by step and field
 
 > **errorSteps**: `Set`\<`StepId`\>
 
-Defined in: [core/src/types.ts:38](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L38)
+Defined in: [core/src/types.ts:38](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L38)
 
 Set of step IDs that currently have active validation errors
 
@@ -156,7 +156,7 @@ Set of step IDs that currently have active validation errors
 
 > `optional` **goToStepResult**: `boolean` \| `"init"` \| `null`
 
-Defined in: [core/src/types.ts:54](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L54)
+Defined in: [core/src/types.ts:54](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L54)
 
 Result of the last goToStep action
 
@@ -166,7 +166,7 @@ Result of the last goToStep action
 
 > **history**: `StepId`[]
 
-Defined in: [core/src/types.ts:30](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L30)
+Defined in: [core/src/types.ts:30](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L30)
 
 History of visited steps (navigation path)
 
@@ -176,7 +176,7 @@ History of visited steps (navigation path)
 
 > **isBusy**: `boolean`
 
-Defined in: [core/src/types.ts:46](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L46)
+Defined in: [core/src/types.ts:46](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L46)
 
 Alias for isPending
 
@@ -186,7 +186,7 @@ Alias for isPending
 
 > **isDirty**: `boolean`
 
-Defined in: [core/src/types.ts:48](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L48)
+Defined in: [core/src/types.ts:48](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L48)
 
 True if any field has been modified since initialization
 
@@ -196,7 +196,7 @@ True if any field has been modified since initialization
 
 > **isFirstStep**: `boolean`
 
-Defined in: [core/src/types.ts:18](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L18)
+Defined in: [core/src/types.ts:18](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L18)
 
 True if currently on the first active step
 
@@ -206,7 +206,7 @@ True if currently on the first active step
 
 > **isLastStep**: `boolean`
 
-Defined in: [core/src/types.ts:20](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L20)
+Defined in: [core/src/types.ts:20](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L20)
 
 True if currently on the last active step
 
@@ -216,7 +216,7 @@ True if currently on the last active step
 
 > **isLoading**: `boolean`
 
-Defined in: [core/src/types.ts:22](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L22)
+Defined in: [core/src/types.ts:22](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L22)
 
 True if the wizard is in an initial loading/hydrating state
 
@@ -226,7 +226,7 @@ True if the wizard is in an initial loading/hydrating state
 
 > **isPending**: `boolean`
 
-Defined in: [core/src/types.ts:24](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L24)
+Defined in: [core/src/types.ts:24](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L24)
 
 True if an async action (like navigation or validation) is in progress
 
@@ -236,7 +236,7 @@ True if an async action (like navigation or validation) is in progress
 
 > **progress**: `number`
 
-Defined in: [core/src/types.ts:42](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L42)
+Defined in: [core/src/types.ts:42](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L42)
 
 Percentage of completion (0-100)
 
@@ -246,6 +246,6 @@ Percentage of completion (0-100)
 
 > **visitedSteps**: `Set`\<`StepId`\>
 
-Defined in: [core/src/types.ts:34](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L34)
+Defined in: [core/src/types.ts:34](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L34)
 
 Set of step IDs that have been visited by the user
