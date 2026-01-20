@@ -1,13 +1,13 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen, act, waitFor, renderHook } from '@testing-library/react';
+import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
+import { IStepConfig, IWizardConfig } from '@wizzard-packages/core';
+import { describe, expect, it } from 'vitest';
+import { WizardStepRenderer } from './components/WizardStepRenderer';
 import {
   WizardProvider,
   useWizardActions,
-  useWizardState,
   useWizardError,
+  useWizardState,
 } from './context/WizardContext';
-import { WizardStepRenderer } from './components/WizardStepRenderer';
-import { IStepConfig, IWizardConfig } from '@wizzard-packages/core';
 
 // Helper component to interact with wizard in tests
 const WizardConsumer = () => {
@@ -71,12 +71,12 @@ describe('Wizard Pro Features', () => {
     );
 
     // Initial state
-    expect(screen.getByTestId('current-step')).toHaveTextContent('step1');
+    expect(screen.getByTestId('current-step').textContent).toBe('step1');
     // Initially only 2 steps active (step1, step3) because step2 condition is async and defaults to false
     await waitFor(() => {
-      expect(screen.getByTestId('steps-count')).toHaveTextContent('2');
+      expect(screen.getByTestId('steps-count').textContent).toBe('2');
     });
-    expect(screen.getByTestId('progress')).toHaveTextContent('50'); // (1/2) * 100
+    expect(screen.getByTestId('progress').textContent).toBe('50'); // (1/2) * 100
   });
 
   it('should handle async step conditions dynamically', async () => {
@@ -87,7 +87,7 @@ describe('Wizard Pro Features', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('steps-count')).toHaveTextContent('2');
+      expect(screen.getByTestId('steps-count').textContent).toBe('2');
     });
 
     // Show step 2
@@ -98,7 +98,7 @@ describe('Wizard Pro Features', () => {
     // Wait for async condition to resolve
     await waitFor(
       () => {
-        expect(screen.getByTestId('steps-count')).toHaveTextContent('3');
+        expect(screen.getByTestId('steps-count').textContent).toBe('3');
       },
       { timeout: 1000 }
     );
@@ -116,20 +116,19 @@ describe('Wizard Pro Features', () => {
     await act(async () => {
       screen.getByTestId('show-2-btn').click();
     });
-
-    await waitFor(() => expect(screen.getByTestId('steps-count')).toHaveTextContent('3'));
+    await waitFor(() => expect(screen.getByTestId('steps-count').textContent).toBe('3'));
 
     // Go to step 2
     await act(async () => {
       screen.getByTestId('next-btn').click();
     });
-    await waitFor(() => expect(screen.getByTestId('current-step')).toHaveTextContent('step2'));
+    await waitFor(() => expect(screen.getByTestId('current-step').textContent).toBe('step2'));
 
     // Go to step 3
     await act(async () => {
       screen.getByTestId('next-btn').click();
     });
-    await waitFor(() => expect(screen.getByTestId('current-step')).toHaveTextContent('step3'));
+    await waitFor(() => expect(screen.getByTestId('current-step').textContent).toBe('step3'));
 
     // Block movement from step 3
     await act(async () => {
@@ -150,15 +149,14 @@ describe('Wizard Pro Features', () => {
     await act(async () => {
       screen.getByTestId('show-2-btn').click();
     });
-
-    await waitFor(() => expect(screen.getByTestId('steps-count')).toHaveTextContent('3'));
+    await waitFor(() => expect(screen.getByTestId('steps-count').textContent).toBe('3'));
 
     await act(async () => {
       await screen.getByTestId('next-btn').click();
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId('history')).toHaveTextContent('step2');
+      expect(screen.getByTestId('history').textContent).toContain('step2');
     });
 
     // Reset
@@ -167,8 +165,8 @@ describe('Wizard Pro Features', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId('current-step')).toHaveTextContent('step1');
-      expect(screen.getByTestId('history')).toHaveTextContent('step1');
+      expect(screen.getByTestId('current-step').textContent).toContain('step1');
+      expect(screen.getByTestId('history').textContent).toContain('step1');
     });
   });
 

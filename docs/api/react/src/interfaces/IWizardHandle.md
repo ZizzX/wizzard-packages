@@ -6,7 +6,7 @@
 
 # Interface: IWizardHandle\<T, StepId\>
 
-Defined in: [react/src/types.ts:19](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/react/src/types.ts#L19)
+Defined in: [react/src/types.ts:19](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/react/src/types.ts#L19)
 
 Handle returned by components for imperative access to the wizard.
 
@@ -26,7 +26,7 @@ Handle returned by components for imperative access to the wizard.
 
 > **actions**: `IWizardActions`\<`StepId`\>
 
-Defined in: [react/src/types.ts:21](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/react/src/types.ts#L21)
+Defined in: [react/src/types.ts:21](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/react/src/types.ts#L21)
 
 ***
 
@@ -34,4 +34,4 @@ Defined in: [react/src/types.ts:21](https://github.com/ZizzX/wizzard-packages/bl
 
 > **state**: [`IWizardState`](IWizardState.md)\<`T`, `StepId`\>
 
-Defined in: [react/src/types.ts:20](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/react/src/types.ts#L20)
+Defined in: [react/src/types.ts:20](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/react/src/types.ts#L20)

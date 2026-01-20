@@ -1,23 +1,13 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  useCallback,
-  useSyncExternalStore,
-  useRef,
-} from 'react';
 import {
-  type IWizardConfig,
   type IPersistenceAdapter,
   type IStepConfig,
-  type Path,
-  type PathValue,
+  type IWizardActions,
+  type IWizardConfig,
   type IWizardContext,
   type IWizardState,
-  type IWizardActions,
   type IWizardStore,
+  type Path,
+  type PathValue,
   type WizardEventHandler,
   type WizardEventName,
   WizardStore,
@@ -25,6 +15,16 @@ import {
   setByPath,
 } from '@wizzard-packages/core';
 import { MemoryAdapter } from '@wizzard-packages/persistence';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import { applyStepDependencies } from '../internal/dependencies';
 
 const UNSET = Symbol('wizard_unset');
@@ -563,29 +563,38 @@ export function useWizardState<T = unknown, StepId extends string = string>(): I
  */
 export function useWizardValue<TValue = any>(
   path: string,
-  options?: { isEqual?: (a: TValue, b: TValue) => boolean }
+  options?: { isEqual?: (a: TValue, b: TValue) => boolean } | ((a: TValue, b: TValue) => boolean)
 ): TValue {
   const store = useContext(WizardStoreContext);
   if (!store) throw new Error('useWizardValue must be used within a WizardProvider');
-  const lastStateRef = useRef<any>(null);
+
+  const lastStateRef = useRef<any>(UNSET);
   const lastValueRef = useRef<any>(UNSET);
+
+  const isEqual = typeof options === 'function' ? options : options?.isEqual;
+  const isEqualRef = useRef(isEqual);
+  isEqualRef.current = isEqual;
+
   const getSnapshot = useCallback(() => {
     const data = store.getSnapshot().data;
     if (data === lastStateRef.current && lastValueRef.current !== UNSET) {
       return lastValueRef.current;
     }
+
     const value = getByPath(data, path) as TValue;
     if (
       lastValueRef.current !== UNSET &&
-      (options?.isEqual || Object.is)(lastValueRef.current, value)
+      (isEqualRef.current || Object.is)(lastValueRef.current, value)
     ) {
       lastStateRef.current = data;
       return lastValueRef.current;
     }
+
     lastStateRef.current = data;
     lastValueRef.current = value;
     return value;
-  }, [store, path, options?.isEqual]);
+  }, [store, path]);
+
   return useSyncExternalStore(store.subscribe, getSnapshot, getSnapshot);
 }
 
@@ -630,27 +639,46 @@ export function useWizardError(path: string): string | undefined {
  */
 export function useWizardSelector<TSelected = any>(
   selector: (state: any) => TSelected,
-  options?: { isEqual?: (a: TSelected, b: TSelected) => boolean }
+  options?:
+    | { isEqual?: (a: TSelected, b: TSelected) => boolean }
+    | ((a: TSelected, b: TSelected) => boolean)
 ): TSelected {
   const store = useContext(WizardStoreContext);
   if (!store) throw new Error('useWizardSelector must be used within a WizardProvider');
 
+  const selectorRef = useRef(selector);
+  selectorRef.current = selector;
+
+  const isEqual = typeof options === 'function' ? options : options?.isEqual;
+  const isEqualRef = useRef(isEqual);
+  isEqualRef.current = isEqual;
+
+  const lastStateRef = useRef<any>(UNSET);
   const lastResultRef = useRef<TSelected | typeof UNSET>(UNSET);
 
   const getSnapshot = useCallback(() => {
     const full = store.getSnapshot();
-    const res = selector(full);
 
-    if (
-      lastResultRef.current !== UNSET &&
-      (options?.isEqual || Object.is)(lastResultRef.current, res)
-    ) {
-      return lastResultRef.current;
+    // If state hasn't changed and we have a cached result, return it
+    if (full === lastStateRef.current && lastResultRef.current !== UNSET) {
+      return lastResultRef.current as TSelected;
     }
 
+    const res = selectorRef.current(full);
+
+    // If result is equal to cached result, return cached result to maintain reference stability
+    if (
+      lastResultRef.current !== UNSET &&
+      (isEqualRef.current || Object.is)(lastResultRef.current as TSelected, res)
+    ) {
+      lastStateRef.current = full;
+      return lastResultRef.current as TSelected;
+    }
+
+    lastStateRef.current = full;
     lastResultRef.current = res;
     return res;
-  }, [store, selector, options?.isEqual]);
+  }, [store]);
 
   return useSyncExternalStore(store.subscribe, getSnapshot, getSnapshot);
 }

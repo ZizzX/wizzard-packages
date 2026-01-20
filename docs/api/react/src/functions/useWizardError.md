@@ -8,7 +8,7 @@
 
 > **useWizardError**(`path`): `string` \| `undefined`
 
-Defined in: [react/src/context/WizardContext.tsx:593](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/react/src/context/WizardContext.tsx#L593)
+Defined in: [react/src/context/WizardContext.tsx:623](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/react/src/context/WizardContext.tsx#L623)
 
 Returns the first error message for a path across all steps.
 

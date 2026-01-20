@@ -8,7 +8,7 @@
 
 > **useWizardStoreSelector**\<`TSelected`\>(`store`, `selector`, `options?`): `TSelected`
 
-Defined in: [react/src/store.ts:471](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/react/src/store.ts#L471)
+Defined in: [react/src/store.ts:497](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/react/src/store.ts#L497)
 
 Hook: select derived state without React Context.
 
@@ -30,9 +30,7 @@ Hook: select derived state without React Context.
 
 ### options?
 
-#### isEqual?
-
-(`a`, `b`) => `boolean`
+\{ `isEqual?`: (`a`, `b`) => `boolean`; \} | (`a`, `b`) => `boolean`
 
 ## Returns
 

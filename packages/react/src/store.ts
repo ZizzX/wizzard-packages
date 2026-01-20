@@ -1,19 +1,19 @@
-import { useCallback, useRef, useSyncExternalStore } from 'react';
 import {
-  type IWizardConfig,
-  type IPersistenceAdapter,
-  type IWizardState,
-  type IWizardStore,
-  type IStepConfig,
-  type Path,
-  type PathValue,
-  WizardStore,
-  getByPath,
-  setByPath,
+    type IPersistenceAdapter,
+    type IStepConfig,
+    type IWizardConfig,
+    type IWizardState,
+    type IWizardStore,
+    type Path,
+    type PathValue,
+    WizardStore,
+    getByPath,
+    setByPath,
 } from '@wizzard-packages/core';
 import { MemoryAdapter } from '@wizzard-packages/persistence';
-import type { IWizardActionsTyped } from './types';
+import { useCallback, useRef, useSyncExternalStore } from 'react';
 import { applyStepDependencies } from './internal/dependencies';
+import type { IWizardActionsTyped } from './types';
 
 const UNSET = Symbol('wizard_store_unset');
 const META_KEY = '__wizzard_meta__';
@@ -418,10 +418,16 @@ export const useWizardStoreState = <T, StepId extends string = string>(
 export const useWizardStoreValue = <T, P extends Path<T>>(
   store: IWizardStore<T, any>,
   path: P,
-  options?: { isEqual?: (a: PathValue<T, P>, b: PathValue<T, P>) => boolean }
+  options?:
+    | { isEqual?: (a: PathValue<T, P>, b: PathValue<T, P>) => boolean }
+    | ((a: PathValue<T, P>, b: PathValue<T, P>) => boolean)
 ): PathValue<T, P> => {
   const lastStateRef = useRef<any>(UNSET);
   const lastValueRef = useRef<any>(UNSET);
+
+  const isEqual = typeof options === 'function' ? options : options?.isEqual;
+  const isEqualRef = useRef(isEqual);
+  isEqualRef.current = isEqual;
 
   const getSnapshot = useCallback(() => {
     const data = store.getSnapshot().data;
@@ -432,7 +438,7 @@ export const useWizardStoreValue = <T, P extends Path<T>>(
     const value = getByPath(data, path as string) as PathValue<T, P>;
     if (
       lastValueRef.current !== UNSET &&
-      (options?.isEqual || Object.is)(lastValueRef.current, value)
+      (isEqualRef.current || Object.is)(lastValueRef.current, value)
     ) {
       lastStateRef.current = data;
       return lastValueRef.current;
@@ -441,7 +447,7 @@ export const useWizardStoreValue = <T, P extends Path<T>>(
     lastStateRef.current = data;
     lastValueRef.current = value;
     return value;
-  }, [store, path, options?.isEqual]);
+  }, [store, path]);
 
   return useSyncExternalStore(store.subscribe, getSnapshot, getSnapshot);
 };
@@ -491,24 +497,39 @@ export const useWizardStoreError = (
 export const useWizardStoreSelector = <TSelected>(
   store: IWizardStore<any, any>,
   selector: (state: any) => TSelected,
-  options?: { isEqual?: (a: TSelected, b: TSelected) => boolean }
+  options?: { isEqual?: (a: TSelected, b: TSelected) => boolean } | ((a: TSelected, b: TSelected) => boolean)
 ): TSelected => {
+  const selectorRef = useRef(selector);
+  selectorRef.current = selector;
+
+  const isEqual = typeof options === 'function' ? options : options?.isEqual;
+  const isEqualRef = useRef(isEqual);
+  isEqualRef.current = isEqual;
+
+  const lastStateRef = useRef<any>(UNSET);
   const lastResultRef = useRef<TSelected | typeof UNSET>(UNSET);
 
   const getSnapshot = useCallback(() => {
     const full = store.getSnapshot();
-    const res = selector(full);
+
+    if (full === lastStateRef.current && lastResultRef.current !== UNSET) {
+      return lastResultRef.current as TSelected;
+    }
+
+    const res = selectorRef.current(full);
 
     if (
       lastResultRef.current !== UNSET &&
-      (options?.isEqual || Object.is)(lastResultRef.current, res)
+      (isEqualRef.current || Object.is)(lastResultRef.current as TSelected, res)
     ) {
-      return lastResultRef.current;
+      lastStateRef.current = full;
+      return lastResultRef.current as TSelected;
     }
 
+    lastStateRef.current = full;
     lastResultRef.current = res;
     return res;
-  }, [store, selector, options?.isEqual]);
+  }, [store]);
 
   return useSyncExternalStore(store.subscribe, getSnapshot, getSnapshot);
 };

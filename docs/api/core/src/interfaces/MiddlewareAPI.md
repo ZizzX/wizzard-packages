@@ -6,7 +6,7 @@
 
 # Interface: MiddlewareAPI\<T, StepId\>
 
-Defined in: [core/src/types.ts:258](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L258)
+Defined in: [core/src/types.ts:258](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L258)
 
 Middleware API
 
@@ -26,7 +26,7 @@ Middleware API
 
 > **dispatch**: (`action`) => `void`
 
-Defined in: [core/src/types.ts:259](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L259)
+Defined in: [core/src/types.ts:259](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L259)
 
 #### Parameters
 
@@ -44,7 +44,7 @@ Defined in: [core/src/types.ts:259](https://github.com/ZizzX/wizzard-packages/bl
 
 > **getSnapshot**: () => [`IWizardState`](IWizardState.md)\<`T`, `StepId`\>
 
-Defined in: [core/src/types.ts:261](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L261)
+Defined in: [core/src/types.ts:261](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L261)
 
 #### Returns
 
@@ -56,7 +56,7 @@ Defined in: [core/src/types.ts:261](https://github.com/ZizzX/wizzard-packages/bl
 
 > **getState**: () => `T`
 
-Defined in: [core/src/types.ts:260](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L260)
+Defined in: [core/src/types.ts:260](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L260)
 
 #### Returns
 

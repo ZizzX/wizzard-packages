@@ -8,7 +8,7 @@
 
 > **useWizard**\<`T`, `StepId`\>(): `IWizardContext`\<`T`, `StepId`\>
 
-Defined in: [react/src/hooks/useWizard.ts:7](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/react/src/hooks/useWizard.ts#L7)
+Defined in: [react/src/hooks/useWizard.ts:7](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/react/src/hooks/useWizard.ts#L7)
 
 Alias for useWizardContext.
 

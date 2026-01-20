@@ -6,9 +6,9 @@
 
 # Function: createWizardHooks()
 
-> **createWizardHooks**\<`T`, `StepId`\>(`store`): `object`
+> **createWizardHooks**\<`T`, `StepId`\>(`store`, `actions?`): `object`
 
-Defined in: [react/src/store.ts:499](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/react/src/store.ts#L499)
+Defined in: [react/src/store.ts:540](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/react/src/store.ts#L540)
 
 Helper: build store-bound hooks for a single store instance.
 
@@ -28,6 +28,10 @@ Helper: build store-bound hooks for a single store instance.
 
 `IWizardStore`\<`T`, `StepId`\>
 
+### actions?
+
+[`IWizardActionsTyped`](../type-aliases/IWizardActionsTyped.md)\<`T`, `StepId`\>
+
 ## Returns
 
 `object`
@@ -45,6 +49,32 @@ Helper: build store-bound hooks for a single store instance.
 #### Returns
 
 `string` \| `undefined`
+
+### useWizardField()
+
+> **useWizardField**: \<`P`\>(`path`, `options?`) => \[`PathValue`\<`T`, `P`\>, (`value`) => `void`\]
+
+#### Type Parameters
+
+##### P
+
+`P` *extends* `string`
+
+#### Parameters
+
+##### path
+
+`P`
+
+##### options?
+
+###### isEqual?
+
+(`a`, `b`) => `boolean`
+
+#### Returns
+
+\[`PathValue`\<`T`, `P`\>, (`value`) => `void`\]
 
 ### useWizardSelector()
 

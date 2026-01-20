@@ -8,7 +8,7 @@
 
 > **WizardEventPayloads**\<`StepId`\> = `object`
 
-Defined in: [core/src/types.ts:279](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L279)
+Defined in: [core/src/types.ts:279](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L279)
 
 Event Payloads
 
@@ -24,7 +24,7 @@ Event Payloads
 
 > **step\_change**: `object`
 
-Defined in: [core/src/types.ts:280](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L280)
+Defined in: [core/src/types.ts:280](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L280)
 
 #### from
 
@@ -44,7 +44,7 @@ Defined in: [core/src/types.ts:280](https://github.com/ZizzX/wizzard-packages/bl
 
 > **validation\_error**: `object`
 
-Defined in: [core/src/types.ts:281](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L281)
+Defined in: [core/src/types.ts:281](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L281)
 
 #### errors
 
@@ -64,7 +64,7 @@ Defined in: [core/src/types.ts:281](https://github.com/ZizzX/wizzard-packages/bl
 
 > **wizard\_reset**: `object`
 
-Defined in: [core/src/types.ts:286](https://github.com/ZizzX/wizzard-packages/blob/3faafc350c2fba09f986bc003f64611593ef97f2/packages/core/src/types.ts#L286)
+Defined in: [core/src/types.ts:286](https://github.com/ZizzX/wizzard-packages/blob/bd9abc50162aedea92b5b7ad6612c24b655bcfe0/packages/core/src/types.ts#L286)
 
 #### data
 

@@ -22,12 +22,13 @@
    - Описать что сделано и почему
 
 3. **Контекст:** Этот файл является источником истины для всех улучшений проекта
-Так же следует все задачи вести в bd! Планировать все таски в bd!
-И всегда ссылаться на этот документ и bd при обсуждении приоритетов.
-Инструкция по использованию bd: AGENTS.md
-Никогда не закрывай сам таски в bd, только через PR.
-bd использовать только для тасков; `bd sync` не запускать (он изменяет проектные файлы).
-Прежде чем что-то делать сначала напиши мне план что будешь делать!
+   Так же следует все задачи вести в bd! Планировать все таски в bd!
+   И всегда ссылаться на этот документ и bd при обсуждении приоритетов.
+   Инструкция по использованию bd: AGENTS.md
+   Никогда не закрывай сам таски в bd, только через PR.
+   bd использовать только для тасков; `bd sync` не запускать (он изменяет проектные файлы).
+   Прежде чем что-то делать сначала напиши мне план что будешь делать!
+
 ---
 
 ## 🎯 Priority 1: Critical (Срок: 1-2 недели)
@@ -288,7 +289,7 @@ export function useWizardValue<TValue = any>(...)
 - [x] Настроить tsup для каждого пакета
 - [x] Настроить exports в package.json
 - [ ] Проверить tree-shaking
-- [x] Проверить точечные импорты @wizzard-packages/* в docs/examples
+- [x] Проверить точечные импорты @wizzard-packages/\* в docs/examples
 
 **Фаза 4: Тестирование (2 дня)**
 
@@ -299,13 +300,13 @@ export function useWizardValue<TValue = any>(...)
 **Фаза 5: Документация (1 день)**
 
 - [x] Обновить README
-- [ ] Создать MIGRATION_SCOPED.md (legacy -> @wizzard-packages/*)
+- [ ] Создать MIGRATION_SCOPED.md (legacy -> @wizzard-packages/\*)
 - [/] Обновить docs
 
 **Фаза 6: Публикация (1 день)**
 
 - [x] Настроить публикацию scoped пакетов
-- [x] Выпустить @wizzard-packages/* версии **0.1.0**
+- [x] Выпустить @wizzard-packages/\* версии **0.1.0**
 - [ ] Депрекейт `wizzard-stepper-react` (ссылка на миграцию)
 
 **Критерии завершения:**
@@ -328,12 +329,12 @@ export function useWizardValue<TValue = any>(...)
 
 **Размеры пакетов (после):**
 
-  - @wizzard-packages/core: **\_**
-  - @wizzard-packages/react: **\_**
-  - @wizzard-packages/adapter-zod: **\_**
-  - @wizzard-packages/adapter-yup: **\_**
-  - @wizzard-packages/middleware: **\_**
-  - @wizzard-packages/persistence: **\_**
+- @wizzard-packages/core: **\_**
+- @wizzard-packages/react: **\_**
+- @wizzard-packages/adapter-zod: **\_**
+- @wizzard-packages/adapter-yup: **\_**
+- @wizzard-packages/middleware: **\_**
+- @wizzard-packages/persistence: **\_**
 
 **Breaking changes:** **\_**
 
@@ -657,7 +658,7 @@ gantt
 
 ## 🎯 Success Metrics
 
-### Цель v0.1.0 (@wizzard-packages/* после всех Priority 1-2 улучшений)
+### Цель v0.2.0 (@wizzard-packages/\* после всех Priority 1-2 улучшений)
 
 | Метрика                      | Текущее  | Целевое    | Статус                |
 | ---------------------------- | -------- | ---------- | --------------------- |
@@ -676,11 +677,26 @@ gantt
 ## 📝 Notes & Decisions
 
 ### 2026-01-04: E2E Testing Implemented ✅
+
 ### 2026-01-10: E2E demo alias fix for @wizzard-packages/react ✅
-### 2026-01-10: Decision: scoped packages @wizzard-packages/* + новый репозиторий ✅
+
+### 2026-01-10: Decision: scoped packages @wizzard-packages/\* + новый репозиторий ✅
+
 ### 2026-01-10: Repo moved to wizzard-packages; GitHub Pages deferred ✅
+
 ### 2026-01-10: Release strategy defined ✅
-### 2026-01-11: Published @wizzard-packages/* v0.1.0 ✅
+
+### 2026-01-19: Stable & Flexible useWizardSelector ✅
+
+- Refactored `useWizardSelector` and `useWizardValue` to be stable and avoid infinite loops.
+- Added `useWizardShallowSelector` and support for direct `isEqual` passing.
+- Stabilized `getSnapshot` in `useSyncExternalStore` for React 18+ compatibility.
+
+### 2026-01-20: Monorepo Build Fix & Release Prep ✅
+- **Problem**: Root `build` script failed because it used a local `tsup` config instead of workspace recursion.
+- **Solution**: Switched root scripts to `pnpm -r build`, removed garbage files (`dist`, `.npmignore`, `tsup.config.ts`), and added changesets.
+
+### 2026-01-11: Published @wizzard-packages/\* v0.1.0 ✅
 
 - All scoped packages release in lockstep starting at 0.1.0
 - Releases cut from main with git tags vX.Y.Z + GitHub releases
@@ -715,5 +731,5 @@ _Здесь записывать важные решения и изменени
 
 ---
 
-**Last Updated:** 2026-01-11 (v0.1.0 published)  
-**Next Review:** 2026-01-18
+**Last Updated:** 2026-01-19 (Selector stability improvements)  
+**Next Review:** 2026-01-26
