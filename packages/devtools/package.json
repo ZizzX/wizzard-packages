@@ -1,6 +1,6 @@
 {
   "name": "@wizzard-packages/devtools",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "DevTools UI for Wizzard Stepper.",
   "repository": {
     "type": "git",
