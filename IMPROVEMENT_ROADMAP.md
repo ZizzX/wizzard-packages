@@ -692,6 +692,10 @@ gantt
 - Added `useWizardShallowSelector` and support for direct `isEqual` passing.
 - Stabilized `getSnapshot` in `useSyncExternalStore` for React 18+ compatibility.
 
+### 2026-01-20: Monorepo Build Fix & Release Prep ✅
+- **Problem**: Root `build` script failed because it used a local `tsup` config instead of workspace recursion.
+- **Solution**: Switched root scripts to `pnpm -r build`, removed garbage files (`dist`, `.npmignore`, `tsup.config.ts`), and added changesets.
+
 ### 2026-01-11: Published @wizzard-packages/\* v0.1.0 ✅
 
 - All scoped packages release in lockstep starting at 0.1.0

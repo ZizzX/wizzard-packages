@@ -1,5 +1,20 @@
 ## Session Update
 
+- Date: 2026-01-20 00:00
+- Scope: Monorepo build fix & Release prep
+- Key changes:
+  - Fixed root `package.json` scripts to use `pnpm -r build` (recursive) instead of incorrect local tsup config.
+  - Removed incorrect root `tsup.config.ts`, `.npmignore`, and `dist` folder.
+  - Added changeset `fix-root-build-scripts.md` (patch) for build script fixes.
+  - Added changeset `selector-stability-and-features.md` (minor) for `useWizardShallowSelector` and stability fixes.
+  - Verified full build and test suite (unit + E2E) pass.
+  - Closed task `wizzard-stepper-react-887` (Fix root build script).
+- Tests run: All tests passed. `pnpm -r build` passed.
+- Open questions: none.
+- Next action: Merge release PRs when CI completes.
+
+## Session Update
+
 - Date: 2026-01-19 02:15
 - Scope: useWizardSelector stability, DX improvements & Build fixes
 - Key changes:
