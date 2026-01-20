@@ -3,11 +3,10 @@
   "compilerOptions": {
     "allowJs": true,
     "checkJs": false,
-    "noEmit": true
+    "noEmit": true,
   },
   "include": [
     "eslint.config.js",
-    "tsup.config.ts",
     "vitest.config.ts",
     "playwright.config.ts",
     "e2e/**/*.ts",
@@ -15,6 +14,6 @@
     "packages/*/vitest.config.ts",
     "packages/ui/vite.config.ts",
     "packages/*/src/**/*.test.ts",
-    "packages/*/src/**/*.test.tsx"
-  ]
+    "packages/*/src/**/*.test.tsx",
+  ],
 }
