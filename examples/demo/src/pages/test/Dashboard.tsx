@@ -87,7 +87,7 @@ const Dashboard = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-5xl font-extrabold tracking-tight mb-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-800 bg-clip-text text-transparent">
+            <h1 className="text-5xl font-extrabold tracking-tight mb-4 bg-linear-to-r from-slate-900 via-indigo-950 to-slate-800 bg-clip-text text-transparent">
               Wizzard Stepper React
             </h1>
             <p className="text-xl text-slate-500 max-w-2xl leading-relaxed">
@@ -111,7 +111,7 @@ const Dashboard = () => {
                 <div className="relative h-full bg-white rounded-2xl border border-slate-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)] transition-all duration-300 group-hover:shadow-[0_20px_40px_rgba(0,0,0,0.04)] group-hover:border-indigo-100 p-8 overflow-hidden">
                   {/* Background Accent */}
                   <div
-                    className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${test.color} opacity-[0.03] rounded-bl-full transition-opacity group-hover:opacity-[0.08]`}
+                    className={`absolute top-0 right-0 w-32 h-32 bg-linear-to-br ${test.color} opacity-[0.03] rounded-bl-full transition-opacity group-hover:opacity-[0.08]`}
                   />
 
                   <div className="relative z-10">
@@ -125,7 +125,7 @@ const Dashboard = () => {
 
                     <p className="text-slate-500 leading-relaxed text-sm">{test.description}</p>
 
-                    <div className="mt-8 flex items-center text-sm font-semibold text-indigo-600 opacity-0 group-hover:opacity-100 transition-all transform translate-x-[-10px] group-hover:translate-x-0">
+                    <div className="mt-8 flex items-center text-sm font-semibold text-indigo-600 opacity-0 group-hover:opacity-100 transition-all transform -translate-x-2.5 group-hover:translate-x-0">
                       Explore demo
                       <svg
                         className="ml-2 w-4 h-4"

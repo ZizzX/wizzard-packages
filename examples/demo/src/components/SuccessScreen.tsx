@@ -19,7 +19,7 @@ const SuccessScreen: React.FC<SuccessScreenProps> = ({
   return (
     <div className="max-w-2xl mx-auto py-12 px-4">
       <Card className="shadow-2xl border-none overflow-hidden bg-white">
-        <div className="h-2 bg-gradient-to-r from-emerald-400 to-teal-500" />
+        <div className="h-2 bg-linear-to-r from-emerald-400 to-teal-500" />
         <CardContent className="py-16 text-center">
           <motion.div
             initial={{ scale: 0 }}
