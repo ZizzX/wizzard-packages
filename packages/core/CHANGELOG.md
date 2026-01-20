@@ -1,5 +1,15 @@
 # @wizzard-packages/core
 
+## 0.4.0
+
+### Minor Changes
+
+- 5696c5c: feat(react): improve DX with store-first hooks, field setters, SSR-safe subscriptions, and docs
+
+### Patch Changes
+
+- 47e81e7: Fix root build scripts to correctly support monorepo structure (switched to `pnpm -r build`).
+
 ## 0.3.0
 
 ### Minor Changes
