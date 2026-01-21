@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
-import { defineComponent, h, onMounted, ref } from 'vue';
+import { describe, expect, it } from 'vitest';
+import { defineComponent, h, ref } from 'vue';
 import { mount } from '@vue/test-utils';
 import { createWizardFactory } from './index';
 import type { IWizardConfig } from '@wizzard-packages/core';

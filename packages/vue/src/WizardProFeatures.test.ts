@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { defineComponent, h, nextTick } from 'vue';
 import { mount } from '@vue/test-utils';
 import { createWizardFactory } from './index';
@@ -463,10 +463,6 @@ describe('Vue Wizard Pro Features', () => {
 
     // Wait a tick for mount to complete
     await nextTick();
-
-    // Check if busy state is set during async condition resolution
-    // The condition is checked immediately on mount, so we might catch it
-    const initialBusy = wrapper.find('[data-testid="is-busy"]').text();
 
     // Resolve the condition
     resolveCondition(true);
