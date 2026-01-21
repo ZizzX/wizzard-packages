@@ -1,0 +1,63 @@
+{
+  "name": "@wizzard-packages/vue",
+  "version": "0.1.0",
+  "description": "Vue 3 composition API and components for Wizzard Stepper.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ZizzX/wizzard-packages.git",
+    "directory": "packages/vue"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup src/index.ts --format cjs,esm --watch --dts",
+    "lint": "eslint .",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "type-check": "vue-tsc --noEmit"
+  },
+  "keywords": [
+    "wizard",
+    "stepper",
+    "vue",
+    "vue3",
+    "composition-api",
+    "headless",
+    "workflow"
+  ],
+  "author": "ZizzX",
+  "license": "MIT",
+  "peerDependencies": {
+    "vue": "^3.3.0"
+  },
+  "dependencies": {
+    "@wizzard-packages/core": "workspace:*",
+    "@wizzard-packages/middleware": "workspace:*",
+    "@wizzard-packages/persistence": "workspace:*"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "@vue/test-utils": "^2.4.6",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^4.0.16",
+    "vue": "^3.5.13",
+    "vue-tsc": "^2.2.0"
+  }
+}
