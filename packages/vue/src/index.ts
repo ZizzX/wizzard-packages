@@ -63,19 +63,32 @@ export function useProvideWizard<
   });
 
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  let isInitialRun = true;
+
   watch(
     () => state.value.data,
     async (newData) => {
       if (debounceTimer) clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(async () => {
+
+      // Run immediately on initial load, debounce subsequent changes
+      if (isInitialRun) {
+        isInitialRun = false;
         const resolved = await store.resolveActiveSteps(newData);
         store.dispatch({
           type: 'SET_ACTIVE_STEPS',
           payload: { steps: resolved as any },
         });
-      }, 200);
+      } else {
+        debounceTimer = setTimeout(async () => {
+          const resolved = await store.resolveActiveSteps(newData);
+          store.dispatch({
+            type: 'SET_ACTIVE_STEPS',
+            payload: { steps: resolved as any },
+          });
+        }, 200);
+      }
     },
-    { deep: true }
+    { deep: true, immediate: true }
   );
 
   onScopeDispose(() => {
