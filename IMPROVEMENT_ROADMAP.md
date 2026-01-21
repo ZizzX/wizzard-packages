@@ -698,6 +698,22 @@ gantt
 - Added `useWizardShallowSelector` and support for direct `isEqual` passing.
 - Stabilized `getSnapshot` in `useSyncExternalStore` for React 18+ compatibility.
 
+### 2026-01-21: Vue 0.2.0 Released to npm ✅
+
+- **Achievement**: Successfully published `@wizzard-packages/vue@0.2.0` to npmjs.com
+- **Features**: 
+  - Full Vue 3 Composition API adapter with feature parity to React
+  - Fixed conditional steps (isVisible) resolution on initialData load
+  - Aligned reset() behavior with React adapter
+  - Comprehensive documentation: README expanded from 129 to 835 lines
+  - 12 advanced integration examples, best practices, testing guides
+- **Testing**: 49/49 unit tests passing (10 Vue-specific tests added)
+- **E2E Progress**: 4/11 Vue E2E specs ported
+- **CI Improvements**: Added timeout guards (15min), Playwright stability config, E2E restricted to main branch
+- **Git Tag**: `@wizzard-packages/vue@0.2.0` created
+- **Known Issues**: GitHub Packages publish failed (non-blocking), npmjs.com successful
+- **Next Steps**: Port remaining 7 E2E specs, add HTTP probe for CI stability, deploy Vue demo to GitHub Pages
+
 ### 2026-01-20: Monorepo Build Fix & Release Prep ✅
 - **Problem**: Root `build` script failed because it used a local `tsup` config instead of workspace recursion.
 - **Solution**: Switched root scripts to `pnpm -r build`, removed garbage files (`dist`, `.npmignore`, `tsup.config.ts`), and added changesets.
