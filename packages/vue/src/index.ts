@@ -6,7 +6,16 @@ import {
   WizardStore,
   getByPath,
 } from '@wizzard-packages/core';
-import { type InjectionKey, type Ref, inject, onScopeDispose, provide, ref, shallowRef } from 'vue';
+import {
+  type InjectionKey,
+  type Ref,
+  inject,
+  onScopeDispose,
+  provide,
+  ref,
+  shallowRef,
+  watch,
+} from 'vue';
 
 /**
  * Injection key for the WizardStore
@@ -46,6 +55,33 @@ export function useProvideWizard<
   }
 
   provide(WIZARD_STORE_KEY, store);
+
+  // Watch for data changes and resolve active steps (similar to React's useEffect)
+  const state = shallowRef(store.getSnapshot());
+  const unsubscribe = store.subscribe(() => {
+    state.value = store.getSnapshot();
+  });
+
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  watch(
+    () => state.value.data,
+    async (newData) => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(async () => {
+        const resolved = await store.resolveActiveSteps(newData);
+        store.dispatch({
+          type: 'SET_ACTIVE_STEPS',
+          payload: { steps: resolved as any },
+        });
+      }, 200);
+    },
+    { deep: true }
+  );
+
+  onScopeDispose(() => {
+    unsubscribe();
+    if (debounceTimer) clearTimeout(debounceTimer);
+  });
 
   return store;
 }
@@ -261,7 +297,47 @@ export function useWizardActions<
       return value !== undefined ? value : defaultValue;
     },
     setErrors: store.setStepErrors.bind(store),
-    reset: (data?: any) => store.dispatch({ type: 'RESET', payload: { data } }),
+    reset: (data?: any) => {
+      const resetData = data || ({} as TSchema);
+      store.dispatch({ type: 'RESET', payload: { data: resetData } });
+      store.updateErrors({} as Record<StepId, Record<string, string>>);
+      store.dispatch({
+        type: 'SET_VISITED_STEPS',
+        payload: { steps: new Set() },
+      });
+      store.dispatch({
+        type: 'SET_COMPLETED_STEPS',
+        payload: { steps: new Set() },
+      });
+      store.dispatch({
+        type: 'SET_ERROR_STEPS',
+        payload: { steps: new Set() },
+      });
+
+      const snapshot = store.getSnapshot();
+      const activeSteps = snapshot.activeSteps;
+
+      if (activeSteps.length > 0) {
+        const startId = activeSteps[0].id;
+        store.dispatch({
+          type: 'SET_CURRENT_STEP_ID',
+          payload: { stepId: startId as StepId },
+        });
+        store.dispatch({
+          type: 'SET_HISTORY',
+          payload: { history: [] },
+        });
+      } else {
+        store.dispatch({
+          type: 'SET_CURRENT_STEP_ID',
+          payload: { stepId: '' as StepId },
+        });
+        store.dispatch({
+          type: 'SET_HISTORY',
+          payload: { history: [] },
+        });
+      }
+    },
     validateStep: store.validateStep.bind(store),
     validateAll: store.validateAll.bind(store),
   };

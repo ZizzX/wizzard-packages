@@ -82,7 +82,7 @@ describe('Vue Wizard Pro Features', () => {
     expect(wrapper.find('[data-testid="progress"]').text()).toBe('50');
   });
 
-  it.skip('should handle async step conditions dynamically', async () => {
+  it('should handle async step conditions dynamically', async () => {
     const steps: IStepConfig<TestSchema, StepId>[] = [
       { id: 'step1', label: 'Step 1' },
       {
@@ -124,7 +124,8 @@ describe('Vue Wizard Pro Features', () => {
     const wrapper = mount(Provider);
 
     // Wait for initial async condition check to complete
-    await new Promise((r) => setTimeout(r, 100));
+    // Need to account for 200ms debounce + 20ms async condition
+    await new Promise((r) => setTimeout(r, 250));
     await nextTick();
     await nextTick();
 
@@ -135,7 +136,8 @@ describe('Vue Wizard Pro Features', () => {
     await nextTick();
 
     // Wait for async condition to re-resolve with new data
-    await new Promise((r) => setTimeout(r, 100));
+    // Need to account for 200ms debounce + 20ms async condition
+    await new Promise((r) => setTimeout(r, 250));
     await nextTick();
     await nextTick();
 
@@ -225,7 +227,7 @@ describe('Vue Wizard Pro Features', () => {
     expect(wrapper.find('[data-testid="current-step"]').text()).toBe('step3');
   });
 
-  it.skip('should reset wizard state', async () => {
+  it('should reset wizard state', async () => {
     const steps: IStepConfig<TestSchema, StepId>[] = [
       { id: 'step1', label: 'Step 1' },
       { id: 'step2', label: 'Step 2' },
