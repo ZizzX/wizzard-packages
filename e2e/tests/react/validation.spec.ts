@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/base';
+import { test, expect } from '../../fixtures/base';
 
 /**
  * E2E Test: Validation Logic
