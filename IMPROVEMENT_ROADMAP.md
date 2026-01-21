@@ -139,6 +139,12 @@ playwright.config.ts
 
 </details>
 
+### 1.4 StackBlitz Examples for Vue (P2)
+- Создать интерактивные примеры на StackBlitz для Vue adapter.
+- Покрыть основные сценарии: persistence, guards, conditional steps, array data.
+- Упростить онбординг пользователей (open in browser, edit & play).
+- **Deliverable:** Коллекция StackBlitz ссылок в README и документации.
+
 ---
 
 ### 1.2 API Documentation (TypeDoc)

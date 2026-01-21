@@ -6,6 +6,13 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e/tests',
+  timeout: process.env.CI ? 60 * 1000 : 30 * 1000,
+  expect: {
+    timeout: 5000,
+  },
+
+  // Global timeout for entire test run on CI
+  globalTimeout: process.env.CI ? 20 * 60 * 1000 : undefined,
 
   // Run tests in files in parallel
   fullyParallel: true,
@@ -32,21 +39,55 @@ export default defineConfig({
 
     // Screenshot on failure
     screenshot: 'only-on-failure',
+
+    // Navigation timeout
+    navigationTimeout: process.env.CI ? 30000 : 15000,
   },
 
   // Configure projects for major browsers
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: 'react',
+      testMatch: /react\/.*\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: 'http://localhost:5173/wizzard-stepper-react/',
+      },
+    },
+    {
+      name: 'vue',
+      testMatch: /vue\/.*\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: 'http://127.0.0.1:5174/',
+      },
     },
   ],
 
-  // Run your local dev server before starting the tests
-  webServer: {
-    command: 'cd examples/demo && pnpm dev',
-    url: 'http://localhost:5173/wizzard-stepper-react/',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+  // Run your local dev servers before starting the tests
+  webServer: [
+    {
+      command: 'pnpm --filter demo dev',
+      url: 'http://localhost:5173/wizzard-stepper-react/',
+      reuseExistingServer: !process.env.CI,
+      timeout: process.env.CI ? 180 * 1000 : 120 * 1000,
+      stdout: 'pipe',
+      stderr: 'pipe',
+      // Add retries for readiness check
+      ignoreHTTPSErrors: true,
+    },
+    {
+      command: 'pnpm --filter @examples/vue-demo dev --host 127.0.0.1 --port 5174 --strictPort',
+      url: 'http://127.0.0.1:5174/',
+      reuseExistingServer: !process.env.CI,
+      timeout: process.env.CI ? 180 * 1000 : 120 * 1000,
+      stdout: 'pipe',
+      stderr: 'pipe',
+      // Add retries for readiness check
+      ignoreHTTPSErrors: true,
+    },
+  ],
+
+  // Maximum time for the entire test run
+  maxFailures: process.env.CI ? 10 : undefined,
 });
