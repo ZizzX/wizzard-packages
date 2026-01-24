@@ -26,7 +26,7 @@
 ## 🧱 Epic: Headless + UI Integrations (P1)
 **Цель:** Снизить порог входа для новичков, предоставив готовые примеры интеграции с популярными UI-библиотеками ("Copy-Paste" решения).
 
-### 2.1 Shadcn/UI Connector Example (P1)
+### 2.1 Shadcn/UI Connector Example (P1) ✅
 - Создать демо-проект или пакет `@wizzard-packages/ui-shadcn`.
 - Показать связку: `Wizard` + `Tabs` + `Form` + `Zod`.
 - **KPI:** Самый частый запрос в React-комьюнити.
@@ -89,6 +89,14 @@
 ---
 
 ## 📝 Notes & Decisions
+### 2026-01-24: Shadcn/UI Connector Completed ✅
+- **Achievement**: Delivered `examples/shadcn-ui-connector` with factory pattern.
+- **Features**:
+  - `createShadcnWizard` factory for type-safe, pre-styled components.
+  - Native Tailwind v4 support.
+  - Documentation updated with UI Integrations section.
+  - Added "Headless Core" examples to READMEs.
+
 ### 2026-01-21: Vue 0.2.0 Released to npm ✅
 - **Achievement**: Successfully published `@wizzard-packages/vue@0.2.0` to npmjs.com
 - **Features**:

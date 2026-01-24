@@ -1,5 +1,27 @@
 ## Session Update
 
+- Date: 2026-01-24 14:20
+- Scope: Shadcn/UI Integration & Documentation
+- Key changes:
+  - Completed P1 Task: Shadcn/UI Connector Example (`examples/shadcn-ui-connector`) ✅
+  - Implemented `createShadcnWizard` factory pattern for fully typed, pre-styled wizard components.
+  - Added native Tailwind v4 support (fixed `border-border` utility issue).
+  - Updated root `README.md`:
+    - Added "UI Integrations" section linking to Shadcn example.
+    - Added "Option B: Vue 3 bindings" with modern `<script setup>` syntax example.
+    - Added "Option C: Headless core only" example.
+  - Updated `packages/react/README.md` with UI Integration guide.
+  - Updated `examples/shadcn-ui-connector/README.md` with Headless Core usage alternative.
+  - Created task for future CLI utility (scaffolding adapters).
+  - Closed task `wizzard-stepper-react-909` in BD.
+- Tests run:
+  - `pnpm build` passed for shadcn-ui-connector.
+  - `pnpm tsc -b` passed for type checking.
+- Next action:
+  - Proceed with Vue E2E stabilization (Task 906/898) or AI Generator Core (Task 915).
+
+## Session Update
+
 - Date: 2026-01-21 23:10
 - Scope: Vue 0.2.0 Release - E2E stabilization & npm publish
 - Key changes:

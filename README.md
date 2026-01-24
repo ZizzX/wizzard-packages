@@ -4,7 +4,7 @@
 [![license](https://img.shields.io/npm/l/@wizzard-packages/react.svg)](https://github.com/ZizzX/wizzard-packages/blob/main/LICENSE)
 [![bundle size](https://img.shields.io/bundlephobia/minzip/@wizzard-packages/react)](https://bundlephobia.com/package/@wizzard-packages/react)
 
-Headless, typed wizard engine for building multi-step flows with React or any UI. The repo ships a core engine plus React bindings, adapters, middleware, persistence, and devtools.
+Headless, typed wizard engine for building multi-step flows with React, Vue, or any UI. The repo ships a core engine plus framework bindings, adapters, middleware, persistence, and devtools.
 
 > Scoped packages are the primary distribution (`@wizzard-packages/*`) in the new repo (`wizzard-packages`). The legacy `wizzard-stepper-react` package is deprecated and stays on v2.x for critical fixes only.
 
@@ -16,6 +16,7 @@ Headless, typed wizard engine for building multi-step flows with React or any UI
 | --- | --- |
 | `@wizzard-packages/core` | Framework-agnostic engine (state, actions, types) |
 | `@wizzard-packages/react` | React provider + hooks built on core |
+| `@wizzard-packages/vue` | Vue 3 composition API bindings |
 | `@wizzard-packages/adapter-zod` | Zod validation adapter |
 | `@wizzard-packages/adapter-yup` | Yup validation adapter |
 | `@wizzard-packages/persistence` | LocalStorage and memory persistence |
@@ -35,6 +36,14 @@ Try the library in the browser with these standalone templates on StackBlitz:
 | **Basic** | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-blue?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-packages/tree/main/.stackblitz/basic) |
 | **Validation** | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-red?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-packages/tree/main/.stackblitz/validation) |
 | **Persistence** | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-green?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-packages/tree/main/.stackblitz/persistence) |
+
+---
+
+## 🎨 UI Integrations
+
+Wizzard is headless, which means you can use it with **any** UI library. We provide detailed examples and "connector factories" for popular design systems:
+
+- **[Shadcn/UI Connector](./examples/shadcn-ui-connector)**: Full example of integrating with shadcn/ui using the Factory Pattern to generate typed `WizardField` and `WizardStep` components that look and feel native to your app.
 
 ---
 
@@ -100,7 +109,43 @@ pnpm add @wizzard-packages/adapter-zod zod
 pnpm add @wizzard-packages/adapter-yup yup
 ```
 
-### Option B: Headless core only
+### Option B: Vue 3 bindings (Script Setup)
+
+```ts
+// 1. Create factory (wizard.ts)
+import { createWizardFactory } from '@wizzard-packages/vue';
+
+type Data = { name: string };
+type StepId = 'name' | 'review';
+
+export const { useProvideWizard, useWizardActions } = createWizardFactory<Data, StepId>();
+```
+
+```vue
+<!-- 2. Usage (App.vue) -->
+<script setup lang="ts">
+import { useProvideWizard, useWizardActions } from './wizard';
+
+useProvideWizard({
+  config: {
+    steps: [
+      { id: 'name', label: 'Name' },
+      { id: 'review', label: 'Review' },
+    ]
+  },
+  initialData: { name: '' },
+  initialStepId: 'name',
+});
+
+const { goToNextStep } = useWizardActions();
+</script>
+
+<template>
+  <button @click="goToNextStep">Next</button>
+</template>
+```
+
+### Option C: Headless core only
 
 ```ts
 import { WizardStore, type IWizardConfig } from '@wizzard-packages/core';
