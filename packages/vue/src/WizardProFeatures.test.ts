@@ -125,7 +125,7 @@ describe('Vue Wizard Pro Features', () => {
 
     // Wait for initial async condition check to complete
     // Need to account for 200ms debounce + 20ms async condition
-    await new Promise((r) => setTimeout(r, 250));
+    await new Promise((r) => setTimeout(r, 350));
     await nextTick();
     await nextTick();
 
@@ -137,7 +137,7 @@ describe('Vue Wizard Pro Features', () => {
 
     // Wait for async condition to re-resolve with new data
     // Need to account for 200ms debounce + 20ms async condition
-    await new Promise((r) => setTimeout(r, 250));
+    await new Promise((r) => setTimeout(r, 350));
     await nextTick();
     await nextTick();
 

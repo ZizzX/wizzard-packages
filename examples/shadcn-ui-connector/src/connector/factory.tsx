@@ -11,6 +11,7 @@ import React from 'react';
  * Creates a Shadcn-styled Wizard instance with typed hooks and components.
  */
 export function createShadcnWizard<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   TSchema extends Record<string, any>,
   StepId extends string = string,
 >() {
@@ -111,12 +112,15 @@ export function createShadcnWizard<
     submitLabel?: string;
     onComplete?: (data: TSchema) => void;
   }) => {
-    const { isFirstStep, isLastStep, isBusy, data } = core.useWizardState();
-    const { goToNextStep, goToPrevStep } = core.useWizardActions();
+    const { isFirstStep, isLastStep, isBusy, data, currentStepId } = core.useWizardState();
+    const { goToNextStep, goToPrevStep, validateStep } = core.useWizardActions();
 
     const handleNext = async () => {
       if (isLastStep) {
-        onComplete?.(data);
+        const isValid = await validateStep(currentStepId as StepId);
+        if (isValid) {
+          onComplete?.(data);
+        }
       } else {
         await goToNextStep();
       }
@@ -165,6 +169,7 @@ export function createShadcnWizard<
     const [value, setValue] = core.useWizardField(path);
     const error = core.useWizardError(path);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleChange = (val: any) => {
       if (val && typeof val === 'object' && 'target' in val) {
         setValue(val.target.value);
