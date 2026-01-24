@@ -63,6 +63,12 @@ function WizardUI() {
 }
 ```
 
+## 🎨 UI Integrations (Shadcn, Mantine, MUI)
+
+Since `@wizzard-packages/react` is headless, you are expected to bring your own UI components. We provide "Connector" examples that demonstrate how to bind popular design systems to the wizard engine using the Factory Pattern.
+
+- **[Shadcn/UI Connector Example](../../examples/shadcn-ui-connector)**: Demonstrates how to create a `createShadcnWizard` factory that generates strongly-typed `WizardField`, `WizardStep`, and `WizardStepper` components pre-styled with Tailwind and Shadcn.
+
 ## Best practices (DX)
 
 - Memoize `steps` and `config` (`useMemo`) to avoid unnecessary recalculations.
