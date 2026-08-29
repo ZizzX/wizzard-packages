@@ -151,3 +151,93 @@ export function isSync(e: Expr | undefined): boolean {
   const operands = Object.values(e as Record<string, readonly Expr[]>)[0];
   return operands === undefined || operands.every(isSync);
 }
+
+/**
+ * Evaluates with `$ref` allowed to be asynchronous.
+ *
+ * Used only where the engine is already awaiting — a guard, a load. Reachability
+ * takes the synchronous path when `isSync` allows it, which is the common case
+ * and the reason a flow renders correctly on the first frame.
+ */
+export async function evaluateAsync(
+  e: Expr,
+  scope: Scope,
+  registry?: AsyncRegistry
+): Promise<unknown> {
+  if (!isNode(e)) {
+    return Array.isArray(e) ? Promise.all(e.map((x) => evaluateAsync(x, scope, registry))) : e;
+  }
+
+  const ev = (x: Expr): Promise<unknown> => evaluateAsync(x, scope, registry);
+
+  if ('$ref' in e) {
+    const fn = registry?.[e.$ref];
+    if (!fn) throw new ExprError(`unknown resolver: ${e.$ref}`);
+    return await fn(e.args, scope);
+  }
+
+  // Short-circuiting matters more here than anywhere else: a `$ref` behind a
+  // false `$and` branch is a request that must not be made.
+  if ('$and' in e) {
+    for (const x of e.$and) if (!(await ev(x))) return false;
+    return true;
+  }
+  if ('$or' in e) {
+    for (const x of e.$or) if (await ev(x)) return true;
+    return false;
+  }
+  if ('$not' in e) return !(await ev(e.$not));
+
+  if (isSync(e)) return evaluate(e, scope, registry as Registry);
+  if ('$get' in e) return read(e.$get, scope);
+  if ('$empty' in e) return empty(await ev(e.$empty));
+
+  const pair = async (p: readonly [Expr, Expr]): Promise<[unknown, unknown]> =>
+    (await Promise.all([ev(p[0]), ev(p[1])])) as [unknown, unknown];
+
+  if ('$eq' in e) {
+    const [a, b] = await pair(e.$eq);
+    return a === b;
+  }
+  if ('$ne' in e) {
+    const [a, b] = await pair(e.$ne);
+    return a !== b;
+  }
+  if ('$gt' in e) {
+    const [a, b] = await pair(e.$gt);
+    return (a as number) > (b as number);
+  }
+  if ('$gte' in e) {
+    const [a, b] = await pair(e.$gte);
+    return (a as number) >= (b as number);
+  }
+  if ('$lt' in e) {
+    const [a, b] = await pair(e.$lt);
+    return (a as number) < (b as number);
+  }
+  if ('$lte' in e) {
+    const [a, b] = await pair(e.$lte);
+    return (a as number) <= (b as number);
+  }
+  if ('$in' in e) {
+    const [needle, hay] = await pair(e.$in);
+    if (typeof hay === 'string') return hay.includes(String(needle));
+    return Array.isArray(hay) && hay.includes(needle);
+  }
+
+  throw new ExprError(`unknown operator: ${Object.keys(e)[0]}`);
+}
+
+export type AsyncResolver = (args: Json | undefined, scope: Scope) => unknown | Promise<unknown>;
+export type AsyncRegistry = Readonly<Record<string, AsyncResolver>>;
+
+/** Evaluates to a boolean, awaiting `$ref`. An absent expression is `true`. */
+export async function testAsync(
+  e: Expr | undefined,
+  scope: Scope,
+  registry?: AsyncRegistry
+): Promise<boolean> {
+  if (e === undefined) return true;
+  if (isSync(e)) return Boolean(evaluate(e, scope, registry as Registry));
+  return Boolean(await evaluateAsync(e, scope, registry));
+}

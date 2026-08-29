@@ -13,10 +13,11 @@
  * the size of the engine it wraps, which is the duplication v1 removes.
  */
 export default [
-  // The v1 skeleton, measured from source while it is built. The spike budget
-  // is 2 kB: the full v1 core is budgeted at 4 kB, and the expression
-  // evaluator, resolver and commit are meant to be half of it.
-  { name: 'core-v1 (spike)', path: 'packages/core/src/v1/index.ts', limit: '2 kB', gzip: true },
+  // The v1 engine, measured from source while it is built. A ratchet like the
+  // rest: it sits just above what is there now, so growth has to be deliberate.
+  // The destination is 4 kB for the finished core, which leaves roughly 1.5 kB
+  // for the store, selectors, defineFlow and patchFlow.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '2.6 kB', gzip: true },
 
   { name: 'core', path: 'packages/core/dist/index.js', limit: '4.2 kB', gzip: true },
   {
