@@ -12,13 +12,19 @@
     - Added "Option C: Headless core only" example.
   - Updated `packages/react/README.md` with UI Integration guide.
   - Updated `examples/shadcn-ui-connector/README.md` with Headless Core usage alternative.
-  - Created task for future CLI utility (scaffolding adapters).
+  - Created task for future CLI utility (scaffolding adapters) [`wizzard-stepper-react-8917`].
   - Closed task `wizzard-stepper-react-909` in BD.
+  - **Refinements**:
+    - Fixed validation bug in Shadcn connector (validates last step before completion).
+    - Fixed flaky Vue async test (timeout adjustment).
+    - Fixed linting issues in new example.
+  - Created task for flaky test investigation [`wizzard-stepper-react-5226`].
 - Tests run:
   - `pnpm build` passed for shadcn-ui-connector.
   - `pnpm tsc -b` passed for type checking.
+  - `pnpm test:run` passed (49/49).
 - Next action:
-  - Proceed with Vue E2E stabilization (Task 906/898) or AI Generator Core (Task 915).
+  - Proceed with Vue E2E stabilization (Task 898) or AI Generator Core (Task 915).
 
 ## Session Update
 
@@ -40,10 +46,10 @@
 - Released packages:
   - `@wizzard-packages/vue@0.2.0` - first stable release with full feature parity to React adapter
   - Git tag: `@wizzard-packages/vue@0.2.0` created and pushed
-- Open questions: 
+- Open questions:
   - E2E tests need HTTP probe/readiness check for deterministic server startup in CI
   - GitHub Packages publish failed (404), but npmjs.com publish successful
-- Next action: 
+- Next action:
   1. Port remaining 7 Vue E2E specs
   2. Add HTTP health probe to Playwright webServer config
   3. Re-enable E2E on dev branch after stabilization

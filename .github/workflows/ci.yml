@@ -2,12 +2,16 @@ name: CI
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main]
   pull_request:
-    branches: [main, dev]
+    branches: [main]
 
 permissions:
   contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-test:
@@ -15,15 +19,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: [20]
+        node: [20, 22]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -34,40 +36,68 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: pnpm -r build
-
       - name: Lint
         run: pnpm lint
 
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Type check
+        run: pnpm type-check
+
+      - name: Build
+        run: pnpm build
+
       - name: Unit tests
-        run: pnpm test:run
+        run: pnpm test:coverage
+
+      # Packaging gates run once. They check published artifacts, which do not
+      # vary by Node version.
+      - name: Package lint
+        if: matrix.node == 22
+        run: pnpm publint
+
+      - name: Types resolution
+        if: matrix.node == 22
+        run: pnpm attw
+
+      - name: Bundle size
+        if: matrix.node == 22
+        run: pnpm size
 
   e2e:
     runs-on: ubuntu-latest
     needs: build-test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build
+        run: pnpm build
+
       - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: E2E tests
         run: pnpm test:e2e
-        timeout-minutes: 15
+        timeout-minutes: 25
+
+      - name: Upload report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

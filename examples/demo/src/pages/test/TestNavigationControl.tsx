@@ -1,6 +1,11 @@
 import { useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
-import { WizardProvider, useWizard, useWizardActions, useWizardState } from '@wizzard-packages/react';
+import {
+  WizardProvider,
+  useWizard,
+  useWizardActions,
+  useWizardState,
+} from '@wizzard-packages/react';
 import type { IWizardConfig } from '@wizzard-packages/react';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';

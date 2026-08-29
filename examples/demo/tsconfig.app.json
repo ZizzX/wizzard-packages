@@ -28,8 +28,8 @@
       "@wizzard-packages/adapter-yup": ["../../packages/adapter-yup/src/index.ts"],
       "@wizzard-packages/devtools": ["../../packages/devtools/src/index.ts"],
       "@wizzard-packages/middleware": ["../../packages/middleware/src/index.ts"],
-      "@wizzard-packages/persistence": ["../../packages/persistence/src/index.ts"],
-    },
+      "@wizzard-packages/persistence": ["../../packages/persistence/src/index.ts"]
+    }
   },
-  "include": ["src"],
+  "include": ["src"]
 }

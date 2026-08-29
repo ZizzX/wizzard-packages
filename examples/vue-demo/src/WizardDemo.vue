@@ -60,26 +60,44 @@ const handleSubmit = () => {
     <!-- Step Rendering -->
     <main class="step-content">
       <!-- Step 1: Personal -->
-      <section v-if="state.currentStepId === 'personal'" data-testid="step-personal">
+      <section
+        v-if="state.currentStepId === 'personal'"
+        data-testid="step-personal"
+      >
         <h2>Personal Info</h2>
         <div class="field">
           <label>Name:</label>
           <input
-            data-testid="input-name"
             v-model="userName"
+            data-testid="input-name"
             @input="(e) => setUserName((e.target as HTMLInputElement).value)"
-          />
-          <span v-if="nameError" data-testid="error-name" class="error">{{ nameError }}</span>
+          >
+          <span
+            v-if="nameError"
+            data-testid="error-name"
+            class="error"
+          >{{ nameError }}</span>
         </div>
         <div class="field">
           <label>Email:</label>
-          <input data-testid="input-email" :value="userEmail" @input="handleEmailInput" />
-          <span v-if="emailError" data-testid="error-email" class="error">{{ emailError }}</span>
+          <input
+            data-testid="input-email"
+            :value="userEmail"
+            @input="handleEmailInput"
+          >
+          <span
+            v-if="emailError"
+            data-testid="error-email"
+            class="error"
+          >{{ emailError }}</span>
         </div>
       </section>
 
       <!-- Step 2: Details -->
-      <section v-else-if="state.currentStepId === 'details'" data-testid="step-details">
+      <section
+        v-else-if="state.currentStepId === 'details'"
+        data-testid="step-details"
+      >
         <h2>Details</h2>
         <div class="field">
           <label>Age:</label>
@@ -88,8 +106,12 @@ const handleSubmit = () => {
             data-testid="input-age"
             :value="state.data.details.age"
             @input="(e) => setData('details.age', Number((e.target as HTMLInputElement).value))"
-          />
-          <span v-if="ageError" data-testid="error-age" class="error">{{ ageError }}</span>
+          >
+          <span
+            v-if="ageError"
+            data-testid="error-age"
+            class="error"
+          >{{ ageError }}</span>
         </div>
         <div class="field">
           <label>Bio:</label>
@@ -97,13 +119,20 @@ const handleSubmit = () => {
             data-testid="input-bio"
             :value="state.data.details.bio"
             @input="(e) => setData('details.bio', (e.target as HTMLTextAreaElement).value)"
-          ></textarea>
-          <span v-if="bioError" data-testid="error-bio" class="error">{{ bioError }}</span>
+          />
+          <span
+            v-if="bioError"
+            data-testid="error-bio"
+            class="error"
+          >{{ bioError }}</span>
         </div>
       </section>
 
       <!-- Step 3: Review -->
-      <section v-else-if="state.currentStepId === 'review'" data-testid="step-review">
+      <section
+        v-else-if="state.currentStepId === 'review'"
+        data-testid="step-review"
+      >
         <h2>Review</h2>
         <pre data-testid="data-summary">{{ JSON.stringify(state.data, null, 2) }}</pre>
       </section>
@@ -111,7 +140,13 @@ const handleSubmit = () => {
 
     <!-- Navigation -->
     <nav class="navigation">
-      <button data-testid="btn-prev" @click="prevStep" :disabled="state.isFirstStep">Back</button>
+      <button
+        data-testid="btn-prev"
+        :disabled="state.isFirstStep"
+        @click="prevStep"
+      >
+        Back
+      </button>
 
       <div class="breadcrumbs">
         <button
@@ -125,8 +160,20 @@ const handleSubmit = () => {
         </button>
       </div>
 
-      <button data-testid="btn-next" @click="nextStep()" v-if="!state.isLastStep">Next</button>
-      <button data-testid="btn-submit" v-else @click="handleSubmit">Submit</button>
+      <button
+        v-if="!state.isLastStep"
+        data-testid="btn-next"
+        @click="nextStep()"
+      >
+        Next
+      </button>
+      <button
+        v-else
+        data-testid="btn-submit"
+        @click="handleSubmit"
+      >
+        Submit
+      </button>
     </nav>
   </div>
 </template>

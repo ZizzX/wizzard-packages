@@ -59,7 +59,7 @@ export const {
   useWizardState,
   useWizardField,
   useWizardSelector,
-  useWizardError
+  useWizardError,
 } = createWizardFactory<MySchema>();
 ```
 
@@ -74,16 +74,16 @@ const config: IWizardConfig<'info' | 'plan' | 'review', any> = {
   steps: [
     { id: 'info', label: 'Personal Info' },
     { id: 'plan', label: 'Select Plan' },
-    { id: 'review', label: 'Review' }
-  ]
+    { id: 'review', label: 'Review' },
+  ],
 };
 
 useProvideWizard({
   config,
-  initialData: { 
-    user: { name: '', email: '' }, 
-    plan: 'basic' 
-  }
+  initialData: {
+    user: { name: '', email: '' },
+    plan: 'basic',
+  },
 });
 </script>
 
@@ -110,14 +110,14 @@ const [email, setEmail] = useWizardField('user.email');
 
 <template>
   <div>
-    <input 
-      :value="name" 
-      @input="e => setName((e.target as HTMLInputElement).value)" 
-      placeholder="Enter name" 
+    <input
+      :value="name"
+      @input="(e) => setName((e.target as HTMLInputElement).value)"
+      placeholder="Enter name"
     />
-    <input 
-      :value="email" 
-      @input="e => setEmail((e.target as HTMLInputElement).value)" 
+    <input
+      :value="email"
+      @input="(e) => setEmail((e.target as HTMLInputElement).value)"
       placeholder="Enter email"
       type="email"
     />
@@ -137,13 +137,9 @@ const { nextStep, prevStep, goToStep } = useWizardActions();
 
 <template>
   <div class="navigation">
-    <button @click="prevStep" :disabled="state.isFirstStep">
-      Back
-    </button>
+    <button @click="prevStep" :disabled="state.isFirstStep">Back</button>
     <span>Step {{ state.currentStepIndex + 1 }} of {{ state.totalSteps }}</span>
-    <button @click="nextStep" :disabled="state.isLastStep">
-      Next
-    </button>
+    <button @click="nextStep" :disabled="state.isLastStep">Next</button>
   </div>
 </template>
 ```
@@ -169,13 +165,13 @@ useProvideWizard({
   config: {
     steps: [
       { id: 'step1', label: 'Step 1' },
-      { id: 'step2', label: 'Step 2' }
+      { id: 'step2', label: 'Step 2' },
     ],
     validationMode: 'onChange', // 'onChange' | 'onBlur' | 'onSubmit'
     validationDebounceTime: 300,
   },
   initialData: { name: '' },
-  initialStepId: 'step1'
+  initialStepId: 'step1',
 });
 ```
 
@@ -187,20 +183,20 @@ Returns a reactive computed ref with the complete wizard state:
 const state = useWizardState();
 
 // Available properties:
-state.currentStepId      // Current step ID
-state.currentStepIndex   // Current step index (0-based)
-state.totalSteps         // Total number of active steps
-state.isFirstStep        // Boolean: is first step
-state.isLastStep         // Boolean: is last step
-state.canGoNext          // Boolean: can navigate forward
-state.canGoPrev          // Boolean: can navigate backward
-state.visitedSteps       // Set of visited step IDs
-state.completedSteps     // Set of completed step IDs
-state.errorSteps         // Set of steps with errors
-state.progress           // Progress percentage (0-100)
-state.isBusy             // Boolean: async operation in progress
-state.data               // Current wizard data
-state.activeSteps        // Array of currently active steps
+state.currentStepId; // Current step ID
+state.currentStepIndex; // Current step index (0-based)
+state.totalSteps; // Total number of active steps
+state.isFirstStep; // Boolean: is first step
+state.isLastStep; // Boolean: is last step
+state.canGoNext; // Boolean: can navigate forward
+state.canGoPrev; // Boolean: can navigate backward
+state.visitedSteps; // Set of visited step IDs
+state.completedSteps; // Set of completed step IDs
+state.errorSteps; // Set of steps with errors
+state.progress; // Progress percentage (0-100)
+state.isBusy; // Boolean: async operation in progress
+state.data; // Current wizard data
+state.activeSteps; // Array of currently active steps
 ```
 
 #### `useWizardValue(path, defaultValue?)`
@@ -243,33 +239,35 @@ Returns navigation and data manipulation methods:
 const actions = useWizardActions();
 
 // Navigation
-actions.nextStep()                    // Go to next step
-actions.prevStep()                    // Go to previous step
-actions.goToStep('stepId')           // Go to specific step
-actions.goToStepIndex(2)             // Go to step by index
+actions.nextStep(); // Go to next step
+actions.prevStep(); // Go to previous step
+actions.goToStep('stepId'); // Go to specific step
+actions.goToStepIndex(2); // Go to step by index
 
 // Data manipulation
-actions.setData('user.name', 'John') // Set single value
-actions.updateData({                 // Update multiple values
-  user: { name: 'John', email: 'john@example.com' }
-})
-actions.getData('user.name')         // Get value by path
-actions.getData('user.name', 'Default') // With default value
+actions.setData('user.name', 'John'); // Set single value
+actions.updateData({
+  // Update multiple values
+  user: { name: 'John', email: 'john@example.com' },
+});
+actions.getData('user.name'); // Get value by path
+actions.getData('user.name', 'Default'); // With default value
 
 // Validation
-actions.validateStep('stepId')       // Validate specific step
-actions.validateAll()                // Validate all steps
+actions.validateStep('stepId'); // Validate specific step
+actions.validateAll(); // Validate all steps
 
 // Error management
-actions.setErrors({                  // Set errors for a step
-  stepId: { 
-    fieldName: 'Error message' 
-  }
-})
+actions.setErrors({
+  // Set errors for a step
+  stepId: {
+    fieldName: 'Error message',
+  },
+});
 
 // Reset
-actions.reset()                      // Reset to initial state
-actions.reset({ name: 'New' })      // Reset with new data
+actions.reset(); // Reset to initial state
+actions.reset({ name: 'New' }); // Reset with new data
 ```
 
 #### `useWizardSelector(selector)`
@@ -277,17 +275,15 @@ actions.reset({ name: 'New' })      // Reset with new data
 Returns a reactive computed value derived from wizard state:
 
 ```typescript
-const progress = useWizardSelector(state => state.progress);
-const isValid = useWizardSelector(state => 
-  state.errorSteps.size === 0
-);
+const progress = useWizardSelector((state) => state.progress);
+const isValid = useWizardSelector((state) => state.errorSteps.size === 0);
 
 // Complex derived state
-const wizardStatus = useWizardSelector(state => ({
+const wizardStatus = useWizardSelector((state) => ({
   step: state.currentStepId,
   progress: state.progress,
   canProceed: state.canGoNext && !state.isBusy,
-  hasErrors: state.errorSteps.size > 0
+  hasErrors: state.errorSteps.size > 0,
 }));
 ```
 
@@ -323,10 +319,10 @@ const config: IWizardConfig<StepId, MySchema> = {
           return { canLeave: false, error: 'Valid email required' };
         }
         return { canLeave: true };
-      }
+      },
     },
-    { id: 'review', label: 'Review' }
-  ]
+    { id: 'review', label: 'Review' },
+  ],
 };
 ```
 
@@ -341,10 +337,10 @@ const config: IWizardConfig<StepId, MySchema> = {
     {
       id: 'payment',
       label: 'Payment',
-      isVisible: (data) => data.plan === 'pro' // Only show for pro plan
+      isVisible: (data) => data.plan === 'pro', // Only show for pro plan
     },
-    { id: 'review', label: 'Review' }
-  ]
+    { id: 'review', label: 'Review' },
+  ],
 };
 ```
 
@@ -362,9 +358,9 @@ const config: IWizardConfig<StepId, MySchema> = {
       isVisible: async (data) => {
         const hasAccess = await checkPremiumAccess(data.user.id);
         return hasAccess;
-      }
-    }
-  ]
+      },
+    },
+  ],
 };
 ```
 
@@ -381,17 +377,17 @@ import { useProvideWizard } from './wizard';
 const userSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
-  age: z.number().min(18, 'Must be 18 or older')
+  age: z.number().min(18, 'Must be 18 or older'),
 });
 
 const config = {
   steps: [
-    { 
-      id: 'info', 
+    {
+      id: 'info',
       label: 'Info',
-      validate: ZodAdapter(userSchema)
-    }
-  ]
+      validate: ZodAdapter(userSchema),
+    },
+  ],
 };
 
 useProvideWizard({ config, initialData: { name: '', email: '', age: 0 } });
@@ -408,9 +404,9 @@ import { LocalStorageAdapter } from '@wizzard-packages/persistence';
 const config = {
   steps: [
     { id: 'step1', label: 'Step 1' },
-    { id: 'step2', label: 'Step 2' }
+    { id: 'step2', label: 'Step 2' },
   ],
-  persistence: LocalStorageAdapter('my-wizard-state')
+  persistence: LocalStorageAdapter('my-wizard-state'),
 };
 
 useProvideWizard({ config, initialData: {} });
@@ -424,10 +420,8 @@ Add logging middleware for debugging:
 import { loggerMiddleware } from '@wizzard-packages/middleware';
 
 const config = {
-  steps: [
-    { id: 'step1', label: 'Step 1' }
-  ],
-  middlewares: [loggerMiddleware]
+  steps: [{ id: 'step1', label: 'Step 1' }],
+  middlewares: [loggerMiddleware],
 };
 
 useProvideWizard({ config, initialData: {} });
@@ -444,14 +438,10 @@ const state = useWizardState();
 
 <template>
   <div class="progress-bar">
-    <div 
-      class="progress-fill" 
-      :style="{ width: `${state.progress}%` }"
-    />
+    <div class="progress-fill" :style="{ width: `${state.progress}%` }" />
   </div>
   <div class="progress-text">
-    {{ state.progress }}% Complete
-    ({{ state.currentStepIndex + 1 }} / {{ state.totalSteps }})
+    {{ state.progress }}% Complete ({{ state.currentStepIndex + 1 }} / {{ state.totalSteps }})
   </div>
 </template>
 
@@ -482,8 +472,7 @@ const state = useWizardState();
 const { goToStep } = useWizardActions();
 
 const canNavigateToStep = (stepId: string) => {
-  return state.visitedSteps.has(stepId) || 
-         state.completedSteps.has(stepId);
+  return state.visitedSteps.has(stepId) || state.completedSteps.has(stepId);
 };
 </script>
 
@@ -496,7 +485,7 @@ const canNavigateToStep = (stepId: string) => {
       :class="{
         active: step.id === state.currentStepId,
         completed: state.completedSteps.has(step.id),
-        error: state.errorSteps.has(step.id)
+        error: state.errorSteps.has(step.id),
       }"
       @click="canNavigateToStep(step.id) && goToStep(step.id)"
     >
@@ -535,7 +524,7 @@ const handleSubmit = async () => {
       <label>Name</label>
       <input
         :value="name"
-        @input="e => setName((e.target as HTMLInputElement).value)"
+        @input="(e) => setName((e.target as HTMLInputElement).value)"
         :class="{ error: nameError }"
       />
       <span v-if="nameError" class="error-message">{{ nameError }}</span>
@@ -546,7 +535,7 @@ const handleSubmit = async () => {
       <input
         type="email"
         :value="email"
-        @input="e => setEmail((e.target as HTMLInputElement).value)"
+        @input="(e) => setEmail((e.target as HTMLInputElement).value)"
         :class="{ error: emailError }"
       />
       <span v-if="emailError" class="error-message">{{ emailError }}</span>
@@ -572,12 +561,12 @@ const [emailRef, setEmail] = useWizardField('user.email');
 // Create computed properties for v-model
 const name = computed({
   get: () => nameRef.value,
-  set: (val) => setName(val)
+  set: (val) => setName(val),
 });
 
 const email = computed({
   get: () => emailRef.value,
-  set: (val) => setEmail(val)
+  set: (val) => setEmail(val),
 });
 </script>
 
@@ -596,10 +585,10 @@ const email = computed({
 import { useWizardSelector } from './wizard';
 
 // Only re-renders when these specific values change
-const wizardMeta = useWizardSelector(state => ({
-  currentStep: state.activeSteps.find(s => s.id === state.currentStepId),
+const wizardMeta = useWizardSelector((state) => ({
+  currentStep: state.activeSteps.find((s) => s.id === state.currentStepId),
   isLastAndValid: state.isLastStep && state.errorSteps.size === 0,
-  completionRate: (state.completedSteps.size / state.totalSteps) * 100
+  completionRate: (state.completedSteps.size / state.totalSteps) * 100,
 }));
 </script>
 
@@ -623,19 +612,12 @@ import type { IStepConfig } from '@wizzard-packages/core';
 const userType = ref<'personal' | 'business'>('personal');
 
 const steps = computed(() => {
-  const baseSteps: IStepConfig<string, any>[] = [
-    { id: 'type', label: 'Account Type' }
-  ];
+  const baseSteps: IStepConfig<string, any>[] = [{ id: 'type', label: 'Account Type' }];
 
   if (userType.value === 'business') {
-    baseSteps.push(
-      { id: 'company', label: 'Company Info' },
-      { id: 'tax', label: 'Tax Details' }
-    );
+    baseSteps.push({ id: 'company', label: 'Company Info' }, { id: 'tax', label: 'Tax Details' });
   } else {
-    baseSteps.push(
-      { id: 'personal', label: 'Personal Info' }
-    );
+    baseSteps.push({ id: 'personal', label: 'Personal Info' });
   }
 
   baseSteps.push({ id: 'review', label: 'Review' });
@@ -644,12 +626,12 @@ const steps = computed(() => {
 });
 
 const config = computed(() => ({
-  steps: steps.value
+  steps: steps.value,
 }));
 
-useProvideWizard({ 
-  config: config.value, 
-  initialData: { type: userType.value } 
+useProvideWizard({
+  config: config.value,
+  initialData: { type: userType.value },
 });
 </script>
 ```
@@ -662,11 +644,9 @@ Use `computed` for step configuration to avoid unnecessary recalculations:
 
 ```typescript
 const config = computed(() => ({
-  steps: [
-    { id: 'step1', label: 'Step 1' }
-  ],
+  steps: [{ id: 'step1', label: 'Step 1' }],
   middlewares: [loggerMiddleware],
-  validationMode: 'onChange'
+  validationMode: 'onChange',
 }));
 ```
 
@@ -689,9 +669,9 @@ Create computed values with `useWizardSelector`:
 
 ```typescript
 // Only re-computes when progress or isBusy changes
-const status = useWizardSelector(state => ({
+const status = useWizardSelector((state) => ({
   progress: state.progress,
-  loading: state.isBusy
+  loading: state.isBusy,
 }));
 ```
 
@@ -715,9 +695,9 @@ Always handle async errors in guards and validation:
       await validateAPI(data);
       return { canLeave: true };
     } catch (error) {
-      return { 
-        canLeave: false, 
-        error: error.message || 'Validation failed' 
+      return {
+        canLeave: false,
+        error: error.message || 'Validation failed'
       };
     }
   }
@@ -738,18 +718,24 @@ const { goToStep } = useWizardActions();
 const state = useWizardState();
 
 // Sync wizard step with route
-watch(() => route.params.step, (stepId) => {
-  if (stepId && stepId !== state.currentStepId) {
-    goToStep(stepId as string);
+watch(
+  () => route.params.step,
+  (stepId) => {
+    if (stepId && stepId !== state.currentStepId) {
+      goToStep(stepId as string);
+    }
   }
-});
+);
 
 // Sync route with wizard step
-watch(() => state.currentStepId, (stepId) => {
-  if (route.params.step !== stepId) {
-    router.push({ params: { step: stepId } });
+watch(
+  () => state.currentStepId,
+  (stepId) => {
+    if (route.params.step !== stepId) {
+      router.push({ params: { step: stepId } });
+    }
   }
-});
+);
 </script>
 ```
 
@@ -767,10 +753,10 @@ describe('Wizard', () => {
           config: {
             steps: [
               { id: 'step1', label: 'Step 1' },
-              { id: 'step2', label: 'Step 2' }
-            ]
+              { id: 'step2', label: 'Step 2' },
+            ],
           },
-          initialData: {}
+          initialData: {},
         });
 
         const state = useWizardState();
@@ -778,7 +764,7 @@ describe('Wizard', () => {
 
         return { state, nextStep };
       },
-      template: '<div>{{ state.currentStepId }}</div>'
+      template: '<div>{{ state.currentStepId }}</div>',
     });
 
     expect(wrapper.text()).toBe('step1');
@@ -801,8 +787,8 @@ The Vue adapter is SSR-friendly and works with Nuxt 3:
 
 const config = computed(() => ({
   steps: [...],
-  persistence: typeof window !== 'undefined' 
-    ? LocalStorageAdapter('key') 
+  persistence: typeof window !== 'undefined'
+    ? LocalStorageAdapter('key')
     : undefined
 }));
 ```

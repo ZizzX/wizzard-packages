@@ -285,7 +285,7 @@ const WizardContent = () => {
             {JSON.stringify(
               {
                 completed: Array.from(completedSteps),
-                data: data,
+                data,
               },
               null,
               2

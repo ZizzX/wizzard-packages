@@ -4,9 +4,15 @@ export default defineConfig({
   entry: ['src/index.ts'],
   format: ['cjs', 'esm'],
   dts: true,
+  treeshake: true,
   splitting: false,
   sourcemap: true,
   clean: true,
   minify: true,
-  external: ['vue', '@wizzard-packages/core', '@wizzard-packages/middleware', '@wizzard-packages/persistence'],
+  external: [
+    'vue',
+    '@wizzard-packages/core',
+    '@wizzard-packages/middleware',
+    '@wizzard-packages/persistence',
+  ],
 });

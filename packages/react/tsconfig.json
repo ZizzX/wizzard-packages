@@ -19,9 +19,9 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "esModuleInterop": true,
+    "esModuleInterop": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.test.tsx"],
-  "references": [{ "path": "../core" }, { "path": "../middleware" }, { "path": "../persistence" }],
+  "references": [{ "path": "../core" }, { "path": "../middleware" }, { "path": "../persistence" }]
 }

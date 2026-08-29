@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { initialData, wizardConfig, wizardFactory } from '../wizardSetup';
 import WizardDemo from '../WizardDemo.vue';
+import { initialData, wizardConfig, wizardFactory } from '../wizardSetup';
 
 const { useProvideWizard } = wizardFactory;
 

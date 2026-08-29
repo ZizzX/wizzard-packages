@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="TData extends Record<string, any>, TStepId extends string">
-import { provide, defineProps } from 'vue';
+import { defineProps } from 'vue';
 
 interface Props {
   factory: any;

@@ -36,11 +36,26 @@ export default defineConfig(() => {
       alias: {
         '@wizzard-packages/react': path.resolve(__dirname, '../../packages/react/src/index.ts'),
         '@wizzard-packages/core': path.resolve(__dirname, '../../packages/core/src/index.ts'),
-        '@wizzard-packages/adapter-zod': path.resolve(__dirname, '../../packages/adapter-zod/src/index.ts'),
-        '@wizzard-packages/adapter-yup': path.resolve(__dirname, '../../packages/adapter-yup/src/index.ts'),
-        '@wizzard-packages/devtools': path.resolve(__dirname, '../../packages/devtools/src/index.ts'),
-        '@wizzard-packages/middleware': path.resolve(__dirname, '../../packages/middleware/src/index.ts'),
-        '@wizzard-packages/persistence': path.resolve(__dirname, '../../packages/persistence/src/index.ts'),
+        '@wizzard-packages/adapter-zod': path.resolve(
+          __dirname,
+          '../../packages/adapter-zod/src/index.ts'
+        ),
+        '@wizzard-packages/adapter-yup': path.resolve(
+          __dirname,
+          '../../packages/adapter-yup/src/index.ts'
+        ),
+        '@wizzard-packages/devtools': path.resolve(
+          __dirname,
+          '../../packages/devtools/src/index.ts'
+        ),
+        '@wizzard-packages/middleware': path.resolve(
+          __dirname,
+          '../../packages/middleware/src/index.ts'
+        ),
+        '@wizzard-packages/persistence': path.resolve(
+          __dirname,
+          '../../packages/persistence/src/index.ts'
+        ),
         react: path.resolve(__dirname, './node_modules/react'),
         'react-dom': path.resolve(__dirname, './node_modules/react-dom'),
         yup: path.resolve(__dirname, './node_modules/yup'),

@@ -1,0 +1,54 @@
+# Every merge to main is published under the `canary` dist-tag. This is what
+# replaces a long-lived `dev` branch: an unfinished feature is tried with
+# `pnpm add @wizzard-packages/core@canary`, not by checking out a branch.
+name: Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/**'
+      - '.changeset/**'
+
+concurrency:
+  group: canary
+  cancel-in-progress: true
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    environment: wizzard-packages
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      # No pending changesets means nothing changed that is worth a canary.
+      - name: Check for changesets
+        id: check
+        run: |
+          count=$(find .changeset -name '*.md' ! -name 'README.md' | wc -l)
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+
+      - if: steps.check.outputs.count != '0'
+        run: pnpm build
+
+      - name: Publish canary
+        if: steps.check.outputs.count != '0'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'
+        run: |
+          pnpm changeset version --snapshot canary
+          pnpm changeset publish --tag canary --no-git-tag

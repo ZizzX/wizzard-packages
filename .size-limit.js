@@ -1,0 +1,41 @@
+/**
+ * Bundle budgets, in gzipped bytes.
+ *
+ * The 0.x entries are a ratchet, not a target: each limit sits just above what
+ * that package measures today, so any accidental growth fails the build. They
+ * are deleted as their v1 replacements land.
+ *
+ * v1 targets, for reference while the new packages are built:
+ *   @wizzard/core 4.0 kB · react 1.5 kB · vue 1.5 kB · validate 0.6 kB
+ *   @wizzard/plugins 0.8 kB per entry
+ *
+ * Today core is 4.09 kB while react is 8.48 kB — the framework layer is twice
+ * the size of the engine it wraps, which is the duplication v1 removes.
+ */
+export default [
+  { name: 'core', path: 'packages/core/dist/index.js', limit: '4.2 kB', gzip: true },
+  {
+    name: 'react',
+    path: 'packages/react/dist/index.js',
+    limit: '8.6 kB',
+    gzip: true,
+    ignore: ['react', 'react-dom'],
+  },
+  { name: 'vue', path: 'packages/vue/dist/index.js', limit: '5.2 kB', gzip: true, ignore: ['vue'] },
+  { name: 'middleware', path: 'packages/middleware/dist/index.js', limit: '650 B', gzip: true },
+  { name: 'persistence', path: 'packages/persistence/dist/index.js', limit: '500 B', gzip: true },
+  {
+    name: 'adapter-zod',
+    path: 'packages/adapter-zod/dist/index.js',
+    limit: '250 B',
+    gzip: true,
+    ignore: ['zod'],
+  },
+  {
+    name: 'adapter-yup',
+    path: 'packages/adapter-yup/dist/index.js',
+    limit: '250 B',
+    gzip: true,
+    ignore: ['yup'],
+  },
+];

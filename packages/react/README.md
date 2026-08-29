@@ -29,12 +29,10 @@ type Data = { name: string };
 
 type StepId = 'name' | 'review';
 
-const {
-  WizardProvider,
-  createStep,
-  useWizardActions,
-  useWizardState,
-} = createWizardFactory<Data, StepId>();
+const { WizardProvider, createStep, useWizardActions, useWizardState } = createWizardFactory<
+  Data,
+  StepId
+>();
 
 const steps = [
   createStep({ id: 'name', label: 'Name', component: NameStep }),
@@ -43,11 +41,7 @@ const steps = [
 
 export function App() {
   return (
-    <WizardProvider
-      config={{ steps }}
-      initialData={{ name: '' }}
-      initialStepId="name"
-    >
+    <WizardProvider config={{ steps }} initialData={{ name: '' }} initialStepId="name">
       <WizardUI />
     </WizardProvider>
   );
@@ -57,9 +51,7 @@ function WizardUI() {
   const { goToNextStep } = useWizardActions();
   const { currentStepId } = useWizardState();
 
-  return (
-    <button onClick={goToNextStep}>Next ({currentStepId})</button>
-  );
+  return <button onClick={goToNextStep}>Next ({currentStepId})</button>;
 }
 ```
 
@@ -125,7 +117,11 @@ function Progress() {
     isBusy: s.isBusy,
   }));
 
-  return <div>Progress: {progress}% {isBusy ? '...' : ''}</div>;
+  return (
+    <div>
+      Progress: {progress}% {isBusy ? '...' : ''}
+    </div>
+  );
 }
 ```
 
@@ -291,14 +287,11 @@ wizard.store.subscribe(() => {
 });
 
 export const selectWizardSnapshot = (state) => state.wizard.snapshot;
-export const selectWizardProgress = createSelector(
-  [selectWizardSnapshot],
-  (snapshot) => ({
-    currentStepId: snapshot.currentStepId,
-    progress: snapshot.progress,
-    isBusy: snapshot.isBusy,
-  })
-);
+export const selectWizardProgress = createSelector([selectWizardSnapshot], (snapshot) => ({
+  currentStepId: snapshot.currentStepId,
+  progress: snapshot.progress,
+  isBusy: snapshot.isBusy,
+}));
 ```
 
 ```tsx

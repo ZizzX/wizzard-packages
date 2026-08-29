@@ -23,16 +23,20 @@ export default defineConfig({
   // Retry on CI only
   retries: process.env.CI ? 2 : 0,
 
-  // Opt out of parallel tests on CI
-  workers: process.env.CI ? 1 : undefined,
+  // Two workers, not one: the suite has ~117 tests and a handful of hard waits,
+  // and a single worker does not finish inside the CI step budget.
+  workers: process.env.CI ? 2 : undefined,
 
-  // Reporter to use
-  reporter: 'html',
+  // `github` annotates the failing line in the PR diff; the HTML report is an
+  // artifact, so it must never try to open a browser.
+  reporter: process.env.CI
+    ? [['github'], ['html', { open: 'never' }]]
+    : [['list'], ['html', { open: 'never' }]],
 
   // Shared settings for all the projects below
   use: {
     // Base URL to use in actions like `await page.goto('/')`
-    baseURL: 'http://localhost:5173/wizzard-stepper-react/',
+    baseURL: 'http://localhost:5173/',
 
     // Collect trace when retrying the failed test
     trace: 'on-first-retry',
@@ -51,7 +55,7 @@ export default defineConfig({
       testMatch: /react\/.*\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
-        baseURL: 'http://localhost:5173/wizzard-stepper-react/',
+        baseURL: 'http://localhost:5173/',
       },
     },
     {
@@ -68,7 +72,7 @@ export default defineConfig({
   webServer: [
     {
       command: 'pnpm --filter demo dev',
-      url: 'http://localhost:5173/wizzard-stepper-react/',
+      url: 'http://localhost:5173/',
       reuseExistingServer: !process.env.CI,
       timeout: process.env.CI ? 180 * 1000 : 120 * 1000,
       stdout: 'pipe',

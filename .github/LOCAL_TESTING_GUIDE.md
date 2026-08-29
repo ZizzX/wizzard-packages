@@ -88,7 +88,7 @@ const { useProvideWizard, useWizardActions, createWizardFactory } = vue;
 console.log('✅ Core exports present:', {
   useProvideWizard: typeof useProvideWizard,
   useWizardActions: typeof useWizardActions,
-  createWizardFactory: typeof createWizardFactory
+  createWizardFactory: typeof createWizardFactory,
 });
 ```
 
@@ -232,7 +232,8 @@ du -sh dist/*
 
 **Cause**: Missing or incorrect `dependencies`/`peerDependencies`
 
-**Fix**: 
+**Fix**:
+
 - Move runtime deps to `dependencies`
 - Move framework deps (vue, react) to `peerDependencies`
 - Move build tools to `devDependencies`

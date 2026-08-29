@@ -2,18 +2,45 @@
   "name": "@wizzard-packages/react",
   "version": "0.4.0",
   "description": "React components and hooks for Wizzard Stepper.",
+  "keywords": [
+    "wizard",
+    "stepper",
+    "react",
+    "form",
+    "multi-step",
+    "headless",
+    "workflow"
+  ],
+  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ZizzX/wizzard-packages.git",
+    "url": "git+https://github.com/ZizzX/wizzard-packages.git",
     "directory": "packages/react"
   },
   "type": "module",
+  "sideEffects": false,
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
     "dist"
   ],
+  "engines": {
+    "node": ">=20.11"
+  },
   "publishConfig": {
     "access": "public"
   },
@@ -25,16 +52,6 @@
     "test:run": "vitest run",
     "type-check": "tsc --noEmit"
   },
-  "keywords": [
-    "wizard",
-    "stepper",
-    "react",
-    "form",
-    "multi-step",
-    "headless",
-    "workflow"
-  ],
-  "license": "MIT",
   "peerDependencies": {
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0"

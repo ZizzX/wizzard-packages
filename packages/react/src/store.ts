@@ -1,14 +1,14 @@
 import {
-    type IPersistenceAdapter,
-    type IStepConfig,
-    type IWizardConfig,
-    type IWizardState,
-    type IWizardStore,
-    type Path,
-    type PathValue,
-    WizardStore,
-    getByPath,
-    setByPath,
+  type IPersistenceAdapter,
+  type IStepConfig,
+  type IWizardConfig,
+  type IWizardState,
+  type IWizardStore,
+  type Path,
+  type PathValue,
+  WizardStore,
+  getByPath,
+  setByPath,
 } from '@wizzard-packages/core';
 import { MemoryAdapter } from '@wizzard-packages/persistence';
 import { useCallback, useRef, useSyncExternalStore } from 'react';
@@ -497,7 +497,9 @@ export const useWizardStoreError = (
 export const useWizardStoreSelector = <TSelected>(
   store: IWizardStore<any, any>,
   selector: (state: any) => TSelected,
-  options?: { isEqual?: (a: TSelected, b: TSelected) => boolean } | ((a: TSelected, b: TSelected) => boolean)
+  options?:
+    | { isEqual?: (a: TSelected, b: TSelected) => boolean }
+    | ((a: TSelected, b: TSelected) => boolean)
 ): TSelected => {
   const selectorRef = useRef(selector);
   selectorRef.current = selector;
