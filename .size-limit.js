@@ -21,9 +21,20 @@ export default [
   // The pipeline is the expensive part at roughly 1.4 kB of its own, which is
   // fair: it is the eleven phases everything else delegates to.
   //
-  // The 4 kB destination is now in question — group and repeat traversal is
-  // still to come. That decision is tracked, not fudged: see the budget task.
+  // Group and repeat traversal is not in this entry and never will be: it goes
+  // behind its own export, so a flow that has no sub-flows pays nothing for the
+  // machinery that walks them. That is what keeps the main entry inside 4 kB.
   { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '3.9 kB', gzip: true },
+
+  // Development and server-driven use only. Measured, but never counted against
+  // the runtime budget, because shipping it to a browser is a mistake the
+  // separate entry makes hard to commit by accident.
+  {
+    name: 'core-v1 validate-flow',
+    path: 'packages/core/src/v1/validate-flow.ts',
+    limit: '1 kB',
+    gzip: true,
+  },
 
   { name: 'core', path: 'packages/core/dist/index.js', limit: '4.2 kB', gzip: true },
   {
