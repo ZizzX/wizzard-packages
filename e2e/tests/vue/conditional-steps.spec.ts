@@ -1,6 +1,21 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Vue Conditional Steps E2E', () => {
+// The page these assert against does not exist yet: examples/vue-demo routes
+// /test/conditional-demo at an eight-line "Coming Soon" placeholder, so there
+// are no breadcrumbs and no active-step counter to read. The specs were ported
+// from the React demo ahead of the page.
+//
+// Kept rather than deleted: they describe the behaviour the Vue binding owes,
+// and the Phase 2 contract suite has to satisfy every one of them.
+// Tracked by wizzard-stepper-react-898.
+// examples/vue-demo routes /test/conditional-demo at an eight-line "Coming Soon"
+// placeholder, so the markup these assert against has never existed — they were
+// ported from the React demo ahead of the page.
+//
+// Kept rather than deleted: they state the behaviour the Vue binding owes, and
+// the Phase 2 contract suite has to satisfy every one of them.
+// Tracked by wizzard-stepper-react-898.
+test.describe.fixme('Vue Conditional Steps E2E', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/#/test/conditional-demo', { waitUntil: 'networkidle' });
     await expect(page.getByTestId('wizard-container')).toBeVisible();

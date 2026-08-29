@@ -1,6 +1,13 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Vue Step Guards E2E', () => {
+// examples/vue-demo routes /test/guards-demo at an eight-line "Coming Soon"
+// placeholder, so the markup these assert against has never existed — they were
+// ported from the React demo ahead of the page.
+//
+// Kept rather than deleted: they state the behaviour the Vue binding owes, and
+// the Phase 2 contract suite has to satisfy every one of them.
+// Tracked by wizzard-stepper-react-898.
+test.describe.fixme('Vue Step Guards E2E', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/#/test/guards-demo', { waitUntil: 'networkidle' });
     await expect(page.getByTestId('wizard-container')).toBeVisible();
