@@ -50,7 +50,7 @@
     "lint": "eslint .",
     "test": "vitest",
     "test:run": "vitest run",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit && tsc --noEmit -p src/v1/tsconfig.json"
   },
   "devDependencies": {
     "tsup": "^8.3.5",
