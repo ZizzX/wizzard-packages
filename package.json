@@ -107,12 +107,6 @@
   "engines": {
     "node": ">=20.11"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "unrs-resolver"
-    ]
-  },
   "lint-staged": {
     "*.{ts,tsx,vue}": [
       "eslint --fix",

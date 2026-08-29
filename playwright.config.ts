@@ -23,11 +23,15 @@ export default defineConfig({
   // Retry on CI only
   retries: process.env.CI ? 2 : 0,
 
-  // Opt out of parallel tests on CI
-  workers: process.env.CI ? 1 : undefined,
+  // Two workers, not one: the suite has ~117 tests and a handful of hard waits,
+  // and a single worker does not finish inside the CI step budget.
+  workers: process.env.CI ? 2 : undefined,
 
-  // Reporter to use
-  reporter: 'html',
+  // `github` annotates the failing line in the PR diff; the HTML report is an
+  // artifact, so it must never try to open a browser.
+  reporter: process.env.CI
+    ? [['github'], ['html', { open: 'never' }]]
+    : [['list'], ['html', { open: 'never' }]],
 
   // Shared settings for all the projects below
   use: {
