@@ -44,13 +44,17 @@ Dependencies point one way — into core. Core has no runtime dependencies.
 | `@wizzard-packages/core`     | flow types, expression evaluator, engine, navigation pipeline, selectors, `defineFlow`, `patchFlow`, `validateFlow` | 4.0 kB           |
 | `@wizzard-packages/react`    | provider, hooks, `useSyncExternalStore` bridge                                                                      | 1.5 kB           |
 | `@wizzard-packages/vue`      | `provideWizard`, composables, `shallowRef` bridge                                                                   | 1.5 kB           |
-| `@wizzard-packages/validate` | one Standard Schema adapter — Zod, Valibot, ArkType, Effect — plus a Yup shim                                       | 0.6 kB           |
+| `@wizzard-packages/validate` | one Standard Schema adapter — Zod, Valibot, ArkType, Effect, Yup                                                    | **317 B**        |
 | `@wizzard-packages/plugins`  | `/persist`, `/analytics`, `/logger`, `/autosave`, `/url-sync`, `/http-flow`                                         | 0.8 kB per entry |
 | `@wizzard-packages/devtools` | inspector, flow graph, time travel                                                                                  | —                |
 | `@wizzard-packages/compat`   | the 0.x API on top of the v1 engine                                                                                 | —                |
 
 Removed in v1: `middleware` (replaced by plugins), `adapter-zod` and `adapter-yup` (one
 Standard Schema adapter covers four validation libraries), `persistence` (a plugin).
+
+The Yup shim the table used to promise is not needed: Yup has implemented Standard
+Schema since 1.5, verified against 1.7.1, and returns issues in the same shape as Zod.
+One adapter, no vendor branches, five libraries.
 
 For reference, 0.x measures 4.09 kB for core against 8.43 kB for react — the framework layer
 is twice the size of the engine it wraps. That ratio is the duplication being removed.
