@@ -145,7 +145,9 @@ export default [
       'no-restricted-syntax': [
         'error',
         {
-          selector: 'AssignmentExpression > MemberExpression[object.name="state"]',
+          // `left.` matters: without it the rule also fires on reads such as
+          // `rev = state.rev`, and a rule that cries wolf gets disabled.
+          selector: 'AssignmentExpression[left.object.name="state"]',
           message: 'State is written only in commit.ts.',
         },
         {

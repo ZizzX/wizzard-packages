@@ -1,0 +1,272 @@
+import { commit } from './commit';
+import { runNav, type Hooks, type NavContext, type NavResult } from './navigate';
+import { getPath, setPath } from './path';
+import { createSelector, type Derived } from './select';
+import { initialState, type WizardState } from './state';
+
+import type { AsyncRegistry, Json, Scope } from './expr';
+import type { FlowDefinition, StepDef } from './flow';
+
+/**
+ * The store.
+ *
+ * It owns exactly one thing the rest of the engine does not: the current state
+ * and the listeners watching it. Everything else — resolution, guards, ordering
+ * — lives in functions that take state and return a decision, which is why they
+ * can be tested without any of this.
+ *
+ * `write` is the single setter. Every path into it runs through `commit`, so
+ * `rev` moves exactly once per change and listeners are called exactly once.
+ * The 0.x store notified twice on every validation action, and both bindings
+ * carried guards to undo the second render.
+ */
+
+export type Snapshot = WizardState & Derived;
+
+export interface WizardOptions {
+  flow: FlowDefinition;
+  /** Named resolvers for everything a flow cannot serialize. */
+  registry?: AsyncRegistry;
+  plugins?: readonly Hooks[];
+  data?: Record<string, unknown>;
+  ctx?: Record<string, unknown>;
+  /** A previously serialized state, for resuming a session. */
+  state?: WizardState;
+}
+
+export interface Wizard {
+  getState: () => WizardState;
+  /** State and derived values in one object, identical between commits. */
+  getSnapshot: () => Snapshot;
+  getFlow: () => FlowDefinition;
+
+  subscribe: (listener: () => void) => () => void;
+  /** Calls back only when the selected value changes. */
+  select: <T>(
+    selector: (s: Snapshot) => T,
+    listener: (value: T) => void,
+    equals?: (a: T, b: T) => boolean
+  ) => () => void;
+  /** Calls back only when the value at a data path changes. */
+  watch: (path: string, listener: (value: unknown) => void) => () => void;
+
+  next: (opts?: { validate?: boolean }) => Promise<NavResult>;
+  back: () => Promise<NavResult>;
+  go: (to: string, opts?: { validate?: boolean; force?: boolean }) => Promise<NavResult>;
+  /** Aborts the navigation in flight, if any. */
+  cancel: () => void;
+
+  get: (path: string) => unknown;
+  set: (path: string, value: unknown) => void;
+  patch: (partial: Record<string, unknown>) => void;
+  /** Applies several writes and notifies once. */
+  batch: (fn: () => void) => void;
+  setCtx: (ctx: Record<string, unknown>) => void;
+  reset: (data?: Record<string, unknown>) => void;
+
+  validate: (stepId?: string) => Promise<boolean>;
+  setErrors: (stepId: string, errors: Readonly<Record<string, string>> | null) => void;
+
+  /** Replaces steps by id. Refuses a patch that would remove the current step. */
+  patchFlow: (patch: Partial<FlowDefinition>) => boolean;
+
+  destroy: () => void;
+}
+
+const strictEquals = <T>(a: T, b: T): boolean => a === b;
+
+export function createWizard(options: WizardOptions): Wizard {
+  let flow = options.flow;
+  const registry = options.registry;
+
+  let state: WizardState = options.state ?? initialState(options.data ?? {}, options.ctx ?? {});
+  const listeners = new Set<() => void>();
+  const select = createSelector(() => flow, registry);
+
+  let batching = false;
+  let dirtyWhileBatching = false;
+  let controller: AbortController | undefined;
+  let snapshotRev = -1;
+  let snapshot: Snapshot | undefined;
+
+  const notify = (): void => {
+    if (batching) {
+      dirtyWhileBatching = true;
+      return;
+    }
+    for (const l of listeners) l();
+  };
+
+  const write = (next: WizardState): void => {
+    state = next;
+    notify();
+  };
+
+  const getSnapshot = (): Snapshot => {
+    if (snapshot !== undefined && snapshotRev === state.rev) return snapshot;
+    snapshot = { ...state, ...select(state) };
+    snapshotRev = state.rev;
+    return snapshot;
+  };
+
+  const scopeOf = (): Scope => ({ data: state.data, ctx: state.ctx });
+
+  const resolverFor = async (
+    ref: { $ref: string; args?: Json } | undefined,
+    fallback: unknown
+  ): Promise<unknown> => {
+    if (!ref) return fallback;
+    const fn = registry?.[ref.$ref];
+    if (!fn) throw new Error(`[wizzard] unknown resolver: ${ref.$ref}`);
+    return await fn(ref.args, scopeOf());
+  };
+
+  const validateStep = async (stepId: string): Promise<Readonly<Record<string, string>> | null> => {
+    const step: StepDef | undefined = flow.steps[stepId];
+    const rule = step && 'validate' in step ? step.validate : undefined;
+    const result = await resolverFor(rule, null);
+    return (result as Readonly<Record<string, string>> | null) ?? null;
+  };
+
+  const navContext = (): NavContext => ({
+    flow,
+    registry,
+    hooks: options.plugins,
+    validate: (stepId) => validateStep(stepId),
+    load: async (stepId) => {
+      const step = flow.steps[stepId];
+      await resolverFor(step?.load, undefined);
+    },
+    signal: controller?.signal,
+  });
+
+  const navigate = async (
+    intent: Parameters<typeof runNav>[2],
+    opts?: { validate?: boolean }
+  ): Promise<NavResult> => {
+    controller = new AbortController();
+    return runNav(navContext(), { read: () => state, write }, intent, opts ?? {});
+  };
+
+  return {
+    getState: () => state,
+    getSnapshot,
+    getFlow: () => flow,
+
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+
+    select(selector, listener, equals = strictEquals) {
+      let previous = selector(getSnapshot());
+      const wrapped = (): void => {
+        const nextValue = selector(getSnapshot());
+        if (equals(previous, nextValue)) return;
+        previous = nextValue;
+        listener(nextValue);
+      };
+      listeners.add(wrapped);
+      return () => listeners.delete(wrapped);
+    },
+
+    watch(path, listener) {
+      let previous = getPath(state.data, path);
+      const wrapped = (): void => {
+        const nextValue = getPath(state.data, path);
+        if (previous === nextValue) return;
+        previous = nextValue;
+        listener(nextValue);
+      };
+      listeners.add(wrapped);
+      return () => listeners.delete(wrapped);
+    },
+
+    next: (opts) => navigate({ type: 'next' }, opts),
+    back: () => navigate({ type: 'back' }),
+    go: (to, opts) => navigate({ type: 'go', to, force: opts?.force }, opts),
+    cancel: () => controller?.abort(),
+
+    get: (path) => getPath(state.data, path),
+
+    set(path, value) {
+      const data = setPath(state.data as Record<string, unknown>, path, value);
+      // A write that changes nothing must not invalidate every memoized
+      // selector downstream.
+      if (data === state.data) return;
+      write(commit(state, { data, dirty: [...new Set([...state.dirty, path])] }));
+    },
+
+    patch(partial) {
+      write(commit(state, { data: { ...state.data, ...partial } }));
+    },
+
+    batch(fn) {
+      batching = true;
+      try {
+        fn();
+      } finally {
+        batching = false;
+        if (dirtyWhileBatching) {
+          dirtyWhileBatching = false;
+          notify();
+        }
+      }
+    },
+
+    setCtx(ctx) {
+      write(commit(state, { ctx: { ...state.ctx, ...ctx } }));
+    },
+
+    reset(data) {
+      write(commit(initialState(data ?? {}, state.ctx), { rev: state.rev }));
+    },
+
+    async validate(stepId) {
+      const target = stepId ?? state.stack[state.stack.length - 1]?.step;
+      if (target === undefined) return true;
+      const errors = await validateStep(target);
+      const failed = errors !== null && Object.keys(errors).length > 0;
+      write(
+        commit(state, {
+          errors: failed
+            ? { ...state.errors, [target]: errors }
+            : Object.fromEntries(Object.entries(state.errors).filter(([k]) => k !== target)),
+        })
+      );
+      return !failed;
+    },
+
+    setErrors(stepId, errors) {
+      write(
+        commit(state, {
+          errors:
+            errors === null
+              ? Object.fromEntries(Object.entries(state.errors).filter(([k]) => k !== stepId))
+              : { ...state.errors, [stepId]: errors },
+        })
+      );
+    },
+
+    patchFlow(patch) {
+      const merged: FlowDefinition = {
+        ...flow,
+        ...patch,
+        steps: { ...flow.steps, ...patch.steps },
+      };
+      const current = state.stack[state.stack.length - 1]?.step;
+      // A patch that deletes the step the user is standing on is rejected rather
+      // than repaired. Silently relocating them loses a half-filled form, and a
+      // backend that sends such a patch has a bug worth surfacing.
+      if (current !== undefined && merged.steps[current] === undefined) return false;
+      flow = merged;
+      write(commit(state, {}));
+      return true;
+    },
+
+    destroy() {
+      controller?.abort();
+      listeners.clear();
+    },
+  };
+}

@@ -2,5 +2,8 @@ export * from './commit';
 export * from './expr';
 export * from './flow';
 export * from './navigate';
+export * from './path';
 export * from './resolve';
+export * from './select';
 export * from './state';
+export * from './store';
