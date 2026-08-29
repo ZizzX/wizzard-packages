@@ -36,6 +36,27 @@ export default [
     gzip: true,
   },
 
+  // The v1 bindings, measured from source. The budget is 1.5 kB each, and the
+  // point of the whole rewrite is that they can be: navigation lives in the
+  // engine, so a binding only bridges a store into a framework.
+  //
+  // Measured 2026-08-30: react 906 B against 8.43 kB for the 0.x layer, vue
+  // 646 B against 5.07 kB. The limits below are the ratchet, not the target.
+  {
+    name: 'react-v1',
+    path: 'packages/react/src/v1/index.tsx',
+    limit: '1 kB',
+    gzip: true,
+    ignore: ['react', 'react-dom', '@wizzard-packages/core/v1'],
+  },
+  {
+    name: 'vue-v1',
+    path: 'packages/vue/src/v1/index.ts',
+    limit: '700 B',
+    gzip: true,
+    ignore: ['vue', '@wizzard-packages/core/v1'],
+  },
+
   { name: 'core', path: 'packages/core/dist/index.js', limit: '4.2 kB', gzip: true },
   {
     name: 'react',

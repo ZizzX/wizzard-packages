@@ -92,6 +92,11 @@ selectors, `defineFlow` and the type machinery. Property tests over randomly gen
 a deterministic scheduler for the race matrix. A size spike comes first: if the skeleton
 exceeds 2 kB, features are cut before any binding is written.
 
+Measured once the bindings existed: **react 906 B, vue 646 B**, against 8.43 kB
+and 5.07 kB for their 0.x equivalents. Nothing was optimised to get there. The
+logic simply moved into the engine, which is the entire argument for the
+rewrite, stated as a number.
+
 **2 — Bindings.** React and Vue, roughly 250 lines each, from the same bridge shape, plus a
 shared contract-test package run against both. That suite is what keeps them from drifting
 apart again.
