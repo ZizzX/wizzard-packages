@@ -11,7 +11,6 @@ import React from 'react';
  * Creates a Shadcn-styled Wizard instance with typed hooks and components.
  */
 export function createShadcnWizard<
-   
   TSchema extends Record<string, any>,
   StepId extends string = string,
 >() {
@@ -169,7 +168,6 @@ export function createShadcnWizard<
     const [value, setValue] = core.useWizardField(path);
     const error = core.useWizardError(path);
 
-     
     const handleChange = (val: any) => {
       if (val && typeof val === 'object' && 'target' in val) {
         setValue(val.target.value);

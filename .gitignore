@@ -21,3 +21,6 @@ blob-report
 
 # bv (beads viewer) local config and caches
 .bv/
+
+# turborepo
+.turbo

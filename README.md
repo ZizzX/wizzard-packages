@@ -12,16 +12,16 @@ Headless, typed wizard engine for building multi-step flows with React, Vue, or 
 
 ## 📦 Packages at a glance
 
-| Package | Purpose |
-| --- | --- |
-| `@wizzard-packages/core` | Framework-agnostic engine (state, actions, types) |
-| `@wizzard-packages/react` | React provider + hooks built on core |
-| `@wizzard-packages/vue` | Vue 3 composition API bindings |
-| `@wizzard-packages/adapter-zod` | Zod validation adapter |
-| `@wizzard-packages/adapter-yup` | Yup validation adapter |
-| `@wizzard-packages/persistence` | LocalStorage and memory persistence |
-| `@wizzard-packages/middleware` | Logger + Redux DevTools middleware |
-| `@wizzard-packages/devtools` | DevTools UI for inspection |
+| Package                         | Purpose                                           |
+| ------------------------------- | ------------------------------------------------- |
+| `@wizzard-packages/core`        | Framework-agnostic engine (state, actions, types) |
+| `@wizzard-packages/react`       | React provider + hooks built on core              |
+| `@wizzard-packages/vue`         | Vue 3 composition API bindings                    |
+| `@wizzard-packages/adapter-zod` | Zod validation adapter                            |
+| `@wizzard-packages/adapter-yup` | Yup validation adapter                            |
+| `@wizzard-packages/persistence` | LocalStorage and memory persistence               |
+| `@wizzard-packages/middleware`  | Logger + Redux DevTools middleware                |
+| `@wizzard-packages/devtools`    | DevTools UI for inspection                        |
 
 For detailed docs and usage, see each package README in `packages/*`.
 
@@ -31,10 +31,10 @@ For detailed docs and usage, see each package README in `packages/*`.
 
 Try the library in the browser with these standalone templates on StackBlitz:
 
-| Example | Template |
-| :-- | :-- |
-| **Basic** | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-blue?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-packages/tree/main/.stackblitz/basic) |
-| **Validation** | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-red?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-packages/tree/main/.stackblitz/validation) |
+| Example         | Template                                                                                                                                                                 |
+| :-------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Basic**       | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-blue?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-packages/tree/main/.stackblitz/basic)        |
+| **Validation**  | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-red?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-packages/tree/main/.stackblitz/validation)    |
 | **Persistence** | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-green?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-packages/tree/main/.stackblitz/persistence) |
 
 ---
@@ -57,8 +57,7 @@ import { createWizardFactory } from '@wizzard-packages/react';
 type Data = { name: string };
 type StepId = 'name' | 'review';
 
-const { WizardProvider, createStep, useWizardActions } =
-  createWizardFactory<Data, StepId>();
+const { WizardProvider, createStep, useWizardActions } = createWizardFactory<Data, StepId>();
 
 const steps = [
   createStep({ id: 'name', label: 'Name', component: NameStep }),
@@ -131,7 +130,7 @@ useProvideWizard({
     steps: [
       { id: 'name', label: 'Name' },
       { id: 'review', label: 'Review' },
-    ]
+    ],
   },
   initialData: { name: '' },
   initialStepId: 'name',
@@ -219,14 +218,14 @@ Core-only setup:
 - Pre-releases use `-next.N` and publish with npm dist-tag `next`.
 - Versioning is managed via Changesets with a fixed group for all `@wizzard-packages/*` packages.
 - Legacy `wizzard-stepper-react` stays on v2.x for critical fixes only.
-- CI publishes the same versions to GitHub Packages for repo sidebar visibility.
+- Every merge to `main` publishes a snapshot under the `canary` dist-tag.
 - Full release steps: `docs/RELEASE.md`.
 
 ## 🌿 Development Workflow
 
-- Work lands in `dev` first; CI validates `dev` and `main`.
-- Promote `dev` to `main` when ready to release.
-- Publishing runs from `main` only.
+- Trunk-based: short-lived branches, PRs into `main`, no `dev` or `stage` branch.
+- Unreleased work is tried from the `canary` dist-tag, not from a branch.
+- Publishing runs from `main` only. See `docs/DEV_WORKFLOW.md`.
 
 See `docs/DEV_WORKFLOW.md` for the full flow.
 

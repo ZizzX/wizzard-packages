@@ -32,7 +32,7 @@ export default defineConfig({
   // Shared settings for all the projects below
   use: {
     // Base URL to use in actions like `await page.goto('/')`
-    baseURL: 'http://localhost:5173/wizzard-stepper-react/',
+    baseURL: 'http://localhost:5173/',
 
     // Collect trace when retrying the failed test
     trace: 'on-first-retry',
@@ -51,7 +51,7 @@ export default defineConfig({
       testMatch: /react\/.*\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
-        baseURL: 'http://localhost:5173/wizzard-stepper-react/',
+        baseURL: 'http://localhost:5173/',
       },
     },
     {
@@ -68,7 +68,7 @@ export default defineConfig({
   webServer: [
     {
       command: 'pnpm --filter demo dev',
-      url: 'http://localhost:5173/wizzard-stepper-react/',
+      url: 'http://localhost:5173/',
       reuseExistingServer: !process.env.CI,
       timeout: process.env.CI ? 180 * 1000 : 120 * 1000,
       stdout: 'pipe',

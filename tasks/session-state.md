@@ -46,10 +46,10 @@
 - Released packages:
   - `@wizzard-packages/vue@0.2.0` - first stable release with full feature parity to React adapter
   - Git tag: `@wizzard-packages/vue@0.2.0` created and pushed
-- Open questions: 
+- Open questions:
   - E2E tests need HTTP probe/readiness check for deterministic server startup in CI
   - GitHub Packages publish failed (404), but npmjs.com publish successful
-- Next action: 
+- Next action:
   1. Port remaining 7 Vue E2E specs
   2. Add HTTP health probe to Playwright webServer config
   3. Re-enable E2E on dev branch after stabilization

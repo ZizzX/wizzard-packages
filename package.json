@@ -6,10 +6,10 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm -r dev",
-    "build": "pnpm -r build",
+    "build": "turbo run build",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "lint": "pnpm -r lint",
+    "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "vitest",
     "test:run": "vitest run",
@@ -18,7 +18,7 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
     "test:all": "pnpm test:run && pnpm test:e2e",
-    "type-check": "pnpm -r type-check",
+    "type-check": "turbo run type-check",
     "docs:api": "typedoc",
     "docs:watch": "typedoc --watch",
     "docs:ui": "pnpm --filter @wizzard-packages/ui dev",
@@ -30,9 +30,10 @@
     "prepare": "husky || true",
     "test:coverage": "vitest run --coverage",
     "size": "size-limit",
-    "publint": "pnpm -r --filter \"./packages/*\" exec publint",
-    "attw": "pnpm -r --filter \"./packages/*\" exec attw --pack .",
-    "check:pack": "pnpm publint && pnpm attw"
+    "publint": "pnpm -r --filter \"./packages/*\" --filter \"!@wizzard-packages/ui\" exec publint",
+    "attw": "pnpm -r --filter \"./packages/*\" --filter \"!@wizzard-packages/ui\" exec attw --pack .",
+    "check:pack": "pnpm publint && pnpm attw",
+    "size:build": "pnpm build && pnpm size"
   },
   "config": {
     "commitizen": {
@@ -77,7 +78,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.2",
     "@vitest/coverage-v8": "^4.1.11",
-    "@vitest/ui": "^4.0.16",
+    "@vitest/ui": "^4.1.11",
     "commitizen": "^4.3.1",
     "cz-conventional-changelog": "^3.3.0",
     "eslint": "^9.39.2",
@@ -97,7 +98,7 @@
     "typedoc-plugin-markdown": "^4.9.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.24.0",
-    "vitest": "^4.0.16",
+    "vitest": "^4.1.11",
     "vue-eslint-parser": "^10.4.1",
     "yup": "^1.7.1",
     "zod": "^4.2.1"
@@ -110,6 +111,15 @@
     "onlyBuiltDependencies": [
       "esbuild",
       "unrs-resolver"
+    ]
+  },
+  "lint-staged": {
+    "*.{ts,tsx,vue}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,mjs,cjs,jsx,json,md,yml,yaml}": [
+      "prettier --write"
     ]
   }
 }

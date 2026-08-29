@@ -20,3 +20,7 @@ test-results
 
 # Config
 .stackblitz
+
+# Frozen 0.x documentation — reformatting it would only create noise.
+docs/legacy/
+docs/api/

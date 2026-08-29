@@ -65,11 +65,13 @@ store.dispatch({
 ## 🛠️ Setup & Run
 
 1. **Install dependencies**:
+
    ```bash
    pnpm install
    ```
 
 2. **Run the development server**:
+
    ```bash
    pnpm dev
    ```

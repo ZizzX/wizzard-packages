@@ -1,3 +1,15 @@
+# Prettier and .editorconfig both write LF. Without this, Windows checkouts get
+# CRLF back and every file looks modified.
+* text=auto eol=lf
 
-# Use bd merge for beads JSONL files
-.beads/issues.jsonl merge=beads
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.db binary
+
+pnpm-lock.yaml linguist-generated=true
+docs/api/** linguist-documentation=true

@@ -1,18 +1,42 @@
-# Development Workflow
+# Development workflow
 
-This repo uses a `dev` branch for integration and a `main` branch for releases.
+This repository is trunk-based: **one long-lived branch, `main`**. There is no `dev` and no
+`stage` branch. Environments come from npm dist-tags and preview deploys, not from branches.
 
-## Flow
+## Branching
 
-1. Create feature branches from `dev`.
-2. Open PRs into `dev` and let CI validate changes.
-3. Promote `dev` to `main` when ready to release.
-4. Releases and publishes run from `main` only.
+1. Branch from `main`. Keep the branch short-lived — under two days is the target.
+2. Open a PR into `main`. CI validates it.
+3. Squash-merge. Delete the branch.
 
-## Notes
+An unfinished feature ships behind a config flag rather than waiting on a branch.
 
-- CI runs on pushes and PRs targeting `dev` and `main`.
-- Publishing workflows are restricted to `main`.
-- Docs UI preview deploys from `dev` to GitHub Pages at `/wizzard-packages/dev/`.
-- Docs UI production deploys from `main` to `/wizzard-packages/` (Pages source must be `gh-pages` branch).
-- After public API changes, regenerate TypeDoc: `pnpm docs:api`.
+## Channels
+
+| Channel     | npm dist-tag | Published when                                                  |
+| ----------- | ------------ | --------------------------------------------------------------- |
+| Canary      | `canary`     | every merge to `main` that touches `packages/` or `.changeset/` |
+| Pre-release | `next`       | while a changesets pre-release mode is active                   |
+| Stable      | `latest`     | when the release PR is merged                                   |
+
+Trying an unreleased change means installing it, not checking out a branch:
+
+```bash
+pnpm add @wizzard-packages/core@canary
+```
+
+The documentation site deploys a preview for every PR, which serves the purpose a `stage`
+branch used to.
+
+## CI
+
+`.github/workflows/ci.yml` runs on pushes to `main` and on every PR, across Node 20 and 22:
+
+- `pnpm lint`, `pnpm format:check`, `pnpm type-check`
+- `pnpm build`
+- `pnpm test:coverage` — coverage thresholds are enforced
+- `pnpm publint`, `pnpm attw`, `pnpm size` — packaging and bundle budgets, once per run
+- `pnpm test:e2e` — Playwright against the React and Vue demos, on PRs as well as `main`
+
+Release steps are in [`RELEASE.md`](RELEASE.md); contributor rules are in
+[`../AGENTS.md`](../AGENTS.md).
