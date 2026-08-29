@@ -13,6 +13,29 @@
  * the size of the engine it wraps, which is the duplication v1 removes.
  */
 export default [
+  // The v1 engine, measured from source while it is built. A ratchet like the
+  // rest: it sits just above what is there now, so growth has to be deliberate.
+  //
+  // Cumulative cost by module, measured 2026-08-29:
+  //   path 279 B, expr 929 B, resolve 1.07 kB, navigate 2.44 kB, store 3.86 kB
+  // The pipeline is the expensive part at roughly 1.4 kB of its own, which is
+  // fair: it is the eleven phases everything else delegates to.
+  //
+  // Group and repeat traversal is not in this entry and never will be: it goes
+  // behind its own export, so a flow that has no sub-flows pays nothing for the
+  // machinery that walks them. That is what keeps the main entry inside 4 kB.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '3.9 kB', gzip: true },
+
+  // Development and server-driven use only. Measured, but never counted against
+  // the runtime budget, because shipping it to a browser is a mistake the
+  // separate entry makes hard to commit by accident.
+  {
+    name: 'core-v1 validate-flow',
+    path: 'packages/core/src/v1/validate-flow.ts',
+    limit: '1 kB',
+    gzip: true,
+  },
+
   { name: 'core', path: 'packages/core/dist/index.js', limit: '4.2 kB', gzip: true },
   {
     name: 'react',

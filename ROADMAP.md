@@ -55,6 +55,33 @@ Standard Schema adapter covers four validation libraries), `persistence` (a plug
 For reference, 0.x measures 4.09 kB for core against 8.43 kB for react — the framework layer
 is twice the size of the engine it wraps. That ratio is the duplication being removed.
 
+## Size budget
+
+Measured 2026-08-29, gzip, cumulative by module:
+
+| Module                      | Size    |
+| --------------------------- | ------- |
+| `path`                      | 279 B   |
+| `expr`                      | 929 B   |
+| `resolve`                   | 1.07 kB |
+| `navigate`                  | 2.44 kB |
+| `store`, `select`, `define` | 3.88 kB |
+
+The pipeline is the expensive part, at roughly 1.4 kB of its own. That is fair:
+it is the eleven phases everything else delegates to, and it is the reason the
+bindings can be 250 lines.
+
+Group and repeat traversal is deliberately **not** in the main entry. It goes
+behind its own export, so a flow with no sub-flows pays nothing for the
+machinery that walks them. The alternatives were raising the budget to 5 kB for
+everyone, or dropping `repeat` — which the plan named as the first feature to
+cut. Neither was necessary: per-entry exports were already the packaging model,
+so the feature survives and the flat case stays inside 4 kB.
+
+`validateFlow` sits behind its own export for the same reason. It is for
+development and for the moment a flow arrives from a backend; a browser bundle
+should never carry it, and a separate entry makes that hard to do by accident.
+
 ## Phases
 
 **0 — Foundation.** Pinned toolchain, one code style, packaging and size gates in CI,

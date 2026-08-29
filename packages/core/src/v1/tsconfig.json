@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    // A flow can arrive from a backend, so an index into `steps` or `order` may
+    // genuinely miss. Without this the compiler claims every lookup succeeds and
+    // the runtime guards that make server-driven flows safe look redundant.
+    "noUncheckedIndexedAccess": true
+  },
+  "include": ["."]
+}

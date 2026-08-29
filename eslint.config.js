@@ -134,12 +134,40 @@ export default [
     },
   },
 
+  // ── V1 ENGINE ───────────────────────────────────────────────────────────────
+  // The invariant the whole design rests on: state is written in exactly one
+  // place, so an aborted navigation can never leave a partial write behind.
+  // Enforced mechanically, because "everyone remembers to" is not a guarantee.
+  {
+    files: ['packages/core/src/v1/**/*.ts'],
+    ignores: ['packages/core/src/v1/commit.ts', 'packages/core/src/v1/**/*.test.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          // `left.` matters: without it the rule also fires on reads such as
+          // `rev = state.rev`, and a rule that cries wolf gets disabled.
+          selector: 'AssignmentExpression[left.object.name="state"]',
+          message: 'State is written only in commit.ts.',
+        },
+        {
+          selector:
+            'CallExpression[callee.object.name="Object"][callee.property.name="assign"] > Identifier:first-child[name="state"]',
+          message: 'State is written only in commit.ts.',
+        },
+      ],
+    },
+  },
+
   // ── LEGACY QUARANTINE ───────────────────────────────────────────────────────
   // The 0.x engine and its duplicated framework layers. These files are replaced
   // wholesale by the v1 packages; linting them to the new standard would only
   // produce noise on code scheduled for deletion.
   // Remove an entry the moment its replacement lands. Never add one.
   {
+    // `ignores` inside a config object subtracts from `files`: v1 source lives
+    // under packages/core/src/v1 and is held to the full standard.
+    ignores: ['packages/core/src/v1/**'],
     files: [
       'packages/core/src/**',
       'packages/react/src/**',
