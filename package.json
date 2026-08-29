@@ -2,7 +2,7 @@
   "name": "wizzard-packages",
   "private": true,
   "version": "0.1.0",
-  "description": "A flexible, headless, and strictly typed multi-step wizard library for React.",
+  "description": "Headless, typed, framework-agnostic engine for multi-step wizards and flows.",
   "type": "module",
   "scripts": {
     "dev": "pnpm -r dev",
@@ -27,10 +27,12 @@
     "release": "changeset version",
     "release:publish": "changeset publish",
     "commit": "cz",
-    "prepare": "husky || true"
-  },
-  "overrides": {
-    "glob": "^9.0.0"
+    "prepare": "husky || true",
+    "test:coverage": "vitest run --coverage",
+    "size": "size-limit",
+    "publint": "pnpm -r --filter \"./packages/*\" exec publint",
+    "attw": "pnpm -r --filter \"./packages/*\" exec attw --pack .",
+    "check:pack": "pnpm publint && pnpm attw"
   },
   "config": {
     "commitizen": {
@@ -38,43 +40,35 @@
     }
   },
   "keywords": [
-    "react",
     "wizard",
     "stepper",
+    "multi-step",
     "form",
-    "multi-step"
+    "flow",
+    "headless",
+    "state-machine",
+    "react",
+    "vue",
+    "typescript"
   ],
   "author": "Aziz Isapov",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ZizzX/wizzard-stepper-react.git"
+    "url": "git+https://github.com/ZizzX/wizzard-packages.git"
   },
   "bugs": {
-    "url": "https://github.com/ZizzX/wizzard-stepper-react/issues",
-    "email": "zizzxiii@gmail.com"
+    "url": "https://github.com/ZizzX/wizzard-packages/issues"
   },
-  "homepage": "https://zizzx.github.io/wizzard-stepper-react/",
-  "peerDependencies": {
-    "react": ">=16.8.0",
-    "react-dom": ">=16.8.0",
-    "yup": "^1.0.0",
-    "zod": "^4.0.0"
-  },
-  "peerDependenciesMeta": {
-    "zod": {
-      "optional": true
-    },
-    "yup": {
-      "optional": true
-    }
-  },
+  "homepage": "https://github.com/ZizzX/wizzard-packages#readme",
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@changesets/cli": "^2.27.8",
     "@commitlint/cli": "^20.2.0",
     "@commitlint/config-conventional": "^20.2.0",
-    "@changesets/cli": "^2.27.8",
     "@eslint/js": "^9.39.2",
     "@playwright/test": "^1.57.0",
+    "@size-limit/preset-small-lib": "^13.0.3",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
     "@testing-library/user-event": "^14.6.1",
@@ -82,21 +76,40 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.2",
+    "@vitest/coverage-v8": "^4.1.11",
     "@vitest/ui": "^4.0.16",
     "commitizen": "^4.3.1",
     "cz-conventional-changelog": "^3.3.0",
     "eslint": "^9.39.2",
+    "eslint-plugin-import-x": "^4.17.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-vue": "^10.10.0",
     "globals": "^15.14.0",
     "husky": "^9.1.7",
     "jsdom": "^27.4.0",
+    "lint-staged": "^17.4.1",
     "prettier": "^3.7.4",
+    "publint": "^0.3.24",
+    "size-limit": "^13.0.3",
     "tsup": "^8.5.1",
+    "turbo": "^2.10.12",
     "typedoc": "^0.28.15",
     "typedoc-plugin-markdown": "^4.9.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.24.0",
     "vitest": "^4.0.16",
+    "vue-eslint-parser": "^10.4.1",
     "yup": "^1.7.1",
     "zod": "^4.2.1"
+  },
+  "packageManager": "pnpm@10.26.2",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "unrs-resolver"
+    ]
   }
 }

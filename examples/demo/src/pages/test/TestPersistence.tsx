@@ -178,7 +178,7 @@ export default function TestPersistence() {
     const persistenceConfig = {
       mode: modeParam || 'onStepChange',
       debounceTime: 100, // Short debounce for tests
-      storageKey: storageKey,
+      storageKey,
       adapter: new LocalStorageAdapter(storageKey),
     };
 

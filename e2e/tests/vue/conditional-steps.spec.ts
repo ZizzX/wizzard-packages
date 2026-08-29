@@ -173,7 +173,7 @@ test.describe('Vue Conditional Steps E2E', () => {
 
   test('should update breadcrumbs dynamically', async ({ page }) => {
     // Start with 2 breadcrumbs
-    let breadcrumbs = page.locator('[data-testid^="breadcrumb-"]');
+    const breadcrumbs = page.locator('[data-testid^="breadcrumb-"]');
     expect(await breadcrumbs.count()).toBe(2);
 
     // Select business -> 3 breadcrumbs

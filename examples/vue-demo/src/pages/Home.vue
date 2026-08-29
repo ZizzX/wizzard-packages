@@ -81,7 +81,9 @@ const navigateTo = (path: string) => {
   <div class="home-container">
     <header class="header">
       <h1>@wizzard-packages/vue</h1>
-      <p class="subtitle">Comprehensive E2E Test Suite & Examples</p>
+      <p class="subtitle">
+        Comprehensive E2E Test Suite & Examples
+      </p>
     </header>
 
     <main class="main-content">
@@ -108,15 +110,27 @@ const navigateTo = (path: string) => {
 
     <footer class="footer">
       <p>
-        <a href="https://github.com/your-org/wizzard-packages" target="_blank" rel="noopener">
+        <a
+          href="https://github.com/your-org/wizzard-packages"
+          target="_blank"
+          rel="noopener"
+        >
           GitHub
         </a>
         •
-        <a href="https://www.npmjs.com/package/@wizzard-packages/vue" target="_blank" rel="noopener">
+        <a
+          href="https://www.npmjs.com/package/@wizzard-packages/vue"
+          target="_blank"
+          rel="noopener"
+        >
           npm
         </a>
         •
-        <a href="https://wizzard-packages.dev/docs" target="_blank" rel="noopener">
+        <a
+          href="https://wizzard-packages.dev/docs"
+          target="_blank"
+          rel="noopener"
+        >
           Documentation
         </a>
       </p>

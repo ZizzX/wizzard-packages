@@ -15,14 +15,21 @@ const goHome = () => {
   <div class="placeholder-container">
     <div class="placeholder-content">
       <h1>🚧 {{ pageName }}</h1>
-      <p class="message">This example page is under construction.</p>
+      <p class="message">
+        This example page is under construction.
+      </p>
       <p class="info">
         For now, please check the
         <strong>Comprehensive Demo</strong> which covers basic navigation, validation, and reactive
         updates.
       </p>
       <div class="actions">
-        <button class="btn btn-primary" @click="goHome">← Back to Examples</button>
+        <button
+          class="btn btn-primary"
+          @click="goHome"
+        >
+          ← Back to Examples
+        </button>
       </div>
       <div class="note">
         <p><strong>Coming soon:</strong></p>

@@ -53,7 +53,7 @@ export default function Api() {
       <article className="api-content markdown">
         <ReactMarkdown
           components={{
-            a: ({ href, children, node, ...props }) => {
+            a: ({ href, children, node: _node, ...props }) => {
               if (!href) {
                 return <a {...props}>{children}</a>;
               }
