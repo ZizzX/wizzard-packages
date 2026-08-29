@@ -2,7 +2,9 @@ import { resolve } from 'path';
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
-  entry: ['src/index.ts'],
+  // v1 ships as its own entry, so it can be tried from canary without
+  // disturbing the 0.x surface.
+  entry: ['src/index.ts', 'src/v1/index.tsx'],
   format: ['cjs', 'esm'],
   dts: true,
   treeshake: true,

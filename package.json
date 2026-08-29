@@ -31,7 +31,7 @@
     "test:coverage": "vitest run --coverage",
     "size": "size-limit",
     "publint": "pnpm -r --filter \"./packages/*\" --filter \"!@wizzard-packages/ui\" exec publint",
-    "attw": "pnpm -r --filter \"./packages/*\" --filter \"!@wizzard-packages/ui\" exec attw --pack .",
+    "attw": "pnpm -r --filter \"./packages/*\" --filter \"!@wizzard-packages/ui\" exec attw --pack . --profile node16",
     "check:pack": "pnpm publint && pnpm attw",
     "size:build": "pnpm build && pnpm size"
   },

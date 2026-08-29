@@ -139,7 +139,7 @@ export default [
   // place, so an aborted navigation can never leave a partial write behind.
   // Enforced mechanically, because "everyone remembers to" is not a guarantee.
   {
-    files: ['packages/core/src/v1/**/*.ts'],
+    files: ['packages/{core,react,vue}/src/v1/**/*.{ts,tsx}'],
     ignores: ['packages/core/src/v1/commit.ts', 'packages/core/src/v1/**/*.test.ts'],
     rules: {
       'no-restricted-syntax': [
@@ -167,7 +167,7 @@ export default [
   {
     // `ignores` inside a config object subtracts from `files`: v1 source lives
     // under packages/core/src/v1 and is held to the full standard.
-    ignores: ['packages/core/src/v1/**'],
+    ignores: ['packages/core/src/v1/**', 'packages/react/src/v1/**', 'packages/vue/src/v1/**'],
     files: [
       'packages/core/src/**',
       'packages/react/src/**',

@@ -33,7 +33,27 @@
         "default": "./dist/index.cjs"
       }
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./v1": {
+      "import": {
+        "types": "./dist/v1/index.d.ts",
+        "default": "./dist/v1/index.js"
+      },
+      "require": {
+        "types": "./dist/v1/index.d.cts",
+        "default": "./dist/v1/index.cjs"
+      }
+    },
+    "./validate-flow": {
+      "import": {
+        "types": "./dist/v1/validate-flow.d.ts",
+        "default": "./dist/v1/validate-flow.js"
+      },
+      "require": {
+        "types": "./dist/v1/validate-flow.d.cts",
+        "default": "./dist/v1/validate-flow.cjs"
+      }
+    }
   },
   "files": [
     "dist"

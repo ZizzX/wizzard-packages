@@ -1,14 +1,14 @@
 name: Deploy Demo
 
+# Manual only.
+#
+# This has failed on every run since January: it and Deploy Docs UI both target
+# the github-pages environment, and only one workflow can own the Pages site.
+# Docs UI is the one that should, so this stopped being a deploy and became a
+# button. The documentation site planned for phase 4 replaces it outright.
+#
+# The demo itself is not dead — the E2E suite runs against it locally.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'examples/demo/**'
-      - 'src/**'
-      - 'typedoc.json'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
   workflow_dispatch:
 
 permissions:
