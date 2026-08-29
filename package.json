@@ -24,7 +24,7 @@
     "docs:ui": "pnpm --filter @wizzard-packages/ui dev",
     "docs:ui:build": "pnpm --filter @wizzard-packages/ui build",
     "changeset": "changeset",
-    "release": "changeset version",
+    "release": "changeset version && pnpm install --lockfile-only",
     "release:publish": "changeset publish",
     "commit": "cz",
     "prepare": "husky || true",
