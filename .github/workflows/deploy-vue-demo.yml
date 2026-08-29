@@ -1,14 +1,12 @@
 name: Deploy Vue Demo to GitHub Pages
 
+# Manual only.
+#
+# Three workflows targeted the github-pages environment and only one can own
+# the Pages site. Docs UI owns it, so every push run of this one was rejected
+# with "Branch main is not allowed to deploy to github-pages". Same treatment
+# as Deploy Demo: a button, not a deploy, until the phase 4 site replaces both.
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'examples/vue-demo/**'
-      - 'packages/vue/**'
-      - 'packages/core/**'
-      - '.github/workflows/deploy-vue-demo.yml'
   workflow_dispatch:
 
 permissions:

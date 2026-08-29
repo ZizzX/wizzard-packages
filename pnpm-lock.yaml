@@ -329,14 +329,14 @@ importers:
         specifier: workspace:*
         version: link:../../packages/core
       '@wizzard-packages/devtools':
-        specifier: ^2.0.0
-        version: 2.0.0(@wizzard-packages/core@packages+core)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        specifier: workspace:*
+        version: link:../../packages/devtools
       '@wizzard-packages/middleware':
-        specifier: ^0.1.3
-        version: 0.1.3
+        specifier: workspace:*
+        version: link:../../packages/middleware
       '@wizzard-packages/persistence':
-        specifier: ^0.1.3
-        version: 0.1.3
+        specifier: workspace:*
+        version: link:../../packages/persistence
       '@wizzard-packages/vue':
         specifier: workspace:*
         version: link:../../packages/vue
@@ -2238,28 +2238,6 @@ packages:
 
   '@vue/test-utils@2.4.6':
     resolution: {integrity: sha512-FMxEjOpYNYiFe0GkaHsnJPXFHxQ6m4t8vI/ElPGpMWxZKpmRvQ33OIrvRXemy6yha03RxhOlQuy+gZMC3CQSow==}
-
-  '@wizzard-packages/core@0.4.0':
-    resolution: {integrity: sha512-SADMGreoSwJYclZWTmX2btmfGX2yltvernEvEUuzjYmfKDfUH/x0GixoO8IG4Qo0igWayOc+CEpWKdxNWaKKPQ==}
-
-  '@wizzard-packages/devtools@2.0.0':
-    resolution: {integrity: sha512-lDBgrS8J/AZjxGQhF1OIkwG+pX/Rx0Cmku5eTC9lZeeMf9a8LTSt0wOiCuMD3WWghgCWZsoYRmzvw28AUvMmUg==}
-    peerDependencies:
-      '@wizzard-packages/core': 0.4.0
-      react: '>=18.0.0'
-      react-dom: '>=18.0.0'
-
-  '@wizzard-packages/middleware@0.1.3':
-    resolution: {integrity: sha512-/TB0FfvPw7X7Gds8NT8ZUUhqSw6mYl16HhPs95DTt1TCLrfTK5Tfy60WJGujrK3sidpSTqI3fJrn0j+q74NTVQ==}
-
-  '@wizzard-packages/persistence@0.1.3':
-    resolution: {integrity: sha512-ovuV1L07X50GHxXkbvA641L5C0BL6MG1TjOB07O5nndrY+aaBuHwVv/GbqfnMZWShUwHK9o/OQzybcwAKbJpug==}
-
-  '@wizzard-packages/react@0.4.0':
-    resolution: {integrity: sha512-b3WLRPzJh/7QCMfh9+d36O7DYLuIvztOcP2wqvxoR74+fq3jkroIt9hNTfhZgoaJLhHtE4VqU/WcGdsgaUNiPQ==}
-    peerDependencies:
-      react: '>=18.0.0'
-      react-dom: '>=18.0.0'
 
   JSONStream@1.3.5:
     resolution: {integrity: sha512-E+iruNOY8VV9s4JEbe1aNEm6MiszPRr/UfcHMz0TQh1BXSxHK+ASV1R6W4HpjBhSeS+54PIsAMCBmwD06LLsqQ==}
@@ -6723,31 +6701,6 @@ snapshots:
     dependencies:
       js-beautify: 1.15.4
       vue-component-type-helpers: 2.2.12
-
-  '@wizzard-packages/core@0.4.0': {}
-
-  '@wizzard-packages/devtools@2.0.0(@wizzard-packages/core@packages+core)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
-    dependencies:
-      '@wizzard-packages/core': link:packages/core
-      '@wizzard-packages/react': 0.4.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      react: 19.2.3
-      react-dom: 19.2.3(react@19.2.3)
-
-  '@wizzard-packages/middleware@0.1.3':
-    dependencies:
-      '@wizzard-packages/core': 0.4.0
-
-  '@wizzard-packages/persistence@0.1.3':
-    dependencies:
-      '@wizzard-packages/core': 0.4.0
-
-  '@wizzard-packages/react@0.4.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
-    dependencies:
-      '@wizzard-packages/core': 0.4.0
-      '@wizzard-packages/middleware': 0.1.3
-      '@wizzard-packages/persistence': 0.1.3
-      react: 19.2.3
-      react-dom: 19.2.3(react@19.2.3)
 
   JSONStream@1.3.5:
     dependencies:
