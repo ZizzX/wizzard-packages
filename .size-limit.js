@@ -57,6 +57,11 @@ export default [
     ignore: ['vue', '@wizzard-packages/core/v1'],
   },
 
+  // One adapter for every Standard Schema vendor, replacing the two 0.x
+  // adapter packages below. Measured from source like the rest of v1; the
+  // schema library itself is the consumer's, never bundled here.
+  { name: 'validate', path: 'packages/validate/src/index.ts', limit: '400 B', gzip: true },
+
   { name: 'core', path: 'packages/core/dist/index.js', limit: '4.2 kB', gzip: true },
   {
     name: 'react',
