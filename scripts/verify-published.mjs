@@ -18,9 +18,13 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const REGISTRY = 'https://registry.npmjs.org';
-// ponytail: fixed retry window, enough for replication lag. Widen if this flaps.
-const ATTEMPTS = 3;
-const DELAY_MS = 10_000;
+// Replication is not uniform across packages: @wizzard-packages/vue has taken
+// minutes to become visible while every sibling published in the same batch
+// showed up at once. A 30s window called it missing three runs in a row and
+// every one of those versions is in the registry now. Five minutes covers it.
+// ponytail: fixed ceiling, raise it if a package ever needs longer.
+const ATTEMPTS = 10;
+const DELAY_MS = 30_000;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
