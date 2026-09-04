@@ -42,6 +42,12 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: 'true'
 
+      # changeset publish reports success for packages the registry never
+      # saved, and exits 0. Never tag a release that did not fully land.
+      - name: Verify the registry has them
+        if: steps.changesets.outputs.published == 'true'
+        run: node scripts/verify-published.mjs
+
       - name: Tag release
         if: steps.changesets.outputs.published == 'true'
         run: |
