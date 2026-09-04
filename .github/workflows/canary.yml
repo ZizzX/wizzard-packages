@@ -4,6 +4,9 @@
 name: Canary
 
 on:
+  # Publishing is only testable by publishing. Without this the only way to
+  # retry a token or a registry hiccup is to re-run an old push.
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
@@ -52,3 +55,9 @@ jobs:
         run: |
           pnpm changeset version --snapshot canary
           pnpm changeset publish --tag canary --no-git-tag
+
+      # changeset publish reports success for packages the registry never
+      # saved, and exits 0. Ask the registry what actually landed.
+      - name: Verify the registry has them
+        if: steps.check.outputs.count != '0'
+        run: node scripts/verify-published.mjs
