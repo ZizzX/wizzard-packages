@@ -1,5 +1,24 @@
 # @wizzard-packages/react
 
+## 0.4.1
+
+### Patch Changes
+
+- fb9b325: Fix type resolution for CommonJS consumers and declare packages side-effect free.
+
+  Every package declared a single `types` condition, which TypeScript resolves as ESM even
+  under `require` — CJS consumers got types that only worked with a dynamic import. The
+  condition is now split per format and points at the `.d.cts` output the build already
+  produced. `@wizzard-packages/react` had no `exports` map at all and now has one.
+
+  All packages also declare `sideEffects: false` and `engines.node`, so bundlers can tree-shake
+  them and installs warn on unsupported Node versions.
+
+- Updated dependencies [fb9b325]
+  - @wizzard-packages/persistence@0.1.4
+  - @wizzard-packages/middleware@0.1.4
+  - @wizzard-packages/core@0.4.1
+
 ## 0.4.0
 
 ### Minor Changes
