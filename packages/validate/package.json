@@ -1,6 +1,6 @@
 {
   "name": "@wizzard-packages/validate",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "One Standard Schema validation adapter for Wizzard flows — Zod, Valibot, ArkType, Effect and Yup.",
   "keywords": [
     "wizard",
