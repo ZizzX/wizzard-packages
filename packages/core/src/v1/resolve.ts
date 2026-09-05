@@ -41,7 +41,7 @@ export function resolveNext(
     return END;
   }
 
-  const order = flow.order ?? Object.keys(flow.steps);
+  const order = effectiveOrder(flow);
   const at = order.indexOf(current);
   if (at === -1) return END;
   return firstReachable(flow, scope, registry, at + 1);
@@ -54,7 +54,7 @@ function firstReachable(
   registry: Registry | undefined,
   from: number
 ): string | typeof END {
-  const order = flow.order ?? Object.keys(flow.steps);
+  const order = effectiveOrder(flow);
   for (let i = from; i < order.length; i++) {
     const id = order[i];
     if (id === undefined) continue;
@@ -62,6 +62,16 @@ function firstReachable(
     if (step && test(step.when, scope, registry)) return id;
   }
   return END;
+}
+
+/**
+ * The order the resolver walks. `order` is optional; a flow that omits it
+ * falls back to the insertion order of `steps`, which is how a hand-written
+ * flow object reads — top to bottom. Declaring `order` is what makes a step
+ * skippable: one missing from it is reachable only via `on.next`.
+ */
+function effectiveOrder(flow: FlowDefinition): readonly string[] {
+  return flow.order ?? Object.keys(flow.steps);
 }
 
 /** Walks `order` backward, so `back()` skips steps that are no longer reachable. */
@@ -78,7 +88,7 @@ export function resolveBack(
     return flow.steps[to] ? to : null;
   }
 
-  const order = flow.order ?? Object.keys(flow.steps);
+  const order = effectiveOrder(flow);
   const at = current ? order.indexOf(current) : order.length;
   for (let i = at - 1; i >= 0; i--) {
     const id = order[i];
@@ -95,7 +105,7 @@ export function reachable(
   scope: Scope,
   registry?: Registry
 ): readonly string[] {
-  const order = flow.order ?? Object.keys(flow.steps);
+  const order = effectiveOrder(flow);
   return order.filter((id) => {
     const step = flow.steps[id];
     return step !== undefined && test(step.when, scope, registry);
