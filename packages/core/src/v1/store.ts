@@ -50,6 +50,12 @@ export interface Wizard {
   /** Calls back only when the value at a data path changes. */
   watch: (path: string, listener: (value: unknown) => void) => () => void;
 
+  /**
+   * Enters the first reachable step. A fresh wizard has an empty stack, so
+   * until this runs there is no current step and a UI has nothing to draw.
+   * Idempotent: once a step is current, this reports it and navigates nowhere.
+   */
+  start: () => Promise<NavResult>;
   next: (opts?: { validate?: boolean }) => Promise<NavResult>;
   back: () => Promise<NavResult>;
   go: (to: string, opts?: { validate?: boolean; force?: boolean }) => Promise<NavResult>;
@@ -182,6 +188,14 @@ export function createWizard(options: WizardOptions): Wizard {
       return () => listeners.delete(wrapped);
     },
 
+    start() {
+      // `next` from an empty stack resolves to the first reachable step, which
+      // is exactly what starting means; the guard is only here so that calling
+      // it twice - two mounts of the same wizard, say - is not a step forward.
+      const current = state.stack[state.stack.length - 1]?.step;
+      if (current !== undefined) return Promise.resolve({ ok: true, from: current, to: current });
+      return navigate({ type: 'next' }, { validate: false });
+    },
     next: (opts) => navigate({ type: 'next' }, opts),
     back: () => navigate({ type: 'back' }),
     go: (to, opts) => navigate({ type: 'go', to, force: opts?.force }, opts),

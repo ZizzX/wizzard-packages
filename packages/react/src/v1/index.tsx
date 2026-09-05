@@ -12,6 +12,7 @@ import {
   createElement,
   useCallback,
   useContext,
+  useEffect,
   useRef,
   useState,
   useSyncExternalStore,
@@ -45,7 +46,17 @@ export function WizardProvider({ wizard, children, ...options }: WizardProviderP
   const [instance] = useState<Wizard>(
     () => wizard ?? createWizard(options as unknown as WizardOptions)
   );
-  return createElement(WizardContext.Provider, { value: wizard ?? instance }, children);
+  const engine = wizard ?? instance;
+
+  // A fresh engine has an empty stack, so without this the first paint has no
+  // current step and the tree below renders nothing. `start` is idempotent and
+  // the effect never runs on the server, which is where the wizard must not
+  // navigate at all.
+  useEffect(() => {
+    void engine.start();
+  }, [engine]);
+
+  return createElement(WizardContext.Provider, { value: engine }, children);
 }
 
 export function useWizard(): Wizard {
