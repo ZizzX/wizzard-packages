@@ -369,10 +369,11 @@ describe('the plugin lifecycle', () => {
     // invisible to a plugin, so nothing could persist a field as it was typed.
     //
     // Seven, not five: a navigation writes twice - once to mark itself busy,
-    // once to land - and `start` and `next` are both navigations. Only the
-    // landing writes carry a new `rev`, which is what a plugin should key on.
+    // once to land - and `start` and `next` are both navigations. Every write
+    // carries its own `rev`, including the busy one, which is what makes the
+    // status visible to a memoized selector.
     expect(seen.length).toBe(7);
-    expect(seen.map((s) => s.rev)).toEqual([0, 1, 2, 3, 4, 4, 5]);
+    expect(seen.map((s) => s.rev)).toEqual([1, 2, 3, 4, 5, 6, 7]);
   });
 
   it('hands init the state and lets it restore through one commit', () => {
@@ -515,5 +516,37 @@ describe('the plugin lifecycle', () => {
     // One: the first navigation ran beforeNavigate before onCommit disabled it.
     expect(navHooks).toBe(1);
     spy.mockRestore();
+  });
+});
+
+describe('busy', () => {
+  const slowFlow: FlowDefinition = {
+    id: 'slow',
+    order: ['a', 'b'],
+    steps: { a: { validate: { $ref: 'slow' } }, b: {} },
+  };
+  const slowRegistry = {
+    slow: async () => {
+      await new Promise((r) => setTimeout(r, 10));
+      return null;
+    },
+  };
+
+  it('is visible in the snapshot while a navigation is in flight', async () => {
+    const w = createWizard({ flow: slowFlow, registry: slowRegistry, data: {} });
+    await w.start();
+    w.getSnapshot();
+
+    const moving = w.next();
+
+    // The snapshot is what every consumer reads - both bindings' isBusy comes
+    // from here - so a status the state knows and the snapshot does not is a
+    // spinner that never appears.
+    expect(w.getState().status).toBe('busy');
+    expect(w.getSnapshot().status).toBe('busy');
+    expect(w.getSnapshot().isBusy).toBe(true);
+
+    await moving;
+    expect(w.getSnapshot().isBusy).toBe(false);
   });
 });

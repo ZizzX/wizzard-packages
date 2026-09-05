@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { Expr, Scope } from './expr';
 import { END, type FlowDefinition, type StepDef } from './flow';
 import { reachable, resolveBack, resolveNext } from './resolve';
+import { beginNav } from './commit';
 import { initialState, type WizardState } from './state';
 import { createWizard } from './store';
 
@@ -310,6 +311,64 @@ describe('start', () => {
 
         expect(w.getState().rev).toBe(rev);
         expect(w.getState().stack).toEqual(stack);
+      })
+    );
+  });
+});
+
+describe('beginNav', () => {
+  /**
+   * The lock is a commit, and the whole engine memoizes on `rev`. A lock that
+   * moved `status` without moving `rev` is why `isBusy` was invisible, so the
+   * property is checked over arbitrary states rather than one fixture.
+   */
+  const arbState: fc.Arbitrary<WizardState> = fc
+    .tuple(
+      arbData,
+      fc.nat({ max: 50 }),
+      fc.nat({ max: 50 }),
+      fc.array(fc.string(), { maxLength: 4 })
+    )
+    .map(([data, rev, nav, visited]) => ({
+      ...initialState(data as Record<string, unknown>),
+      rev,
+      nav,
+      visited,
+      status: 'idle' as const,
+    }));
+
+  it('always advances both counters and says it is busy', () => {
+    fc.assert(
+      fc.property(arbState, (state) => {
+        const { state: locked, token } = beginNav(state);
+
+        expect(locked.rev).toBe(state.rev + 1);
+        expect(locked.nav).toBe(state.nav + 1);
+        expect(token).toBe(locked.nav);
+        expect(locked.status).toBe('busy');
+      })
+    );
+  });
+
+  it('changes nothing else', () => {
+    fc.assert(
+      fc.property(arbState, (state) => {
+        const { state: locked } = beginNav(state);
+        const ignore = { rev: 0, nav: 0, status: 'idle' as const };
+
+        expect({ ...locked, ...ignore }).toEqual({ ...state, ...ignore });
+      })
+    );
+  });
+
+  it('is monotonic: locking twice never repeats a revision', () => {
+    fc.assert(
+      fc.property(arbState, (state) => {
+        const first = beginNav(state);
+        const second = beginNav(first.state);
+
+        expect(second.state.rev).toBeGreaterThan(first.state.rev);
+        expect(second.token).toBeGreaterThan(first.token);
       })
     );
   });
