@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
+import type { Scope } from './expr';
 import { END, type FlowDefinition } from './flow';
 import { buildGraph, type FlowGraph } from './graph';
+import { resolveNext } from './resolve';
+import { initialState, type WizardState } from './state';
 
 const flow: FlowDefinition = {
   id: 'booking',
@@ -50,7 +53,7 @@ describe('nodes', () => {
 
   it('falls back to the insertion order of `steps` when `order` is absent', () => {
     const g = buildGraph({ id: 'f', steps: { a: {}, b: {} } });
-    expect(ids(g)).toEqual(['a', 'b']);
+    expect(ids(g)).toEqual(['a', 'b', END]);
     expect(from(g, 'a')).toEqual([{ from: 'a', to: 'b', kind: 'order' }]);
     // Nothing is off-order when there is no order to be off.
     expect(node(g, 'a')?.offOrder).toBeUndefined();
@@ -109,12 +112,75 @@ describe('explicit edges', () => {
   it('adds one terminal node, only when something reaches it', () => {
     expect(node(buildGraph(flow), END)?.kind).toBe('end');
     expect(ids(buildGraph(flow)).filter((id) => id === END)).toHaveLength(1);
-    expect(node(buildGraph({ id: 'f', steps: { a: {} } }), END)).toBeUndefined();
+    // A flow whose every step routes explicitly, in a loop, never ends.
+    const cycle = buildGraph({
+      id: 'f',
+      steps: { a: { on: { next: 'b' } }, b: { on: { next: 'a' } } },
+    });
+    expect(node(cycle, END)).toBeUndefined();
   });
 
   it('keeps a target that names nothing, and flags it', () => {
     const g = buildGraph({ id: 'f', steps: { a: { on: { next: 'ghost' } } } });
     expect(from(g, 'a')).toEqual([{ from: 'a', to: 'ghost', kind: 'next', dangling: true }]);
+  });
+});
+
+describe('the synthesized end', () => {
+  it('ends the flow after the last ordered step', () => {
+    expect(from(buildGraph(flow), 'review')).toContainEqual({
+      from: 'review',
+      to: END,
+      kind: 'order',
+    });
+  });
+
+  it('ends the flow from a step that is not in `order` at all', () => {
+    // resolveNext returns END when indexOf(current) is -1. Drawing nothing
+    // here left retry looking like a dead end on a graph whose job is to
+    // show where a flow goes.
+    expect(from(buildGraph(flow), 'retry')).toEqual([{ from: 'retry', to: END, kind: 'order' }]);
+  });
+
+  it('ends the flow when every remaining step is conditional', () => {
+    // b and c can both be false, so a really can be the last step run.
+    const g = buildGraph({
+      id: 'f',
+      order: ['a', 'b', 'c'],
+      steps: { a: {}, b: { when: { $get: 'data.b' } }, c: { when: { $get: 'data.c' } } },
+    });
+    expect(from(g, 'a').map((e) => e.to)).toEqual(['b', 'c', END]);
+  });
+
+  it('leaves the end edge unlabelled rather than synthesizing a negation', () => {
+    const end = from(buildGraph(flow), 'review').find((e) => e.to === END);
+    expect(end?.when).toBeUndefined();
+  });
+
+  it('does not end a step that routes explicitly', () => {
+    expect(from(buildGraph(flow), 'payment').some((e) => e.kind === 'order')).toBe(false);
+  });
+
+  it('agrees with the resolver about where every step can go', () => {
+    // The claim this whole module rests on. Case-by-case tests say the builder
+    // does what was written down; this says what was written down matches the
+    // engine -- which is how the missing end edges were found in the first
+    // place.
+    const g = buildGraph(flow);
+    const at = (step: string): WizardState => ({
+      ...initialState(),
+      stack: [{ flow: 'booking', step }],
+    });
+
+    for (const payer of ['business', 'private']) {
+      for (const ok of [true, false]) {
+        const scope: Scope = { data: { trip: { payer }, payment: { ok } }, ctx: {} };
+        for (const step of Object.keys(flow.steps)) {
+          const target = resolveNext(flow, at(step), scope);
+          expect(from(g, step).map((e) => e.to)).toContain(target);
+        }
+      }
+    }
   });
 });
 
@@ -126,13 +192,13 @@ describe('groups', () => {
     const group = node(g, 'addr')?.group;
     expect(node(g, 'addr')?.kind).toBe('group');
     expect(group?.flowId).toBe('address');
-    expect(group?.graph && ids(group.graph)).toEqual(['line1', 'city']);
+    expect(group?.graph && ids(group.graph)).toEqual(['line1', 'city', END]);
   });
 
   it('resolves a sub-flow named by id against the registry', () => {
     const g = buildGraph({ id: 'f', steps: { addr: { flow: 'address' } } }, { address: child });
     const nested = node(g, 'addr')?.group?.graph;
-    expect(nested && ids(nested)).toEqual(['line1', 'city']);
+    expect(nested && ids(nested)).toEqual(['line1', 'city', END]);
   });
 
   it('says so when a reference cannot be resolved, rather than drawing a plain box', () => {

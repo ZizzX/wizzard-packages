@@ -172,22 +172,37 @@ function explicitEdges(
 
 /**
  * The default path: a step with no `on.next` falls through to the next entry in
- * `order` whose `when` passes.
+ * `order` whose `when` passes, and ends the flow when nothing is left.
  *
  * Which is why one edge per pair is not enough. Statically we cannot know which
  * `when` holds, so every step up to and including the first unconditional one
  * is genuinely reachable from here, and a lone edge to the immediate neighbour
- * would hide the skip that `when` exists to express.
+ * would hide the skip that `when` exists to express. By the same argument, a
+ * tail of conditional steps can all be false, so the flow can end there too.
+ *
+ * The edge to `END` carries no `when`. Expressing it would mean negating every
+ * guard it skipped past, and a synthesized compound predicate on a drawing is
+ * harder to trust than an unlabelled fallback arrow.
  */
 function fallThroughEdges(flow: FlowDefinition): GraphEdge[] {
   const walk = flow.order ?? Object.keys(flow.steps);
   const edges: GraphEdge[] = [];
 
-  for (let i = 0; i < walk.length; i++) {
-    const from = walk[i];
-    if (from === undefined || flow.steps[from]?.on?.next !== undefined) continue;
+  for (const [from, step] of Object.entries(flow.steps)) {
+    if (step.on?.next !== undefined) continue;
 
-    for (let j = i + 1; j < walk.length; j++) {
+    const at = walk.indexOf(from);
+    // Absent from `order`, so the resolver has nothing to walk and ends the
+    // flow -- the same `END` it returns past the last ordered step. Drawing
+    // nothing here would leave the step looking like a dead end on a graph
+    // whose whole job is to show where a flow goes.
+    if (at === -1) {
+      edges.push({ from, to: END, kind: 'order' });
+      continue;
+    }
+
+    let ends = true;
+    for (let j = at + 1; j < walk.length; j++) {
       const to = walk[j];
       if (to === undefined) continue;
       const target = flow.steps[to];
@@ -199,8 +214,12 @@ function fallThroughEdges(flow: FlowDefinition): GraphEdge[] {
         kind: 'order',
         ...(target.when !== undefined && { when: target.when }),
       });
-      if (target.when === undefined) break;
+      if (target.when === undefined) {
+        ends = false;
+        break;
+      }
     }
+    if (ends) edges.push({ from, to: END, kind: 'order' });
   }
   return edges;
 }
