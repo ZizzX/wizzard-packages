@@ -190,6 +190,50 @@ describe('persist', () => {
     expect(storage.items.get('signup')).toContain('Ada');
   });
 
+  it('writes what is pending when the page goes away', () => {
+    // The frame a write was waiting for never arrives when someone closes the
+    // tab, and they did not ask to lose the field they just filled in.
+    const storage = fakeStorage();
+    const w = make(storage);
+
+    w.set('name.full', 'Ada');
+    globalThis.dispatchEvent(new Event('pagehide'));
+
+    expect(storage.items.get('signup')).toContain('Ada');
+    w.destroy();
+  });
+
+  it('stops listening for pagehide once the wizard is destroyed', () => {
+    const storage = fakeStorage();
+    const w = make(storage);
+    w.destroy();
+    const after = storage.writes;
+
+    globalThis.dispatchEvent(new Event('pagehide'));
+
+    expect(storage.writes).toBe(after);
+  });
+
+  it('starts clean rather than throwing when the stored value is not an object', () => {
+    // JSON.parse('null') succeeds, and reading a property off it would throw
+    // inside init - where a throw disables the plugin instead of starting fresh.
+    const storage = fakeStorage({ signup: 'null' });
+
+    expect(() => make(storage)).not.toThrow();
+    expect(outcomes.at(-1)).toEqual({ restored: false, reason: 'snapshot/unreadable' });
+  });
+
+  it('says out loud that it started fresh, with the reason and a link', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    make(fakeStorage({ signup: '{not json' }));
+
+    const message = warn.mock.calls[0]?.[0] as string;
+    expect(message).toContain('starts fresh');
+    expect(message).toContain('snapshot/unreadable');
+    expect(message).toContain('/errors/');
+    warn.mockRestore();
+  });
+
   it('writes what is pending when the wizard is destroyed', () => {
     const storage = fakeStorage();
     const w = make(storage);

@@ -46,12 +46,17 @@ export interface SyncStorage {
   removeItem: (key: string) => void;
 }
 
-export type RestoreOutcome =
-  | { restored: true }
-  | { restored: false; reason: RestoreReason | 'persist/nothing-stored' | 'persist/unavailable' };
+interface NotRestored {
+  restored: false;
+  reason: RestoreReason | 'persist/nothing-stored' | 'persist/unavailable';
+}
+
+export type RestoreOutcome = { restored: true } | NotRestored;
 
 /** Coalescing window. One write per frame, not one per keystroke. */
 const WRITE_AFTER_MS = 16;
+
+const DOCS = 'https://zizzx.github.io/wizzard-packages/errors';
 
 export function persist(options: PersistOptions): Hooks {
   const { key, version, migrate, onRestore } = options;
@@ -59,13 +64,18 @@ export function persist(options: PersistOptions): Hooks {
   let flowOf: (() => FlowDefinition) | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let pending: string | undefined;
-  /** One warning per reason, not one per commit. */
+  /** One warning per code, not one per commit. */
   const warned = new Set<string>();
 
-  const warn = (reason: string, message: string): void => {
-    if (warned.has(reason)) return;
-    warned.add(reason);
-    console.warn(`[wizzard] ${message} Persistence is off for this session.`);
+  /**
+   * Problem, cause, fix, link - the shape every diagnostic in this library
+   * takes. A message that names only the symptom leaves the reader to find the
+   * rest, which is the thing the template exists to stop.
+   */
+  const warn = (code: string, problem: string, cause: string, fix: string): void => {
+    if (warned.has(code)) return;
+    warned.add(code);
+    console.warn(`[wizzard] ${problem}. ${cause}. ${fix}. ${DOCS}/${code.replace('/', '-')}`);
   };
 
   const flush = (): void => {
@@ -82,7 +92,12 @@ export function persist(options: PersistOptions): Hooks {
       // Quota, or a browser that allows reads and refuses writes. Either way
       // the session is not coming back, and neither is a reason to interrupt
       // the one in progress.
-      warn('write', `could not save the wizard: ${describe(error)}.`);
+      warn(
+        'persist/write-failed',
+        'The wizard could not be saved',
+        `storage refused the write (${describe(error)})`,
+        'free some space, or pass a storage of your own; this session will not survive a reload'
+      );
       storage = undefined;
     }
   };
@@ -92,9 +107,31 @@ export function persist(options: PersistOptions): Hooks {
 
     init(host) {
       flowOf = () => host.getFlow();
+
+      /**
+       * Starting clean is a decision worth announcing. A form that was half
+       * filled in and is now empty looks like a bug to whoever is filling it,
+       * and silence is why they would think so.
+       */
+      const refuse = (reason: NotRestored['reason']): (() => void) => {
+        warn(
+          'persist/not-restored',
+          'The saved wizard was not restored, so it starts fresh',
+          `the stored session was refused (${reason})`,
+          'this is expected after a flow or version change; clear the key to stop the warning'
+        );
+        onRestore?.({ restored: false, reason });
+        return teardown;
+      };
+
       storage = options.storage ?? defaultStorage();
       if (storage === undefined) {
-        warn('unavailable', 'this browser did not allow storage.');
+        warn(
+          'persist/unavailable',
+          'The wizard cannot be saved',
+          'this browser did not allow storage, which private windows commonly do',
+          'pass a storage of your own, or accept that this session will not survive a reload'
+        );
         onRestore?.({ restored: false, reason: 'persist/unavailable' });
         return;
       }
@@ -103,49 +140,69 @@ export function persist(options: PersistOptions): Hooks {
       try {
         raw = storage.getItem(key);
       } catch (error) {
-        warn('read', `could not read the saved wizard: ${describe(error)}.`);
+        warn(
+          'persist/unavailable',
+          'The saved wizard could not be read',
+          `storage refused the read (${describe(error)})`,
+          'pass a storage of your own, or accept that this session starts fresh'
+        );
         storage = undefined;
         onRestore?.({ restored: false, reason: 'persist/unavailable' });
         return;
       }
 
+      // A pending write is worth more than the frame it was waiting for: a
+      // person who edits a field and closes the tab has not asked to lose it.
+      const onHide = (): void => {
+        flush();
+      };
+      // Typed as possibly absent because it is: a wizard built during server
+      // rendering has no window to listen to, and the DOM lib's types say
+      // otherwise.
+      const target = globalThis as Partial<
+        Pick<Window, 'addEventListener' | 'removeEventListener'>
+      >;
+      target.addEventListener?.('pagehide', onHide);
+      const teardown = (): void => {
+        target.removeEventListener?.('pagehide', onHide);
+        flush();
+      };
+
       if (raw === null) {
         onRestore?.({ restored: false, reason: 'persist/nothing-stored' });
-        return flush;
+        return teardown;
       }
 
       let parsed: unknown;
       try {
         parsed = JSON.parse(raw);
       } catch {
-        // Corrupt, truncated, or written by something else entirely. Start
-        // clean and let the next commit overwrite it.
-        onRestore?.({ restored: false, reason: 'snapshot/unreadable' });
-        return flush;
+        // Corrupt, truncated, or written by something else entirely.
+        return refuse('snapshot/unreadable');
       }
 
-      const flow = host.getFlow();
+      // `JSON.parse` happily returns null, a number or a string, and reading a
+      // property off the first of those throws - inside `init`, where throwing
+      // disables the plugin rather than starting a session cleanly.
+      if (parsed === null || typeof parsed !== 'object') return refuse('snapshot/unreadable');
+
       const stored = parsed as { appVersion?: unknown; snapshot?: unknown };
       if (version !== undefined && stored.appVersion !== version) {
-        onRestore?.({ restored: false, reason: 'snapshot/other-flow' });
-        return flush;
+        return refuse('snapshot/other-flow');
       }
 
-      const result = decodeSnapshot(flow, stored.snapshot, {
+      const result = decodeSnapshot(host.getFlow(), stored.snapshot, {
         migrate,
         epoch: host.getState().nav,
       });
 
-      if (!result.restored) {
-        onRestore?.({ restored: false, reason: result.reason });
-        return flush;
-      }
+      if (!result.restored) return refuse(result.reason);
 
       // Through `commit`, like every other write: the restore is a commit, the
       // epoch moves with it, and anything begun before it is superseded.
       host.commit(result.state);
       onRestore?.({ restored: true });
-      return flush;
+      return teardown;
     },
 
     onCommit(state) {
