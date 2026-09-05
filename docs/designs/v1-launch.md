@@ -115,7 +115,7 @@ is the right length. What follows are amendments, not a rewrite.
 | A2  | Only whole-repo commands                                | Every gate listed is `pnpm <gate>` for all packages; PRs #22–#26 needed single-package, single-file runs (`pnpm -F @wizzard-packages/core test:run -- session`) | Add per-package and single-file forms next to each gate                                                                                                                                                                                               |
 | A3  | Budget boundaries are tribal knowledge                  | `validate-flow`, `graph`, `session` must never be re-exported from `v1/index.ts` (core-v1 sits at 3.88 kB of 3.9 kB). Learned twice, written nowhere            | New hard rule 6: every `core` sub-entry is its own budget; adding one means tsup entry + `exports` + `.size-limit.js` in the same PR. Budgets are ratchets set _after_ correctness, raised with a stated reason — never a target that trims semantics |
 | A4  | Error messages have no template                         | DX review T22: every throw site is single-clause (three in core, two in the bindings today). The template needs a fourth clause: a link                         | `[wizzard] <problem>. <cause>. <fix>. <docs-url>#<code>` — added to Working agreement, checked by a grep in CI                                                                                                                                        |
-| A5  | The automated PR review is undocumented                 | Codex reviews every PR and its comments are reachable only through `gh api …/pulls/<n>/comments`; 6-for-6 correct across #25–#26                                | One paragraph under Working agreement: green CI is necessary, the review is the second gate; fetch and verify each finding                                                                                                                            |
+| A5  | The automated PR review is undocumented                 | The automated PR review runs on every PR and its comments are reachable only through `gh api …/pulls/<n>/comments`; 6-for-6 correct across #25–#26              | One paragraph under Working agreement: green CI is necessary, the review is the second gate; fetch and verify each finding                                                                                                                            |
 | A6  | "The 0.x line is in maintenance"                        | True today, false after this plan                                                                                                                               | Reword at teardown time                                                                                                                                                                                                                               |
 | A7  | Issue tracker ids are undiscoverable                    | Reviewer concern in `flow-inspector.md`; `tasks/session-state.md` uses an older scheme                                                                          | Point at `.beads/issues.jsonl` and the `wizzard-N` scheme; retire `tasks/session-state.md`                                                                                                                                                            |
 | A8  | No "definition of done" for a PR                        | Whether a changeset is required is decided per PR by memory (v1: none until 1.0.0)                                                                              | Three lines: tests, changeset rule, size ratchet reason in the PR body                                                                                                                                                                                |
@@ -1052,12 +1052,12 @@ engine" diagram stays accurate; `README.md`'s two package trees are deleted with
 ## Step 0.5. Dual Voices (CEO)
 
 Both voices read the plan as it stood before the amendments below; the amendments are their
-result. Codex ran with the plan inlined (its first run could not read the file: the Windows
+result. Voice A ran with the plan inlined (its first run could not read the file: the Windows
 sandbox refused to spawn the exec helper, error 1223) and was told this is a solo open-source
-project whose owner has declined "earn the audience first" discipline. The Claude subagent
+project whose owner has declined "earn the audience first" discipline. The voice B
 was told nothing beyond the plan, so its market framing is its own.
 
-### CODEX SAYS (CEO — strategy challenge)
+### OUTSIDE VOICE A (CEO — strategy challenge)
 
 Eight blind spots, quoted in substance:
 
@@ -1093,7 +1093,7 @@ Eight blind spots, quoted in substance:
 Verdicts: premises CONCERN · right problem CONFIRMED · scope CONCERN · alternatives CONCERN ·
 competitive CONCERN · trajectory CONCERN.
 
-### CLAUDE SUBAGENT (CEO — strategic independence)
+### OUTSIDE VOICE B (CEO — strategic independence)
 
 1. **Right problem, framed too narrowly:** three problems of different urgency (a decayed
    npm page, a 0.x deletion, a bespoke site) are bundled, so the highest-leverage fix (the
@@ -1116,39 +1116,39 @@ check, name competitors, stack undecided) stand regardless of that framing.
 
 ```
 ═══════════════════════════════════════════════════════════════════════════════
-  Dimension                             Claude    Codex     Consensus
+  Dimension                             Voice B    Voice A     Consensus
   ──────────────────────────────────── ───────── ───────── ────────────────────
   1. Premises valid?                    CONCERN   CONCERN   CONFIRMED (concern) — persistence needs a contract, compat-cut needs a dependents check → amended
-  2. Right problem to solve?            CONCERN   CONFIRMED DISAGREE → the disagreement is Claude's market framing; Codex's "right problem" stands with the reference-app reframing → amended
-  3. Scope calibration correct?         CONCERN   CONCERN   CONFIRMED (concern) — in OPPOSITE directions (Claude: smaller; Codex: prove the contract). Resolved by adding evidence (R-A/B/C), not size → amended; devtools publish → TASTE
+  2. Right problem to solve?            CONCERN   CONFIRMED DISAGREE → the disagreement is voice B's market framing; voice A's "right problem" stands with the reference-app reframing → amended
+  3. Scope calibration correct?         CONCERN   CONCERN   CONFIRMED (concern) — in OPPOSITE directions (voice B: smaller; voice A: prove the contract). Resolved by adding evidence (R-A/B/C), not size → amended; devtools publish → TASTE
   4. Alternatives sufficiently explored? CONCERN  CONCERN   CONFIRMED (concern) — four scope alternatives added and rejected on grounds; RC period accepted → amended
   5. Competitive/market risks covered?  CONCERN   CONCERN   CONFIRMED (concern) — README makes outcome claims + names two competitors → amended (D3)
-  6. 6-month trajectory sound?          CONCERN   CONCERN   CONFIRMED (concern) — group traversal / inspector honesty (Codex) is the durable one → Premise 6 added, L9 → gate
+  6. 6-month trajectory sound?          CONCERN   CONCERN   CONFIRMED (concern) — group traversal / inspector honesty (voice A) is the durable one → Premise 6 added, L9 → gate
 ═══════════════════════════════════════════════════════════════════════════════
 ```
 
 Five of six dimensions are shared concerns; one disagreement. Nothing rises to a User
 Challenge from this phase alone: the two voices do not jointly recommend changing an
-owner direction. The single-voice critical findings that are flagged regardless: Codex 2
-(groups drawn but not executable) and Codex 5 (devtools as a product commitment) — both go
+owner direction. The single-voice critical findings that are flagged regardless: voice A finding 2
+(groups drawn but not executable) and voice A finding 5 (devtools as a product commitment) — both go
 to the gate as taste decisions with a recommendation.
 
 ### Amendments applied to the plan body from this phase
 
-| #   | Source                       | Amendment                                                                                                                                                                                                                    |
-| --- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| M1  | Codex 1, 6                   | New section "What 'done right' means here": three reference applications R-A/R-B/R-C as release evidence; they replace the fifteen deleted specs and are the site's examples (S3, L8 precondition)                           |
-| M2  | Codex 2                      | Premise 6 (the inspector draws only what the engine runs); L9 becomes a gate decision with a recommendation to include group traversal in 1.0.0, and a defined fallback (`flow/groups-unsupported`, "drawn, not executable") |
-| M3  | Codex 3                      | L4 is now a versioned durable `Snapshot` contract in core (`toSnapshot`/`fromSnapshot`, transient fields named, frames validated, lazy revalidation) plus the plugin                                                         |
-| M4  | Codex 4, 8                   | Four rejected alternatives written out; R0 release candidate with packed tarballs in three clean consumer fixtures on the `next` tag; R3 moved to day 0                                                                      |
-| M5  | Codex 5                      | L5 carries a built-in layered layout; "publish devtools or site-only" → gate                                                                                                                                                 |
-| M6  | Codex 7                      | A3 restated: budgets are ratchets set after correctness; L4's budget is set after its tests pass                                                                                                                             |
-| M7  | Claude 1                     | D3 moved to step 2 of Next Steps, gated on `examples/quickstart` + the embed script (E1)                                                                                                                                     |
-| M8  | Claude 2                     | D2 records a dated dependents search (C8)                                                                                                                                                                                    |
-| M9  | Claude 5, Codex 6            | D3 makes three outcome claims and names `@stepperize/react` and XState (E2)                                                                                                                                                  |
-| M10 | Claude 2, design + DX voices | The site stack is decided in the plan (Astro + Starlight, reasons stated) and flagged at the gate as the reversal of an owner decision                                                                                       |
+| #   | Source                        | Amendment                                                                                                                                                                                                                    |
+| --- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| M1  | voice A finding 1, 6          | New section "What 'done right' means here": three reference applications R-A/R-B/R-C as release evidence; they replace the fifteen deleted specs and are the site's examples (S3, L8 precondition)                           |
+| M2  | voice A finding 2             | Premise 6 (the inspector draws only what the engine runs); L9 becomes a gate decision with a recommendation to include group traversal in 1.0.0, and a defined fallback (`flow/groups-unsupported`, "drawn, not executable") |
+| M3  | voice A finding 3             | L4 is now a versioned durable `Snapshot` contract in core (`toSnapshot`/`fromSnapshot`, transient fields named, frames validated, lazy revalidation) plus the plugin                                                         |
+| M4  | voice A finding 4, 8          | Four rejected alternatives written out; R0 release candidate with packed tarballs in three clean consumer fixtures on the `next` tag; R3 moved to day 0                                                                      |
+| M5  | voice A finding 5             | L5 carries a built-in layered layout; "publish devtools or site-only" → gate                                                                                                                                                 |
+| M6  | voice A finding 7             | A3 restated: budgets are ratchets set after correctness; L4's budget is set after its tests pass                                                                                                                             |
+| M7  | voice B 1                     | D3 moved to step 2 of Next Steps, gated on `examples/quickstart` + the embed script (E1)                                                                                                                                     |
+| M8  | voice B 2                     | D2 records a dated dependents search (C8)                                                                                                                                                                                    |
+| M9  | voice B 5, voice A finding 6  | D3 makes three outcome claims and names `@stepperize/react` and XState (E2)                                                                                                                                                  |
+| M10 | voice B 2, design + DX voices | The site stack is decided in the plan (Astro + Starlight, reasons stated) and flagged at the gate as the reversal of an owner decision                                                                                       |
 
-> **Phase 1 complete.** Codex: 8 concerns. Claude subagent: 5 issues.
+> **Phase 1 complete.** voice A: 8 concerns. voice B: 5 issues.
 > Consensus: 5/6 shared concerns, 1 disagreement; 2 single-voice criticals → gate as taste.
 > 10 amendments applied to the plan body. Passing to Phase 2 (Design).
 
@@ -1176,10 +1176,10 @@ devtools panel). Mode: all seven passes, auto-decided; aesthetic choices marked 
 
 ## Step 0.5: Dual Voices (design)
 
-The Claude subagent read the first draft with no other context. Codex read the Phase 1
+The voice B read the first draft with no other context. voice A read the Phase 1
 amended plan and the CEO consensus summary, inlined.
 
-### CODEX SAYS (design — UX challenge)
+### OUTSIDE VOICE A (design — UX challenge)
 
 1. **The hierarchy serves the author.** A graph demonstrates the architecture before
    explaining why to choose it. The first screen needs the product name and an explicit
@@ -1217,7 +1217,7 @@ amended plan and the CEO consensus summary, inlined.
 Litmus against the written plan: 1 NO · 2 YES · 3 NO · 4 NO · 5 NO (cards not necessary —
 agrees with the plan's cardless default) · 6 NO · 7 NO.
 
-### CLAUDE SUBAGENT (design — independent review)
+### OUTSIDE VOICE B (design — independent review)
 
 1. **First paint is right, everything after is unspecified** — homepage content once the
    0.x hero-card grid is deleted, nav, the CTA out of the inspector.
@@ -1242,11 +1242,11 @@ document, not the intent.
 
 ```
 ═══════════════════════════════════════════════════════════════════════════════
-  Dimension                         Claude     Codex            Consensus
+  Dimension                         Voice B     Voice A            Consensus
   ───────────────────────────────── ────────── ──────────────── ────────────────────────
   1. Hierarchy serves the user      CONCERN    NO (brand)       CONFIRMED concern → hero gets name, promise, two actions (D-M1)
   2. Interaction states specified   CONCERN    (8 gaps listed)  CONFIRMED concern → state table extended (D-M3)
-  3. User journey coherent          CONFIRMED  NO (scan/jobs)   DISAGREE → task-oriented headlines + one job per page (D-M2); Codex's reading stands after amendment
+  3. User journey coherent          CONFIRMED  NO (scan/jobs)   DISAGREE → task-oriented headlines + one job per page (D-M2); voice A's reading stands after amendment
   4. UI decisions specific          CONCERN    NO (motion)      CONFIRMED concern → DESIGN.md content list fixed (G1), motion purposes named
   5. Design system alignment        CONCERN    NO (premium)     CONFIRMED concern → tokens + DESIGN.md first (G1)
   6. Responsive intentional         CONCERN    (cutoff)         CONFIRMED concern → mobile keeps the form; step list; graph separate (D-M4)
@@ -1262,15 +1262,15 @@ ask it to explain itself.
 
 ### Amendments applied to the plan body from this phase
 
-| #    | Source            | Amendment                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| ---- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| D-M1 | Codex 1, Claude 1 | S1 hero: product name, one-line promise, the live R-A graph, primary "Get started", secondary "Explore this flow", install line as a copy button; the three applications as three rows below with task-oriented headlines                                                                                                                                                                                                                                                             |
-| D-M2 | Codex 2, 3        | S2 defines three inspector modes — **Live** (the built-in example runs; a compact form beside the graph; "change the payer type and watch the route change"), **Replay** (a recording; scrubber; "back to live" always visible), **Preview** (a pasted flow: structure only, labelled "structure preview — no registry, nothing runs"). Selecting a node inspects, never navigates. Groups drawn in Preview; run in Live only if L9 ships                                             |
-| D-M3 | Codex 5, Claude 2 | Interaction state table extended with pre-hydration, last-valid-graph labelling, "Load example", "Restart example", persistence restored/discarded message in R-B, pending validation (Next disabled + inline "checking…" + cancel on back), replay mismatch help                                                                                                                                                                                                                     |
-| D-M4 | Codex 6           | Responsive rewritten: below 640 px the form stays interactive, the route is a compact step list, "View graph" opens a full-screen pannable graph; sheet dismissal returns focus to its trigger; breakpoints at 640 / 1100 chosen from content fit                                                                                                                                                                                                                                     |
-| D-M5 | Codex 7, Claude 5 | A11y: the graph is one focus stop; arrow keys move between nodes, Enter inspects, Esc returns; the table mirror is visually hidden but exposed to assistive technology; `aria-live` announces validation results and step changes; focus moves to the new step's heading; non-colour indicators (shape + label) for active/visited/blocked; contrast ≥ 4.5:1 body, ≥ 3:1 UI; 44 px targets. R-A/R-B/R-C implement this by hand and become the basis of the 1.1 bindings contract (E9) |
-| D-M6 | Codex 4           | Premise 2 reworded: React and Vue are both first-class, selected once and remembered; a page mounts one runtime at a time; comparison is an explicit toggle. S3's isolation test stands                                                                                                                                                                                                                                                                                               |
-| D-M7 | Codex 8, Claude 4 | G1's `DESIGN.md` must contain: typography roles (display, body, code), reading width, graph density rules, semantic colours (active, visited, blocked, error, group), borders and selected states, the three motions and their reduced-motion equivalents. Fonts and accent are chosen there (TASTE, not in this plan)                                                                                                                                                                |
+| #    | Source                       | Amendment                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ---- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D-M1 | voice A finding 1, voice B 1 | S1 hero: product name, one-line promise, the live R-A graph, primary "Get started", secondary "Explore this flow", install line as a copy button; the three applications as three rows below with task-oriented headlines                                                                                                                                                                                                                                                             |
+| D-M2 | voice A finding 2, 3         | S2 defines three inspector modes — **Live** (the built-in example runs; a compact form beside the graph; "change the payer type and watch the route change"), **Replay** (a recording; scrubber; "back to live" always visible), **Preview** (a pasted flow: structure only, labelled "structure preview — no registry, nothing runs"). Selecting a node inspects, never navigates. Groups drawn in Preview; run in Live only if L9 ships                                             |
+| D-M3 | voice A finding 5, voice B 2 | Interaction state table extended with pre-hydration, last-valid-graph labelling, "Load example", "Restart example", persistence restored/discarded message in R-B, pending validation (Next disabled + inline "checking…" + cancel on back), replay mismatch help                                                                                                                                                                                                                     |
+| D-M4 | voice A finding 6            | Responsive rewritten: below 640 px the form stays interactive, the route is a compact step list, "View graph" opens a full-screen pannable graph; sheet dismissal returns focus to its trigger; breakpoints at 640 / 1100 chosen from content fit                                                                                                                                                                                                                                     |
+| D-M5 | voice A finding 7, voice B 5 | A11y: the graph is one focus stop; arrow keys move between nodes, Enter inspects, Esc returns; the table mirror is visually hidden but exposed to assistive technology; `aria-live` announces validation results and step changes; focus moves to the new step's heading; non-colour indicators (shape + label) for active/visited/blocked; contrast ≥ 4.5:1 body, ≥ 3:1 UI; 44 px targets. R-A/R-B/R-C implement this by hand and become the basis of the 1.1 bindings contract (E9) |
+| D-M6 | voice A finding 4            | Premise 2 reworded: React and Vue are both first-class, selected once and remembered; a page mounts one runtime at a time; comparison is an explicit toggle. S3's isolation test stands                                                                                                                                                                                                                                                                                               |
+| D-M7 | voice A finding 8, voice B 4 | G1's `DESIGN.md` must contain: typography roles (display, body, code), reading width, graph density rules, semantic colours (active, visited, blocked, error, group), borders and selected states, the three motions and their reduced-motion equivalents. Fonts and accent are chosen there (TASTE, not in this plan)                                                                                                                                                                |
 
 ## Pass 1: Information Architecture — 8/10 (was 3/10 before the Phase 1 amendments)
 
@@ -1289,7 +1289,7 @@ What the visitor sees first, second, third, per page:
 
 Nav: Docs · Examples · API · GitHub — four items, no dropdowns. Constraint worship: if the
 homepage could show three things they are the graph, the sentence, the install line, and
-that is all it shows above the fold. The Claude design voice's concern — "everything after
+that is all it shows above the fold. The voice B's concern — "everything after
 first paint is unspecified" — was true of the first draft and is closed by S1's homepage
 composition and this table. Remaining gap (why not 10): the docs sidebar order is not
 written; auto-decided: it follows the Getting-started → Flow → Expressions → Navigation →
@@ -1332,7 +1332,7 @@ slice name and "no data yet", never an empty box (P1). Added to S2 acceptance.
   8    | files a bug                        | "will they understand me?"       | E4 record hook → a replayable session file (gate)
 ```
 
-Where it breaks: the Claude design voice's point — there is no handoff _out_ of the
+Where it breaks: the voice B's point — there is no handoff _out_ of the
 inspector. Auto-decided (P1): the inspector page ends with one line and two links — "Run
 this yourself" → `/docs/start`, "See the three apps" → `/examples` — and the homepage's
 install line is a copy button, not text. Added to S1/S2. Time horizons: 5-second (graph),
@@ -1363,7 +1363,7 @@ absence · 6 motion improves hierarchy — YES (the graph moving is the hierarch
 without decorative shadows — YES (none planned).
 
 Why not 10: the two typefaces and the accent are not yet named in the plan (they are
-`DESIGN.md`'s job in S1, written before the first page). The Claude voice called the first
+`DESIGN.md`'s job in S1, written before the first page). The voice B called the first
 draft "specific about code, generic about screen"; the amended S1/S2 close that for
 composition, states and keyboard; typography and colour are deliberately left to the token
 file so the plan does not pretend to be a design system.
@@ -1398,7 +1398,7 @@ Accessibility: keyboard spec in S2 (arrow keys on the scrubber, Tab through node
 opens a node's state), the hidden table mirror (T11) as the screen-reader path for the
 graph, 44 px targets on the scrubber and nav, contrast ≥ 4.5:1 enforced by `axe` in CI, body
 ≥ 16 px, focus rings never removed, `prefers-reduced-motion` disables the three motions.
-The Claude voice's point that a Lighthouse score is a proxy is accepted: the gate is `axe`
+The voice B's point that a Lighthouse score is a proxy is accepted: the gate is `axe`
 
 - a keyboard-only Playwright spec, Lighthouse is informational (Phase 1 §6). Why not 10:
   touch behaviour of the graph (pinch-zoom vs page scroll) is unspecified — auto-decided:
@@ -1473,7 +1473,7 @@ the first task of S1 rather than guessed in a planning document.
   | Pass 6 (Resp + a11y)   | 7/10 → 9/10 with D-M4/D-M5                |
   | Pass 7 (Unresolved)    | 7 decisions: 5 auto-decided, 2 TASTE → G1 |
   +--------------------------------------------------------------------+
-  | Dual voices            | Codex 8 concerns, Claude 5; 6/7 confirmed |
+  | Dual voices            | voice A finding 8 concerns, voice B 5; 6/7 confirmed |
   | Amendments             | 7 (D-M1..D-M7)                             |
   | NOT in scope           | written (4 items)                          |
   | What already exists    | written                                    |
@@ -1482,7 +1482,7 @@ the first task of S1 rather than guessed in a planning document.
   +====================================================================+
 ```
 
-> **Phase 2 complete.** Codex: 8 concerns. Claude subagent: 5 issues.
+> **Phase 2 complete.** voice A: 8 concerns. voice B: 5 issues.
 > Consensus: 6/7 confirmed concerns, 1 disagreement resolved by amendment; 0 → gate.
 > Passing to Phase 2.5 (DX).
 
@@ -1508,14 +1508,14 @@ against those.
 - **TTHW today:** undefined — the README's imports do not exist in the v1 bindings.
   **TTHW after the plan:** target under five minutes, measured by a person (S4). The
   quickstart is specified as: two steps, a field, Next, Back, the value survives — the
-  Codex bar, adopted.
+  voice A bar, adopted.
 - **Initial DX completeness of the plan as drafted: 4/10** (README early and CI-tested was
   already there; behaviour of the API, diagnostics beyond throws, and the release sequence
   were not).
 
 ## Step 0.5: Dual Voices (DX)
 
-### CODEX SAYS (DX — developer experience challenge)
+### OUTSIDE VOICE A (DX — developer experience challenge)
 
 1. **Getting started: plausibly five minutes, underspecified.** Six steps from an empty
    directory; the 20-line README must not omit setup; hello world must show two steps, a
@@ -1553,7 +1553,7 @@ against those.
 
 Verdicts: all six CONCERN.
 
-### CLAUDE SUBAGENT (DX — independent review)
+### OUTSIDE VOICE B (DX — independent review)
 
 1. **Getting started:** today undefined (verified: `createWizardFactory`/`WizardStore` are
    not in the v1 bindings). After the plan: 4–5 concepts before a button works — more than
@@ -1581,33 +1581,33 @@ upgrade CONFIRMED · environment CONFIRMED.
 
 ```
 ═══════════════════════════════════════════════════════════════════════════════
-  Dimension                        Claude      Codex     Consensus
+  Dimension                        Voice B      Voice A     Consensus
   ──────────────────────────────── ─────────── ───────── ──────────────────────────────────
   1. Getting started < 5 min?      CONCERN     CONCERN   CONFIRMED concern → quickstart bar, two paths, selector, "Start building" (X-M1)
-  2. API naming guessable?         CONFIRMED   CONCERN   DISAGREE → names are fine (Claude); behaviour is ambiguous (Codex). Both true; behavioural table added (X-M3). Not a taste decision: nothing to choose between
+  2. API naming guessable?         CONFIRMED   CONCERN   DISAGREE → names are fine (voice B); behaviour is ambiguous (voice A). Both true; behavioural table added (X-M3). Not a taste decision: nothing to choose between
   3. Error messages actionable?    CONCERN     CONCERN   CONFIRMED concern → diagnostic contract replaces the grep (X-M2)
   4. Docs findable & complete?     CONCERN     CONCERN   CONFIRMED concern → search phrases, task tests, StackBlitz from published packages (X-M4)
-  5. Upgrade path safe?            CONFIRMED   CONCERN   DISAGREE → Codex's points (alias through 1.x, executable stored-data fixtures, restore outcome surfaced) accepted as completeness (P1) (X-M5)
-  6. Dev environment friction-free? CONFIRMED  CONCERN   DISAGREE → Codex asks for a support matrix + one verify command; accepted (P1) (X-M6)
+  5. Upgrade path safe?            CONFIRMED   CONCERN   DISAGREE → voice A's points (alias through 1.x, executable stored-data fixtures, restore outcome surfaced) accepted as completeness (P1) (X-M5)
+  6. Dev environment friction-free? CONFIRMED  CONCERN   DISAGREE → voice A asks for a support matrix + one verify command; accepted (P1) (X-M6)
 ═══════════════════════════════════════════════════════════════════════════════
 ```
 
 3/6 confirmed concerns, 3 disagreements resolved by taking the more complete option each
-time (P1). Single-voice criticals flagged regardless: Codex's release-sequencing blocker
+time (P1). Single-voice criticals flagged regardless: voice A's release-sequencing blocker
 (R0 before the export flip) — a real ordering bug, fixed (X-M7).
 
 ### Amendments applied to the plan body from this phase
 
-| #    | Source            | Amendment                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| ---- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| X-M1 | Codex 1, Claude 1 | Quickstart defined: two steps, one field, Next, Back, the value survives; "new app" and "existing app" paths; framework choice remembered (D-M6); "Start building" beside the install line. The `component: null` boilerplate does not return                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| X-M2 | Codex 2, Claude 3 | L6 becomes a **diagnostic contract**, not a grep: every failure — thrown or returned — carries `{ code, op, path?, message, fix, url }`; `NavResult` reasons (`invalid`, `blocked`, `no-target`, `superseded`, `aborted`, `not-reachable`) each documented with what the developer sees; the URL is `/errors/<code>` (one form only); representative diagnostics are tested; error islands carry "Restart example"                                                                                                                                                                                                                                                         |
-| X-M3 | Codex 3           | A behavioural table for the public API goes into `docs/api-behaviour` (S4): `go()` respects guards and validation unless `{ force }`; `back()` follows the history stack; `set()` replaces a path, `patch()` merges shallowly; `validate(step?)` checks one step or the current one, `validateAll()` the flow; abandoned-branch data is kept unless the step declares `clearOnLeave`; repeat items are keyed by `keyBy`; the provider keeps one instance across rerenders and never runs on the server. The expression builder is imported as a namespace (`import * as x from '@wizzard-packages/core/expr'`), so `wizard.get(path)` and `x.get(path)` cannot be confused |
-| X-M4 | Codex 4, Claude 4 | S4: four task pages whose titles are the phrases people search ("block Next until valid", "restore after reload", "clear abandoned branch data", "render field errors"); Pagefind indexes them; every snippet is a complete file with imports and registry; StackBlitz templates install from the `next` tag (so they exist only after R0); the server-driven page labels the _supported_ JSON contract and the _deferred_ `http-flow` integration separately; D3 adds one paragraph "when this earns its dependency" against Stepperize, XState and `useReducer`                                                                                                          |
-| X-M5 | Codex 5           | `./v1` alias kept through all of 1.x; L4: `Snapshot.v` is the format version, `fromSnapshot` accepts a `migrate` hook, and the restore outcome (`restored` / `reset: reason` / `unavailable: reason`) is returned to the host so R-B can tell the person what happened; executable fixtures for a stored 0.x-shaped object and a stale v1 snapshot                                                                                                                                                                                                                                                                                                                         |
-| X-M6 | Codex 5           | README and every package README carry a support matrix (Node ≥ 20.11, TypeScript ≥ 5.x, React ≥ 18, Vue ≥ 3.3) and peer requirements; AGENTS.md A10: one verification command (`pnpm verify` = lint + type-check + test:run) and pinned tooling stated                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| X-M7 | Codex 1           | **Sequencing fix:** L8 (teardown + root-export flip) precedes R0; R0 packs the final layout and the fixtures import root paths; the same tarballs are what R1 publishes. D3's early README imports `@wizzard-packages/react/v1` and installs `@canary` until R1, when the embed script switches both (one edit in `examples/quickstart`)                                                                                                                                                                                                                                                                                                                                   |
-| X-M8 | Claude 1, 5       | L6: provider throws in dev when `wizard` and options are both passed; L3: a docs note that the `"use client"` directive is inert outside React Server Components                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| #    | Source                       | Amendment                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ---- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| X-M1 | voice A finding 1, voice B 1 | Quickstart defined: two steps, one field, Next, Back, the value survives; "new app" and "existing app" paths; framework choice remembered (D-M6); "Start building" beside the install line. The `component: null` boilerplate does not return                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| X-M2 | voice A finding 2, voice B 3 | L6 becomes a **diagnostic contract**, not a grep: every failure — thrown or returned — carries `{ code, op, path?, message, fix, url }`; `NavResult` reasons (`invalid`, `blocked`, `no-target`, `superseded`, `aborted`, `not-reachable`) each documented with what the developer sees; the URL is `/errors/<code>` (one form only); representative diagnostics are tested; error islands carry "Restart example"                                                                                                                                                                                                                                                         |
+| X-M3 | voice A finding 3            | A behavioural table for the public API goes into `docs/api-behaviour` (S4): `go()` respects guards and validation unless `{ force }`; `back()` follows the history stack; `set()` replaces a path, `patch()` merges shallowly; `validate(step?)` checks one step or the current one, `validateAll()` the flow; abandoned-branch data is kept unless the step declares `clearOnLeave`; repeat items are keyed by `keyBy`; the provider keeps one instance across rerenders and never runs on the server. The expression builder is imported as a namespace (`import * as x from '@wizzard-packages/core/expr'`), so `wizard.get(path)` and `x.get(path)` cannot be confused |
+| X-M4 | voice A finding 4, voice B 4 | S4: four task pages whose titles are the phrases people search ("block Next until valid", "restore after reload", "clear abandoned branch data", "render field errors"); Pagefind indexes them; every snippet is a complete file with imports and registry; StackBlitz templates install from the `next` tag (so they exist only after R0); the server-driven page labels the _supported_ JSON contract and the _deferred_ `http-flow` integration separately; D3 adds one paragraph "when this earns its dependency" against Stepperize, XState and `useReducer`                                                                                                          |
+| X-M5 | voice A finding 5            | `./v1` alias kept through all of 1.x; L4: `Snapshot.v` is the format version, `fromSnapshot` accepts a `migrate` hook, and the restore outcome (`restored` / `reset: reason` / `unavailable: reason`) is returned to the host so R-B can tell the person what happened; executable fixtures for a stored 0.x-shaped object and a stale v1 snapshot                                                                                                                                                                                                                                                                                                                         |
+| X-M6 | voice A finding 5            | README and every package README carry a support matrix (Node ≥ 20.11, TypeScript ≥ 5.x, React ≥ 18, Vue ≥ 3.3) and peer requirements; AGENTS.md A10: one verification command (`pnpm verify` = lint + type-check + test:run) and pinned tooling stated                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| X-M7 | voice A finding 1            | **Sequencing fix:** L8 (teardown + root-export flip) precedes R0; R0 packs the final layout and the fixtures import root paths; the same tarballs are what R1 publishes. D3's early README imports `@wizzard-packages/react/v1` and installs `@canary` until R1, when the embed script switches both (one edit in `examples/quickstart`)                                                                                                                                                                                                                                                                                                                                   |
+| X-M8 | voice B 1, 5                 | L6: provider throws in dev when `wizard` and options are both passed; L3: a docs note that the `"use client"` directive is inert outside React Server Components                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 
 ## Pass 1: Getting Started Experience — 8/10 (prior review: 0/10)
 
@@ -1633,11 +1633,11 @@ Naming: `defineFlow`/`step`/`group`, `createWizard`, `next/back/go`, `get/set/pa
 `validate`, `useWizard/useNavigation/useStep/useField/useErrors` — guessable, consistent
 grammar, identical across bindings. Defaults: `createWizard({ flow })` works with no
 registry when the flow uses no `$ref`; `policy` defaults to `sequential`; validation on
-`next`. Completeness: every escape hatch listed by the Claude voice exists. Reliability:
+`next`. Completeness: every escape hatch listed by the voice B exists. Reliability:
 navigation returns a `NavResult`, never a boolean; superseded navigations resolve, never
 hang. Progressive disclosure: core → binding hooks → plugins → devtools. Persona fit: the
 form engineer sees `useField(path)` and understands it. What held the score: the six
-behavioural ambiguities Codex listed — now a table (X-M3). Why not 10: the table is a
+behavioural ambiguities voice A listed — now a table (X-M3). Why not 10: the table is a
 plan commitment; the score rises when it is in the docs.
 
 ## Pass 3: Error Messages & Debugging — 7/10 (prior: 2/10)
@@ -1782,7 +1782,7 @@ By the time I look at the inspector I already trust the engine; the graph is a b
 
 `packages/core/package.json` exports map and tsup entries (the pattern L1 extends);
 `contract/binding-suite.ts` (the pattern the persist probe extends); `check:pack` script
-(R0's tarballs); Codex PR review (the second gate A5 documents).
+(R0's tarballs); voice A PR review (the second gate A5 documents).
 
 ### Implementation Tasks (DX phase)
 
@@ -1813,7 +1813,7 @@ By the time I look at the inspector I already trust the engine; the graph is a b
   | Mode                  | DX POLISH                                 |
   | TTHW                  | undefined → < 2 min (existing) / < 5 (new)|
   | Initial → final score | 5.4 → 7.3 / 10                            |
-  | Dual voices           | Codex 5 findings (1 blocker), Claude 7    |
+  | Dual voices           | voice A finding 5 findings (1 blocker), voice B 7    |
   | Consensus             | 3/6 confirmed, 3 disagreements → P1       |
   | Amendments            | 8 (X-M1..X-M8)                            |
   | Tasks                 | X1–X7                                     |
@@ -1822,7 +1822,7 @@ By the time I look at the inspector I already trust the engine; the graph is a b
 ```
 
 > **Phase 2.5 complete.** DX overall: 7.3/10. TTHW: undefined → < 5 min.
-> Codex: 5 concerns incl. one release blocker. Claude subagent: 7 issues.
+> voice A: 5 concerns incl. one release blocker. voice B: 7 issues.
 > Consensus: 3/6 confirmed, 3 disagreements resolved toward completeness; 0 → gate.
 > Passing to Phase 3 (Eng Review — the required gate reviews the final amended plan).
 
@@ -1869,10 +1869,10 @@ Hooks[]` and passes them as `hooks` at `:134`; `state.ts:21-36` is the nine-fiel
 ## Step 0.5: Dual Voices (eng)
 
 Both voices read the plan as amended by Phases 1, 2 and 2.5, and both were given the three
-prior consensus summaries. The Claude subagent read the repository; Codex received the plan
+prior consensus summaries. The voice B read the repository; Voice A received the plan
 inlined.
 
-### CODEX SAYS (eng — architecture challenge)
+### OUTSIDE VOICE A (eng — architecture challenge)
 
 1. **`./v1` as a "zero-byte alias" needs a precise implementation.** Both paths must resolve
    to the _same_ built module and declaration files under every export condition, or a
@@ -1942,7 +1942,7 @@ inlined.
 
 Verdicts: all six CONCERN.
 
-### CLAUDE SUBAGENT (eng — independent review)
+### OUTSIDE VOICE B (eng — independent review)
 
 Verified against the tree; the plan's factual claims about the current state all check out.
 
@@ -1977,35 +1977,35 @@ error paths CONFIRMED · deployment CONFIRMED.
 
 ```
 ═══════════════════════════════════════════════════════════════════════════════
-  Dimension                        Claude    Codex    Consensus
+  Dimension                        Voice B    Voice A    Consensus
   ──────────────────────────────── ───────── ──────── ────────────────────────────────
-  1. Architecture sound?           CONCERN   CONCERN  CONFIRMED concern — the hook contract (F1 / Codex 4) is a blocker, verified in code → new L0 (E-M1)
+  1. Architecture sound?           CONCERN   CONCERN  CONFIRMED concern — the hook contract (F1 / voice A finding 4) is a blocker, verified in code → new L0 (E-M1)
   2. Test coverage sufficient?     CONCERN   CONCERN  CONFIRMED concern — migrate chains, two tabs, module-level isolation, assertion-level teardown mapping (E-M6)
   3. Performance risks addressed?  CONCERN   CONCERN  CONFIRMED concern — stringify-per-commit and L9's budget claim (E-M2, E-M4)
-  4. Security threats covered?     CONFIRMED CONCERN  DISAGREE → Codex's additions accepted (P1): snapshot size/depth bounds, path-segment rejection, redaction for sessions (E-M7)
-  5. Error paths handled?          CONFIRMED CONCERN  DISAGREE → Codex's additions accepted (P1): failures inside diagnostic callbacks, storage failure must not fail a navigation (E-M2)
-  6. Deployment risk manageable?   CONFIRMED CONCERN  DISAGREE → Codex's version-identity finding is correct and accepted (E-M5); the rest of the deploy path stands
+  4. Security threats covered?     CONFIRMED CONCERN  DISAGREE → voice A's additions accepted (P1): snapshot size/depth bounds, path-segment rejection, redaction for sessions (E-M7)
+  5. Error paths handled?          CONFIRMED CONCERN  DISAGREE → voice A's additions accepted (P1): failures inside diagnostic callbacks, storage failure must not fail a navigation (E-M2)
+  6. Deployment risk manageable?   CONFIRMED CONCERN  DISAGREE → voice A's version-identity finding is correct and accepted (E-M5); the rest of the deploy path stands
 ═══════════════════════════════════════════════════════════════════════════════
 ```
 
 3/6 confirmed concerns, 3 disagreements resolved toward the more complete option. Two
-findings are verified-in-code criticals and reshape the plan: F1/Codex-4 (the hook
+findings are verified-in-code criticals and reshape the plan: F1/voice A-4 (the hook
 contract) and F2 (`clearOnLeave` does not exist).
 
 ### Amendments applied to the plan body from this phase
 
-| #     | Source           | Amendment                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| ----- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| E-M1  | F1, Codex 4      | **New L0, before L4:** extend `Hooks` with `init(host)` and `onCommit(state, prev)`; invoke them from a single place in `store.ts` so every write path — `set`, `patch`, `setCtx`, `reset`, `patchFlow` and the navigation commit — reports exactly once; define ordering (registration order), failure isolation (a throwing plugin is disabled with a diagnostic, never breaks a write), disposal on `destroy()`, repeated mounts, and re-entrancy (a commit made _by_ a plugin during `init` does not re-enter `onCommit`). Contract test: `set()` triggers persistence on both bindings. Storage is synchronous by contract; async storage is out of scope for 1.0                                                                                                       |
-| E-M2  | Codex 2, 4       | L4a is a **pure decoder**: `decodeSnapshot(flow, snapshot, { migrate? }) → { state, diagnostics } \| { reset, reason }`; the plugin installs it through `commit.ts`, which is what bumps `rev` and invalidates selectors; restore **bumps `nav`** so any pre-restore async operation resolves as superseded; snapshots handed out are detached copies. A storage failure is reported through `onRestore`/a diagnostic and never turns a successful navigation into a failed one. Writes coalesce: one write per animation frame or 50 ms, flushed on `destroy()` and on `pagehide`, measured against a 100-passenger R-C payload                                                                                                                                             |
-| E-M3  | F4               | `decodeSnapshot` reuses `session.ts`'s frame checker; the shared predicate moves to one place and both call it                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| E-M4  | F3, Codex 5      | **L9 gets a design note before implementation**, listing the invariants: stable item identity under `keyBy`, removal of the active item, reordering, nested groups, empty `over`, `back()` across a boundary, `go()` into a group, completion, pruning of dead frames, and what a snapshot containing group frames means. It states the injection point that keeps group code out of the flat-flow bundle, or the `.size-limit.js` comment is corrected and the budget raised deliberately. Property tests cover structural change during a pending navigation; `resolve.property.test.ts` must pass unchanged                                                                                                                                                               |
-| E-M5  | Codex 9          | **Release identity:** R0 builds the **final 1.0.0 artefacts** and publishes them to the `next` dist-tag; R1 promotes that exact version to `latest` (`npm dist-tag add`), it does not rebuild. Checksums and internal dependency versions are frozen at R0. The README shipped inside the tarball is the final one, so D3's `@latest` switch lands **before** R0, not after. StackBlitz templates pin the exact version, never a moving tag                                                                                                                                                                                                                                                                                                                                  |
-| E-M6  | Codex 1, 6, 7, 8 | R0's fixtures include a **mixed root/alias consumer** (provider from the root, hooks from `./v1`) and cover ESM and CJS and every subentry; the alias is the same built files, not a second build. The isolation test asserts **executed modules and network requests**, not just mounted components; the framework toggle is a route change and the SSR default is stated. The embed script's runner is pinned (`tsx`, already a dev dependency of the repo's tooling, or a compiled step) and CI **compiles** the extracted examples. L8 gains an inventory checklist (workspace globs, lockfile, scripts, workflow path filters, caches, coverage, changesets config), a precondition that the old site still builds until S6, and a mapping table at **assertion** level |
-| E-M7  | Codex 10         | Snapshot size and depth bounds (reject over 1 MB or depth > 32 with a diagnostic); path segments containing `__proto__`, `constructor` or `prototype` rejected at decode; a documented redaction hook for recorded sessions and a note that session storage is not confidentiality; diagnostics never embed submitted data in a URL; a failing diagnostic callback is caught                                                                                                                                                                                                                                                                                                                                                                                                 |
-| E-M8  | F2               | **New L10:** `clearOnLeave?: string[] \| true` on `StepBase`, cleared at exit in `commit.ts` as part of the navigation commit, with the default documented as "kept" — or the claim is removed from S4 and the API table. Chosen: implement (a task page promises it and 0.x had `clearData`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| E-M9  | F7               | L6 enumerates all nine current throw sites (`expr.ts` ×5 via `ExprError`, `store.ts:120`, `validate-flow.ts:115`, `react/index.tsx:53`, `vue/index.ts:44`); `AGENTS.md` A4's count is corrected                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| E-M10 | Codex 8          | L7's count reconciled: the test diagram in this phase lists 46 paths; "25 gaps (T32)" was the 2026-09-03 figure for the inspector alone. L7 now reads "every GAP in the Phase 3 test diagram"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| #     | Source                     | Amendment                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ----- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| E-M1  | F1, voice A finding 4      | **New L0, before L4:** extend `Hooks` with `init(host)` and `onCommit(state, prev)`; invoke them from a single place in `store.ts` so every write path — `set`, `patch`, `setCtx`, `reset`, `patchFlow` and the navigation commit — reports exactly once; define ordering (registration order), failure isolation (a throwing plugin is disabled with a diagnostic, never breaks a write), disposal on `destroy()`, repeated mounts, and re-entrancy (a commit made _by_ a plugin during `init` does not re-enter `onCommit`). Contract test: `set()` triggers persistence on both bindings. Storage is synchronous by contract; async storage is out of scope for 1.0                                                                                                       |
+| E-M2  | voice A finding 2, 4       | L4a is a **pure decoder**: `decodeSnapshot(flow, snapshot, { migrate? }) → { state, diagnostics } \| { reset, reason }`; the plugin installs it through `commit.ts`, which is what bumps `rev` and invalidates selectors; restore **bumps `nav`** so any pre-restore async operation resolves as superseded; snapshots handed out are detached copies. A storage failure is reported through `onRestore`/a diagnostic and never turns a successful navigation into a failed one. Writes coalesce: one write per animation frame or 50 ms, flushed on `destroy()` and on `pagehide`, measured against a 100-passenger R-C payload                                                                                                                                             |
+| E-M3  | F4                         | `decodeSnapshot` reuses `session.ts`'s frame checker; the shared predicate moves to one place and both call it                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| E-M4  | F3, voice A finding 5      | **L9 gets a design note before implementation**, listing the invariants: stable item identity under `keyBy`, removal of the active item, reordering, nested groups, empty `over`, `back()` across a boundary, `go()` into a group, completion, pruning of dead frames, and what a snapshot containing group frames means. It states the injection point that keeps group code out of the flat-flow bundle, or the `.size-limit.js` comment is corrected and the budget raised deliberately. Property tests cover structural change during a pending navigation; `resolve.property.test.ts` must pass unchanged                                                                                                                                                               |
+| E-M5  | voice A finding 9          | **Release identity:** R0 builds the **final 1.0.0 artefacts** and publishes them to the `next` dist-tag; R1 promotes that exact version to `latest` (`npm dist-tag add`), it does not rebuild. Checksums and internal dependency versions are frozen at R0. The README shipped inside the tarball is the final one, so D3's `@latest` switch lands **before** R0, not after. StackBlitz templates pin the exact version, never a moving tag                                                                                                                                                                                                                                                                                                                                  |
+| E-M6  | voice A finding 1, 6, 7, 8 | R0's fixtures include a **mixed root/alias consumer** (provider from the root, hooks from `./v1`) and cover ESM and CJS and every subentry; the alias is the same built files, not a second build. The isolation test asserts **executed modules and network requests**, not just mounted components; the framework toggle is a route change and the SSR default is stated. The embed script's runner is pinned (`tsx`, already a dev dependency of the repo's tooling, or a compiled step) and CI **compiles** the extracted examples. L8 gains an inventory checklist (workspace globs, lockfile, scripts, workflow path filters, caches, coverage, changesets config), a precondition that the old site still builds until S6, and a mapping table at **assertion** level |
+| E-M7  | voice A finding 10         | Snapshot size and depth bounds (reject over 1 MB or depth > 32 with a diagnostic); path segments containing `__proto__`, `constructor` or `prototype` rejected at decode; a documented redaction hook for recorded sessions and a note that session storage is not confidentiality; diagnostics never embed submitted data in a URL; a failing diagnostic callback is caught                                                                                                                                                                                                                                                                                                                                                                                                 |
+| E-M8  | F2                         | **New L10:** `clearOnLeave?: string[] \| true` on `StepBase`, cleared at exit in `commit.ts` as part of the navigation commit, with the default documented as "kept" — or the claim is removed from S4 and the API table. Chosen: implement (a task page promises it and 0.x had `clearData`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| E-M9  | F7                         | L6 enumerates all nine current throw sites (`expr.ts` ×5 via `ExprError`, `store.ts:120`, `validate-flow.ts:115`, `react/index.tsx:53`, `vue/index.ts:44`); `AGENTS.md` A4's count is corrected                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| E-M10 | voice A finding 8          | L7's count reconciled: the test diagram in this phase lists 46 paths; "25 gaps (T32)" was the 2026-09-03 figure for the inspector alone. L7 now reads "every GAP in the Phase 3 test diagram"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 ## Section 1: Architecture
 
@@ -2248,12 +2248,12 @@ phase, with the context needed to pick it up cold:
   - What already exists         — written
   - TODOS.md updates            — 8 items written
   - Failure modes               — 12 rows, 0 critical gaps
-  - Outside voice               — ran (codex 0.153.0 + Claude subagent)
+  - Outside voice               — ran (the outside voice 0.153.0 + voice B)
   - Parallelization             — 6 lanes, 3 parallel at the start, 2 conflict flags
   - Lake Score                  — 10/10 recommendations chose the complete option
 ```
 
-> **Phase 3 complete.** Codex: 10 concerns. Claude subagent: 7 findings, 2 verified criticals.
+> **Phase 3 complete.** voice A: 10 concerns. voice B: 7 findings, 2 verified criticals.
 > Consensus: 3/6 confirmed concerns, 3 disagreements resolved toward completeness;
 > 10 amendments (E-M1..E-M10), 2 of which add engine work the plan had not disclosed.
 > Passing to Phase 4 (Final Gate).
@@ -2320,9 +2320,9 @@ complete option where completeness applied.
 ## Cross-Phase Themes
 
 Concerns that surfaced independently in two or more phases' outside voices. Eight model runs
-with no sight of each other (four Codex, four Claude subagents), so repetition is signal.
+with no sight of each other (four voice A, four voice Bs), so repetition is signal.
 
-**Theme 1: the plan measured discipline, not the contract.** Flagged in **Phase 1 (Codex)**
+**Theme 1: the plan measured discipline, not the contract.** Flagged in **Phase 1 (voice A)**
 and again, concretely, in **Phase 3 (both voices)**. The CEO voice said "zero warnings and
 byte budgets do not answer whether someone can build a difficult wizard"; the eng voices then
 found the two places where the abstraction actually did not reach — no `init`/`onCommit` hook
@@ -2331,12 +2331,12 @@ three reference applications are the fix for exactly this class, and both engine
 found _because_ the plan committed to building them.
 
 **Theme 2: the inspector must not promise what the engine cannot run.** Flagged in **Phase 1
-(Codex)**, **Phase 2 (Codex)** and **Phase 3 (both)**. It started as "the graph draws groups
+(voice A)**, **Phase 2 (voice A)** and **Phase 3 (both)**. It started as "the graph draws groups
 while the engine walks one level", became Premise 6, and ended as the L9 design note with its
 invariant list: if group traversal is deferred, the third reference application and the
 site's claims must be revised in the same decision.
 
-**Theme 3: artefact identity.** Flagged in **Phase 2.5 (Codex)** and **Phase 3 (Codex)**,
+**Theme 3: artefact identity.** Flagged in **Phase 2.5 (voice A)** and **Phase 3 (voice A)**,
 twice in different forms: R0 testing root imports before L8 created them, then an RC-version
 tarball that cannot become 1.0.0 unchanged, and `./v1` as a second build that would duplicate
 React contexts. All three are the same underlying question — _is the thing we tested the
@@ -2349,29 +2349,29 @@ inspector modes, the interaction-state table, the keyboard contract and the quic
 exact shape all came from this theme.
 
 **Theme 5: failures that are returned, not thrown, were invisible to the plan's checks.**
-Flagged in **Phase 2.5 (both)** and **Phase 3 (Codex)**. A grep over `throw new` would have
+Flagged in **Phase 2.5 (both)** and **Phase 3 (voice A)**. A grep over `throw new` would have
 passed while `NavResult` reasons, storage warnings and decode diagnostics stayed
 unactionable. The diagnostic contract covers both kinds, and the failure of a diagnostic
 callback is itself handled.
 
 **Theme 6: what the review did _not_ contest.** All eight runs accepted the engine as the
 foundation, the teardown of 0.x, the README-early sequencing and GitHub Pages. The only
-strategic dissent came from the Phase 1 Claude subagent applying market discipline the owner
+strategic dissent came from the Phase 1 voice B applying market discipline the owner
 has explicitly declined; its process findings were kept, its framing was not.
 
 ## GSTACK REVIEW REPORT
 
-| Review        | Trigger               | Why                             | Runs | Status                | Findings                                                                |
-| ------------- | --------------------- | ------------------------------- | ---- | --------------------- | ----------------------------------------------------------------------- |
-| CEO Review    | `/plan-ceo-review`    | Scope & strategy                | 1    | CLEAR (via /autoplan) | 11 proposals, 6 accepted, 3 deferred; 0 critical gaps                   |
-| Design Review | `/plan-design-review` | UI/UX gaps                      | 1    | CLEAR (via /autoplan) | score 3/10 → 8/10, 7 amendments                                         |
-| DX Review     | `/plan-devex-review`  | Developer experience gaps       | 1    | CLEAR (via /autoplan) | score 5.4/10 → 7.3/10, TTHW undefined → < 5 min, 8 amendments           |
-| Eng Review    | `/plan-eng-review`    | Architecture & tests (required) | 1    | CLEAR (via /autoplan) | 12 issues, 0 critical gaps, 10 amendments, 2 verified-in-code criticals |
-| Outside Voice | `codex exec`          | Independent 2nd opinion         | 4    | issues_found          | 8 + 8 + 5 + 10 concerns across the four phases                          |
+| Review        | Trigger                    | Why                             | Runs | Status                | Findings                                                                |
+| ------------- | -------------------------- | ------------------------------- | ---- | --------------------- | ----------------------------------------------------------------------- |
+| CEO Review    | `/plan-ceo-review`         | Scope & strategy                | 1    | CLEAR (via /autoplan) | 11 proposals, 6 accepted, 3 deferred; 0 critical gaps                   |
+| Design Review | `/plan-design-review`      | UI/UX gaps                      | 1    | CLEAR (via /autoplan) | score 3/10 → 8/10, 7 amendments                                         |
+| DX Review     | `/plan-devex-review`       | Developer experience gaps       | 1    | CLEAR (via /autoplan) | score 5.4/10 → 7.3/10, TTHW undefined → < 5 min, 8 amendments           |
+| Eng Review    | `/plan-eng-review`         | Architecture & tests (required) | 1    | CLEAR (via /autoplan) | 12 issues, 0 critical gaps, 10 amendments, 2 verified-in-code criticals |
+| Outside Voice | `the outside-voice runner` | Independent 2nd opinion         | 4    | issues_found          | 8 + 8 + 5 + 10 concerns across the four phases                          |
 
-**CODEX:** four passes (0.153.0). Its two highest-value findings were the release-identity
+**OUTSIDE VOICE A:** four passes. Its two highest-value findings were the release-identity
 inconsistency (an RC-version tarball cannot become 1.0.0 unchanged) and the plugin-lifecycle
-gap, which the Claude eng subagent independently verified in the source.
+gap, which voice B independently verified in the source.
 
 **CROSS-MODEL:** eight runs, no shared context. Agreement on: the plan measured discipline
 rather than the contract (fixed by the three reference applications and by L0/L10); the
