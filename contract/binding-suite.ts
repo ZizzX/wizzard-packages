@@ -136,16 +136,24 @@ export function describeBindingContract(harness: BindingHarness): void {
       probe.unmount();
     });
 
-    it('re-renders once per commit, not twice', async () => {
-      // The 0.x store notified twice on every validation action and both
-      // bindings carried guards to hide the second render. Neither should need
-      // one now, and this is what proves it.
+    it('never renders more often than the engine commits', async () => {
+      // The 0.x store notified twice for one change and both bindings carried
+      // guards to hide the second render. Neither should need one now.
+      //
+      // A navigation is two commits: it marks itself busy, then it lands, and
+      // those are two different things to draw - the second render is the
+      // spinner going away. How many renders that becomes is the framework's
+      // business: React paints both, Vue coalesces them into one flush. The
+      // contract is the ceiling, not the count. More than two would mean a
+      // binding is notifying itself, which is the bug this case exists for.
       const probe = await mount({ name: 'Ann' });
       const before = probe.renders();
 
       await probe.click('next');
 
-      expect(probe.renders() - before).toBe(1);
+      const rendered = probe.renders() - before;
+      expect(rendered).toBeGreaterThanOrEqual(1);
+      expect(rendered).toBeLessThanOrEqual(2);
       probe.unmount();
     });
 

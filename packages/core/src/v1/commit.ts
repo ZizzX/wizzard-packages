@@ -31,7 +31,11 @@ export function restart(state: WizardState, fresh: WizardState): WizardState {
 /** Starts a navigation epoch. The returned token is re-checked after every await. */
 export function beginNav(state: WizardState): { state: WizardState; token: number } {
   const token = state.nav + 1;
-  return { state: { ...state, nav: token, status: 'busy' }, token };
+  // `rev` moves here too, and it has to. Everything downstream memoizes on it -
+  // the selector cache and the snapshot cache both - so a lock that changed
+  // `status` while leaving `rev` alone was invisible: `getState()` said busy
+  // while `getSnapshot().isBusy` stayed false, and no spinner could ever show.
+  return { state: { ...state, nav: token, status: 'busy', rev: state.rev + 1 }, token };
 }
 
 /** True when this navigation is still the current one. */
