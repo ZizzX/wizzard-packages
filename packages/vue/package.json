@@ -1,6 +1,6 @@
 {
   "name": "@wizzard-packages/vue",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Vue 3 composition API and components for Wizzard Stepper.",
   "keywords": [
     "wizard",
