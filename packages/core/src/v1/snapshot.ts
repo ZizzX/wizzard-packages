@@ -55,6 +55,12 @@ export type RestoreResult =
 
 export interface DecodeOptions {
   /**
+   * The engine's current epoch, when restoring into a live wizard. The restored
+   * state always lands above it, so a navigation begun before the restore
+   * resolves as superseded instead of overwriting what was just put back.
+   */
+  epoch?: number;
+  /**
    * Upgrades a snapshot written by an older format. Called until it returns
    * something at the current version or gives up by returning the input
    * unchanged, so a host can write one hop at a time rather than one function
@@ -87,13 +93,33 @@ export function toSnapshot(state: WizardState, flow: FlowDefinition): Snapshot {
     ...(flow.version === undefined ? {} : { version: flow.version }),
     stack: state.stack.map((f) => ({ ...f })),
     history: state.history.map((frames) => frames.map((f) => ({ ...f }))),
-    data: { ...state.data },
-    ctx: { ...state.ctx },
+    data: detach(state.data),
+    ctx: detach(state.ctx),
     visited: [...state.visited],
     completed: [...state.completed],
     dirty: [...state.dirty],
     nav: state.nav,
   };
+}
+
+/**
+ * A deep copy of the plain parts.
+ *
+ * A shallow spread would leave every nested object shared with live state, so
+ * `snapshot.data.name.full = 'x'` would reach into the engine - a second writer
+ * beside `commit.ts`, which is the one thing the design does not allow.
+ *
+ * Anything that is not a plain object or an array is copied by reference and
+ * left for `decodeSnapshot` to refuse: a `Date` is a bug to report at the
+ * boundary, not something to quietly convert on the way out.
+ */
+function detach<T>(value: T): T {
+  if (Array.isArray(value)) return value.map(detach) as unknown as T;
+  if (value === null || typeof value !== 'object') return value;
+  if (Object.getPrototypeOf(value) !== Object.prototype) return value;
+  const out: Record<string, unknown> = {};
+  for (const [key, child] of Object.entries(value)) out[key] = detach(child);
+  return out as T;
 }
 
 /**
@@ -145,10 +171,16 @@ export function decodeSnapshot(
     return fail('snapshot/other-flow');
   }
 
+  // Only frames belonging to this flow can be checked here. A frame naming a
+  // sub-flow is checked by whoever can resolve that sub-flow; rejecting it
+  // would refuse every legitimate snapshot taken inside a group.
   const frames = [...snapshot.stack, ...snapshot.history.flat()];
-  if (frames.some((f) => flow.steps[f.step] === undefined)) return fail('snapshot/unknown-step');
+  const mine = frames.filter((f) => f.flow === flow.id);
+  if (mine.some((f) => flow.steps[f.step] === undefined)) return fail('snapshot/unknown-step');
 
-  const storable = checkStorable({ data: snapshot.data, ctx: snapshot.ctx });
+  // The whole snapshot, not only what a host put in it: a stack or a history
+  // can run away just as easily as a data blob can.
+  const storable = checkStorable(snapshot);
   if (storable !== null) return fail(storable);
 
   return {
@@ -169,7 +201,10 @@ export function decodeSnapshot(
       errors: {},
       busy: [],
       rev: 0,
-      nav: snapshot.nav,
+      // Always above both the stored epoch and the live one. Carrying the
+      // stored number verbatim would leave a navigation already in flight
+      // holding a token that still counts as current, and it would win.
+      nav: Math.max(snapshot.nav, options.epoch ?? 0) + 1,
     },
   };
 }

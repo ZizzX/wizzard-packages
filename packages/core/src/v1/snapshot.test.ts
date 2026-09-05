@@ -76,9 +76,9 @@ describe('decodeSnapshot', () => {
     expect(result.state.busy).toEqual([]);
     expect(result.state.errors).toEqual({});
     expect(result.state.rev).toBe(0);
-    // The epoch is carried, not reset: it is what makes anything begun before
-    // the restore resolve as superseded instead of overwriting it.
-    expect(result.state.nav).toBe(3);
+    // The epoch lands above the stored one, which is what makes a navigation
+    // begun before the restore resolve as superseded instead of overwriting it.
+    expect(result.state.nav).toBe(4);
     expect(result.state.data).toEqual({ name: { full: 'Ada' } });
   });
 
@@ -231,5 +231,53 @@ describe('migration', () => {
     });
 
     expect(result).toEqual({ restored: false, reason: 'snapshot/unreadable' });
+  });
+});
+
+describe('the epoch and the frames it restores', () => {
+  it('lands above a live navigation that is already in flight', () => {
+    const snapshot = toSnapshot(live(), flow);
+
+    // A wizard that has navigated nine times while this snapshot sat in storage.
+    const result = decodeSnapshot(flow, snapshot, { epoch: 9 });
+
+    expect(result.restored).toBe(true);
+    if (!result.restored) return;
+    expect(result.state.nav).toBe(10);
+  });
+
+  it('leaves a frame from a sub-flow to whoever can resolve it', () => {
+    // Rejecting this would refuse every snapshot taken inside a group: the step
+    // belongs to the child's steps, which this flow does not contain.
+    const snapshot = {
+      ...toSnapshot(live(), flow),
+      stack: [
+        { flow: 'signup', step: 'name' },
+        { flow: 'passenger', step: 'seat' },
+      ],
+    };
+
+    expect(decodeSnapshot(flow, snapshot).restored).toBe(true);
+  });
+
+  it('still refuses a runaway stack, not only runaway data', () => {
+    const snapshot = {
+      ...toSnapshot(live(), flow),
+      stack: [{ flow: 'signup', step: 'name', base: 'x'.repeat(1_000_001) }],
+    };
+
+    expect(decodeSnapshot(flow, snapshot)).toEqual({
+      restored: false,
+      reason: 'snapshot/too-large',
+    });
+  });
+
+  it('copies nested data rather than sharing it with live state', () => {
+    const state = live();
+    const snapshot = toSnapshot(state, flow);
+
+    (snapshot.data.name as { full: string }).full = 'Grace';
+
+    expect((state.data.name as { full: string }).full).toBe('Ada');
   });
 });

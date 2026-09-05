@@ -57,7 +57,17 @@ export default [
   // never persists a wizard should not carry the validator that decides whether
   // stored JSON can be trusted - and one that does persist wants it whether or
   // not it draws graphs.
-  { name: 'core-v1 snapshot', path: 'packages/core/src/v1/snapshot.ts', limit: '1 kB', gzip: true },
+  //
+  // Most of it is that validator: a deep copy on the way out, and on the way in
+  // a walk that refuses values JSON cannot round-trip, keys that reach a
+  // prototype, cycles, and anything past its bounds. Refusing a bad snapshot
+  // costs more than writing a good one, which is the right way round.
+  {
+    name: 'core-v1 snapshot',
+    path: 'packages/core/src/v1/snapshot.ts',
+    limit: '1.1 kB',
+    gzip: true,
+  },
 
   // Development and server-driven use only. Measured, but never counted against
   // the runtime budget, because shipping it to a browser is a mistake the
