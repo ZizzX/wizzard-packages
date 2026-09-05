@@ -1,235 +1,195 @@
-# Wizzard Stepper (scoped packages) 🧙‍♂️
+# wizzard
 
-[![npm version](https://img.shields.io/npm/v/@wizzard-packages/react.svg)](https://www.npmjs.com/package/@wizzard-packages/react)
-[![license](https://img.shields.io/npm/l/@wizzard-packages/react.svg)](https://github.com/ZizzX/wizzard-packages/blob/main/LICENSE)
-[![bundle size](https://img.shields.io/bundlephobia/minzip/@wizzard-packages/react)](https://bundlephobia.com/package/@wizzard-packages/react)
+[![npm](https://img.shields.io/npm/v/@wizzard-packages/core.svg)](https://www.npmjs.com/package/@wizzard-packages/core)
+[![license](https://img.shields.io/npm/l/@wizzard-packages/core.svg)](LICENSE)
 
-Headless, typed wizard engine for building multi-step flows with React, Vue, or any UI. The repo ships a core engine plus framework bindings, adapters, middleware, persistence, and devtools.
+A multi-step flow is a graph, but most libraries make you write it as a list and keep the
+branches in your components. Here the flow is **data** — a plain JSON object — and one engine
+runs it for React and Vue alike. Because it is data, you can draw it, send it from a server,
+diff it, and replay a recorded run of it.
 
-> Scoped packages are the primary distribution (`@wizzard-packages/*`) in the new repo (`wizzard-packages`). The legacy `wizzard-stepper-react` package is deprecated and stays on v2.x for critical fixes only.
+```bash
+pnpm add @wizzard-packages/core@canary @wizzard-packages/react@canary
+```
 
----
+## A wizard in twenty lines
 
-## 📦 Packages at a glance
+Two steps, one field, and a value that is still there after Back.
 
-| Package                         | Purpose                                           |
-| ------------------------------- | ------------------------------------------------- |
-| `@wizzard-packages/core`        | Framework-agnostic engine (state, actions, types) |
-| `@wizzard-packages/react`       | React provider + hooks built on core              |
-| `@wizzard-packages/vue`         | Vue 3 composition API bindings                    |
-| `@wizzard-packages/adapter-zod` | Zod validation adapter                            |
-| `@wizzard-packages/adapter-yup` | Yup validation adapter                            |
-| `@wizzard-packages/persistence` | LocalStorage and memory persistence               |
-| `@wizzard-packages/middleware`  | Logger + Redux DevTools middleware                |
-| `@wizzard-packages/devtools`    | DevTools UI for inspection                        |
+<!-- example:quickstart-flow -->
 
-For detailed docs and usage, see each package README in `packages/*`.
+<!-- prettier-ignore -->
+```ts
+import { defineFlow, step } from '@wizzard-packages/core/v1';
 
----
+/**
+ * The smallest flow that is still a wizard: two steps, one field, and a value
+ * that has to survive going back.
+ *
+ * A flow is data. This object is JSON — no functions, no classes — so the same
+ * definition can come from a file, from a backend, or from a generator, and one
+ * engine runs all three.
+ */
+export const signup = defineFlow({
+  id: 'signup',
+  order: ['name', 'review'],
+  steps: {
+    name: step<{ full: string }>({ label: 'Your name' }),
+    review: step({ label: 'Review' }),
+  },
+});
+```
 
-## 🎮 Interactive Playground
+<!-- /example -->
 
-Try the library in the browser with these standalone templates on StackBlitz:
+<!-- example:quickstart-react -->
 
-| Example         | Template                                                                                                                                                                 |
-| :-------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Basic**       | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-blue?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-packages/tree/main/.stackblitz/basic)        |
-| **Validation**  | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-red?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-packages/tree/main/.stackblitz/validation)    |
-| **Persistence** | [![Open](https://img.shields.io/badge/Open_in_StackBlitz-green?logo=stackblitz)](https://stackblitz.com/github/ZizzX/wizzard-packages/tree/main/.stackblitz/persistence) |
-
----
-
-## 🎨 UI Integrations
-
-Wizzard is headless, which means you can use it with **any** UI library. We provide detailed examples and "connector factories" for popular design systems:
-
-- **[Shadcn/UI Connector](./examples/shadcn-ui-connector)**: Full example of integrating with shadcn/ui using the Factory Pattern to generate typed `WizardField` and `WizardStep` components that look and feel native to your app.
-
----
-
-## 🚀 Quick Start
-
-### Option A: React bindings
-
+<!-- prettier-ignore -->
 ```tsx
-import { createWizardFactory } from '@wizzard-packages/react';
+import { WizardProvider, useField, useNavigation, useStep } from '@wizzard-packages/react/v1';
 
-type Data = { name: string };
-type StepId = 'name' | 'review';
-
-const { WizardProvider, createStep, useWizardActions } = createWizardFactory<Data, StepId>();
-
-const steps = [
-  createStep({ id: 'name', label: 'Name', component: NameStep }),
-  createStep({ id: 'review', label: 'Review', component: ReviewStep }),
-];
+import { signup } from './flow';
 
 export function App() {
   return (
-    <WizardProvider config={{ steps }} initialData={{ name: '' }}>
-      <WizardUI />
+    <WizardProvider flow={signup}>
+      <Wizard />
     </WizardProvider>
   );
 }
 
-function WizardUI() {
-  const { goToNextStep } = useWizardActions();
-  return <button onClick={goToNextStep}>Next</button>;
+function Wizard() {
+  const { current, isLast } = useStep();
+  const { next, back, canBack } = useNavigation();
+  const [full, setFull] = useField<string>('name.full');
+
+  return (
+    <form onSubmit={(e) => e.preventDefault()}>
+      {current === 'name' && (
+        <label>
+          Your name
+          <input value={full ?? ''} onChange={(e) => setFull(e.target.value)} />
+        </label>
+      )}
+      {current === 'review' && <p>Hello, {full || 'stranger'}.</p>}
+
+      <button type="button" onClick={() => back()} disabled={!canBack}>
+        Back
+      </button>
+      <button type="button" onClick={() => next()} disabled={isLast}>
+        Next
+      </button>
+    </form>
+  );
 }
 ```
 
-Context-free (no React Context) usage:
+<!-- /example -->
 
-```tsx
-import { createWizardStore, createWizardHooks } from '@wizzard-packages/react';
+Vue is the same engine and the same hook names. The component that provides the wizard is not
+the one that uses it, because Vue's `inject` reads the parent chain:
 
-type Data = { name: string };
-type StepId = 'name' | 'review';
+<!-- example:quickstart-vue -->
 
-const { store, actions } = createWizardStore<Data, StepId>({
-  config: { steps },
-  initialData: { name: '' },
-  initialStepId: 'name',
-});
-
-const { useWizardState } = createWizardHooks(store);
-
-function WizardUI() {
-  const { currentStepId } = useWizardState();
-  return <button onClick={actions.goToNextStep}>Next ({currentStepId})</button>;
-}
-```
-
-Optional add-ons:
-
-```bash
-pnpm add @wizzard-packages/persistence @wizzard-packages/middleware
-pnpm add @wizzard-packages/adapter-zod zod
-pnpm add @wizzard-packages/adapter-yup yup
-```
-
-### Option B: Vue 3 bindings (Script Setup)
-
-```ts
-// 1. Create factory (wizard.ts)
-import { createWizardFactory } from '@wizzard-packages/vue';
-
-type Data = { name: string };
-type StepId = 'name' | 'review';
-
-export const { useProvideWizard, useWizardActions } = createWizardFactory<Data, StepId>();
-```
-
+<!-- prettier-ignore -->
 ```vue
-<!-- 2. Usage (App.vue) -->
 <script setup lang="ts">
-import { useProvideWizard, useWizardActions } from './wizard';
+import { useField, useNavigation, useStep } from '@wizzard-packages/vue/v1';
 
-useProvideWizard({
-  config: {
-    steps: [
-      { id: 'name', label: 'Name' },
-      { id: 'review', label: 'Review' },
-    ],
-  },
-  initialData: { name: '' },
-  initialStepId: 'name',
-});
-
-const { goToNextStep } = useWizardActions();
+const { current, isLast } = useStep();
+const { next, back, canBack } = useNavigation();
+const full = useField<string>('name.full');
 </script>
 
 <template>
-  <button @click="goToNextStep">Next</button>
+  <form @submit.prevent>
+    <label v-if="current === 'name'">
+      Your name
+      <input v-model="full">
+    </label>
+    <p v-else-if="current === 'review'">
+      Hello, {{ full || 'stranger' }}.
+    </p>
+
+    <button
+      type="button"
+      :disabled="!canBack"
+      @click="back()"
+    >
+      Back
+    </button>
+    <button
+      type="button"
+      :disabled="isLast"
+      @click="next()"
+    >
+      Next
+    </button>
+  </form>
 </template>
 ```
 
-### Option C: Headless core only
+<!-- /example -->
 
-```ts
-import { WizardStore, type IWizardConfig } from '@wizzard-packages/core';
+Those three files are `examples/quickstart`. CI runs them on both bindings and fails if this
+README drifts from them, so what you paste is what is tested.
 
-type Data = { name: string };
-type StepId = 'name' | 'review';
+## Why this and not something else
 
-const config: IWizardConfig<Data, StepId> = {
-  steps: [
-    { id: 'name', label: 'Name', component: null },
-    { id: 'review', label: 'Review', component: null },
-  ],
-};
+**No stale async transitions.** Validation, guards and loading are eleven phases of one
+pipeline, and state is written exactly once at the end of it. Every `await` re-checks a
+navigation epoch, so a slow validator that resolves after you pressed Back cannot move you.
+Navigation returns a result — `{ ok: false, reason: 'blocked', by: 'age-check' }` — never a
+bare boolean.
 
-const store = new WizardStore<Data, StepId>({ name: '' });
+**One engine, two bindings.** `@wizzard-packages/react` is 906 B and `@wizzard-packages/vue`
+is 646 B, against 8.43 kB and 5.07 kB for their 0.x equivalents. Nothing was optimised to get
+there: the logic moved into the engine. A shared contract suite runs against both, which is
+what stops them drifting apart.
 
-store.dispatch({
-  type: 'INIT',
-  payload: { data: { name: '' }, config },
-});
-```
+**The flow is JSON.** No functions, no classes, no `Set`s — in the definition or in the state.
+Predicates and validators are named entries in a registry, so `JSON.stringify(flow)` always
+round-trips. That is what makes a graph view, a server-driven flow and a replayable session
+possible at all.
 
----
+## When it earns its dependency
 
-## ✨ Key Features
+Reach for [`@stepperize/react`](https://stepperize.vercel.app) if you need a stepper: one
+hook, one list of steps, and your own branching in components. It is smaller and simpler, and
+for a linear form it is the right answer.
 
-- 🧠 Headless architecture: bring your own UI
-- ⚡ Typed factory and granular hooks for performance
-- 🔌 Validation adapters for Zod/Yup
-- 💾 Persistence adapters for localStorage/memory
-- 🛠️ Middleware + Redux DevTools integration
+Reach for [XState](https://stately.ai/docs) if your problem is a state machine that happens to
+have a UI — parallel states, actors, invoked services. It is a bigger idea than a wizard, and
+its visualiser is excellent.
 
----
+Reach for this when the flow itself is the thing you need to hold: branches that depend on
+answers, a back button that must not lose data, a reload that must not lose progress, or a
+definition that comes from somewhere other than your bundle. When a `useReducer` and three
+`useEffect`s have started disagreeing about which step you are on, that is the moment.
 
-## 🧭 How the stack fits together
+## Packages
 
-Typical React setup:
+| Package                        | What it is                                                 | gzip    |
+| ------------------------------ | ---------------------------------------------------------- | ------- |
+| `@wizzard-packages/core`       | the engine: flow types, expressions, navigation, selectors | 3.92 kB |
+| `@wizzard-packages/react`      | provider and hooks                                         | 927 B   |
+| `@wizzard-packages/vue`        | `provideWizard` and the same composables                   | 660 B   |
+| `@wizzard-packages/validate`   | one adapter for Zod, Valibot, ArkType, Effect and Yup      | 317 B   |
+| `@wizzard-packages/core/graph` | a flow as `{ nodes, edges }`, for drawing it               | 754 B   |
 
-```
-@wizzard-packages/react
-  ├─ @wizzard-packages/core
-  ├─ @wizzard-packages/persistence (optional)
-  ├─ @wizzard-packages/middleware (optional)
-  ├─ @wizzard-packages/adapter-zod or adapter-yup (optional)
-  └─ @wizzard-packages/devtools (optional)
-```
+Separate entries because they are separate budgets: a wizard that never draws itself does not
+carry the code that would.
 
-Core-only setup:
+## Supported
 
-```
-@wizzard-packages/core
-  └─ Your UI layer (React/Vue/custom)
-```
+Node 20.11+, TypeScript 5+, React 18+, Vue 3.3+. ESM and CJS, types for both.
 
----
+## Status
 
-## 📄 Documentation & Demos
-
-- Docs UI: https://zizzx.github.io/wizzard-packages/
-- API Reference: `docs/API_REFERENCE.md`
-- E2E Testing: `e2e/README.md`
-- Local StackBlitz templates: `.stackblitz/README.md`
-- Context-free React usage: `packages/react/README.md`
-
----
-
-## 📦 Release Strategy
-
-- Scoped packages (`@wizzard-packages/*`) are versioned in lockstep starting at `0.1.0`.
-- Releases are cut from `main` with git tags `vX.Y.Z` and GitHub releases.
-- Pre-releases use `-next.N` and publish with npm dist-tag `next`.
-- Versioning is managed via Changesets with a fixed group for all `@wizzard-packages/*` packages.
-- Legacy `wizzard-stepper-react` stays on v2.x for critical fixes only.
-- Every merge to `main` publishes a snapshot under the `canary` dist-tag.
-- Full release steps: `docs/RELEASE.md`.
-
-## 🌿 Development Workflow
-
-- Trunk-based: short-lived branches, PRs into `main`, no `dev` or `stage` branch.
-- Unreleased work is tried from the `canary` dist-tag, not from a branch.
-- Publishing runs from `main` only. See `docs/DEV_WORKFLOW.md`.
-
-See `docs/DEV_WORKFLOW.md` for the full flow.
-
----
+v1 is on the `canary` tag while the launch lands: the engine, both bindings and validation are
+done; persistence, devtools and the documentation site are in progress. `docs/designs/v1-launch.md`
+is the plan, and `ROADMAP.md` is where it came from. The 0.x line on `latest` is a different
+library with the same name and is being retired.
 
 ## License
 

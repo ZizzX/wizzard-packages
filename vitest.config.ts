@@ -1,8 +1,12 @@
 import react from '@vitejs/plugin-react';
+import vue from '@vitejs/plugin-vue';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-  plugins: [react()],
+  // Both plugins, because the quickstart example ships a React file and a Vue
+  // single-file component and the same test drives both. A binding that drifts
+  // from the other fails here rather than in a reader's editor.
+  plugins: [react(), vue()],
   test: {
     environment: 'jsdom',
     globals: true,
