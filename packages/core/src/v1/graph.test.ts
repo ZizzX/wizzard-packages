@@ -146,6 +146,23 @@ describe('groups', () => {
     expect(node(g, 'again')?.group).toEqual({ flowId: 'loop', opaque: 'cycle' });
   });
 
+  it('stops at a depth cap, so pasted JSON cannot walk the stack down', () => {
+    // Thirty-three distinct sub-flows: no cycle to catch it, and a flow can
+    // arrive from a paste box.
+    const deep: Record<string, FlowDefinition> = {};
+    for (let i = 0; i < 40; i++) {
+      deep[`f${i}`] = { id: `f${i}`, steps: { down: { flow: `f${i + 1}` } } };
+    }
+    let g = buildGraph(deep.f0 as FlowDefinition, deep);
+    let depth = 0;
+    while (g.nodes[0]?.group?.graph) {
+      g = g.nodes[0].group.graph;
+      depth++;
+    }
+    expect(g.nodes[0]?.group?.opaque).toBe('too-deep');
+    expect(depth).toBeLessThan(40);
+  });
+
   it('carries the repeat expression, which the definition has and the run time varies', () => {
     const g = buildGraph({
       id: 'f',

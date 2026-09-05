@@ -53,7 +53,7 @@ export interface GroupNode {
    * reason would render as an ordinary box and read as working software, so
    * the reason is part of the data and the renderer is expected to show it.
    */
-  opaque?: 'unresolved' | 'cycle';
+  opaque?: 'unresolved' | 'cycle' | 'too-deep';
 }
 
 export interface GraphEdge {
@@ -70,6 +70,16 @@ export interface GraphEdge {
   /** `to` names neither a step in this flow nor `END`. */
   dangling?: boolean;
 }
+
+/**
+ * How deep sub-flows are followed.
+ *
+ * A flow can arrive as pasted, untrusted JSON. The cycle guard in `toGroup`
+ * catches a sub-flow that names an ancestor, but a chain of thirty-two
+ * *distinct* ones has no cycle in it and would still walk the stack down.
+ * Nothing legitimate nests that far.
+ */
+const MAX_DEPTH = 32;
 
 /**
  * Builds the graph of `flow`.
@@ -134,6 +144,7 @@ function toGroup(
   if (sub === undefined) return { flowId, ...repeat, opaque: 'unresolved' };
   // A sub-flow that names an ancestor by id would otherwise recurse forever.
   if (drawing.includes(flowId)) return { flowId, ...repeat, opaque: 'cycle' };
+  if (drawing.length >= MAX_DEPTH) return { flowId, ...repeat, opaque: 'too-deep' };
 
   return { flowId, ...repeat, graph: build(sub, subFlows, [...drawing, flowId]) };
 }
