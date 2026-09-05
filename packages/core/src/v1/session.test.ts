@@ -137,6 +137,80 @@ describe('sub-flows by reference', () => {
   it('verifies it once the registry supplies it', () => {
     expect(checkSession(clean, byRef, { passenger })).toEqual([]);
   });
+
+  // A registered flow gets walked like any other, so a frame inside its own
+  // inline child is not drift. `buildGraph` follows inline children after
+  // resolving a reference; a checker that stopped at the reference would call
+  // a legitimate grandchild frame unknown.
+  it('walks the inline children of a registered flow', () => {
+    const seat: FlowDefinition = { id: 'seat', order: ['pick'], steps: { pick: {} } };
+    const withInlineChild: FlowDefinition = {
+      ...passenger,
+      order: ['name', 'age', 'seat'],
+      steps: { ...passenger.steps, seat: { flow: seat } },
+    };
+    const deep: RecordedSession = {
+      flow: 'booking',
+      version: 2,
+      frames: [
+        frame({
+          stack: [
+            { flow: 'booking', step: 'passengers', i: 0 },
+            { flow: 'passenger', step: 'seat' },
+            { flow: 'seat', step: 'pick' },
+          ],
+          visited: ['passengers', 'seat', 'pick'],
+          rev: 1,
+          nav: 1,
+        }),
+      ],
+    };
+
+    expect(checkSession(deep, byRef, { passenger: withInlineChild })).toEqual([]);
+  });
+});
+
+describe('stacks the engine could not have built', () => {
+  // `state.ts`: the last entry is the current step, the ones before it enclose
+  // it. An atom cannot enclose anything.
+  it('rejects a parent frame that is not a group', () => {
+    const problems = checkSession(
+      withFrame(1, {
+        stack: [
+          { flow: 'booking', step: 'who' },
+          { flow: 'passenger', step: 'name' },
+        ],
+        visited: ['who', 'name'],
+      }),
+      booking
+    );
+    expect(messages(problems)).toContain('is not a group');
+  });
+
+  it('rejects a group whose child frame is in a different flow', () => {
+    const problems = checkSession(
+      withFrame(1, {
+        stack: [
+          { flow: 'booking', step: 'passengers', i: 0 },
+          { flow: 'seat', step: 'pick' },
+        ],
+        visited: ['passengers', 'pick'],
+      }),
+      booking
+    );
+    expect(messages(problems)).toContain('group into passenger');
+  });
+
+  it('still allows a group as the current step, with nothing below it', () => {
+    const problems = checkSession(
+      withFrame(1, {
+        stack: [{ flow: 'booking', step: 'passengers', i: 0 }],
+        visited: ['who', 'passengers'],
+      }),
+      booking
+    );
+    expect(problems).toEqual([]);
+  });
 });
 
 describe('frames that could not have come from the engine', () => {
@@ -204,5 +278,16 @@ describe('recordings that are not recordings', () => {
     const junk = { ...clean, frames: [null, 'nope', 7] } as unknown as RecordedSession;
     expect(() => checkSession(junk, booking)).not.toThrow();
     expect(checkSession(junk, booking)).toHaveLength(3);
+  });
+
+  // The top-level fields can all be present and the stack still be junk. This
+  // is the shape that used to reach `entry.flow` and throw out of a checker
+  // that promises it never throws.
+  it('survives a stack holding something that is not a frame', () => {
+    for (const junk of [null, 7, 'who', {}, { flow: 'booking' }]) {
+      const broken = withFrame(0, { stack: [junk] as never, visited: ['who'] });
+      expect(() => checkSession(broken, booking)).not.toThrow();
+      expect(messages(checkSession(broken, booking))).toContain('corrupt');
+    }
   });
 });
