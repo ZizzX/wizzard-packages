@@ -451,4 +451,69 @@ describe('the plugin lifecycle', () => {
 
     expect(torn).toBe(1);
   });
+
+  it('delivers nothing to a plugin after destroy', async () => {
+    const { seen, plugin } = recorder();
+    const w = createWizard({ flow, registry, data: { payer: 'private' }, plugins: [plugin] });
+    await w.start();
+    const before = seen.length;
+
+    w.destroy();
+    w.set('name', 'Ann');
+    await w.next();
+
+    expect(seen.length).toBe(before);
+    expect(w.isDestroyed()).toBe(true);
+  });
+
+  it('tears every plugin down even when one throws', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    let second = 0;
+    const w = createWizard({
+      flow,
+      registry,
+      plugins: [
+        {
+          name: 'rude',
+          init: () => () => {
+            throw new Error('nope');
+          },
+        },
+        { name: 'polite', init: () => () => (second += 1) },
+      ],
+    });
+
+    w.destroy();
+
+    expect(second).toBe(1);
+    spy.mockRestore();
+  });
+
+  it('stops calling navigation hooks of a plugin that threw', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    let navHooks = 0;
+    const w = createWizard({
+      flow,
+      registry,
+      data: { payer: 'private' },
+      plugins: [
+        {
+          name: 'broken',
+          onCommit: () => {
+            throw new Error('nope');
+          },
+          beforeNavigate: () => {
+            navHooks += 1;
+          },
+        },
+      ],
+    });
+
+    await w.start();
+    await w.next();
+
+    // One: the first navigation ran beforeNavigate before onCommit disabled it.
+    expect(navHooks).toBe(1);
+    spy.mockRestore();
+  });
 });

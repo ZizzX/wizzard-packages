@@ -35,8 +35,12 @@ import {
 const KEY: InjectionKey<Wizard> = Symbol('wizzard');
 
 export function provideWizard(source: Wizard | WizardOptions): Wizard {
-  const wizard = 'getSnapshot' in source ? source : createWizard(source);
+  const owned = !('getSnapshot' in source);
+  const wizard = owned ? createWizard(source) : (source as Wizard);
   provide(KEY, wizard);
+  // An engine this call created is this scope's to dispose, or a plugin's
+  // teardown never runs. One the caller passed in is theirs.
+  if (owned) onScopeDispose(() => wizard.destroy());
   // A fresh engine has an empty stack, so without this there is no current step
   // to render. `start` is idempotent, and on the server `onMounted` never runs,
   // which is where the wizard must not navigate at all. The React binding does

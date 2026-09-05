@@ -76,6 +76,9 @@ export interface Wizard {
   /** Replaces steps by id. Refuses a patch that would remove the current step. */
   patchFlow: (patch: Partial<FlowDefinition>) => boolean;
 
+  /** True once `destroy` has run. Plugins receive nothing after that. */
+  isDestroyed: () => boolean;
+
   destroy: () => void;
 }
 
@@ -99,6 +102,7 @@ export function createWizard(options: WizardOptions): Wizard {
   // Set while `init` runs, so a plugin's own restoring commit does not come
   // back to it as `onCommit`.
   let initializing = false;
+  let destroyed = false;
   let snapshotRev = -1;
   let snapshot: Snapshot | undefined;
 
@@ -119,7 +123,7 @@ export function createWizard(options: WizardOptions): Wizard {
     const previous = state;
     state = next;
     for (const h of plugins) {
-      if (initializing || h.onCommit === undefined || disabled.has(h.name)) continue;
+      if (initializing || destroyed || h.onCommit === undefined || disabled.has(h.name)) continue;
       try {
         h.onCommit(state, previous);
       } catch (error) {
@@ -172,7 +176,10 @@ export function createWizard(options: WizardOptions): Wizard {
   const navContext = (): NavContext => ({
     flow,
     registry,
-    hooks: plugins,
+    // Disabled and post-destroy plugins are filtered here too: `fail` must mean
+    // the same thing to a navigation hook as it does to `onCommit`, or a plugin
+    // that threw once keeps running half its contract.
+    hooks: destroyed ? [] : plugins.filter((h) => !disabled.has(h.name)),
     validate: (stepId) => validateStep(stepId),
     load: async (stepId) => {
       const step = flow.steps[stepId];
@@ -354,10 +361,21 @@ export function createWizard(options: WizardOptions): Wizard {
       return true;
     },
 
+    isDestroyed: () => destroyed,
+
     destroy() {
+      destroyed = true;
       controller?.abort();
       listeners.clear();
-      for (const t of teardowns.splice(0)) t();
+      // One teardown that throws must not strand the rest: the list is already
+      // spliced, so an early exit would leak every plugin after the failure.
+      for (const t of teardowns.splice(0)) {
+        try {
+          t();
+        } catch (error) {
+          console.error('[wizzard] a plugin threw while being torn down.', error);
+        }
+      }
     },
   };
 }
