@@ -260,14 +260,12 @@ Alternatives: VitePress (Vue-native; React examples become iframes), Next.js sta
 | R1  | Promote the **same version** to `latest` with `npm dist-tag add` -- no rebuild, no second pack. StackBlitz templates pin that exact version, never a moving tag                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | R2  | `npm deprecate` for `middleware`, `persistence`, `adapter-zod`, `adapter-yup` pointing at MIGRATION.md (T23)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
-## Open Questions (decided at the review gate)
+## Open Questions — all decided at the review gate on 2026-09-06
 
-- **Site stack** — recommended Astro + Starlight (above); reverses an owner decision.
+- **Site stack** — **decided: Astro + Starlight** (above). Supersedes the 2026-08-29 Next.js + Vercel choice.
 - **Group traversal in 1.0.0** -- recommended yes (L9, design note first); R-C depends on it, so deferring it also means replacing the third reference application and revising the site's claims in the same decision.
-- **Publish devtools in 1.0.0, or ship the inspector in the site only** — recommended keep
-  (owner scope), with the built-in layout so hosts owe nothing.
-- **Devtools "record" hook** emitting a `RecordedSession` — recommended yes; it turns a bug
-  report into a replayable file.
+- **Devtools in 1.0.0** — **decided: published**, with the built-in layered layout so a host owes it no positions.
+- **Devtools "record" hook** emitting a `RecordedSession` — **decided: yes** (E4 accepted). A bug report becomes a replayable file.
 - **`examples/shadcn-ui-connector`** — rewritten as a site page ("using a design system")
   rather than deleted outright. Recommended: page.
 
@@ -2387,12 +2385,18 @@ process findings were kept, its framing was not.
 **VERDICT:** CEO + DESIGN + DX + ENG CLEARED — ready to implement once the four gate
 decisions below are made.
 
-**UNRESOLVED DECISIONS:**
+**GATE DECISIONS (owner, 2026-09-06) — all four resolved:**
 
-- Premise check: does "written from scratch" include the v1 engine, or only the README, the
-  site, the examples and the 0.x teardown (this plan's reading)?
-- Site stack: Astro + Starlight with React and Vue islands (recommended) reverses the
-  2026-08-29 choice of Next.js + Vercel.
-- Group traversal (L9) in 1.0.0, which also decides whether R-C survives as release evidence.
-- Devtools: published in 1.0.0, and whether it carries the session record hook (E4, the one
-  taste decision of the review).
+- **Scope:** the v1 engine stays. "From scratch" covers the README, the site, the examples
+  and the 0.x teardown; the engine is the rewrite, and its two verified gaps (L0, L10) are
+  closed as tasks rather than by starting again.
+- **Site stack:** Astro + Starlight with React and Vue islands, static output to GitHub
+  Pages. This supersedes the 2026-08-29 choice of Next.js + Vercel; the reason is that both
+  bindings must run live on the same page and the site already ships from Pages.
+- **Group traversal (L9): in 1.0.0**, design note first (`docs/designs/group-traversal.md`
+  with the invariant list), then the implementation. R-C survives as release evidence and
+  Premise 6 holds.
+- **Devtools: published in 1.0.0, with the session record hook** (E4 accepted) and a
+  built-in layered layout, so a host owes it no positions.
+
+NO UNRESOLVED DECISIONS
