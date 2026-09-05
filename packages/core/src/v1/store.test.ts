@@ -314,3 +314,28 @@ describe('start', () => {
     expect(w.getSnapshot().errors).toEqual({});
   });
 });
+
+describe('start under concurrency', () => {
+  it('runs the pipeline once when two mounts race', async () => {
+    let entered = 0;
+    const w = createWizard({
+      flow,
+      registry,
+      data: { payer: 'private', name: 'Ann' },
+      plugins: [
+        {
+          name: 'count',
+          beforeNavigate: () => {
+            entered += 1;
+          },
+        },
+      ],
+    });
+
+    const [a, b] = await Promise.all([w.start(), w.start()]);
+
+    expect(entered).toBe(1);
+    expect(a).toEqual(b);
+    expect(w.getSnapshot().current).toBe('trip');
+  });
+});

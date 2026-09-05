@@ -42,7 +42,11 @@ export function provideWizard(source: Wizard | WizardOptions): Wizard {
   // which is where the wizard must not navigate at all. The React binding does
   // the same thing in an effect — the contract suite checks both.
   onMounted(() => {
-    void wizard.start();
+    wizard.start().catch((error: unknown) => {
+      // A first step whose loader fails is an ordinary network error. Dropping
+      // the promise would turn it into an unhandled rejection instead.
+      console.error('[wizzard] the wizard could not start.', error);
+    });
   });
   return wizard;
 }
