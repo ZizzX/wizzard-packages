@@ -53,6 +53,16 @@
         "types": "./dist/v1/validate-flow.d.cts",
         "default": "./dist/v1/validate-flow.cjs"
       }
+    },
+    "./graph": {
+      "import": {
+        "types": "./dist/v1/graph.d.ts",
+        "default": "./dist/v1/graph.js"
+      },
+      "require": {
+        "types": "./dist/v1/graph.d.cts",
+        "default": "./dist/v1/graph.cjs"
+      }
     }
   },
   "files": [
