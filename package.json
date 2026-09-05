@@ -13,6 +13,7 @@
     "examples:check": "node scripts/embed-examples.mjs --check",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "verify": "pnpm lint && pnpm type-check && pnpm test:run",
     "test": "vitest",
     "test:run": "vitest run",
     "test:e2e": "playwright test",
