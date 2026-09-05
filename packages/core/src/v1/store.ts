@@ -93,6 +93,12 @@ export function createWizard(options: WizardOptions): Wizard {
   let dirtyWhileBatching = false;
   let controller: AbortController | undefined;
   let starting: Promise<NavResult> | undefined;
+  const plugins: readonly Hooks[] = options.plugins ?? [];
+  const disabled = new Set<string>();
+  const teardowns: (() => void)[] = [];
+  // Set while `init` runs, so a plugin's own restoring commit does not come
+  // back to it as `onCommit`.
+  let initializing = false;
   let snapshotRev = -1;
   let snapshot: Snapshot | undefined;
 
@@ -104,9 +110,37 @@ export function createWizard(options: WizardOptions): Wizard {
     for (const l of listeners) l();
   };
 
+  /**
+   * The one funnel. Navigation writes here through its host, and so does every
+   * direct edit, which is what makes `onCommit` a complete record rather than
+   * a record of navigation only.
+   */
   const write = (next: WizardState): void => {
+    const previous = state;
     state = next;
+    for (const h of plugins) {
+      if (initializing || h.onCommit === undefined || disabled.has(h.name)) continue;
+      try {
+        h.onCommit(state, previous);
+      } catch (error) {
+        fail(h.name, 'onCommit', error);
+      }
+    }
     notify();
+  };
+
+  /**
+   * A plugin that throws is switched off and named, rather than taking the
+   * write down with it: one broken analytics plugin must not lose a
+   * half-filled form.
+   */
+  const fail = (name: string, at: string, error: unknown): void => {
+    disabled.add(name);
+    console.error(
+      `[wizzard] plugin "${name}" threw in ${at} and was disabled. ` +
+        `Its later hooks will not run. Fix the plugin or remove it from options.plugins.`,
+      error
+    );
   };
 
   const getSnapshot = (): Snapshot => {
@@ -138,7 +172,7 @@ export function createWizard(options: WizardOptions): Wizard {
   const navContext = (): NavContext => ({
     flow,
     registry,
-    hooks: options.plugins,
+    hooks: plugins,
     validate: (stepId) => validateStep(stepId),
     load: async (stepId) => {
       const step = flow.steps[stepId];
@@ -154,6 +188,26 @@ export function createWizard(options: WizardOptions): Wizard {
     controller = new AbortController();
     return runNav(navContext(), { read: () => state, write }, intent, opts ?? {});
   };
+
+  // Plugins are initialised before the engine is handed out, so a restored
+  // session is already in place the first time anything reads it.
+  initializing = true;
+  for (const h of plugins) {
+    if (h.init === undefined) continue;
+    try {
+      const teardown = h.init({
+        getState: () => state,
+        getFlow: () => flow,
+        commit: (patch) => {
+          write(commit(state, patch));
+        },
+      });
+      if (teardown !== undefined) teardowns.push(teardown);
+    } catch (error) {
+      fail(h.name, 'init', error);
+    }
+  }
+  initializing = false;
 
   return {
     getState: () => state,
@@ -303,6 +357,7 @@ export function createWizard(options: WizardOptions): Wizard {
     destroy() {
       controller?.abort();
       listeners.clear();
+      for (const t of teardowns.splice(0)) t();
     },
   };
 }

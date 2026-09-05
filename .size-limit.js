@@ -29,7 +29,14 @@ export default [
   // fresh engine has an empty stack, so before it existed a binding rendered
   // nothing until the user pressed Next. Twenty-one bytes for the difference
   // between a wizard that shows its first step and one that shows nothing.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '4 kB', gzip: true },
+  //
+  // Raised again the same day, 4.0 to 4.3 kB, for the plugin lifecycle. The
+  // 4.0 came from a plan written before the contract existed, and persistence
+  // is in 1.0.0: `init` and `onCommit` on every write path, with a throwing
+  // plugin disabled rather than taking the write down with it, is what makes
+  // a persist plugin possible at all. Two hundred bytes, once, for every
+  // plugin the library will ever have.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '4.3 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a
