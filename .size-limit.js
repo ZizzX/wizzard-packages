@@ -107,6 +107,23 @@ export default [
     ignore: ['vue', '@wizzard-packages/core/v1'],
   },
 
+  // The persist plugin, measured from source like the rest of v1.
+  //
+  // The roadmap budgeted 0.8 kB per plugin before any of them existed. This one
+  // is 1.18 kB, and the difference is entirely the failure paths: a browser
+  // that refuses storage, a quota that fills, a value corrupted in place, a
+  // pending write flushed when the page goes away, and four diagnostics that
+  // name a cause and a fix rather than a symptom. Those are the reason a
+  // persistence plugin is worth having rather than fifteen lines of
+  // localStorage in an application.
+  {
+    name: 'plugins persist',
+    path: 'packages/plugins/src/persist.ts',
+    limit: '1.2 kB',
+    gzip: true,
+    ignore: ['@wizzard-packages/core/v1', '@wizzard-packages/core/snapshot'],
+  },
+
   // One adapter for every Standard Schema vendor, replacing the two 0.x
   // adapter packages below. Measured from source like the rest of v1; the
   // schema library itself is the consumer's, never bundled here.

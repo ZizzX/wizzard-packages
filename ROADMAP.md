@@ -39,15 +39,15 @@ Three consequences, each of which removes a class of bug by construction:
 
 Dependencies point one way — into core. Core has no runtime dependencies.
 
-| Package                      | Role                                                                                                                | Budget (gzip)    |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| `@wizzard-packages/core`     | flow types, expression evaluator, engine, navigation pipeline, selectors, `defineFlow`, `patchFlow`, `validateFlow` | 4.3 kB           |
-| `@wizzard-packages/react`    | provider, hooks, `useSyncExternalStore` bridge                                                                      | 1.5 kB           |
-| `@wizzard-packages/vue`      | `provideWizard`, composables, `shallowRef` bridge                                                                   | 1.5 kB           |
-| `@wizzard-packages/validate` | one Standard Schema adapter — Zod, Valibot, ArkType, Effect, Yup                                                    | **317 B**        |
-| `@wizzard-packages/plugins`  | `/persist`, `/analytics`, `/logger`, `/autosave`, `/url-sync`, `/http-flow`                                         | 0.8 kB per entry |
-| `@wizzard-packages/devtools` | inspector, flow graph, time travel                                                                                  | —                |
-| `@wizzard-packages/compat`   | the 0.x API on top of the v1 engine                                                                                 | —                |
+| Package                      | Role                                                                                                                | Budget (gzip)     |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| `@wizzard-packages/core`     | flow types, expression evaluator, engine, navigation pipeline, selectors, `defineFlow`, `patchFlow`, `validateFlow` | 4.3 kB            |
+| `@wizzard-packages/react`    | provider, hooks, `useSyncExternalStore` bridge                                                                      | 1.5 kB            |
+| `@wizzard-packages/vue`      | `provideWizard`, composables, `shallowRef` bridge                                                                   | 1.5 kB            |
+| `@wizzard-packages/validate` | one Standard Schema adapter — Zod, Valibot, ArkType, Effect, Yup                                                    | **317 B**         |
+| `@wizzard-packages/plugins`  | `/persist` in 1.0.0; `/analytics`, `/logger`, `/autosave`, `/url-sync`, `/http-flow` on demand                      | 1.2 kB `/persist` |
+| `@wizzard-packages/devtools` | inspector, flow graph, time travel                                                                                  | —                 |
+| `@wizzard-packages/compat`   | the 0.x API on top of the v1 engine                                                                                 | —                 |
 
 Removed in v1: `middleware` (replaced by plugins), `adapter-zod` and `adapter-yup` (one
 Standard Schema adapter covers four validation libraries), `persistence` (a plugin).

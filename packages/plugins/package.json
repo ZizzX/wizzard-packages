@@ -1,0 +1,59 @@
+{
+  "name": "@wizzard-packages/plugins",
+  "version": "0.1.0",
+  "description": "Plugins for Wizzard flows — persistence today, one entry per concern.",
+  "keywords": [
+    "wizard",
+    "stepper",
+    "flow",
+    "persistence",
+    "localstorage"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ZizzX/wizzard-packages.git",
+    "directory": "packages/plugins"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./persist": {
+      "import": {
+        "types": "./dist/persist.d.ts",
+        "default": "./dist/persist.js"
+      },
+      "require": {
+        "types": "./dist/persist.d.cts",
+        "default": "./dist/persist.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20.11"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint .",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@wizzard-packages/core": "workspace:*"
+  },
+  "devDependencies": {
+    "jsdom": "^27.4.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^4.0.16"
+  }
+}
