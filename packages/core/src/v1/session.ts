@@ -54,7 +54,12 @@ function knownFlows(
   return known;
 }
 
-const isStackEntry = (entry: unknown): entry is Frame => {
+/**
+ * Exported because the snapshot decoder validates the same thing: a frame
+ * arriving as JSON is a frame arriving as JSON, and two copies of this check
+ * would drift the way 0.x's three navigation copies drifted.
+ */
+export const isStackEntry = (entry: unknown): entry is Frame => {
   if (entry === null || typeof entry !== 'object') return false;
   const e = entry as Partial<Frame>;
   return typeof e.flow === 'string' && typeof e.step === 'string';
