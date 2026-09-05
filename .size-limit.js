@@ -69,17 +69,24 @@ export default [
   //
   // Measured 2026-08-30: react 906 B against 8.43 kB for the 0.x layer, vue
   // 646 B against 5.07 kB. The limits below are the ratchet, not the target.
+  //
+  // Both moved on 2026-09-06, react 1 to 1.1 kB and vue 700 to 800 B, for two
+  // things a binding does have to own: starting the engine when it mounts, and
+  // destroying the one it created so a plugin's teardown runs. The React side
+  // costs a little more because StrictMode mounts twice against one instance
+  // and the provider has to notice an engine it already tore down. Both stay
+  // far under the 1.5 kB the rewrite budgeted for them.
   {
     name: 'react-v1',
     path: 'packages/react/src/v1/index.tsx',
-    limit: '1 kB',
+    limit: '1.1 kB',
     gzip: true,
     ignore: ['react', 'react-dom', '@wizzard-packages/core/v1'],
   },
   {
     name: 'vue-v1',
     path: 'packages/vue/src/v1/index.ts',
-    limit: '700 B',
+    limit: '800 B',
     gzip: true,
     ignore: ['vue', '@wizzard-packages/core/v1'],
   },
