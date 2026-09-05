@@ -107,6 +107,18 @@ export default [
     ignore: ['vue', '@wizzard-packages/core/v1'],
   },
 
+  // The persist plugin. Its own entry per the roadmap's 0.8 kB per plugin, and
+  // measured from source like the rest of v1. Most of it is the failure paths:
+  // a browser that refuses storage, a quota that fills, a snapshot that turns
+  // out to belong to another flow. Those are the reason it exists.
+  {
+    name: 'plugins persist',
+    path: 'packages/plugins/src/persist.ts',
+    limit: '900 B',
+    gzip: true,
+    ignore: ['@wizzard-packages/core/v1', '@wizzard-packages/core/snapshot'],
+  },
+
   // One adapter for every Standard Schema vendor, replacing the two 0.x
   // adapter packages below. Measured from source like the rest of v1; the
   // schema library itself is the consumer's, never bundled here.
