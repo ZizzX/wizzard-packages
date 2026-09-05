@@ -63,6 +63,16 @@
         "types": "./dist/v1/graph.d.cts",
         "default": "./dist/v1/graph.cjs"
       }
+    },
+    "./session": {
+      "import": {
+        "types": "./dist/v1/session.d.ts",
+        "default": "./dist/v1/session.js"
+      },
+      "require": {
+        "types": "./dist/v1/session.d.cts",
+        "default": "./dist/v1/session.cjs"
+      }
     }
   },
   "files": [

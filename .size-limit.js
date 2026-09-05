@@ -31,6 +31,16 @@ export default [
   // wizard that never draws itself should not carry the code that would.
   { name: 'core-v1 graph', path: 'packages/core/src/v1/graph.ts', limit: '800 B', gzip: true },
 
+  // The recorded-session checker. Its own entry because replay is a devtools and
+  // documentation concern: an application that only runs a wizard never needs to
+  // verify a recording of one.
+  //
+  // Measured 2026-09-06 at 1.03 kB, which is more than the checker's own logic:
+  // it walks a stack against the flow, so it pulls `isGroup` and the step types
+  // in with it. That is the cost of checking a recording against the definition
+  // it claims to belong to, and it is paid only by a page that replays one.
+  { name: 'core-v1 session', path: 'packages/core/src/v1/session.ts', limit: '1.1 kB', gzip: true },
+
   // Development and server-driven use only. Measured, but never counted against
   // the runtime budget, because shipping it to a browser is a mistake the
   // separate entry makes hard to commit by accident.
