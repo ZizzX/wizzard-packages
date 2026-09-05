@@ -12,6 +12,7 @@ export default defineConfig({
     'src/v1/validate-flow.ts',
     'src/v1/graph.ts',
     'src/v1/session.ts',
+    'src/v1/snapshot.ts',
   ],
   format: ['cjs', 'esm'],
   dts: true,

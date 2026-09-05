@@ -73,6 +73,16 @@
         "types": "./dist/v1/session.d.cts",
         "default": "./dist/v1/session.cjs"
       }
+    },
+    "./snapshot": {
+      "import": {
+        "types": "./dist/v1/snapshot.d.ts",
+        "default": "./dist/v1/snapshot.js"
+      },
+      "require": {
+        "types": "./dist/v1/snapshot.d.cts",
+        "default": "./dist/v1/snapshot.cjs"
+      }
     }
   },
   "files": [
