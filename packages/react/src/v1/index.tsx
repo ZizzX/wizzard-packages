@@ -50,10 +50,11 @@ export interface WizardProviderProps extends Partial<WizardOptions> {
 
 export function WizardProvider({ wizard, children, ...options }: WizardProviderProps): ReactNode {
   // Created once. A new engine on every render would restart the wizard.
-  const [instance] = useState<Wizard>(
+  const [instance, setInstance] = useState<Wizard>(
     () => wizard ?? createWizard(options as unknown as WizardOptions)
   );
   const engine = wizard ?? instance;
+  const ownsEngine = wizard === undefined;
 
   // A fresh engine has an empty stack, so without this the first paint has no
   // current step and the tree below renders nothing. `start` is idempotent and
@@ -72,6 +73,27 @@ export function WizardProvider({ wizard, children, ...options }: WizardProviderP
       console.error('[wizzard] the wizard could not start.', error);
     });
   }, [engine]);
+
+  // An engine this provider created is also this provider's to dispose, or a
+  // plugin's teardown never runs. One the caller passed in is theirs.
+  //
+  // The `isDestroyed` branch is for StrictMode, which mounts, unmounts and
+  // mounts again while `useState` keeps the same instance: without it the
+  // second mount would be handed an engine that was already torn down.
+  useEffect(() => {
+    if (!ownsEngine) return;
+    if (instance.isDestroyed()) {
+      setInstance(createWizard(options as unknown as WizardOptions));
+      return;
+    }
+    return () => {
+      instance.destroy();
+    };
+    // The options object is a fresh literal on every render; the engine is
+    // created once and re-created only after a destroy, which is what the
+    // dependencies below describe.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [instance, ownsEngine]);
 
   return createElement(WizardContext.Provider, { value: engine }, children);
 }

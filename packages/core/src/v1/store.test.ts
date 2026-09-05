@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import type { FlowDefinition } from './flow';
+import type { WizardState } from './state';
 import { createWizard } from './store';
 
 const flow: FlowDefinition = {
@@ -337,5 +338,182 @@ describe('start under concurrency', () => {
     expect(entered).toBe(1);
     expect(a).toEqual(b);
     expect(w.getSnapshot().current).toBe('trip');
+  });
+});
+
+describe('the plugin lifecycle', () => {
+  const recorder = () => {
+    const seen: { step: string | null; rev: number }[] = [];
+    return {
+      seen,
+      plugin: {
+        name: 'recorder',
+        onCommit: (s: WizardState) => {
+          seen.push({ step: s.stack[s.stack.length - 1]?.step ?? null, rev: s.rev });
+        },
+      },
+    };
+  };
+
+  it('reports every write, not only the navigations', async () => {
+    const { seen, plugin } = recorder();
+    const w = createWizard({ flow, registry, data: { payer: 'private' }, plugins: [plugin] });
+
+    await w.start();
+    w.set('name', 'Ann');
+    w.patch({ payer: 'business' });
+    w.setCtx({ role: 'admin' });
+    await w.next();
+
+    // The direct edits are the point: before the lifecycle existed they were
+    // invisible to a plugin, so nothing could persist a field as it was typed.
+    //
+    // Seven, not five: a navigation writes twice - once to mark itself busy,
+    // once to land - and `start` and `next` are both navigations. Only the
+    // landing writes carry a new `rev`, which is what a plugin should key on.
+    expect(seen.length).toBe(7);
+    expect(seen.map((s) => s.rev)).toEqual([0, 1, 2, 3, 4, 4, 5]);
+  });
+
+  it('hands init the state and lets it restore through one commit', () => {
+    const w = createWizard({
+      flow,
+      registry,
+      plugins: [
+        {
+          name: 'restore',
+          init: (host) => {
+            expect(host.getFlow().id).toBe(flow.id);
+            host.commit({ data: { payer: 'business', name: 'Ann' } });
+          },
+        },
+      ],
+    });
+
+    expect(w.getState().data).toEqual({ payer: 'business', name: 'Ann' });
+  });
+
+  it('does not report a restoring commit back to the plugins', () => {
+    const { seen, plugin } = recorder();
+    createWizard({
+      flow,
+      registry,
+      plugins: [
+        plugin,
+        { name: 'restore', init: (host) => host.commit({ data: { payer: 'business' } }) },
+      ],
+    });
+
+    expect(seen).toEqual([]);
+  });
+
+  it('disables a plugin that throws instead of failing the write', async () => {
+    const errors: unknown[] = [];
+    const spy = vi.spyOn(console, 'error').mockImplementation((...args) => errors.push(args));
+    const { seen, plugin } = recorder();
+    let calls = 0;
+    const w = createWizard({
+      flow,
+      registry,
+      data: { payer: 'private' },
+      plugins: [
+        {
+          name: 'broken',
+          onCommit: () => {
+            calls += 1;
+            throw new Error('nope');
+          },
+        },
+        plugin,
+      ],
+    });
+
+    await w.start();
+    w.set('name', 'Ann');
+
+    expect(calls).toBe(1);
+    expect(seen.length).toBe(3);
+    expect(w.getSnapshot().data.name).toBe('Ann');
+    expect(errors.length).toBe(1);
+    spy.mockRestore();
+  });
+
+  it('runs what init returned when the wizard is destroyed', () => {
+    let torn = 0;
+    const w = createWizard({
+      flow,
+      registry,
+      plugins: [{ name: 'cleanup', init: () => () => (torn += 1) }],
+    });
+
+    w.destroy();
+    w.destroy();
+
+    expect(torn).toBe(1);
+  });
+
+  it('delivers nothing to a plugin after destroy', async () => {
+    const { seen, plugin } = recorder();
+    const w = createWizard({ flow, registry, data: { payer: 'private' }, plugins: [plugin] });
+    await w.start();
+    const before = seen.length;
+
+    w.destroy();
+    w.set('name', 'Ann');
+    await w.next();
+
+    expect(seen.length).toBe(before);
+    expect(w.isDestroyed()).toBe(true);
+  });
+
+  it('tears every plugin down even when one throws', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    let second = 0;
+    const w = createWizard({
+      flow,
+      registry,
+      plugins: [
+        {
+          name: 'rude',
+          init: () => () => {
+            throw new Error('nope');
+          },
+        },
+        { name: 'polite', init: () => () => (second += 1) },
+      ],
+    });
+
+    w.destroy();
+
+    expect(second).toBe(1);
+    spy.mockRestore();
+  });
+
+  it('stops calling navigation hooks of a plugin that threw', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    let navHooks = 0;
+    const w = createWizard({
+      flow,
+      registry,
+      data: { payer: 'private' },
+      plugins: [
+        {
+          name: 'broken',
+          onCommit: () => {
+            throw new Error('nope');
+          },
+          beforeNavigate: () => {
+            navHooks += 1;
+          },
+        },
+      ],
+    });
+
+    await w.start();
+    await w.next();
+
+    // One: the first navigation ran beforeNavigate before onCommit disabled it.
+    expect(navHooks).toBe(1);
+    spy.mockRestore();
   });
 });

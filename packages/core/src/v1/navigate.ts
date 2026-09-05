@@ -53,6 +53,24 @@ export type NavDecision = void | false | { block: string } | { redirect: string 
 
 export interface Hooks {
   name: string;
+  /**
+   * Runs once, when the engine is built, before anything reads it. A plugin
+   * that restores a saved session does it here. The returned function, if any,
+   * runs on `destroy`.
+   *
+   * A commit made from inside `init` does not come back as `onCommit`: the
+   * plugin already knows what it just wrote, and re-entering is how a restore
+   * turns into a loop.
+   */
+  init?: (host: PluginHost) => void | (() => void);
+  /**
+   * Every committed state, from any path - navigation, `set`, `patch`,
+   * `setCtx`, `reset`, `patchFlow`. A plugin that persists writes here.
+   *
+   * Not a veto and not a place to be slow: it runs inside the write, so
+   * throwing disables the plugin rather than failing the write.
+   */
+  onCommit?: (state: WizardState, previous: WizardState) => void;
   beforeNavigate?: (e: {
     from: string | null;
     to: string | typeof END | null;
@@ -61,6 +79,14 @@ export interface Hooks {
   afterNavigate?: (e: { from: string | null; to: string | typeof END; state: WizardState }) => void;
   /** Supplies the body of a deferred step, typically over the network. */
   loadStep?: (stepId: string, signal: AbortSignal) => Promise<StepDef | undefined>;
+}
+
+/** What a plugin is handed at `init`. Deliberately small: read, and write once. */
+export interface PluginHost {
+  getState: () => WizardState;
+  getFlow: () => FlowDefinition;
+  /** Replaces state through the one commit path, exactly as the engine does. */
+  commit: (patch: Partial<WizardState>) => void;
 }
 
 export interface NavHost {

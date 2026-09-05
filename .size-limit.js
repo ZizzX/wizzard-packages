@@ -29,7 +29,14 @@ export default [
   // fresh engine has an empty stack, so before it existed a binding rendered
   // nothing until the user pressed Next. Twenty-one bytes for the difference
   // between a wizard that shows its first step and one that shows nothing.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '4 kB', gzip: true },
+  //
+  // Raised again the same day, 4.0 to 4.3 kB, for the plugin lifecycle. The
+  // 4.0 came from a plan written before the contract existed, and persistence
+  // is in 1.0.0: `init` and `onCommit` on every write path, with a throwing
+  // plugin disabled rather than taking the write down with it, is what makes
+  // a persist plugin possible at all. Two hundred bytes, once, for every
+  // plugin the library will ever have.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '4.3 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a
@@ -62,17 +69,24 @@ export default [
   //
   // Measured 2026-08-30: react 906 B against 8.43 kB for the 0.x layer, vue
   // 646 B against 5.07 kB. The limits below are the ratchet, not the target.
+  //
+  // Both moved on 2026-09-06, react 1 to 1.1 kB and vue 700 to 800 B, for two
+  // things a binding does have to own: starting the engine when it mounts, and
+  // destroying the one it created so a plugin's teardown runs. The React side
+  // costs a little more because StrictMode mounts twice against one instance
+  // and the provider has to notice an engine it already tore down. Both stay
+  // far under the 1.5 kB the rewrite budgeted for them.
   {
     name: 'react-v1',
     path: 'packages/react/src/v1/index.tsx',
-    limit: '1 kB',
+    limit: '1.1 kB',
     gzip: true,
     ignore: ['react', 'react-dom', '@wizzard-packages/core/v1'],
   },
   {
     name: 'vue-v1',
     path: 'packages/vue/src/v1/index.ts',
-    limit: '700 B',
+    limit: '800 B',
     gzip: true,
     ignore: ['vue', '@wizzard-packages/core/v1'],
   },
