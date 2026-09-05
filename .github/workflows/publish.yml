@@ -43,15 +43,10 @@ jobs:
           NPM_CONFIG_PROVENANCE: 'true'
 
       # changeset publish reports success for packages the registry never
-      # saved, and exits 0. Never tag a release that did not fully land.
+      # saved, and exits 0. Nothing else in this job would notice, so a red
+      # step here is the only signal that a release did not fully land.
+      # Tags are already pushed by then: changesets/action creates a GitHub
+      # release per package during publish, and that creates the tag.
       - name: Verify the registry has them
         if: steps.changesets.outputs.published == 'true'
         run: node scripts/verify-published.mjs
-
-      - name: Tag release
-        if: steps.changesets.outputs.published == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          pnpm changeset tag
-          git push --tags
