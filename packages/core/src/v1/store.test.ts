@@ -164,13 +164,24 @@ describe('data', () => {
 
   it('resets data while keeping ctx and the revision moving forward', () => {
     const w = createWizard({ flow, registry, data: { name: 'Ann' }, ctx: { role: 'admin' } });
-    const rev = w.getState().rev;
+    // Several commits first: resetting from rev 0 passes whatever the counters
+    // do, which is how a reset that restarted `rev` at 1 went unnoticed.
+    w.set('name', 'Cy');
+    w.set('name', 'Di');
+    w.set('name', 'Ed');
+    const { rev, nav } = w.getState();
+    expect(rev).toBeGreaterThan(1);
 
     w.reset({ name: 'Bo' });
 
     expect(w.getState().data).toEqual({ name: 'Bo' });
     expect(w.getState().ctx).toEqual({ role: 'admin' });
+    // `rev` is every selector's memoization key, so a reset that replayed an
+    // earlier revision could serve a snapshot cached before it.
     expect(w.getState().rev).toBeGreaterThan(rev);
+    // `nav` moves forward too, so a navigation in flight when the reset lands
+    // finds its token superseded rather than current again.
+    expect(w.getState().nav).toBeGreaterThan(nav);
   });
 });
 

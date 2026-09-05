@@ -1,6 +1,6 @@
 import { isGroup, type FlowDefinition } from './flow';
 
-import type { WizardState } from './state';
+import type { Frame, WizardState } from './state';
 import type { FlowProblem } from './validate-flow';
 
 /**
@@ -28,9 +28,8 @@ function knownFlows(
   subFlows: Readonly<Record<string, FlowDefinition>> | undefined
 ): Map<string, FlowDefinition> {
   const known = new Map<string, FlowDefinition>();
-  for (const [id, def] of Object.entries(subFlows ?? {})) known.set(id, def);
-
   const seen = new Set<FlowDefinition>();
+
   const walk = (f: FlowDefinition, depth: number): void => {
     if (seen.has(f) || depth > MAX_DEPTH) return;
     seen.add(f);
@@ -39,21 +38,43 @@ function knownFlows(
       if (isGroup(step) && typeof step.flow !== 'string') walk(step.flow, depth + 1);
     }
   };
+
+  // A registered flow is walked like any other, so an inline grandchild inside
+  // it resolves too — `buildGraph` follows inline children after resolving a
+  // reference, and a frame deep in one is not evidence of drift. Registered
+  // under the key the flow is referenced by *and* its own id, which a producer
+  // is free to disagree about.
+  for (const [id, def] of Object.entries(subFlows ?? {})) {
+    walk(def, 0);
+    known.set(id, def);
+  }
+  // Last, so the root's own definitions win a collision with the registry.
   walk(flow, 0);
 
   return known;
 }
 
+const isStackEntry = (entry: unknown): entry is Frame => {
+  if (entry === null || typeof entry !== 'object') return false;
+  const e = entry as Partial<Frame>;
+  return typeof e.flow === 'string' && typeof e.step === 'string';
+};
+
 /**
  * A recording arrives as JSON, so it gets to be any shape at all. Checked
  * against what this module actually reads, not against the whole of
  * `WizardState` — a field nobody looks at cannot mis-render anything.
+ *
+ * The stack is checked element by element rather than just for being an array:
+ * everything below reads `entry.flow`, and a `stack: [null]` that got this far
+ * would throw out of a checker whose whole promise is that it does not.
  */
 function isFrameShaped(frame: unknown): frame is WizardState {
   if (frame === null || typeof frame !== 'object') return false;
   const f = frame as Partial<WizardState>;
   return (
     Array.isArray(f.stack) &&
+    f.stack.every(isStackEntry) &&
     Array.isArray(f.visited) &&
     typeof f.status === 'string' &&
     typeof f.rev === 'number' &&
@@ -149,6 +170,27 @@ export function checkSession(
       if (step === undefined) {
         report(path, `names a step ${entry.flow} does not have: ${entry.step}`);
         return;
+      }
+
+      // Only the last entry is the current step; the ones before it enclose it.
+      // A parent that is not a group, or a group leading somewhere other than
+      // where the child says it is, is a stack the engine could not have built —
+      // and the shape drift hides in when nobody stamped a version.
+      const child = frame.stack[depth + 1];
+      if (child !== undefined) {
+        if (!isGroup(step)) {
+          report(path, `encloses another frame, but ${entry.step} is not a group`);
+        } else {
+          // A string `flow` is the key the group is referenced by, and the
+          // definition behind that key is free to carry a different id. The
+          // frame names the id, so compare against what the reference actually
+          // resolves to, falling back to the bare reference when nothing does.
+          const ref = typeof step.flow === 'string' ? step.flow : step.flow.id;
+          const into = known.get(ref)?.id ?? ref;
+          if (into !== child.flow) {
+            report(path, `is a group into ${into}, but the frame below it is in ${child.flow}`);
+          }
+        }
       }
 
       if (entry.i === undefined) return;

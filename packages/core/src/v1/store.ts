@@ -1,4 +1,4 @@
-import { commit } from './commit';
+import { commit, restart } from './commit';
 import { runNav, type Hooks, type NavContext, type NavResult } from './navigate';
 import { getPath, setPath } from './path';
 import { createSelector, type Derived } from './select';
@@ -219,7 +219,7 @@ export function createWizard(options: WizardOptions): Wizard {
     },
 
     reset(data) {
-      write(commit(initialState(data ?? {}, state.ctx), { rev: state.rev }));
+      write(restart(state, initialState(data ?? {}, state.ctx)));
     },
 
     async validate(stepId) {

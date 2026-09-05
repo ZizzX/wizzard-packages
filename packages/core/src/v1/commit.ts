@@ -15,6 +15,19 @@ export function commit(state: WizardState, patch: Partial<WizardState>): WizardS
   return { ...state, ...patch, rev: state.rev + 1 };
 }
 
+/**
+ * A reset: the data starts over, the counters do not.
+ *
+ * `rev` keeps climbing because it is every selector's memoization key, and a
+ * reset that replayed an earlier revision would serve the snapshot cached
+ * before it. `nav` moves forward rather than starting again, so a navigation
+ * still in flight when the reset lands finds its token superseded instead of
+ * looking current again.
+ */
+export function restart(state: WizardState, fresh: WizardState): WizardState {
+  return { ...fresh, rev: state.rev + 1, nav: state.nav + 1 };
+}
+
 /** Starts a navigation epoch. The returned token is re-checked after every await. */
 export function beginNav(state: WizardState): { state: WizardState; token: number } {
   const token = state.nav + 1;
