@@ -131,6 +131,15 @@ export default [
     files: ['examples/**/*.vue'],
     rules: {
       'vue/multi-word-component-names': 'off',
+
+      // Prettier owns whitespace in this repository - there is a format:check
+      // gate for it - and these four rules want the opposite of what it
+      // produces, so a .vue file oscillates between the two on every commit.
+      // Turning them off here keeps one formatter of record.
+      'vue/html-self-closing': 'off',
+      'vue/singleline-html-element-content-newline': 'off',
+      'vue/max-attributes-per-line': 'off',
+      'vue/attributes-order': 'off',
     },
   },
 

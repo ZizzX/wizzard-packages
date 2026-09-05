@@ -105,26 +105,12 @@ const full = useField<string>('name.full');
   <form @submit.prevent>
     <label v-if="current === 'name'">
       Your name
-      <input v-model="full">
+      <input v-model="full" />
     </label>
-    <p v-else-if="current === 'review'">
-      Hello, {{ full || 'stranger' }}.
-    </p>
+    <p v-else-if="current === 'review'">Hello, {{ full || 'stranger' }}.</p>
 
-    <button
-      type="button"
-      :disabled="!canBack"
-      @click="back()"
-    >
-      Back
-    </button>
-    <button
-      type="button"
-      :disabled="isLast"
-      @click="next()"
-    >
-      Next
-    </button>
+    <button type="button" :disabled="!canBack" @click="back()">Back</button>
+    <button type="button" :disabled="isLast" @click="next()">Next</button>
   </form>
 </template>
 ```

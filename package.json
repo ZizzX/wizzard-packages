@@ -120,6 +120,10 @@
     ],
     "*.{js,mjs,cjs,jsx,json,md,yml,yaml}": [
       "prettier --write"
+    ],
+    "examples/quickstart/src/*": [
+      "node scripts/embed-examples.mjs",
+      "git add README.md"
     ]
   }
 }
