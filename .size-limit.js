@@ -26,6 +26,11 @@ export default [
   // machinery that walks them. That is what keeps the main entry inside 4 kB.
   { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '3.9 kB', gzip: true },
 
+  // The graph builder. Its own entry for the same reason validate-flow is:
+  // structure-only drawing is a development and inspection concern, and a
+  // wizard that never draws itself should not carry the code that would.
+  { name: 'core-v1 graph', path: 'packages/core/src/v1/graph.ts', limit: '800 B', gzip: true },
+
   // Development and server-driven use only. Measured, but never counted against
   // the runtime budget, because shipping it to a browser is a mistake the
   // separate entry makes hard to commit by accident.
