@@ -1,4 +1,4 @@
-import { commit } from './commit';
+import { commit, restart } from './commit';
 import { runNav, type Hooks, type NavContext, type NavResult } from './navigate';
 import { getPath, setPath } from './path';
 import { createSelector, type Derived } from './select';
@@ -219,14 +219,7 @@ export function createWizard(options: WizardOptions): Wizard {
     },
 
     reset(data) {
-      // The counters outlive the data. `commit` derives the new revision from
-      // the state it is handed, so the carry has to ride on the fresh state and
-      // not on the patch, where it was silently overwritten: a reset restarted
-      // `rev` at 1 and could hand a selector a revision it had already cached.
-      // `nav` moves forward rather than being preserved, so a navigation still
-      // in flight when the reset lands finds its token superseded.
-      const fresh = { ...initialState(data ?? {}, state.ctx), rev: state.rev, nav: state.nav + 1 };
-      write(commit(fresh, {}));
+      write(restart(state, initialState(data ?? {}, state.ctx)));
     },
 
     async validate(stepId) {

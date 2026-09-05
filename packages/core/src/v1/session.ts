@@ -181,7 +181,12 @@ export function checkSession(
         if (!isGroup(step)) {
           report(path, `encloses another frame, but ${entry.step} is not a group`);
         } else {
-          const into = typeof step.flow === 'string' ? step.flow : step.flow.id;
+          // A string `flow` is the key the group is referenced by, and the
+          // definition behind that key is free to carry a different id. The
+          // frame names the id, so compare against what the reference actually
+          // resolves to, falling back to the bare reference when nothing does.
+          const ref = typeof step.flow === 'string' ? step.flow : step.flow.id;
+          const into = known.get(ref)?.id ?? ref;
           if (into !== child.flow) {
             report(path, `is a group into ${into}, but the frame below it is in ${child.flow}`);
           }

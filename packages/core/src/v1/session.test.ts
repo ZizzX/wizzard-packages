@@ -168,6 +168,21 @@ describe('sub-flows by reference', () => {
 
     expect(checkSession(deep, byRef, { passenger: withInlineChild })).toEqual([]);
   });
+
+  // The key a group references and the id the definition carries are allowed
+  // to disagree. Frames name the id, so a checker comparing against the key
+  // would call a correct recording drift.
+  it('resolves a reference whose registry key is not the flow id', () => {
+    const renamed: FlowDefinition = { ...passenger, id: 'traveller' };
+    const frames = clean.frames.map((f) => ({
+      ...f,
+      stack: f.stack.map((entry) =>
+        entry.flow === 'passenger' ? { ...entry, flow: 'traveller' } : entry
+      ),
+    }));
+
+    expect(checkSession({ ...clean, frames }, byRef, { passenger: renamed })).toEqual([]);
+  });
 });
 
 describe('stacks the engine could not have built', () => {
