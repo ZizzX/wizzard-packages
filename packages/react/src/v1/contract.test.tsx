@@ -23,6 +23,7 @@ function Probe(): ReactElement {
       <span data-testid="step">{step.current ?? ''}</span>
       <span data-testid="progress">{step.progress}</span>
       <span data-testid="can-back">{nav.canBack ? 'yes' : 'no'}</span>
+      <span data-testid="busy">{nav.isBusy ? 'yes' : 'no'}</span>
       <span data-testid="errors">
         {Object.entries(errors)
           .map(([field, message]) => `${field}: ${message}`)

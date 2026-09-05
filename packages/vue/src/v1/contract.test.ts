@@ -32,6 +32,7 @@ const ProbeComponent = defineComponent({
         h('span', { 'data-testid': 'step' }, step.current.value ?? ''),
         h('span', { 'data-testid': 'progress' }, String(step.progress.value)),
         h('span', { 'data-testid': 'can-back' }, nav.canBack.value ? 'yes' : 'no'),
+        h('span', { 'data-testid': 'busy' }, nav.isBusy.value ? 'yes' : 'no'),
         h(
           'span',
           { 'data-testid': 'errors' },

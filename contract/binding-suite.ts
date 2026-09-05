@@ -37,7 +37,7 @@ export interface BindingHarness {
 
 /**
  * Test ids a probe must render:
- *   step, progress, can-back, errors, renders
+ *   step, progress, can-back, busy, errors, renders
  *   name-input (bound to the `name` field), next, back
  */
 
@@ -55,6 +55,34 @@ const flow: FlowDefinition = {
 const registry = {
   needsName: (_args: unknown, scope: { data: Record<string, unknown> }) =>
     scope.data.name ? null : { name: 'required' },
+};
+
+/** The same flow with a validator that takes its time, for the busy case. */
+const slowFlow: FlowDefinition = {
+  ...flow,
+  steps: { ...flow.steps, one: { label: 'One', validate: { $ref: 'slow' } } },
+};
+
+const slowRegistry = {
+  slow: async (_args: unknown, _scope: { data: Record<string, unknown> }) => {
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    return null;
+  },
+};
+
+/** One turn of the event loop, which both frameworks flush within. */
+const settle = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
+
+/**
+ * Polls instead of sleeping for a fixed span: a fixed wait is either flaky on a
+ * loaded runner or slower than it needs to be on an idle one.
+ */
+const until = async (predicate: () => boolean, what: string): Promise<void> => {
+  for (let i = 0; i < 100; i++) {
+    if (predicate()) return;
+    await settle();
+  }
+  throw new Error(`timed out waiting for ${what}`);
 };
 
 export function describeBindingContract(harness: BindingHarness): void {
@@ -133,6 +161,29 @@ export function describeBindingContract(harness: BindingHarness): void {
       await probe.fill('name-input', 'Bo');
 
       expect(probe.text('name-value')).toBe('Bo');
+      probe.unmount();
+    });
+
+    it('shows the wizard as busy while a slow step is validating', async () => {
+      // The point of a status the engine keeps: a UI can draw it. Before the
+      // lock carried a revision this read 'no' for the whole navigation, so a
+      // spinner drawn from isBusy never appeared in either framework.
+      const probe = await harness.mount({
+        flow: slowFlow,
+        registry: slowRegistry,
+        data: { name: 'Ann' },
+      });
+      // Mounting starts the engine, and starting is itself a navigation; let it
+      // land before asking whether the wizard is busy with the next one.
+      await until(() => probe.text('busy') === 'no', 'the start navigation to land');
+
+      const moving = probe.click('next');
+      await settle();
+      expect(probe.text('busy')).toBe('yes');
+
+      await moving;
+      await until(() => probe.text('busy') === 'no', 'the wizard to stop being busy');
+      expect(probe.text('step')).toBe('three');
       probe.unmount();
     });
 
