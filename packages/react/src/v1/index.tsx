@@ -12,6 +12,8 @@ import {
   createElement,
   useCallback,
   useContext,
+  useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   useSyncExternalStore,
@@ -34,6 +36,12 @@ import {
 
 const WizardContext = createContext<Wizard | null>(null);
 
+/**
+ * `useLayoutEffect` in the browser, `useEffect` on the server - where neither
+ * runs, and where React warns about the layout one. The standard shim.
+ */
+const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
+
 export interface WizardProviderProps extends Partial<WizardOptions> {
   /** An existing engine. Supply this or `flow`, not both. */
   wizard?: Wizard;
@@ -45,7 +53,27 @@ export function WizardProvider({ wizard, children, ...options }: WizardProviderP
   const [instance] = useState<Wizard>(
     () => wizard ?? createWizard(options as unknown as WizardOptions)
   );
-  return createElement(WizardContext.Provider, { value: wizard ?? instance }, children);
+  const engine = wizard ?? instance;
+
+  // A fresh engine has an empty stack, so without this the first paint has no
+  // current step and the tree below renders nothing. `start` is idempotent and
+  // the effect never runs on the server, which is where the wizard must not
+  // navigate at all.
+  // A layout effect, so the start begins before the browser paints rather than
+  // after it. It cannot remove the first frame entirely - the pipeline is
+  // asynchronous, so the step arrives a microtask later - but it is the earlier
+  // of the two moments React offers, and on the server neither runs at all.
+  //
+  // The rejection is caught rather than dropped: a first step with a loader
+  // that fails is an ordinary network error, and an unhandled rejection is not
+  // an error channel.
+  useIsomorphicLayoutEffect(() => {
+    engine.start().catch((error: unknown) => {
+      console.error('[wizzard] the wizard could not start.', error);
+    });
+  }, [engine]);
+
+  return createElement(WizardContext.Provider, { value: engine }, children);
 }
 
 export function useWizard(): Wizard {

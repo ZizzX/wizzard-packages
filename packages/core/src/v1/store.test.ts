@@ -275,3 +275,67 @@ describe('patchFlow', () => {
     expect(w.getSnapshot().current).toBe('trip');
   });
 });
+
+describe('start', () => {
+  it('enters the first reachable step, which a fresh wizard is not on', () => {
+    const w = make();
+    expect(w.getSnapshot().current).toBeNull();
+
+    return w.start().then((r) => {
+      expect(r).toEqual({ ok: true, from: null, to: 'trip' });
+      expect(w.getSnapshot().current).toBe('trip');
+    });
+  });
+
+  it('is idempotent: a second call navigates nowhere', async () => {
+    const w = make();
+    await w.start();
+    const rev = w.getState().rev;
+
+    const again = await w.start();
+
+    expect(again).toEqual({ ok: true, from: 'trip', to: 'trip' });
+    expect(w.getState().rev).toBe(rev);
+  });
+
+  it('skips a step whose condition is false, like any other move', async () => {
+    const w = make({ payer: 'business', name: 'Ann' });
+    await w.start();
+    expect(w.getSnapshot().current).toBe('trip');
+  });
+
+  it('does not validate on the way in', async () => {
+    // Starting is not a step forward: an empty form must not open with errors
+    // on a field nobody has touched yet.
+    const w = make({});
+    await w.start();
+
+    expect(w.getSnapshot().current).toBe('trip');
+    expect(w.getSnapshot().errors).toEqual({});
+  });
+});
+
+describe('start under concurrency', () => {
+  it('runs the pipeline once when two mounts race', async () => {
+    let entered = 0;
+    const w = createWizard({
+      flow,
+      registry,
+      data: { payer: 'private', name: 'Ann' },
+      plugins: [
+        {
+          name: 'count',
+          beforeNavigate: () => {
+            entered += 1;
+          },
+        },
+      ],
+    });
+
+    const [a, b] = await Promise.all([w.start(), w.start()]);
+
+    expect(entered).toBe(1);
+    expect(a).toEqual(b);
+    expect(w.getSnapshot().current).toBe('trip');
+  });
+});

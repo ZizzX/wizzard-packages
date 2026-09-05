@@ -1,11 +1,11 @@
 import { commit, restart } from './commit';
+import { END, type FlowDefinition, type StepDef } from './flow';
 import { runNav, type Hooks, type NavContext, type NavResult } from './navigate';
 import { getPath, setPath } from './path';
 import { createSelector, type Derived } from './select';
 import { initialState, type WizardState } from './state';
 
 import type { AsyncRegistry, Json, Scope } from './expr';
-import type { FlowDefinition, StepDef } from './flow';
 
 /**
  * The store.
@@ -50,6 +50,12 @@ export interface Wizard {
   /** Calls back only when the value at a data path changes. */
   watch: (path: string, listener: (value: unknown) => void) => () => void;
 
+  /**
+   * Enters the first reachable step. A fresh wizard has an empty stack, so
+   * until this runs there is no current step and a UI has nothing to draw.
+   * Idempotent: once a step is current, this reports it and navigates nowhere.
+   */
+  start: () => Promise<NavResult>;
   next: (opts?: { validate?: boolean }) => Promise<NavResult>;
   back: () => Promise<NavResult>;
   go: (to: string, opts?: { validate?: boolean; force?: boolean }) => Promise<NavResult>;
@@ -86,6 +92,7 @@ export function createWizard(options: WizardOptions): Wizard {
   let batching = false;
   let dirtyWhileBatching = false;
   let controller: AbortController | undefined;
+  let starting: Promise<NavResult> | undefined;
   let snapshotRev = -1;
   let snapshot: Snapshot | undefined;
 
@@ -182,6 +189,35 @@ export function createWizard(options: WizardOptions): Wizard {
       return () => listeners.delete(wrapped);
     },
 
+    start() {
+      // `next` from an empty stack resolves to the first reachable step, which
+      // is exactly what starting means; the guard is only here so that calling
+      // it twice - two mounts of the same wizard, say - is not a step forward.
+      //
+      // The guard reads `status`, not the stack: a flow whose every step is
+      // unreachable finishes on the first start and leaves the stack empty
+      // again, and a second call must not walk it a second time.
+      // The in-flight check comes first. Phase 0 of the pipeline bumps the
+      // epoch synchronously, so by the time a second mount calls in, `status`
+      // already says busy while the first attempt has committed nothing yet -
+      // answering from `status` there would report a finished flow. Two mounts
+      // of one engine share one attempt, so an enter guard or a deferred step's
+      // loader runs once, not twice.
+      if (starting !== undefined) return starting;
+
+      // Read `status`, not the stack: a flow whose every step is unreachable
+      // finishes on the first start and leaves the stack empty again, and a
+      // second call must not walk it a second time.
+      const current = state.stack[state.stack.length - 1]?.step ?? null;
+      if (state.status !== 'init') {
+        return Promise.resolve({ ok: true, from: current, to: current ?? END });
+      }
+
+      starting = navigate({ type: 'next' }, { validate: false }).finally(() => {
+        starting = undefined;
+      });
+      return starting;
+    },
     next: (opts) => navigate({ type: 'next' }, opts),
     back: () => navigate({ type: 'back' }),
     go: (to, opts) => navigate({ type: 'go', to, force: opts?.force }, opts),

@@ -62,9 +62,11 @@ export function describeBindingContract(harness: BindingHarness): void {
     harness.mount({ flow, registry, data });
 
   describe(`binding contract: ${harness.name}`, () => {
-    it('renders the first step once the wizard starts', async () => {
+    it('is on the first step as soon as it mounts', async () => {
+      // No click. A binding starts the engine when it mounts, so the first
+      // paint already has a current step; a wizard that renders nothing until
+      // the user presses Next is the bug this case exists to catch.
       const probe = await mount();
-      await probe.click('next');
 
       expect(probe.text('step')).toBe('one');
       probe.unmount();
@@ -72,7 +74,6 @@ export function describeBindingContract(harness: BindingHarness): void {
 
     it('skips a step whose condition is false', async () => {
       const probe = await mount({ name: 'Ann', wantsTwo: false });
-      await probe.click('next');
       await probe.click('next');
 
       expect(probe.text('step')).toBe('three');
@@ -82,7 +83,6 @@ export function describeBindingContract(harness: BindingHarness): void {
     it('includes a step once its condition becomes true, without a reload', async () => {
       const probe = await mount({ name: 'Ann', wantsTwo: true });
       await probe.click('next');
-      await probe.click('next');
 
       expect(probe.text('step')).toBe('two');
       probe.unmount();
@@ -90,7 +90,6 @@ export function describeBindingContract(harness: BindingHarness): void {
 
     it('reports progress over the reachable steps only', async () => {
       const probe = await mount({ name: 'Ann', wantsTwo: false });
-      await probe.click('next');
       expect(probe.text('progress')).toBe('0');
 
       await probe.click('next');
@@ -100,7 +99,6 @@ export function describeBindingContract(harness: BindingHarness): void {
 
     it('goes back, and says so before you try', async () => {
       const probe = await mount({ name: 'Ann', wantsTwo: false });
-      await probe.click('next');
       expect(probe.text('can-back')).toBe('no');
 
       await probe.click('next');
@@ -114,7 +112,6 @@ export function describeBindingContract(harness: BindingHarness): void {
     it('blocks a forward move on invalid data and surfaces the errors', async () => {
       const probe = await mount({});
       await probe.click('next');
-      await probe.click('next');
 
       expect(probe.text('step')).toBe('one');
       expect(probe.text('errors')).toBe('name: required');
@@ -123,7 +120,6 @@ export function describeBindingContract(harness: BindingHarness): void {
 
     it('clears the block once the field is filled', async () => {
       const probe = await mount({});
-      await probe.click('next');
       await probe.click('next');
       await probe.fill('name-input', 'Ann');
       await probe.click('next');

@@ -5,6 +5,7 @@ import type { Expr, Scope } from './expr';
 import { END, type FlowDefinition, type StepDef } from './flow';
 import { reachable, resolveBack, resolveNext } from './resolve';
 import { initialState, type WizardState } from './state';
+import { createWizard } from './store';
 
 /**
  * Example-based tests check the cases someone thought of. These check the
@@ -269,6 +270,47 @@ describe('reachable — properties', () => {
         }
       }),
       { numRuns: 100 }
+    );
+  });
+});
+
+describe('start', () => {
+  /**
+   * `start` is `next` from an empty stack, so whatever holds for the resolver
+   * holds for it. These are the two properties a binding depends on: it lands
+   * where the flow says the first step is, and calling it again is not a move.
+   */
+  it('lands on the first reachable step, or finishes when there is none', async () => {
+    await fc.assert(
+      fc.asyncProperty(arbLinearFlow, async ({ flow, scope }) => {
+        const w = createWizard({ flow, data: scope.data as Record<string, unknown> });
+        const active = reachable(flow, scope);
+
+        await w.start();
+
+        const current = w.getSnapshot().current;
+        if (active.length === 0) {
+          expect(current).toBeNull();
+          expect(w.getState().status).toBe('done');
+        } else {
+          expect(current).toBe(active[0]);
+        }
+      })
+    );
+  });
+
+  it('is idempotent for any flow: a second call commits nothing', async () => {
+    await fc.assert(
+      fc.asyncProperty(arbBranchingFlow, async ({ flow, scope }) => {
+        const w = createWizard({ flow, data: scope.data as Record<string, unknown> });
+        await w.start();
+        const { rev, stack } = w.getState();
+
+        await w.start();
+
+        expect(w.getState().rev).toBe(rev);
+        expect(w.getState().stack).toEqual(stack);
+      })
     );
   });
 });

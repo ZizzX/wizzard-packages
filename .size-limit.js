@@ -24,7 +24,12 @@ export default [
   // Group and repeat traversal is not in this entry and never will be: it goes
   // behind its own export, so a flow that has no sub-flows pays nothing for the
   // machinery that walks them. That is what keeps the main entry inside 4 kB.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '3.9 kB', gzip: true },
+  //
+  // Raised from 3.9 kB to the roadmap's 4.0 kB on 2026-09-06 for `start`: a
+  // fresh engine has an empty stack, so before it existed a binding rendered
+  // nothing until the user pressed Next. Twenty-one bytes for the difference
+  // between a wizard that shows its first step and one that shows nothing.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '4 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a

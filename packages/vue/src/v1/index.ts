@@ -8,6 +8,7 @@ import {
 import {
   computed,
   inject,
+  onMounted,
   onScopeDispose,
   provide,
   shallowRef,
@@ -36,6 +37,17 @@ const KEY: InjectionKey<Wizard> = Symbol('wizzard');
 export function provideWizard(source: Wizard | WizardOptions): Wizard {
   const wizard = 'getSnapshot' in source ? source : createWizard(source);
   provide(KEY, wizard);
+  // A fresh engine has an empty stack, so without this there is no current step
+  // to render. `start` is idempotent, and on the server `onMounted` never runs,
+  // which is where the wizard must not navigate at all. The React binding does
+  // the same thing in an effect — the contract suite checks both.
+  onMounted(() => {
+    wizard.start().catch((error: unknown) => {
+      // A first step whose loader fails is an ordinary network error. Dropping
+      // the promise would turn it into an unhandled rejection instead.
+      console.error('[wizzard] the wizard could not start.', error);
+    });
+  });
   return wizard;
 }
 
