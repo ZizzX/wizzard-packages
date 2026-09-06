@@ -80,6 +80,9 @@ must be JSON. Fix the value; redact runs after the copy and cannot remove it. �
 must be JSON. Fix the value; redact runs after the copy and cannot remove it. …#devtools-export-failed
 [wizzard] export stopped: redact threw <message>. Nothing was copied. The hook must return a
 SessionBundle; fix it, or remove it to export unredacted development data. …#devtools-export-failed
+[wizzard] export stopped: redact returned a session checkSession rejects (<path>: <message>).
+Nothing was copied. The hook must keep every frame a state of the recorded flow; fix it, or
+remove it to export unredacted development data. …#devtools-export-failed
 ```
 
 Thrown by `Recorder.bundle()` from `@wizzard-packages/devtools/headless`, and shown by the
@@ -91,9 +94,10 @@ JSON round-trip, because `WizardState` is JSON by contract, and the copy is what
 hook receives. That order is what the messages describe. The first two fire when the copy
 itself fails: a cycle is the usual cause, a `BigInt` or a throwing `toJSON` the others, and
 `<detail>` carries the engine's own words. No devtools setting works around either, because
-the value has to be serialisable before anything can be redacted out of it. The last fires
-when the hook throws or returns something that is not a bundle; fixing the hook, or removing
-it, is the whole fix.
+the value has to be serialisable before anything can be redacted out of it. The others fire
+when the hook throws, returns something that is not a bundle, or returns frames that
+`checkSession` (the reader's own check) rejects; fixing the hook, or removing it, is the whole
+fix.
 
 ```ts
 import { recordSession } from '@wizzard-packages/devtools/headless';

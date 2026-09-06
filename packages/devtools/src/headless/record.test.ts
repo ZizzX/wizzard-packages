@@ -184,7 +184,7 @@ describe('recordSession', () => {
     const rec = recordSession(w, {
       redact: (b) => {
         for (const f of b.session.frames) delete (f.data as Record<string, unknown>).card;
-        (b.flow as { id: string }).id = 'changed';
+        (b.flow.steps.details as { label: string }).label = 'changed';
         return b;
       },
     });
@@ -195,7 +195,8 @@ describe('recordSession', () => {
     expect(bundle.session.frames.every((f) => !('card' in f.data))).toBe(true);
     expect(bundle.meta.redacted).toBe(true);
     expect(w.getState().data.card).toBe('4111');
-    expect(flowA.id).toBe('signup');
+    expect(bundle.flow.steps.details?.label).toBe('changed');
+    expect(flowA.steps.details?.label).toBe('Details');
     expect(rec.bundle().session.frames[0]?.data.card).toBeUndefined(); // redact runs on a fresh copy each time
     expect(w.getState().data.card).toBe('4111');
   });
@@ -248,6 +249,11 @@ describe('recordSession', () => {
         }) as unknown as SessionBundle,
     });
     expect(() => hollow.bundle()).toThrow(/not a SessionBundle/);
+    const broken = recordSession(w, {
+      redact: (b) =>
+        ({ ...b, session: { ...b.session, frames: [{}] } }) as unknown as SessionBundle,
+    });
+    expect(() => broken.bundle()).toThrow(/checkSession rejects \(frames/);
   });
 
   it('names a non-JSON value as such, not as a circular reference', async () => {

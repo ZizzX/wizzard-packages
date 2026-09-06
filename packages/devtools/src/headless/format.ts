@@ -33,7 +33,11 @@ const asNode = (e: Expr): Node | null =>
 const opOf = (n: Node): string | undefined =>
   ['$get', '$ref', '$not', '$and', '$or', '$empty', ...Object.keys(COMPARE)].find((k) => k in n);
 
-/** `$and`/`$or` inside another boolean, or anything compound under `$not`, gets parentheses. */
+/**
+ * `$and`/`$or` inside another boolean, and anything compound under `$not` or
+ * beside a comparison, gets parentheses, so the text reads as the engine
+ * evaluates: `false == (1 == 2)`, never `false == 1 == 2`.
+ */
 const wrap = (e: Expr, when: (op: string) => boolean): string => {
   const text = print(e);
   const node = asNode(e);
@@ -71,7 +75,7 @@ function print(e: Expr): string {
       const pair = node[op];
       if (!Array.isArray(pair) || pair.length !== 2) return JSON.stringify(e);
       const [a, b] = pair as unknown as readonly [Expr, Expr];
-      return `${wrap(a, isBool)} ${COMPARE[op]} ${wrap(b, isBool)}`;
+      return `${wrap(a, isCompound)} ${COMPARE[op]} ${wrap(b, isCompound)}`;
     }
   }
 }

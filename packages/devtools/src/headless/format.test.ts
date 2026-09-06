@@ -18,6 +18,8 @@ describe('formatExpr', () => {
     [{ $or: [{ $get: 'data.a' }, { $get: 'data.b' }] }, 'data.a || data.b'],
     [{ $not: { $get: 'data.a' } }, '!data.a'],
     [{ $not: { $eq: [{ $get: 'data.a' }, 1] } }, '!(data.a == 1)'],
+    [{ $eq: [false, { $eq: [1, 2] }] }, 'false == (1 == 2)'],
+    [{ $eq: [{ $not: { $get: 'data.a' } }, true] }, '(!data.a) == true'],
     [{ $and: [{ $or: [true, false] }, { $get: 'data.c' }] }, '(true || false) && data.c'],
     [{ $empty: { $get: 'data.passengers' } }, 'empty(data.passengers)'],
     [{ $not: { $empty: { $get: 'data.passengers' } } }, '!empty(data.passengers)'],

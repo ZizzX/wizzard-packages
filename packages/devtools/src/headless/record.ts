@@ -1,3 +1,4 @@
+import { checkSession } from '@wizzard-packages/core/session';
 import type { RecordedSession } from '@wizzard-packages/core/session';
 import type { FlowDefinition, SubFlows, Wizard, WizardState } from '@wizzard-packages/core/v1';
 
@@ -206,6 +207,13 @@ export function recordSession(wizard: WizardLike, options: RecordOptions = {}): 
         if (!isBundle(out)) {
           throw new Error(
             `[wizzard] export stopped: redact returned something that is not a SessionBundle. Nothing was copied. The hook must return the bundle it was given, changed as needed; fix it, or remove it to export unredacted development data. ${DOCS}`
+          );
+        }
+        // The frames are what a reader replays, so the reader's own check runs here.
+        const problem = checkSession(out.session, out.flow, out.subFlows)[0];
+        if (problem !== undefined) {
+          throw new Error(
+            `[wizzard] export stopped: redact returned a session checkSession rejects (${problem.path}: ${problem.message}). Nothing was copied. The hook must keep every frame a state of the recorded flow; fix it, or remove it to export unredacted development data. ${DOCS}`
           );
         }
       }
