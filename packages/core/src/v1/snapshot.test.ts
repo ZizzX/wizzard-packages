@@ -417,6 +417,38 @@ describe('decodeSnapshot, inside a group', () => {
     });
   });
 
+  it('resolves a child frame through its group, not through a colliding id', () => {
+    // `knownFlows` registers a definition under its reference key and its own
+    // id at once, so `alias` and `traveller` both answer here. Resolving the
+    // child by name would pick the wrong one and refuse a valid snapshot.
+    const viaAlias: FlowDefinition = {
+      ...booking,
+      steps: {
+        ...booking.steps,
+        trip: { flow: 'alias', repeat: { over: { $get: 'data.passengers' }, keyBy: 'id' } },
+      },
+    };
+    const alias: FlowDefinition = { id: 'traveller', order: ['seat'], steps: { seat: {} } };
+    const other: FlowDefinition = { id: 'traveller', order: ['other'], steps: { other: {} } };
+    const state: WizardState = {
+      ...inGroup(),
+      stack: [
+        { flow: 'booking', step: 'trip', key: 'p2' },
+        { flow: 'traveller', step: 'seat' },
+      ],
+    };
+    const snapshot = JSON.parse(JSON.stringify(toSnapshot(state, viaAlias))) as unknown;
+
+    expect(
+      decodeSnapshot(viaAlias, snapshot, { subFlows: { alias, traveller: other } }).restored
+    ).toBe(true);
+
+    const emptied: FlowDefinition = { ...alias, order: [], steps: {} };
+    expect(
+      decodeSnapshot(viaAlias, snapshot, { subFlows: { alias: emptied, traveller: other } })
+    ).toEqual({ restored: false, reason: 'snapshot/unknown-step' });
+  });
+
   it('checks the history of a group run the same way as the stack', () => {
     const state = inGroup();
     const snapshot = {

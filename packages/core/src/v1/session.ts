@@ -118,14 +118,26 @@ export type FrameProblem = 'unknown-flow' | 'unknown-step' | 'not-a-group' | 'wr
  * stack it passed in. Everything else a sentence needs is `stack[depth]`. So
  * the sentences live in `checkSession`, where they are read, and the snapshot
  * entry carries the walk and none of the prose it never prints.
+ *
+ * Only the bottom frame is resolved by name. Every frame above it is resolved
+ * from the group that encloses it, because `known` is keyed by a registry key
+ * *and* by each definition's `id`: a key colliding with another definition's id
+ * would otherwise resolve a child against the wrong flow and call a correct
+ * stack drift. That is what the nesting rule already says - the enclosing frame
+ * is a group into the enclosed frame's flow - so the walk reads it forwards.
  */
 export function checkFrames(
   stack: readonly Frame[],
   known: Map<string, FlowDefinition>,
   report: (depth: number, problem: FrameProblem, into?: string) => void
 ): void {
-  stack.forEach((entry, depth) => {
-    const owner = known.get(entry.flow);
+  // The bottom frame names the root, or a flow the caller registered; from
+  // there the stack resolves itself.
+  let owner = stack.length === 0 ? undefined : known.get((stack[0] as Frame).flow);
+
+  for (let depth = 0; depth < stack.length; depth++) {
+    const entry = stack[depth] as Frame;
+
     if (owner === undefined) {
       report(depth, 'unknown-flow');
       return;
@@ -137,31 +149,41 @@ export function checkFrames(
       return;
     }
 
-    // Only the last entry is the current step; the ones before it enclose it.
-    // A parent that is not a group, or a group leading somewhere other than
-    // where the child says it is, is a stack the engine could not have built —
-    // and the shape drift hides in when nobody stamped a version.
-    const child = stack[depth + 1];
-    if (child !== undefined) {
-      if (!isGroup(step)) {
-        report(depth, 'not-a-group');
-      } else {
-        // A string `flow` is the key the group is referenced by, and the
-        // definition behind that key is free to carry a different id. The
-        // frame names the id, so compare against what the reference actually
-        // resolves to, falling back to the bare reference when nothing does.
-        const ref = typeof step.flow === 'string' ? step.flow : step.flow.id;
-        const into = known.get(ref)?.id ?? ref;
-        if (into !== child.flow) report(depth, 'wrong-flow', into);
-      }
-    }
-
     // `isStackEntry` already refused a `key` that is not a string, so what is
     // left is whether the step it sits on can have one at all.
     if (entry.key !== undefined && (!isGroup(step) || step.repeat === undefined)) {
       report(depth, 'key');
     }
-  });
+
+    // Only the last entry is the current step; the ones before it enclose it.
+    // A parent that is not a group, or a group leading somewhere other than
+    // where the child says it is, is a stack the engine could not have built —
+    // and the shape drift hides in when nobody stamped a version. Either way
+    // nothing above such a frame can be resolved, so the walk stops there
+    // rather than guessing at an owner for what sits on it.
+    const child = stack[depth + 1];
+    if (child === undefined) return;
+    if (!isGroup(step)) {
+      report(depth, 'not-a-group');
+      return;
+    }
+
+    // A string `flow` is the key the group is referenced by, and the definition
+    // behind that key is free to carry a different id. The frame names the id,
+    // so compare against what the reference actually resolves to, falling back
+    // to the bare reference when nothing does.
+    const ref = typeof step.flow === 'string' ? step.flow : step.flow.id;
+    const sub = typeof step.flow === 'string' ? known.get(step.flow) : step.flow;
+    const into = sub?.id ?? ref;
+    if (into !== child.flow) {
+      report(depth, 'wrong-flow', into);
+      return;
+    }
+
+    // Undefined for a reference nobody registered; the next turn reports that
+    // as an unknown flow at the child's own depth.
+    owner = sub;
+  }
 }
 
 /**

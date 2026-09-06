@@ -166,6 +166,63 @@ describe('validateFlow, on a repeat group', () => {
   it('leaves an unversioned flat flow alone', () => {
     expect(validateFlow(good)).toEqual([]);
   });
+
+  // An inline sub-flow definition is carried inside this flow, so a repeat two
+  // levels down is still this flow's to stamp: `toSnapshot` writes the root's
+  // version and no other.
+  const nested = (version?: number): FlowDefinition => ({
+    id: 'booking',
+    ...(version === undefined ? {} : { version }),
+    order: ['trip'],
+    steps: {
+      trip: {
+        flow: {
+          id: 'leg',
+          order: ['seats'],
+          steps: {
+            seats: {
+              flow: 'seat',
+              when: { $not: { $empty: { $get: 'data.passengers' } } },
+              repeat,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  it('asks for a version when the repeat is two levels down an inline sub-flow', () => {
+    expect(problems(nested())).toEqual([
+      'version: flow has a repeat group but no version, so a snapshot taken inside it cannot be ' +
+        'refused when keyBy changes — stamp a version and bump it with the shape',
+    ]);
+  });
+
+  it('is satisfied once the root that carries it is versioned', () => {
+    expect(validateFlow(nested(4))).toEqual([]);
+  });
+
+  it('names the nesting when the buried repeat has no when', () => {
+    const bare = nested(4);
+    const leg = (bare.steps.trip as { flow: FlowDefinition }).flow;
+    const unguarded: FlowDefinition = {
+      ...bare,
+      steps: { trip: { flow: { ...leg, steps: { seats: { flow: 'seat', repeat } } } } },
+    };
+
+    expect(problems(unguarded)[0]).toMatch(/^steps\.trip\.flow\.steps\.seats: is a repeat group/);
+  });
+
+  it('cannot see inside a sub-flow named by reference, and does not pretend to', () => {
+    // The definition behind a string lives wherever it was written, and is
+    // validated there. Reporting this flow for it would be a guess.
+    const byRef: FlowDefinition = {
+      id: 'booking',
+      order: ['trip'],
+      steps: { trip: { flow: 'leg' } },
+    };
+    expect(validateFlow(byRef)).toEqual([]);
+  });
 });
 
 describe('assertFlow', () => {

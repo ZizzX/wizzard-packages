@@ -114,9 +114,12 @@ export default [
   // registry `knownFlows`, both exported so `decodeSnapshot` runs the same two
   // rather than a second copy - and the four sentences a bad frame is reported
   // with moved here, out of the walk, because this is the entry that prints
-  // them and the snapshot entry never does. Measured 1098 B, which passes the
-  // old 1.1 kB by two bytes; two bytes is not a budget, so the ratchet moves to
-  // where the next honest change can land.
+  // them and the snapshot entry never does. Measured 1125 B, where the old
+  // 1.1 kB left two bytes of headroom; two bytes is not a budget, so the
+  // ratchet moves to where the next honest change can land. The frame walk also
+  // resolves each frame from the group enclosing it rather than by name, so a
+  // registry key colliding with another definition's id cannot make a correct
+  // stack read as drift.
 
   { name: 'core-v1 session', path: 'packages/core/src/v1/session.ts', limit: '1.2 kB', gzip: true },
 
@@ -131,7 +134,7 @@ export default [
   // costs more than writing a good one, which is the right way round.
   //
   // 1.1 to 1.4 kB on 2026-09-06 for the group frames of `group-traversal.md`
-  // 4.10. Measured 1.05 kB before, 1.35 kB after. The decoder now resolves
+  // 4.10. Measured 1.05 kB before, 1377 B after. The decoder now resolves
   // every frame against `knownFlows` and walks each stack with `checkFrames`,
   // both imported from `session.ts` rather than copied: L4a asks for one frame
   // checker, and two would drift the way 0.x's three navigation copies did.
@@ -166,18 +169,25 @@ export default [
   // the runtime budget, because shipping it to a browser is a mistake the
   // separate entry makes hard to commit by accident.
   //
-  // 1 to 1.2 kB on 2026-09-06 for the two repeat-group reports of
-  // `group-traversal.md` 4.5 and 4.10. Measured 887 B before, 1.12 kB after,
-  // and almost all of it is the two sentences: reachability reads `when` and
-  // never `over`, so an unguarded repeat draws a breadcrumb for an empty
-  // section, and an unversioned flow with a repeat group cannot refuse a
-  // snapshot written before its `keyBy` changed. A report that names neither
-  // the cause nor the fix is a report people learn to ignore, and this entry
-  // is the one place in the tree where a sentence costs a reader nothing.
+  // 1 to 1.3 kB on 2026-09-06 for the two repeat-group reports of
+  // `group-traversal.md` 4.5 and 4.10. Measured 887 B before, 1210 B after, and
+  // most of it is the two sentences: reachability reads `when` and never
+  // `over`, so an unguarded repeat draws a breadcrumb for an empty section, and
+  // an unversioned flow with a repeat group cannot refuse a snapshot written
+  // before its `keyBy` changed. A report that names neither the cause nor the
+  // fix is a report people learn to ignore, and this entry is the one place in
+  // the tree where a sentence costs a reader nothing.
+  //
+  // The remaining ~90 B is the walk that finds them: a repeat inside an inline
+  // sub-flow definition is still this flow's to stamp a version for, because
+  // `toSnapshot` writes the root's version and no other, so the scan recurses
+  // through inline definitions - depth-capped and cycle-guarded by identity,
+  // like `graph.ts` and `session.ts`. A string reference names a definition
+  // this entry was never handed, and is validated where it is written.
   {
     name: 'core-v1 validate-flow',
     path: 'packages/core/src/v1/validate-flow.ts',
-    limit: '1.2 kB',
+    limit: '1.3 kB',
     gzip: true,
   },
 

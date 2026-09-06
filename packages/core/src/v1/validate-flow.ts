@@ -19,6 +19,9 @@ export interface FlowProblem {
 
 const ROOTS = ['data', 'ctx', 'loop', 'step'];
 
+/** Same cap as `graph.ts` and `session.ts`: thirty-two flows deep is not nesting. */
+const MAX_DEPTH = 32;
+
 export function validateFlow(
   flow: FlowDefinition,
   registry?: Readonly<Record<string, unknown>>
@@ -30,7 +33,6 @@ export function validateFlow(
   };
 
   if (ids.length === 0) report('steps', 'flow has no steps');
-  let repeats = false;
 
   if (flow.order) {
     for (const id of flow.order) {
@@ -111,24 +113,46 @@ export function validateFlow(
     if (step_.when !== undefined && step_.on?.next !== undefined) {
       report(at, 'has both when and on.next — on.next wins, and when is ignored here');
     }
+  }
 
-    if (isGroup(step_) && step_.repeat !== undefined) {
-      repeats = true;
-      // Reachability reads `when` and nothing else, so a repeat over an empty
-      // list is still an active step: it draws a breadcrumb for a section with
-      // nothing in it and counts towards progress. Teaching reachability about
-      // `over` would put group code in the entry every flat flow carries, so
-      // the fix is the author's, and it is one line.
-      if (step_.when === undefined) {
-        report(
-          at,
-          'is a repeat group with no when — an empty over is walked past, but the group still ' +
-            'draws a breadcrumb and counts towards progress; guard it with ' +
-            '{ $not: { $empty: <the same expression as over> } }'
-        );
+  // Repeat groups anywhere in the flow, not only among its own steps. A group
+  // whose `flow` is an inline definition carries its sub-flow inside this one,
+  // so a repeat two levels down is still this flow's to stamp a version for -
+  // `toSnapshot` writes the root's version and no other. A string reference
+  // names a definition this function was never handed, and is nothing it can
+  // look inside; that flow is validated wherever it is defined.
+  const seen = new Set<FlowDefinition>();
+  const scanRepeats = (f: FlowDefinition, path: string, depth: number): boolean => {
+    if (depth > MAX_DEPTH || seen.has(f)) return false;
+    seen.add(f);
+
+    let found = false;
+    for (const [id, step_] of Object.entries(f.steps)) {
+      if (!isGroup(step_)) continue;
+      if (step_.repeat !== undefined) {
+        found = true;
+        // Reachability reads `when` and nothing else, so a repeat over an empty
+        // list is still an active step: it draws a breadcrumb for a section with
+        // nothing in it and counts towards progress. Teaching reachability about
+        // `over` would put group code in the entry every flat flow carries, so
+        // the fix is the author's, and it is one line.
+        if (step_.when === undefined) {
+          report(
+            `${path}.${id}`,
+            'is a repeat group with no when — an empty over is walked past, but the group still ' +
+              'draws a breadcrumb and counts towards progress; guard it with ' +
+              '{ $not: { $empty: <the same expression as over> } }'
+          );
+        }
+      }
+      if (typeof step_.flow !== 'string') {
+        found = scanRepeats(step_.flow, `${path}.${id}.flow.steps`, depth + 1) || found;
       }
     }
-  }
+    return found;
+  };
+
+  const repeats = scanRepeats(flow, 'steps', 0);
 
   // A repeat frame stores the item key its `keyBy` produced, so the stored
   // state depends on a field of the definition — the only construct in the flow
