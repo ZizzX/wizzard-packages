@@ -1,4 +1,4 @@
-import { reachable } from './resolve';
+import { reachable, resolveBack } from './resolve';
 
 import type { AsyncRegistry, Registry, Scope } from './expr';
 import type { FlowDefinition } from './flow';
@@ -76,7 +76,11 @@ function derive(flow: FlowDefinition, state: WizardState, registry?: Registry): 
       const status = statusOf(id, current, state, index, at);
       return label === undefined ? { id, status } : { id, label, status };
     }),
-    canBack: index > 0 || state.history.length > 0,
+    // The answer `back()` would give, not a guess at it. `index > 0 ||
+    // history.length > 0` disagreed with the engine whenever a step behind the
+    // current one stopped being reachable: the button was enabled and the move
+    // then answered `no-target`.
+    canBack: resolveBack(flow, state, scope, registry) !== null,
     isBusy: state.status === 'busy' || state.busy.length > 0,
     hasErrors: Object.values(state.errors).some((e) => Object.keys(e).length > 0),
   };

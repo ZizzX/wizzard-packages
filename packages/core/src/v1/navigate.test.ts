@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { END, type FlowDefinition } from './flow';
 import { runNav, type Hooks, type NavContext, type NavHost } from './navigate';
+import { createSelector } from './select';
 import { initialState, type WizardState } from './state';
 
 const flow: FlowDefinition = {
@@ -419,6 +420,30 @@ describe('runNav — the back stack', () => {
 
     expect(await runNav(ctx, host, { type: 'back' })).toMatchObject({ reason: 'no-target' });
     expect(host.read().history).toEqual([]);
+  });
+
+  // `back()` walks `order`, so it can jump over a record. Popping one record
+  // then leaves a stale one behind, and `canBack` goes on offering it.
+  it('drops the records of steps that stopped being reachable', async () => {
+    const branchy: FlowDefinition = {
+      id: 'booking',
+      order: ['a', 'b', 'c'],
+      steps: { a: {}, b: { when: { $get: 'data.viaB' } }, c: {} },
+    };
+    const ctxB: NavContext = { flow: branchy };
+    const host = makeHost({ ...on('a'), data: { viaB: true } });
+
+    await runNav(ctxB, host, { type: 'next' });
+    await runNav(ctxB, host, { type: 'next' });
+    expect(host.read().stack).toEqual([{ flow: 'booking', step: 'c' }]);
+    expect(host.read().history).toHaveLength(2);
+
+    host.write({ ...host.read(), data: { viaB: false } });
+    await runNav(ctxB, host, { type: 'back' });
+
+    expect(host.read().stack).toEqual([{ flow: 'booking', step: 'a' }]);
+    expect(host.read().history).toEqual([]);
+    expect(createSelector(() => branchy)(host.read()).canBack).toBe(false);
   });
 
   it('leaves history alone when there was nowhere to come from', async () => {
