@@ -248,18 +248,28 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
 
   const resolverFor = async (
     ref: { $ref: string; args?: Json } | undefined,
-    fallback: unknown
+    fallback: unknown,
+    scope: Scope
   ): Promise<unknown> => {
     if (!ref) return fallback;
     const fn = registry?.[ref.$ref];
     if (!fn) throw new Error(`[wizzard] unknown resolver: ${ref.$ref}`);
-    return await fn(ref.args, at(state).scope);
+    return await fn(ref.args, scope);
   };
 
-  const validateStep = async (stepId: string): Promise<Readonly<Record<string, string>> | null> => {
-    const step: StepDef | undefined = at(state).flow.steps[stepId];
+  /**
+   * `where` is the flow the step belongs to and the scope it is evaluated
+   * against. It defaults to wherever the wizard is standing, which is what the
+   * navigation's phase 2 and a bare `validate()` both mean; an explicitly named
+   * step is a root step id, so `validate(id)` hands the root pair instead.
+   */
+  const validateStep = async (
+    stepId: string,
+    where = at(state)
+  ): Promise<Readonly<Record<string, string>> | null> => {
+    const step: StepDef | undefined = where.flow.steps[stepId];
     const rule = step && 'validate' in step ? step.validate : undefined;
-    const result = await resolverFor(rule, null);
+    const result = await resolverFor(rule, null, where.scope);
     return (result as Readonly<Record<string, string>> | null) ?? null;
   };
 
@@ -273,10 +283,8 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
     // that threw once keeps running half its contract.
     hooks: destroyed ? [] : plugins.filter((h) => !disabled.has(h.name)),
     validate: (stepId) => validateStep(stepId),
-    // The reference arrives from the pipeline rather than being looked back up:
-    // a step inside a sub-flow has no id in the root flow.
-    load: async (_stepId, load) => {
-      await resolverFor(load as { $ref: string; args?: Json } | undefined, undefined);
+    load: async (_stepId, load, scope) => {
+      await resolverFor(load as { $ref: string; args?: Json } | undefined, undefined, scope);
     },
     signal: controller?.signal,
   });
@@ -417,7 +425,14 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
     async validate(stepId) {
       const target = stepId ?? state.stack[state.stack.length - 1]?.step;
       if (target === undefined) return true;
-      const errors = await validateStep(target);
+      // `StepIdOf<F>` is the root flow's ids, so a named step is looked up
+      // there and evaluated against `{ data, ctx }`. Inside a group the active
+      // flow is the child's, and a root id looked up in it finds nothing, runs
+      // no resolver and answers `true` - a validation that silently passes.
+      const errors = await validateStep(
+        target,
+        stepId === undefined ? at(state) : { flow, scope: { data: state.data, ctx: state.ctx } }
+      );
       const failed = errors !== null && Object.keys(errors).length > 0;
       write(
         commit(state, {

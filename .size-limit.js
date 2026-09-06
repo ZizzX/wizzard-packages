@@ -55,13 +55,14 @@ export default [
   //
   // 4.5 to 5.0 kB on 2026-09-06 for the group traversal seam. Measured, then
   // trimmed and measured again: 4.48 kB before, 4991 B on the first pass, 4938 B
-  // after the trim. Where the 458 B sits, each figure taken by removing that
-  // piece and re-measuring:
+  // after the trim, 4958 B once the review's findings were fixed. Where the
+  // 478 B sits, each figure taken by removing that piece and re-measuring:
   //
-  //   258 B  the seam itself - phase 0.5's `here`, phase 4's `step`, the flow
-  //          and scope phases 5 to 7 read, the phase-8 recheck against a
-  //          `set()` that landed under an await, phase 9's stack, and the
-  //          active flow the store hands `validate`, `load` and the selector.
+  //   278 B  the seam itself - phase 0.5's `here`, phase 4's `step`, the flow
+  //          and scope phases 5 to 7 read, the scope phase 6 hands the loader,
+  //          the phase-8 recheck against a `set()` that landed under an await,
+  //          phase 9's stack, and the active flow and scope the store hands
+  //          `validate`, `load` and the selector.
   //   156 B  the message a flow with a group and no traversal is refused with.
   //   44 B   the scan that finds the group and throws it.
   //
@@ -93,7 +94,7 @@ export default [
   // frames and the `END`-by-depth rule that the invariants in
   // `docs/designs/group-traversal.md` describe.
   //
-  // Measured 2026-09-06 at 2917 B, and most of that is not its own: it calls
+  // Measured 2026-09-06 at 2981 B, and most of that is not its own: it calls
   // `resolveNext` and `resolveBack` for a single level rather than reimplementing
   // them, and evaluates `over` and `input` with the expression evaluator, so it
   // pulls `resolve`, `expr`, `path` and the step types in behind it. An

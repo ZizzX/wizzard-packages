@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { isGroup, type FlowDefinition } from './flow';
+import { END, isGroup, type FlowDefinition } from './flow';
 import { groups, here, itemsOf, step, walk } from './groups';
 import { checkSession } from './session';
 import { createWizard } from './store';
@@ -343,6 +343,39 @@ describe('4.7 go() into a group, and out of one', () => {
     ]);
   });
 
+  it('refuses to enter a group whose own `when` is false, even forced', async () => {
+    const flow: FlowDefinition = {
+      ...booking(),
+      steps: {
+        ...booking().steps,
+        each: { ...(booking().steps.each as object), when: { $get: 'data.perPerson' } } as never,
+      },
+    };
+    const wizard = build(flow, { passengers, perPerson: false });
+    await wizard.start();
+
+    // Forced, so nothing but the group's own reachability can refuse it.
+    expect(await wizard.go('each', { force: true })).toEqual({
+      ok: false,
+      reason: 'not-reachable',
+      by: 'each',
+    });
+    expect(at(wizard)).toEqual([{ flow: 'booking', step: 'who' }]);
+
+    // `next` must never reach it either - `resolveNext` filters by `when` - so
+    // it walks straight past to the step after the group.
+    await wizard.next();
+    expect(stepOf(wizard)).toBe('review');
+
+    // The same forced call enters once the flag is on.
+    wizard.set('perPerson', true);
+    await wizard.go('each', { force: true });
+    expect(at(wizard)).toEqual([
+      { flow: 'booking', step: 'each', key: 'p1' },
+      { flow: 'passenger', step: 'seat' },
+    ]);
+  });
+
   it('compares a `sequential` policy against the sub-flow`s active steps', async () => {
     const strict: FlowDefinition = { ...passenger, policy: 'sequential' };
     const flow: FlowDefinition = {
@@ -382,6 +415,45 @@ describe('4.8 completion of a group, and of the flow', () => {
     expect(last).toEqual({ ok: true, from: 'meal', to: '@end' });
     expect(wizard.getState().status).toBe('done');
     expect(wizard.getState().completed).toContain('meal');
+  });
+});
+
+describe('4.8 go(END) inside a group', () => {
+  /** `go(END)` ends the flow the wizard is standing in, which is the child's. */
+  const twoItems = { passengers: [{ id: 'p1' }, { id: 'p2' }] };
+
+  it('advances to the next surviving item and stays idle', async () => {
+    const wizard = await enterGroup(booking(), twoItems);
+    expect(keyOf(wizard)).toBe('p1');
+
+    const result = await wizard.go(END, { force: true });
+
+    expect(result).toMatchObject({ ok: true, to: 'seat' });
+    expect(keyOf(wizard)).toBe('p2');
+    expect(stepOf(wizard)).toBe('seat');
+    expect(wizard.getState().status).toBe('idle');
+  });
+
+  it('leaves the group for the step after it from the last item', async () => {
+    const wizard = await enterGroup(booking(), twoItems);
+    await wizard.next();
+    await wizard.next(); // p2/seat
+
+    await wizard.go(END, { force: true });
+
+    expect(stepOf(wizard)).toBe('review');
+    expect(at(wizard)).toHaveLength(1);
+    expect(wizard.getState().status).toBe('idle');
+  });
+
+  it('finishes the wizard once when the group is the last step of the root', async () => {
+    const flow: FlowDefinition = { ...booking(), order: ['who', 'each'] };
+    const wizard = await enterGroup(flow, { passengers: [{ id: 'p1' }] });
+
+    const result = await wizard.go(END, { force: true });
+
+    expect(result).toEqual({ ok: true, from: 'seat', to: END });
+    expect(wizard.getState().status).toBe('done');
   });
 });
 
@@ -489,6 +561,80 @@ describe('5.1 the active flow and scope', () => {
     expect(load).toHaveBeenCalledTimes(1);
     expect(args).toEqual({ n: 1 });
     expect(flow.steps.seat).toBeUndefined();
+  });
+
+  it('gives a child `load` the item being entered, not the one being left', async () => {
+    const seen: (string | undefined)[] = [];
+    const loading: FlowDefinition = {
+      id: 'passenger',
+      order: ['seat', 'meal'],
+      steps: { seat: { load: { $ref: 'fetch' } }, meal: {} },
+    };
+    const flow: FlowDefinition = {
+      ...booking(),
+      steps: {
+        ...booking().steps,
+        each: { flow: loading, repeat: { over: { $get: 'data.passengers' }, keyBy: 'id' } },
+      },
+    };
+    const wizard = build(
+      flow,
+      { passengers },
+      {
+        registry: {
+          fetch: (_args, scope) => {
+            seen.push(scope.loop?.key);
+            return undefined;
+          },
+        },
+      }
+    );
+
+    await wizard.start();
+    await wizard.next(); // enters the group: nothing on the stack carries p1 yet
+    await wizard.next(); // p1/meal
+    await wizard.next(); // advances to p2, whose `seat` loads again
+
+    expect(seen).toEqual(['p1', 'p2']);
+  });
+
+  it('validates a named root step against the root, and the current one against the child', async () => {
+    const seen: [string, string | undefined][] = [];
+    const record =
+      (name: string) =>
+      (_args: unknown, scope: { loop?: { key: string } }): null => {
+        seen.push([name, scope.loop?.key]);
+        return null;
+      };
+    const child: FlowDefinition = {
+      id: 'passenger',
+      order: ['seat'],
+      steps: { seat: { validate: { $ref: 'childRule' } } },
+    };
+    const flow: FlowDefinition = {
+      id: 'booking',
+      order: ['who', 'each', 'review'],
+      steps: {
+        who: { validate: { $ref: 'rootRule' } },
+        each: { flow: child, repeat: { over: { $get: 'data.passengers' }, keyBy: 'id' } },
+        review: {},
+      },
+    };
+    const wizard = build(
+      flow,
+      { passengers },
+      { registry: { rootRule: record('root'), childRule: record('child') } }
+    );
+    await wizard.start();
+    await wizard.next(); // p1/seat
+    seen.length = 0;
+
+    expect(await wizard.validate('who')).toBe(true);
+    expect(seen).toEqual([['root', undefined]]);
+
+    seen.length = 0;
+    expect(await wizard.validate()).toBe(true);
+    expect(seen).toEqual([['child', 'p1']]);
   });
 
   it('resolves a string `GroupStep.flow` through `subFlows`, by the definition`s own id', async () => {

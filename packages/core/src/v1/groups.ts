@@ -1,7 +1,7 @@
 import { evaluate, type Registry, type Scope } from './expr';
 import { END, isGroup, type FlowDefinition, type GroupStep } from './flow';
 import { getPath } from './path';
-import { resolveBack, resolveNext } from './resolve';
+import { reachable, resolveBack, resolveNext } from './resolve';
 
 import type { NavIntent, SubFlows, Traversal } from './navigate';
 import type { Frame, WizardState } from './state';
@@ -42,11 +42,19 @@ export interface Level {
   frame?: Frame;
 }
 
-export type Invalid = {
+/**
+ * A move the traversal refuses outright, in the shape `runNav` returns.
+ *
+ * `invalid` is a data error the author can fix (4.1b). `not-reachable` is the
+ * flat path's own answer for a target whose `when` is false, reused because a
+ * group is a step like any other: without it a forced `go` would enter a
+ * section the flow says is not there.
+ */
+export type Refusal = {
   ok: false;
-  reason: 'invalid';
+  reason: 'invalid' | 'not-reachable';
   by: string;
-  errors: Readonly<Record<string, string>>;
+  errors?: Readonly<Record<string, string>>;
 };
 
 export type Move = {
@@ -276,7 +284,7 @@ const landed = (levels: readonly Level[], to: string | typeof END, level: Level)
   scope: level.scope,
 });
 
-const invalid = (id: string, step: GroupStep, message: string): Invalid => ({
+const invalid = (id: string, step: GroupStep, message: string): Refusal => ({
   ok: false,
   reason: 'invalid',
   by: id,
@@ -289,7 +297,10 @@ type Enter =
   | { kind: 'in'; to: string | typeof END | null }
   | { kind: 'past' }
   | { kind: 'refused' }
+  | { kind: 'hidden' }
   | { kind: 'invalid'; message: string };
+
+const notReachable = (id: string): Refusal => ({ ok: false, reason: 'not-reachable', by: id });
 
 /**
  * Steps into a group, at its first surviving item.
@@ -309,6 +320,12 @@ function enter(
 ): Enter {
   const level = levels[levels.length - 1];
   if (level === undefined) return { kind: 'past' };
+
+  // A group is a step, so it answers to its own `when` first. `resolveNext`
+  // already filters by it, but `go` does not: without this a forced jump enters
+  // a section the flow says is not there, and phase 5 would only ever check the
+  // child step it landed on.
+  if (!reachable(level.flow, level.scope, registry).includes(id)) return { kind: 'hidden' };
 
   const sub = subFlowOf(step, subFlows);
   if (sub === undefined) return { kind: 'past' };
@@ -389,7 +406,7 @@ function settle(
   state: WizardState,
   registry?: Registry,
   subFlows?: SubFlows
-): Move | Invalid | null {
+): Move | Refusal | null {
   let to = from;
 
   for (let turn = 0; turn <= MAX_DEPTH * 2; turn++) {
@@ -426,6 +443,7 @@ function settle(
     if (isGroup(step)) {
       const entered = enter(levels, to, step, state, registry, subFlows);
       if (entered.kind === 'invalid') return invalid(to, step, entered.message);
+      if (entered.kind === 'hidden') return notReachable(to);
       if (entered.kind === 'refused') return null;
       if (entered.kind === 'in') {
         to = entered.to;
@@ -455,7 +473,7 @@ function forward(
   state: WizardState,
   registry?: Registry,
   subFlows?: SubFlows
-): Move | Invalid | null {
+): Move | Refusal | null {
   const level = levels[levels.length - 1];
   if (level === undefined) return null;
 
@@ -491,7 +509,7 @@ function retreat(
   state: WizardState,
   registry?: Registry,
   subFlows?: SubFlows
-): Move | Invalid | null {
+): Move | Refusal | null {
   if (levels.length > 1 || state.stack.length > 1) {
     for (let i = state.history.length - 1; i >= 0; i--) {
       const recorded = state.history[i];
@@ -539,11 +557,12 @@ function jump(
   to: string,
   registry?: Registry,
   subFlows?: SubFlows
-): Move | Invalid | null {
-  if (to === END) {
-    const level = levels[levels.length - 1];
-    return level === undefined ? null : landed(levels, END, level);
-  }
+): Move | Refusal | null {
+  // `END` ends the flow the wizard is standing in, not the wizard. Inside a
+  // group that is the child flow, so it goes through the same path a child step
+  // resolving to `END` takes: the repeat advances, or the parent carries on
+  // after the group. Only `END` reached in the root finishes the wizard.
+  if (to === END) return settle(levels, END, state, registry, subFlows);
 
   for (let i = levels.length - 1; i >= 0; i--) {
     if (levels[i]?.flow.steps[to] === undefined) continue;
@@ -559,7 +578,7 @@ export function step(
   intent: NavIntent,
   registry?: Registry,
   subFlows?: SubFlows
-): Move | Invalid | null {
+): Move | Refusal | null {
   const levels = walk(root, state, registry, subFlows);
   if (levels.length === 0) levels.push({ flow: root, scope: rootScope(state) });
 

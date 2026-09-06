@@ -138,7 +138,12 @@ export interface Traversal {
     subFlows?: SubFlows
   ) =>
     | { stack: readonly Frame[]; to: string | typeof END; flow: FlowDefinition; scope: Scope }
-    | { ok: false; reason: 'invalid'; by: string; errors: Readonly<Record<string, string>> }
+    | {
+        ok: false;
+        reason: 'invalid' | 'not-reachable';
+        by: string;
+        errors?: Readonly<Record<string, string>>;
+      }
     | null;
 }
 
@@ -152,11 +157,15 @@ export interface NavContext {
     state: WizardState
   ) => Promise<Readonly<Record<string, string>> | null>;
   /**
-   * Runs the load of a step before entering it. The second argument is the
-   * step's own `load` reference: a step inside a sub-flow has no id in the root
-   * flow, so the host cannot look it back up by id.
+   * Runs the load of a step before entering it.
+   *
+   * Both the reference and the scope arrive from the pipeline rather than being
+   * looked back up. A step inside a sub-flow has no id in the root flow, and
+   * the scope the resolver needs is the one *after* the move: on entry to a
+   * repeat, `loop` does not exist in the committed state at all, and on an
+   * advance it still names the item being left.
    */
-  load?: (stepId: string, load: unknown, signal: AbortSignal) => Promise<void>;
+  load?: (stepId: string, load: unknown, scope: Scope, signal: AbortSignal) => Promise<void>;
   /** Group and repeat traversal. Absent means flat flows only. */
   groups?: Traversal;
   /** Sub-flow definitions a string `GroupStep.flow` names. */
@@ -331,7 +340,7 @@ export async function runNav(
           }
         }
         if (step.load !== undefined && ctx.load) {
-          await ctx.load(target, step.load, controller.signal);
+          await ctx.load(target, step.load, where.scope, controller.signal);
         }
       } finally {
         ctx.signal?.removeEventListener('abort', onAbort);
