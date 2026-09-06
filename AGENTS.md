@@ -101,6 +101,13 @@ comment beside the budget.
 names are identical across both and stay that way; the asymmetry above them is not a bug to
 fix.
 
+**The React binding is a client module.** `react/src/v1/index.tsx` opens with `'use client'`
+and the built `dist/v1/index.js` and `.cjs` must too: a React Server Components bundler reads
+the directive from `dist`, and without it a server component importing the binding fails at
+build time. `examples/next-app` is the proof, built on every `pnpm build` and driven by e2e.
+Outside RSC - Vite, Remix, plain bundlers, Node - the directive is inert. Keep the react
+`tsup` config on esbuild only; the rollup pass drops directives.
+
 ## Quality gates
 
 These run in CI and must pass locally before a PR:

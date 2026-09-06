@@ -66,6 +66,14 @@ export default defineConfig({
         baseURL: 'http://127.0.0.1:5174/',
       },
     },
+    {
+      name: 'next',
+      testMatch: /next\/.*\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: 'http://127.0.0.1:3100/',
+      },
+    },
   ],
 
   // Run your local dev servers before starting the tests
@@ -89,6 +97,16 @@ export default defineConfig({
       stderr: 'pipe',
       // Add retries for readiness check
       ignoreHTTPSErrors: true,
+    },
+    {
+      // Serves the production build: `pnpm build` runs `next build` for the
+      // fixture, and the e2e job builds before it tests.
+      command: 'pnpm --filter @examples/next-app start --hostname 127.0.0.1 --port 3100',
+      url: 'http://127.0.0.1:3100/',
+      reuseExistingServer: !process.env.CI,
+      timeout: process.env.CI ? 180 * 1000 : 120 * 1000,
+      stdout: 'pipe',
+      stderr: 'pipe',
     },
   ],
 
