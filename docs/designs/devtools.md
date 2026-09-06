@@ -943,6 +943,162 @@ shows `devtools-redact-failed`; `limits` are honoured (a 3-row activity ring). T
 e2e "diagnosis journey" already measures the getting-started claim end to end: it is the
 TTHW test.
 
+## 14. Amendments from the Phase 3 engineering review (2026-09-06)
+
+These paragraphs override §3.7, §4.2, §4.3, §10, §11 (X1), §12.7, §13.1, §13.2 and §13.4
+where they differ. Every one of them was checked against the engine's source before it was
+written; the line numbers are from `main` `814dc8c`.
+
+**14.1 One attempt hook replaces `afterResult`.** The store's wrapper (`store.ts:292-298`)
+is the single place all four callers (`next`, `back`, `go`, and `start()` at `store.ts:378`)
+enter `runNav`. Three facts made `afterResult(intent, result)` insufficient:
+`beforeNavigate` receives `to: null` for `next` and `back` (`navigate.ts:238`), so a plugin
+cannot name a pending target from it; `runNav` re-throws when a resolver or validator throws
+(`navigate.ts:420-422`), so an attempt that ends in an exception would never reach a
+"result" hook and a pending row would stay forever; and a superseded attempt's late result
+would clear a newer attempt's pending state unless attempts carry an identity
+(`navigate.ts:243`). Core therefore gains one optional hook, fired only from the wrapper:
+
+```ts
+// core — navigate.ts Hooks (replaces the §11 afterResult proposal)
+onAttempt?: (e: Attempt) => void;
+
+export type Attempt =
+  | { id: number; intent: NavIntent; source: 'call' | 'start'; phase: 'start'; rev: number }
+  | { id: number; intent: NavIntent; source: 'call' | 'start'; phase: 'end'; result: NavResult; rev: number }
+  | { id: number; intent: NavIntent; source: 'call' | 'start'; phase: 'error'; error: unknown; rev: number };
+```
+
+`id` is a counter in the wrapper; `rev` is `getState().rev` at the moment of the event;
+`source: 'start'` marks the engine's own first move so the Activity tab shows it as
+`▶ start → details`, not as a click nobody made. The wrapper fires `start`, then awaits
+`runNav` in a try/catch/finally: `end` with the result, or `error` with the thrown value
+(which is then re-thrown to the caller unchanged). The call goes through the same
+`disabled`/`destroyed` filter and the same `fail()` helper that `write()` uses for `onCommit`
+(`store.ts:214-240`) — one helper, both call sites, so a plugin disabled for throwing in one
+hook receives neither. `cancel()` still fires nothing of its own; the aborted attempt ends
+with `{ ok: false, reason: 'aborted' }` through `end`. Cost: measured in PR 1; the honest
+estimate is 100–150 B gzip, so the `core-v1` line moves 5.0 → 5.2 kB with this paragraph as
+its reason (TASTE T2 at the gate carries the new number). The `store.ts:19-31` header gains
+one sentence naming the hook.
+
+The plugin: `devtools()` keeps `pending` per attempt id and clears it only for the matching
+id; `outcomes` gains `{ id, intent, source, result | error, rev }`; an `error` phase is an
+Activity row `✗ next threw · <message>` and the strip says the same. §13.1's
+`pending: { from, to }` becomes `pending: { id: number; intent: NavIntent } | null`; the strip
+prints the verb and, for `go`, the target: `… next pending`, `… go(payment) pending`.
+
+**14.2 Recorded frames are settled states.** `beginNav` bumps `rev` and sets
+`status: 'busy'` (`commit.ts:38`) and that write notifies subscribers (`store.ts:201-206`),
+so every navigation produces at least two notifications, and the very first one after
+`start()` has an empty stack with `status: 'busy'`, which `checkSession` rejects
+(`session.ts:258-260`). §4.3's "one notification, one commit row" is wrong as stated.
+Amended: the recorder stores a frame only when `status !== 'busy'`; the Activity tab lists
+settled commits and uses the busy notifications for the pending segment alone; §4.3 reads
+"one settled commit, one row". The property test in §4.6 stands unchanged, because it is
+exactly what this rule protects.
+
+**14.3 A flow change ends the recording.** `patchFlow` replaces the definition and keeps the
+accumulated history (`store.ts:458-482`); a bundle carries one `flow`. When the panel sees
+`getFlow()` return a different object, the recorder stops with `meta.stopped: 'flow-changed'`
+and the preview says so; a new recording starts against the new flow. Each Activity row keeps
+a reference to the flow object it was observed under, so a pinned row is drawn with its own
+definition, not the current one (the layout memo already keys on that object, §12.3/1.2).
+
+**14.4 The redactor gets a copy.** `WizardState` is `Readonly` one level deep
+(`state.ts:28-29`); frames are the live objects `getState()` returned, and a `redact` that
+deletes `bundle.session.frames[0].data.card` would edit the wizard's state without a
+commit. `bundle()` runs `structuredClone` on the assembled artefact and hands the copy to
+`redact`; if the clone fails (a function or a DOM node inside `data`), the export stops with
+the message below. `devtools-redact-failed` is renamed **`devtools-export-failed`** and
+covers both causes: `[wizzard] export stopped: <clone | redact> failed: <message>. Nothing was
+copied. Recorded data must be structured-cloneable and redact must return a SessionBundle;
+fix the value or the hook, or remove the hook to export development data unredacted.
+…#devtools-export-failed`. A test asserts, deeply, that a mutating redactor leaves the
+wizard's state and the recorder's frames untouched.
+
+**14.5 Nothing devtools does reaches the host.** `notify()` calls listeners bare
+(`store.ts:201-206`): a throwing devtools subscriber would surface inside the host's `set()`
+or navigation. Every callback devtools registers — the store subscription, the plugin's
+`onAttempt`/`onCommit`/`init` bodies, `onRecord`, the `sessionStorage` legend read — runs
+under its own try/catch. On a failure the panel unsubscribes, keeps what it has, and the
+strip shows a sixth message: `[wizzard] diagnostics stopped: <message>. A devtools listener
+threw; the wizard is unaffected and this panel no longer updates. Reload the page, and
+record a session and attach it to an issue if it happens again. …#devtools-stopped`. The
+plugin catches inside its own hooks for the same reason, so core's `fail()` never has to
+disable it for a devtools bug. §4.2 now reads "devtools never throws into the host, from a
+render or from a callback", and the §4.1 test drives every control with a throwing
+`onRecord` and a throwing `layout` and asserts the host's next `set()` still commits.
+
+**14.6 Every ring has an owner.** The plugin is created before the panel and lives without
+it, so its cap is its own: `devtools({ outcomes?: number })`, default 500. The recorder takes
+`limits?: { frames?: number; outcomes?: number }` (defaults 2000 and 500) in place of
+`limit`; when either cap is reached both subscriptions stop together and `meta.capped` names
+which (`'frames' | 'outcomes' | false`), so a bundle never carries outcomes for frames it
+does not have. The panel's `limits.activity` caps the commit rows it displays; refusal rows
+are bounded by the plugin. A byte cap is still not added (Phase 1 §7); `meta.bytes` in the
+preview is the number the person sees.
+
+**14.7 The inspected flow is resolved through the stack, not by id.** `known` in
+`session.ts` is keyed by registry key and by definition id, and the file says why resolving
+a frame by name alone can pick the wrong definition (`session.ts:122-127`); `checkFrames`
+walks parents for that reason. The panel does the same: the root frame resolves by name,
+every frame above it through the group step of the frame below. Highlights and the inferred
+edge are keyed on `(flow, step, key)`, so two sub-flows with the same step ids, or two repeat
+items, never share a highlight.
+
+**14.8 Density is edges, not nodes.** `graph.ts:204-222` emits an `order` edge from a step
+to every later conditional step until an unconditional one; 200 steps that all carry `when`
+produce ~20 000 edges. The perf fixture is that graph, not a chain; `layoutGraph` must
+finish it under 100 ms and the memoised result must be shared. The renderer draws at most
+**1 500** edges and then shows `N of M edges drawn (dense graph)` in the toolbar while the
+mirror table stays complete. Dangling edges are placed against a ghost endpoint in the next
+layer (drawn as the struck-through target §3.2 already describes), so the layout property
+reads "every edge endpoint is a laid-out node or a ghost".
+
+**14.9 Attachment, StrictMode and destroy.** `WizardProvider` re-creates an owned engine
+under StrictMode (`react/v1/index.tsx:83-99`) and Fast Refresh can evaluate a module twice,
+so one plugin object may meet two wizards in sequence, and a second `devtools()` instance may
+be passed to the panel by mistake. Rules: `init` records its host and returns a cleanup;
+`init` while attached replaces the attachment and clears the rings; the cleanup (run by core
+on `destroy`, `store.ts:303-317`) notifies the plugin's subscribers, which is how the panel
+learns of a destroy without polling `isDestroyed`. The plugin exposes `attached: boolean` and
+`lastRev: number`. The panel shows the `devtools-no-plugin` message with a second form when
+`plugin` is given but either `attached` is false or `lastRev` stays behind the wizard's `rev`
+after a commit: "…the plugin object passed to the panel is not the one installed on this
+wizard; pass the same instance to both." One test mounts the panel under
+`<React.StrictMode>` and asserts one commit row per commit and one `init` attachment.
+
+**14.10 One snapshot.** The panel subscribes to the wizard and to the plugin, and reads both
+inside one `getSnapshot` for one `useSyncExternalStore` call, so a render never pairs a new
+commit with a stale outcome list (the binding uses one store per hook,
+`react/v1/index.tsx:143,149`; two hooks would tear).
+
+**14.11 Headless means installable without React.** `exports` alone does not split install
+requirements. `package.json` marks `react`, `react-dom` and `@wizzard-packages/react` as
+optional peers (`peerDependenciesMeta`), the client entry documents that it needs them, and
+R0's consumer fixtures gain a React-free Node project that imports `/headless`, records a
+bundle, and type-checks.
+
+**14.12 No broken package between PRs.** Every merge to `main` publishes to the `canary`
+tag (`canary.yml`), so §10's order (delete the 0.x panel in PR 1, add the new one in PR 2)
+would publish a devtools with no panel. Amended: PR 1 adds the headless entry, the fixtures,
+the core hook and the tests **beside** the 0.x panel; PR 2 replaces the panel and carries the
+`major` changeset; PR 3 is unchanged. The changeset's body is the 13.4 table.
+
+**14.13 Tests corrected and added.** The §4.5 XSS test asserted `queryByRole('img')` is
+null, which §12.10's `role="img"` on every node contradicts; it now asserts no `<img>`
+element exists and the hostile id is present as text. Added: the attempt hook fires
+`start`/`end` once per call and `error` for a throwing validator, with `source: 'start'` for
+the engine's first move; a superseded attempt does not clear a newer pending; settled-only
+recording (14.2); flow change stops the recording (14.3); deep immutability under a mutating
+redactor (14.4); a throwing listener never reaches the host (14.5); both caps (14.6); same
+step ids in two sub-flows (14.7); the dense fixture and the draw cap (14.8); StrictMode and
+the wrong-instance message (14.9); one-snapshot tearing test with a commit and an outcome in
+one tick (14.10); a React-free install of `/headless` (14.11); the chaos property test
+interleaves Record/Stop with navigation. TTHW is a hypothesis until a person installs from
+the tarball: Pass 8 says so, and R0's checklist gains that line.
+
 ---
 
 <!-- /autoplan Phase 1: CEO review (SELECTIVE EXPANSION, auto-decided). Appended 2026-09-06. -->
@@ -2268,6 +2424,456 @@ _No new tasks from Pass 6 (peer range is in T6)._
 > 1 single-voice taste item (T3) → surfaced at gate.
 > Passing to Phase 3 (Eng Review — the required gate reviews the final amended plan).
 
+---
+
+<!-- /autoplan Phase 3: engineering review (all four sections, dual voices, auto-decided). Appended 2026-09-06. -->
+
+## Step 0: Scope Challenge (Eng)
+
+Read for this step, at `main` `814dc8c`: `packages/core/src/v1/store.ts` (the wrapper at
+292–298, `write` and `fail()` at 213–240, plugin `init` at 303–317, `patchFlow` at 458–482,
+`getFlow` at 323), `navigate.ts` (`runNav` 208–424, `Hooks` 59–87, `NavResult` 41–49),
+`commit.ts:32-40`, `session.ts:118-130, 250-264`, `graph.ts:200-224`, `react/v1/index.tsx`
+(context at 40, `useWizard` throw at 107, StrictMode handling 83–99, directive at 3),
+`packages/devtools/src/*` (one 416-line file importing `useWizardContext`,
+`subscribeToActions`, `RESTORE_SNAPSHOT` — all 0.x, none in v1), `.size-limit.js` (no
+devtools line; `core-v1` 5.0 kB at 83; `react-v1` 1.1 kB at 207), `examples/next-app`
+(`page.tsx` is a server component; `steps.tsx` is the client boundary), `playwright.config.ts`
+(project `next` at 69–76, web server at 101–110), `scripts/embed-examples.mjs`, `ci.yml`
+(build → unit → publint/attw/size on Node 22; a second `e2e` job), `canary.yml`,
+`.husky/pre-push` (`pnpm test:run`).
+
+1. **Existing code per sub-problem** — unchanged from Phase 1 Step 0B, with two corrections
+   from reading: `evaluate` lives on the `core-v1` main entry (`index.ts:3` re-exports
+   `expr.ts`), not on `/expr`, so the panel's live `when` costs no new entry; `WizardContext`
+   exists (`index.tsx:40`) and is simply not exported — a one-word change.
+2. **Minimum set** — the four pure modules, the fixtures, the panel, the size line. Everything
+   else is evidence for the product's value (X1, X2, X8) or a hard rule (A3, A4). Nothing is
+   deferred (override: never reduce).
+3. **Complexity check** — triggers (eleven source files plus fixtures, one core hook, one
+   example edit, one CI fixture). Proceed: each file is one module with one test, and the
+   count comes from a rewrite, not from abstraction (P5, P2). No AskUserQuestion mid-run.
+4. **Search check** — no live search in this pipeline (P3). Patterns and their layer:
+   layered graph layout **[Layer 3]** (nothing in React or the DOM lays out a DAG; dagre/elk
+   are the Layer 1 answers and the `layout` prop admits them); `useSyncExternalStore` with
+   two sources **[Layer 1, footgun]** — one hook per store tears; merged in 14.10;
+   `structuredClone` **[Layer 1]** — Node ≥ 17 and every current browser; the failure mode
+   (functions, DOM nodes) is a message, 14.4; `ResizeObserver` **[Layer 1]**; error
+   boundaries as a class **[Layer 1]** (React has no hook form); an attempt id carried through
+   an async pipeline **[Layer 3]** — the engine already uses `nav` tokens for the same problem
+   (`commit.ts:33`), and 14.1 copies the idea rather than the token.
+5. **TODOS cross-reference** — `TODOS.md` holds `url-sync` (P2), the bindings' a11y contract
+   (P2) and inspector URL state (P3); none blocks L5, none is bundled. This plan adds two
+   items (below).
+6. **Completeness** — the plan proposes the complete version at every fork (Lake Score
+   below). One shortcut was found and removed: `afterResult` was the minimal hook; the
+   complete one (14.1) is the same call site with three phases.
+7. **Distribution** — `publish.yml` and `canary.yml` exist; changesets publish; the two
+   entries are declared in `exports` with split types and checked by publint and attw in CI;
+   the consumer fixture (R0) now includes a React-free import. Nothing deferred.
+
+Scope: **accepted as amended** (no reduction; §14 adds correctness, not surface).
+
+## Step 0.5: Dual Voices (Eng)
+
+Both voices ran against the plan at `42a38bf` (§1–13 plus the appendix). Codex replied in
+Russian; the content is used, the transcript is in the session log.
+
+### CODEX SAYS (eng — architecture challenge)
+
+Fourteen findings, every one checked against the source before acceptance:
+
+1. **(high)** `pending` cannot be built from `beforeNavigate`: `to: null` for `next`/`back`
+   (`navigate.ts:238`), and hooks run in order, so a slow or blocking earlier plugin delays or
+   prevents the call. — **verified; fixed 14.1.**
+2. **(high)** Concurrent attempts have no identity; a late `superseded` result clears the
+   newer pending. — **verified (`navigate.ts:243`); fixed 14.1.**
+3. **(high)** Exceptions escape the contract: `runNav` re-throws (`navigate.ts:420-422`), so
+   no result hook fires and pending stays. — **verified; fixed 14.1 (`phase: 'error'`).**
+4. **(high)** "A refusal never commits" is false: `beginNav` writes a busy state that
+   notifies; the first frame after `start()` has an empty stack with `status: 'busy'`, which
+   `checkSession` rejects. — **verified (`commit.ts:38`, `session.ts:258-260`); fixed 14.2.**
+5. **(high)** One flow definition cannot describe a recording across `patchFlow`. —
+   **verified (`store.ts:458-482`); fixed 14.3.**
+6. **(high)** A redactor can mutate the live wizard through shared references. — **verified
+   (`state.ts:28-29`, frames are `getState()` objects); fixed 14.4.**
+7. **(high)** The Graph boundary does not isolate subscription-time errors; `notify()` is
+   bare. — **verified (`store.ts:201-206`); fixed 14.5.**
+8. **(high)** The frame cap does not bound outcomes; the plugin's cap belongs to the plugin.
+   — **accepted; fixed 14.6.**
+9. **(medium)** Resolving a sub-flow by `frame.flow` alone can pick another definition. —
+   **verified (`session.ts:122-127`); fixed 14.7.**
+10. **(medium)** Performance is measured in nodes while the load is edges (~20 000 for 200
+    conditional steps); dangling edges contradict "every endpoint is a node". — **verified
+    (`graph.ts:204-222`); fixed 14.8.**
+11. **(medium)** Plugin and recorder lifecycle: destroy clears listeners without a final
+    notification; one plugin on two wizards; StrictMode. — **verified
+    (`store.ts:488-491`, `index.tsx:83-99`); fixed 14.9.**
+12. **(medium)** The headless entry does not make the install React-free. — **accepted;
+    fixed 14.11.**
+13. **(medium)** PR 1 deletes the panel and PR 2 adds the new one while `canary.yml`
+    publishes every merge. — **verified; fixed 14.12.**
+14. **(medium)** Tests: the `role="img"` contradiction between §4.5 and §12.10; TTHW measured
+    by an e2e is not a human install. — **verified; fixed 14.13.**
+
+Verdict: CONCERN on all six dimensions; "not ready to implement" before amendments.
+
+### CLAUDE SUBAGENT (eng — independent review)
+
+- **Two-store tearing (medium):** `wizard` and `plugin` are separately subscribable; two
+  `useSyncExternalStore` calls can pair a new commit with stale outcomes. — **fixed 14.10.**
+- **`start()` indistinguishable through the hook (low/medium):** the engine's own first move
+  goes through the same wrapper (`store.ts:378`). — **fixed 14.1 (`source: 'start'`).**
+- **No stated filtering parity for the new hook (medium):** `write()` filters `disabled`/
+  `destroyed` and wraps in `fail()` (`store.ts:214-240`); the note did not require the new
+  call site to share it. — **fixed 14.1 (one helper, both call sites).**
+- **`plugin` prop vs. installed plugin is an unchecked identity (medium):** a second
+  `devtools()` instance shows `[]` forever. — **fixed 14.9 (`attached`, `lastRev`,
+  the second form of `devtools-no-plugin`).**
+- **StrictMode double-subscribe untested (medium).** — **fixed 14.9.**
+- **Byte cap consciously rejected (low):** accepted debt; make the README's ceiling loud. —
+  **kept as debt; TODOS.md item 10.**
+- **Security note:** `redact` protects the export only; a live tab shows unredacted data. —
+  **README's redaction recipe gains the sentence; no runtime guard (Phase 1 §3).**
+- **Hidden complexity:** cycle-breaking determinism in the layout; the property tests must
+  not be trimmed. — **kept; the §7 property rows are P1 tasks.**
+
+Verdicts: architecture CONCERN, tests CONCERN, performance SOUND, security SOUND, error
+paths SOUND, deployment SOUND.
+
+### ENG DUAL VOICES — CONSENSUS TABLE
+
+```
+═══════════════════════════════════════════════════════════════════════════════════════
+  Dimension                           Claude    Codex     Consensus
+  ──────────────────────────────────── ───────── ───────── ────────────────────────────────
+  1. Architecture sound?               CONCERN   CONCERN   CONFIRMED (concern) — the hook contract
+                                                           (Codex 1-3, Claude start/parity), the
+                                                           two-object handshake (Claude identity,
+                                                           Codex 11) → 14.1, 14.9, 14.10
+  2. Test coverage sufficient?         CONCERN   CONCERN   CONFIRMED (concern) → 14.13
+  3. Performance risks addressed?      SOUND     CONCERN   DISAGREE — settled by code: graph.ts
+                                                           fans out order edges → 14.8 (T4 at gate:
+                                                           the 1 500-edge draw cap is a number)
+  4. Security threats covered?         SOUND     CONCERN   DISAGREE — settled by code: shared
+                                                           references reach the redactor → 14.4;
+                                                           Claude's export-only note → README
+  5. Error paths handled?              SOUND     CONCERN   DISAGREE — settled by code: bare
+                                                           notify(), re-thrown attempts → 14.1, 14.5
+  6. Deployment risk manageable?       SOUND     CONCERN   DISAGREE — settled by code: canary on
+                                                           every merge → 14.12 (T5 at gate: PR order)
+═══════════════════════════════════════════════════════════════════════════════════════
+```
+
+2/6 confirmed as concerns and amended; 4/6 DISAGREE, each resolved by reading the line
+Codex cited rather than by preference — the amendments are recorded, and two of them carry a
+number or an order the owner may prefer differently (T4 draw cap, T5 PR order), so they are
+listed at the gate. **Not a User Challenge:** neither voice asked to change the owner's
+direction; both asked for the contract under it.
+
+## Section 1: Architecture Review
+
+Dependency graph after §13–§14 (arrows = imports; `*` = new; `†` = changed):
+
+```
+  @wizzard-packages/devtools*
+    ├── index.ts ('use client')            ──▶ react/v1† (peer, optional-for-headless: WizardContext export)
+    │     WizardDevtools, FlowGraphView     ──▶ ./headless (devtools, recordSession re-exported)
+    │     one useSyncExternalStore over {wizard state, plugin rings}          (14.10)
+    └── headless/index.ts* (no directive)  ──▶ core/graph (buildGraph)
+          devtools(), recordSession,        ──▶ core/session (knownFlows, checkSession as test oracle)
+          diffState, layoutGraph, formatExpr──▶ core/v1 (types, evaluate)
+  core†: Hooks.onAttempt?(Attempt) — ONE call site: the store wrapper, through write()'s fail() helper (14.1)
+  contract/fixtures.ts* ◀── devtools tests, binding-suite (R-C moved), the dense perf fixture (14.8)
+  examples/quickstart/src/Devtools.tsx* ◀── README embed (13.3)
+  examples/next-app/app/steps.tsx† ──▶ devtools (client boundary; page.tsx stays a server component)
+  R0 consumer fixtures†: + a React-free Node project importing /headless (14.11)
+```
+
+Data flows with their nil / empty / error paths:
+
+```
+  attempt flow*   next()/back()/go()/start() ──▶ wrapper: onAttempt{start} ──▶ runNav ──▶ onAttempt{end|error} ──▶ plugin rings ──▶ strip + Activity
+    nil:   no plugin                       → strip `… pending` from status; Activity header devtools-no-plugin
+    empty: result ok                       → `✓ next → payment`; the settled commit row follows
+    error: runNav throws                   → onAttempt{error}; row `✗ next threw · msg`; rethrown to the caller unchanged
+    race:  superseded                      → end{superseded} for id A; pending for id B untouched (14.1)
+  commit flow     subscribe ──▶ getState() ──▶ status busy? skip : diffState(prev, next) ──▶ rows ──▶ one snapshot ──▶ render
+    nil:   no wizard                       → one-line message; nothing subscribed
+    empty: flow.steps = {}                 → "flow has no steps"; diff works
+    error: listener body throws            → caught; unsubscribe; strip devtools-stopped; host's set() unaffected (14.5)
+  record flow     recordSession(w, {plugin, limits, redact}) ──▶ settled frames + plugin outcomes ──▶ bundle(): clone → redact → meta
+    nil:   no redact                       → identity; README sentence
+    empty: stopped before any commit       → one frame (the mount state); checkSession passes
+    error: clone or redact throws          → devtools-export-failed; nothing copied (14.4)
+    change: getFlow() identity changes     → stop; meta.stopped = 'flow-changed' (14.3)
+    cap:   frames or outcomes              → both subscriptions stop; meta.capped names which (14.6)
+  layout flow     buildGraph ──▶ layoutGraph | layout prop ──▶ validate finite, dedupe, ghost dangling ──▶ ≤ 1 500 edges drawn
+    nil:   layout prop misses a node       → drawn known, mirror lists missing, no throw
+    dense: 20 000 edges                    → layout < 100 ms; `1 500 of 20 000 edges drawn`; mirror complete (14.8)
+    error: layout prop throws              → Graph-tab boundary; strip, State, Activity, export keep working
+  attach flow*    devtools() ──▶ createWizard({ plugins }) ──▶ init(host) ──▶ attached, cleanup registered ──▶ destroy → cleanup → notify
+    nil:   plugin never installed          → attached false → second form of devtools-no-plugin
+    wrong: another instance installed      → lastRev lags rev after a commit → same message (14.9)
+    twice: StrictMode / Fast Refresh       → re-init replaces the attachment, rings cleared
+```
+
+Coupling: core → devtools stays absent (an optional hook and a type); devtools → core is on
+three entries; devtools → react is a peer and optional for headless installs. Scaling: rings
+are bounded (500/2 000/500), layout is O(V+E) once per flow object, the draw cap bounds the
+DOM, diff is O(keys) per settled commit only. SPOF: none. Realistic production failures per
+new codepath: a resolver that throws on the third step (→ `error` row, promise rejects as
+before); a host that passes a plugin created in a hot-reloaded module (→ the wrong-instance
+message); a `data` with a `File` object (→ `devtools-export-failed`, states still visible).
+Distribution: two entries in `exports`, split types, publint + attw + size in CI, changesets
+publish, canary on merge, the consumer fixtures at R0 — all existing machinery; nothing new
+to build.
+
+Findings (each auto-decided; confidence per the calibration table):
+
+- **1.1** `[P1] (9/10) navigate.ts:238` `to: intent.type === 'go' ? intent.to : null` — a
+  plugin cannot name a pending target from `beforeNavigate`. Decided: 14.1 (P1).
+- **1.2** `[P1] (9/10) navigate.ts:420-422` `catch (error) { …; throw error; }` — an attempt
+  can end without a result. Decided: 14.1 `phase: 'error'` (P1).
+- **1.3** `[P1] (9/10) store.ts:201-206` `for (const l of listeners) l();` — devtools can
+  throw into the host. Decided: 14.5 (P1).
+- **1.4** `[P1] (9/10) commit.ts:38` `status: 'busy', rev: state.rev + 1` — busy states
+  notify; recorded frames must be settled. Decided: 14.2 (P5).
+- **1.5** `[P2] (8/10)` two `useSyncExternalStore` calls tear. Decided: 14.10 (P5).
+- **1.6** `[P2] (9/10) store.ts:378` `start()` uses the wrapper. Decided: `source: 'start'`
+  (P5, explicit over inferred).
+- **1.7** `[P2] (7/10)` plugin identity unverifiable. Decided: 14.9 `attached` + `lastRev`
+  (P1); rejected: a registry keyed by wizard (clever, a global).
+
+## Section 2: Code Quality Review
+
+- **2.1 DRY — the hook call site.** `write()` already owns the filter and `fail()`
+  (`store.ts:214-240`); the wrapper calls the same helper. Decided: extract `dispatch(hook,
+  at, fn)` used by both, so the two paths cannot drift (P4).
+- **2.2 Naming.** `onAttempt` beside `onCommit`, `beforeNavigate`, `afterNavigate`: a verb
+  or a preposition plus a noun, one word each — consistent. `Attempt.phase` values are the
+  words the strip prints. `limits` is the one plural on the surface; kept because it holds
+  three numbers (P5).
+- **2.3 Stale diagram.** `store.ts:19-31` is prose, not a diagram, and lists what the store
+  owns; it gains one sentence for `onAttempt` in the same commit. `navigate.ts`'s numbered
+  phases (0–10) are untouched by design: the hook lives outside `runNav`.
+- **2.4 Error handling.** Six messages, one template, one test (13.2, 14.4, 14.5). The plugin
+  catches inside its hooks so a devtools bug never consumes core's `fail()` path (14.5).
+- **2.5 Over-engineering check.** `Attempt` has three variants because there are three ways
+  an attempt ends; an `id` because two can overlap; nothing else. The ghost node for
+  dangling edges is a `Positioned` with a flag, not a class. The edge draw cap is one
+  constant and one line of toolbar text.
+- **2.6 Under-engineering check.** Index-based array diff (Phase 1 5.4) stays documented; the
+  byte cap stays a TODO. Both are stated ceilings, not surprises.
+- **2.7 Debt hotspot.** `WizardDevtools.tsx` is the glue that touches every module; the
+  puzzle map keeps it thin (one snapshot, one reducer of view state, no rendering of its own).
+
+## Section 3: Test Review
+
+Framework: vitest (root `vitest.config.ts`, `environment: 'jsdom'`, React and Vue plugins),
+fast-check for properties, testing-library, Playwright (`playwright.config.ts`, project
+`next` on port 3100). Devtools has no test file today; every module below gets one.
+
+```
+CODE PATHS                                                         USER FLOWS
+[+] core/store.ts wrapper                                          [+] Diagnosis journey (§12.12)          [→E2E]
+  ├── [GAP→T] onAttempt start/end once per call                      ├── [GAP→T] refusal read on the default tab
+  ├── [GAP→T] phase error on throwing validator; rethrow unchanged   ├── [GAP→T] open refusal → inspector → export with outcome
+  ├── [GAP→T] source 'start' for the engine's first move             ├── [GAP→T] narrow container (390 px) variant
+  ├── [GAP→T] superseded end does not clear newer pending            └── [GAP→T] keyboard-only variant
+  ├── [GAP→T] aborted via cancel() ends with reason aborted        [+] Getting started (§13.3)
+  └── [GAP→T] disabled plugin receives neither hook (shared helper)  ├── [GAP→T] quickstart Devtools.tsx type-checks; embed check
+[+] devtools/headless/plugin.ts                                      └── [GAP→T] README states the first result (embed marker)
+  ├── [GAP→T] pending per id; outcomes ring at cap                 [+] Attach / detach
+  ├── [GAP→T] init twice → re-attach, rings cleared (StrictMode)     ├── [GAP→T] StrictMode: one row per commit
+  ├── [GAP→T] cleanup on destroy notifies subscribers                ├── [GAP→T] wrong instance → second no-plugin form
+  └── [GAP→T] hook body throws → caught, plugin not disabled         └── [GAP→T] wizard prop replaced → log cleared, note
+[+] devtools/headless/record.ts                                    [+] Record / export
+  ├── [GAP→T] settled frames only; checkSession passes (property)    ├── [GAP→T] preview counts post-redaction
+  ├── [GAP→T] flow change → stopped 'flow-changed'                   ├── [GAP→T] clone failure → export-failed, nothing copied
+  ├── [GAP→T] caps: frames | outcomes, both subscriptions stop       ├── [GAP→T] clipboard rejected → textarea focused
+  ├── [GAP→T] clone → redact → meta; deep immutability               └── [GAP→T] Record/Stop interleaved with navigation (chaos)
+  └── [GAP→T] React-free Node import of /headless                  [+] Graph
+[+] devtools/headless/layout.ts                                      ├── [GAP→T] dense fixture: `1 500 of N edges drawn`
+  ├── [GAP→T] no overlap; y(to) > y(from); deterministic; cycles     ├── [GAP→T] keyboard: arrows/Enter/Escape/Tab; Table toggle
+  ├── [GAP→T] dense 20 000-edge fixture < 100 ms; memo by identity   ├── [GAP→T] hostile id: no <img> element, text present
+  ├── [GAP→T] ghost endpoint for dangling edges                      └── [GAP→T] drill in/out; Open sub-flow preview; same ids twice
+  └── [GAP→T] crossing-count ratchet on the three fixtures         [+] Error states
+[+] devtools/headless/format.ts, diff.ts — table + caps (§7)         ├── [GAP→T] layout throws → Graph boundary only
+[+] devtools/WizardDevtools.tsx                                      ├── [GAP→T] listener throws → devtools-stopped; host set() commits
+  ├── [GAP→T] one snapshot: commit + outcome in one tick, no tear    └── [GAP→T] every [wizzard] string matches template + anchor
+  ├── [GAP→T] three concepts independent (§12.12)
+  ├── [GAP→T] pinned row past the ring keeps its snapshot + flow
+  └── [GAP→T] drives every control with throwing onRecord/layout; getState identity unchanged
+[+] build: directive in dist (client), absent in /headless; size lines; check:pack
+
+COVERAGE: 0/47 today (the package has no tests) → 47/47 planned   |  E2E: 4 (one spec, three variants)  |  EVAL: none (no LLM)
+QUALITY target: ★★★ on every row (each names its failure and edge case above)
+```
+
+Regression rule: the diff modifies existing behaviour in one place — the store wrapper
+(`store.ts:292-298`) gains the hook calls. **CRITICAL regression tests:** `next`/`back`/`go`/
+`start` return the same `NavResult`s and reject with the same errors as before with no
+plugin installed and with a throwing plugin installed (core `store.test.ts`), and the
+`core-v1` size line is re-measured. Test plan artifact written to
+`~/.gstack/projects/ZizzX-wizzard-packages/Aziz-docs-devtools-design-eng-review-test-plan-20260906-235500.md`.
+
+## Section 4: Performance Review
+
+- Layout: O(V+E) once per flow object; the dense fixture (~20 000 edges) under 100 ms is
+  asserted; the memo is a `WeakMap` on the definition.
+- Render: the draw cap (1 500 edges) bounds the SVG; 500 rows and 200 nodes are within DOM
+  comfort; no virtualisation (P5).
+- Diff: runs on settled commits only (14.2 halves the work per navigation); 10k-key walk cap.
+- Memory: rings 500/2 000/500; `structuredClone` at export doubles the recording transiently
+  — stated in the preview's `bytes`; a byte cap is TODOS.md item 10.
+- `evaluate` runs on inspect, not on render; `structuredClone` runs on export, not on record.
+- No N+1, no network, no caching beyond the two memos.
+
+## Required Outputs (Eng)
+
+### NOT in scope (eng)
+
+- Crossing minimisation (X5) — TODOS.md item 9; the ratchet test lands now.
+- A byte cap on the recorder — TODOS.md item 10; count and `bytes` are shown.
+- A runtime production guard — documented; ESM bundles make `NODE_ENV` a false comfort.
+- Time travel, theme presets, compound nodes, a Vue panel, a layout dependency — Phase 1.
+- A codemod, an alias, a hosted playground, telemetry — Phase 2.5.
+- A second core hook for `cancel()` — the aborted attempt already ends through `end`.
+
+### What already exists (eng)
+
+`nav` tokens in `commit.ts` (the idea behind attempt ids); `write()`'s filter and `fail()`
+(the shared dispatch helper); `checkFrames`' parent-walk (the resolution rule in 14.7);
+`react/v1`'s StrictMode handling (the reason 14.9 exists); `useSyncExternalStore` in the
+binding (one store per hook); `embed-examples.mjs`; the Playwright `next` project; CI's
+publint/attw/size steps; `canary.yml`; the fast-check seed memory.
+
+### Failure modes registry (eng)
+
+```
+  CODEPATH                 | FAILURE MODE                           | RESCUED? | TEST? | USER SEES?                          | LOGGED?
+  -------------------------|----------------------------------------|----------|-------|-------------------------------------|--------
+  store wrapper onAttempt  | plugin throws in the hook              | Y (core) | Y     | nothing; plugin disabled            | console (core)
+  store wrapper onAttempt  | runNav throws                          | Y        | Y     | ✗ next threw · msg; app sees reject | n/a
+  plugin pending           | superseded late result                 | Y        | Y     | newer pending intact                | n/a
+  plugin attach            | second instance / never installed      | Y        | Y     | no-plugin second form               | n/a
+  plugin attach            | StrictMode double init                 | Y        | Y     | one row per commit                  | n/a
+  recorder                 | busy frame                             | Y        | Y     | not recorded                        | n/a
+  recorder                 | patchFlow                              | Y        | Y     | stopped: flow changed               | n/a
+  recorder                 | cap (frames | outcomes)                | Y        | Y     | capped: which                       | n/a
+  bundle()                 | clone fails / redact throws / mutates  | Y        | Y     | export-failed; nothing copied       | n/a
+  panel subscription       | listener throws                        | Y        | Y     | devtools-stopped in the strip       | console once
+  panel snapshot           | commit + outcome in one tick           | Y        | Y     | consistent render                   | n/a
+  layout                   | dense graph / dangling / NaN / dup ids | Y        | Y     | draw cap note / ghost / fallback    | n/a
+  flow resolution          | same ids in two sub-flows              | Y        | Y     | correct child drawn                 | n/a
+  install                  | /headless without React                | Y        | Y     | works; client entry documents peers | n/a
+  release                  | canary between PR 1 and PR 2           | Y        | —     | old panel still present             | n/a
+```
+
+No row is RESCUED=N / TEST=N / silent. **0 CRITICAL GAPS.** (The release row has no test
+by nature; the PR order is the control.)
+
+### Diagrams
+
+Architecture and data flows (Section 1), the test diagram (Section 3), the attach flow
+(Section 1). Inline diagram candidates for the implementation: `headless/plugin.ts` (the
+attempt state per id: start → end | error, with supersede), `headless/record.ts` (settled
+frame filter → rings → bundle pipeline), `WizardDevtools.tsx` (the one-snapshot reducer of
+observed time / inspected flow / selected node). Stale-diagram audit: `store.ts:19-31` prose
+gains one sentence (2.3); nothing else in touched files carries a diagram.
+
+### Worktree parallelization strategy
+
+| Step                                        | Modules touched                                   | Depends on |
+| ------------------------------------------- | ------------------------------------------------- | ---------- |
+| A. core hook + shared dispatch helper       | `packages/core/src/v1/` (store, navigate, tests)  | —          |
+| B. fixtures + headless pure modules         | `contract/`, `packages/devtools/src/headless/`    | —          |
+| C. plugin + recorder                        | `packages/devtools/src/headless/`                 | A, B       |
+| D. renderer + panel + messages + errors.md  | `packages/devtools/src/`, `docs/`                 | B, C       |
+| E. README + quickstart + changeset + peers  | `packages/devtools/`, `examples/quickstart/`      | D          |
+| F. next-app mount + e2e + consumer fixture  | `examples/next-app/`, `e2e/`, R0 fixtures         | D          |
+
+Lanes: **Lane 1:** A (independent). **Lane 2:** B (independent). Then **C** (needs both).
+Then **D**. Then **E ∥ F** in two worktrees (no shared module). Execution: launch A and B in
+parallel worktrees; merge; C; D; then E and F in parallel; merge. Conflict flag: A and C both
+add tests under `packages/core/src/v1/` if C adds a core-side plugin test — keep the plugin's
+core-facing test in `packages/devtools`. This maps onto §10's PRs as PR 1 = A + B + C,
+PR 2 = D + E, PR 3 = F (14.12).
+
+### TODOS.md (collected from all phases)
+
+Two items, written to `TODOS.md` under P3 in this commit: **9. Crossing-minimisation pass in
+devtools' `layoutGraph`** (Phase 1 X5) and **10. Byte cap on the devtools session recorder**
+(Phase 3, accepted debt). No other phase deferred anything.
+
+## Implementation Tasks (Eng)
+
+Synthesized from this review's findings. Each task derives from a specific finding above.
+
+- [ ] **T1 (P1, human: ~3h / CC: ~25min)** — core — `Hooks.onAttempt` with `Attempt` (start / end / error, `id`, `source`, `rev`) fired from the store wrapper through a shared `dispatch` helper with `onCommit`; `store.ts` header sentence; `core-v1` line re-measured (5.0 → ~5.2 kB with the reason)
+  - Surfaced by: Section 1 — 1.1, 1.2, 1.6; Section 2 — 2.1
+  - Files: `packages/core/src/v1/navigate.ts`, `packages/core/src/v1/store.ts`, `packages/core/src/v1/store.test.ts`, `.size-limit.js`
+  - Verify: `pnpm --filter @wizzard-packages/core test:run`; `pnpm size`; the regression rows (same results and rejections without a plugin and with a throwing one)
+- [ ] **T2 (P1, human: ~2h / CC: ~20min)** — devtools — `devtools({ outcomes })` plugin: pending per attempt id, outcomes ring, `attached`/`lastRev`, re-init replaces the attachment, cleanup notifies subscribers, hook bodies catch internally
+  - Surfaced by: Step 0.5 — Codex 1, 2, 8, 11; Claude identity, StrictMode
+  - Files: `packages/devtools/src/headless/plugin.ts`, `packages/devtools/src/headless/plugin.test.ts`
+  - Verify: unit rows in the test diagram under `plugin.ts`
+- [ ] **T3 (P1, human: ~2h / CC: ~20min)** — devtools — `recordSession` records settled frames only, stops on flow change, `limits` for frames and outcomes with both subscriptions stopping together, `bundle()` = clone → redact → meta, `devtools-export-failed`
+  - Surfaced by: Step 0.5 — Codex 4, 5, 6, 8
+  - Files: `packages/devtools/src/headless/record.ts`, `packages/devtools/src/headless/record.test.ts`, `docs/errors.md`
+  - Verify: the property test against `checkSession` on every fixture; the deep-immutability test with a mutating redactor
+- [ ] **T4 (P1, human: ~2h / CC: ~15min)** — devtools — Panel: one `useSyncExternalStore` snapshot over wizard state and plugin rings; every callback under try/catch with `devtools-stopped`; flow resolved through the stack; per-row flow reference for pinned rows
+  - Surfaced by: Section 1 — 1.3, 1.5; Step 0.5 — Codex 7, 9
+  - Files: `packages/devtools/src/WizardDevtools.tsx`, `packages/devtools/src/useObserved.ts`, `packages/devtools/src/messages.ts`
+  - Verify: the tearing test (commit + outcome in one tick); the throwing-listener test asserts the host's next `set()` commits
+- [ ] **T5 (P1, human: ~1.5h / CC: ~15min)** — devtools — Layout and renderer: dense 20 000-edge fixture under 100 ms, 1 500-edge draw cap with toolbar text, ghost endpoint for dangling edges, crossing-count ratchet
+  - Surfaced by: Step 0.5 — Codex 10; Phase 1 X5
+  - Files: `packages/devtools/src/headless/layout.ts`, `packages/devtools/src/FlowGraphView.tsx`, `contract/fixtures.ts`
+  - Verify: `layout.test.ts` property rows; the dense fixture timing under vitest's `bench` or a plain timer assertion
+- [ ] **T6 (P1, human: ~1h / CC: ~10min)** — devtools + repo — `peerDependenciesMeta` optional for react peers; PR order per 14.12 (0.x panel kept in PR 1, deleted in PR 2 with the `major` changeset); React-free Node consumer fixture for `/headless` in R0's list
+  - Surfaced by: Step 0.5 — Codex 12, 13
+  - Files: `packages/devtools/package.json`, `docs/designs/v1-launch.md` (R0 row), the consumer fixture list
+  - Verify: `pnpm check:pack`; the fixture imports `/headless` with no React in `node_modules`
+- [ ] **T7 (P1, human: ~1h / CC: ~10min)** — devtools — Tests corrected: XSS asserts no `<img>` and text present; StrictMode mount; wrong-instance message; chaos test interleaves Record/Stop with navigation; `source: 'start'` row
+  - Surfaced by: Step 0.5 — Codex 14; Claude tests
+  - Files: `packages/devtools/src/FlowGraphView.test.tsx`, `packages/devtools/src/WizardDevtools.test.tsx`
+  - Verify: `pnpm --filter @wizzard-packages/devtools test:run`
+- [ ] **T8 (P2, human: ~20min / CC: ~5min)** — docs — README redaction recipe: "redact protects the export; a live tab shows unredacted data; do not ship devtools to production"; R0 checklist line for a human install from the tarball
+  - Surfaced by: Step 0.5 — Claude security note; Codex 14 (TTHW is a hypothesis)
+  - Files: `packages/devtools/README.md`, `docs/designs/v1-launch.md`
+  - Verify: review
+
+_No new tasks from Section 4 (performance rows are inside T5)._
+
+### Completion Summary (Eng)
+
+```
+  +====================================================================+
+  |            ENG PLAN REVIEW — COMPLETION SUMMARY                    |
+  +====================================================================+
+  | Step 0: Scope Challenge | accepted as amended (no reduction)       |
+  | Architecture Review     | 7 issues found, all decided (§14)       |
+  | Code Quality Review     | 7 items, 1 DRY extraction (dispatch)    |
+  | Test Review             | diagram produced, 47 paths, 47 planned; |
+  |                         | 2 CRITICAL regression rows added        |
+  | Performance Review      | 0 open issues (6 bounds stated)         |
+  | NOT in scope            | written (6 items)                       |
+  | What already exists     | written                                 |
+  | TODOS.md updates        | 2 items written (crossing pass, byte cap)|
+  | Failure modes           | 15 rows, 0 critical gaps                |
+  | Outside voice           | ran (codex + claude subagent)           |
+  | Parallelization         | 6 steps, 2 parallel pairs, 4 sequential |
+  | Lake Score              | 7/7 recommendations chose complete option|
+  | Amendments              | 13 (§14.1–14.13), 8 tasks               |
+  | Gate items added        | T4 draw cap, T5 PR order; T2 renumbered |
+  +====================================================================+
+```
+
+> **Phase 3 complete.** Codex: 14 concerns (all verified in code). Claude subagent: 9 issues.
+> Consensus: 2/6 confirmed as concerns, 4/6 disagreements settled by the cited source lines
+> (two carry a number or an order → T4, T5 at the gate). Passing to Phase 4 (Final Gate).
+
 <!-- AUTONOMOUS DECISION LOG -->
 
 ## Decision Audit Trail
@@ -2322,3 +2928,74 @@ _No new tasks from Pass 6 (peer range is in T6)._
 | 46  | DX     | Entries stay unversioned (`/headless`, not `/v1`)                               | taste (T3)     | P5        | devtools' own major is the version; `/v1` is L8's transition alias        | `/v1` entries (Claude MEDIUM)      |
 | 47  | DX     | Competitive tier target (2–5 min) for the diagnostic path; no auto-mount        | mechanical     | P5        | Champion needs the engine to know devtools (§4.1)                        | self-installing plugin             |
 | 48  | DX     | Issue template asking for a `SessionBundle` in PR 3                             | mechanical     | P2        | the bundle is the feedback loop; ten lines, in blast radius              | defer to TODOS.md                  |
+| 49  | Eng    | Scope accepted as amended; complexity check proceeds                            | mechanical     | override  | rewrite; one module per file; never reduce                               | reduction                          |
+| 50  | Eng    | `onAttempt(Attempt)` with start/end/error and an id replaces `afterResult`      | taste (T2)     | P1, P5    | `to: null` in beforeNavigate; runNav re-throws; supersede needs identity | `afterResult` + `beforeAttempt`    |
+| 51  | Eng    | `source: 'start'` marks the engine's first move                                 | mechanical     | P5        | start() uses the same wrapper (store.ts:378)                             | skip the hook for start()          |
+| 52  | Eng    | Both hook call sites share `write()`'s filter and `fail()` via one helper       | mechanical     | P4        | disabled/destroyed parity cannot drift                                   | duplicated guard                   |
+| 53  | Eng    | Recorder stores settled frames only; §4.3 → one settled commit, one row         | mechanical     | P5        | busy states notify and fail checkSession                                 | record everything                  |
+| 54  | Eng    | Flow change stops the recording; rows keep their flow object                    | mechanical     | P1        | one flow per bundle; pinned rows must draw with their own definition     | versioned flows in the bundle      |
+| 55  | Eng    | `bundle()` clones before redact; `devtools-export-failed` covers clone + redact | mechanical     | P1        | shared references reach the redactor (state.ts:28-29)                    | document "do not mutate"           |
+| 56  | Eng    | Every devtools callback caught; `devtools-stopped`; plugin catches internally  | mechanical     | P1        | notify() is bare (store.ts:201-206)                                      | whole-panel boundary only          |
+| 57  | Eng    | Caps owned per ring: plugin `outcomes`, recorder `limits`; stop together        | mechanical     | P1        | the plugin outlives the panel; a bundle must be self-consistent          | one frame cap                      |
+| 58  | Eng    | Inspected flow resolved through the stack; highlights keyed (flow, step, key)   | mechanical     | P1        | session.ts:122-127 names the collision                                   | id lookup                          |
+| 59  | Eng    | Dense fixture (~20 000 edges); 1 500-edge draw cap; ghost endpoints             | taste (T4)     | P1        | graph.ts:204-222 fans out; the cap is a number the owner may move        | no cap; nodes-only perf test       |
+| 60  | Eng    | Plugin attaches to one wizard; re-init replaces; cleanup notifies; `attached`/`lastRev` | mechanical | P1   | StrictMode and Fast Refresh; the wrong-instance case was silent          | global registry                    |
+| 61  | Eng    | One `useSyncExternalStore` snapshot over both sources                           | mechanical     | P5        | two hooks tear                                                           | two hooks                          |
+| 62  | Eng    | React peers optional; React-free consumer fixture for `/headless`               | mechanical     | P1        | exports do not split installs                                            | required peers                     |
+| 63  | Eng    | PR 1 keeps the 0.x panel; PR 2 replaces it with the `major` changeset           | taste (T5)     | P1, P6    | canary publishes every merge                                             | §10 order                          |
+| 64  | Eng    | XSS test asserts no `<img>`; StrictMode, chaos, start-row tests added           | mechanical     | P1        | §4.5 contradicted §12.10                                                 | keep `queryByRole('img')`          |
+| 65  | Eng    | Byte cap stays a TODO; README states redact protects exports only               | mechanical     | P3        | count is what the person sees; a live tab is unredacted by design        | byte cap now                       |
+
+## Cross-Phase Themes
+
+**Theme: the engine reports outcomes, not intents** — flagged in Phase 1 (Codex 1: the
+panel shows consequences, not causes), Phase 2.5 (Codex 2: `status: 'busy'` cannot name a
+pending action) and Phase 3 (Codex 1–3, Claude start/parity). Three independent runs
+converged on the same missing contract; §11 answered it partially and §14.1 completes it.
+High-confidence signal.
+
+**Theme: a recording is only a bug report if it is self-contained and safe to hand over** —
+Phase 1 (Codex 2, 3: format and redaction), Phase 2 (Codex 3: outcomes and the export
+preview), Phase 2.5 (Codex 5: whole-artefact redaction, a format version), Phase 3 (Codex 6:
+the redactor can mutate the wizard). Every phase added one layer: bundle → outcomes →
+version → clone.
+
+**Theme: the two-object handshake is the product's one real DX cost** — Phase 2.5 (both
+voices: two unsignposted steps) and Phase 3 (Claude: identity unverifiable; Codex 11:
+lifecycle). Accepted as inherent to "devtools never mutates the wizard"; made one snippet, one
+message, and one `attached` flag.
+
+**Theme: React is the panel, not the product** — Phase 1 (Codex 4: headless entry), Phase 2.5
+(Codex 3: the plugin from `/headless`), Phase 3 (Codex 12: optional peers). Each phase moved
+one more piece out of the React-only path.
+
+No theme contradicts an owner decision; all four are contract completions under the direction
+set on 2026-09-06.
+
+## GSTACK REVIEW REPORT
+
+| Review        | Trigger               | Why                             | Runs | Status                                        | Findings                                                                 |
+| ------------- | --------------------- | ------------------------------- | ---- | --------------------------------------------- | ------------------------------------------------------------------------ |
+| CEO Review    | `/plan-ceo-review`    | Scope & strategy                | 1    | CLEAR (via /autoplan, pending the gate)       | 8 proposals, 5 accepted, 1 deferred, 2 skipped; 0 critical gaps          |
+| Design Review | `/plan-design-review` | UI/UX gaps                      | 1    | CLEAR (via /autoplan)                         | score 5/10 → 8/10, 20 amendments (§12)                                   |
+| DX Review     | `/plan-devex-review`  | Developer experience gaps       | 1    | CLEAR (via /autoplan)                         | score 4/10 → 8/10, TTHW ~7 min → ~4 min, 6 amendments (§13)              |
+| Eng Review    | `/plan-eng-review`    | Architecture & tests (required) | 1    | CLEAR (via /autoplan, pending the gate)       | 7 issues, 0 critical gaps, 13 amendments (§14), 14 Codex findings verified |
+| Outside Voice | dual voices           | Independent 2nd opinion         | 8    | issues_found                                  | 7 + 6, 7 + 9, 5 + 11, 14 + 9 concerns across the four phases             |
+
+**CROSS-MODEL:** eight runs, no shared context. Agreement on: the refusal contract (the
+attempt hook), the self-contained redactable bundle, the headless path, the two-object
+handshake as the DX cost, and the diagnosis journey as the release gate. Disagreements: the
+publish decision (Phase 1, T1: carried with the owner's direction as default) and four Phase 3
+rows where one voice read the source and the other did not; each was settled by the cited
+line, and the two that carry a tunable number or order are gate items T4 and T5.
+
+**VERDICT:** CEO + DESIGN + DX + ENG CLEARED — ready to implement once the five gate items
+below are decided. Eng review required: satisfied by this run.
+
+**UNRESOLVED DECISIONS:**
+
+- D1 (User Challenge) — the version: `1.0.0` and `2.0.1` exist on npm; the note recommends `3.0.0`.
+- T1 (taste) — publish `@wizzard-packages/devtools` in the 1.0.0 release, or site-only first; the owner's direction (publish) is the default.
+- T2 (taste) — the core hook `onAttempt` and the `core-v1` budget 5.0 → ~5.2 kB, measured in PR 1.
+- T3 (taste) — entries stay unversioned (`/headless`, not `/v1`); recommended.
+- T4 (taste) — the 1 500-edge draw cap; T5 (taste) — PR 1 keeps the 0.x panel, PR 2 replaces it.

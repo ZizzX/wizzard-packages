@@ -76,3 +76,27 @@ need explicit handling and none of the 1.0 examples need them.
 **Context:** the restriction is stated in L0 and in the persistence docs page; lifting it
 means an ordering token per write.
 **Effort:** human M / CC ~45m. **Blocked by:** L4b.
+
+### 9. Crossing-minimisation pass in devtools' `layoutGraph`
+
+**What:** a barycenter ordering pass within each layer of the layered layout.
+**Why:** the first layout orders a layer by declaration order and states the ceiling: a flow
+whose branches fan out and rejoin draws crossings.
+**Pros:** readable graphs for branch-and-rejoin flows without a layout dependency.
+**Cons:** ~40 lines and a second property test; the crossing-count ratchet must be re-baselined.
+**Context:** `packages/devtools/src/headless/layout.ts`, rule 2 of the layout in
+`docs/designs/devtools.md` §3.3; the ratchet test names the current crossing counts for the
+three fixtures. Written by the `/autoplan` review of `docs/designs/devtools.md` (2026-09-06).
+**Effort:** human S / CC ~30m. **Blocked by:** L5 PR 1.
+
+### 10. Byte cap on the devtools session recorder
+
+**What:** stop a recording at a configurable number of bytes, beside the frame and outcome caps.
+**Why:** the caps are counts; 2 000 frames of a large `data` can hold tens of megabytes in one
+tab, and `bundle()` clones the recording once more at export.
+**Pros:** a bounded worst case for hosts with large states. **Cons:** measuring bytes per
+frame costs a serialisation per commit; the number a person sees stays the frame count.
+**Context:** `recordSession` in `packages/devtools/src/headless/record.ts`; `meta.bytes` is
+already computed at export and shown in the preview. Deferred by the Phase 3 review of
+`docs/designs/devtools.md` (§14.6): count is what the person sees; measure before adding.
+**Effort:** human S / CC ~20m. **Blocked by:** L5 PR 1.
