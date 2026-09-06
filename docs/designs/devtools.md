@@ -596,6 +596,153 @@ crossing pass are for.
 **§6 — decisions restated.** D1 unchanged (owner's call at the gate). D2 unchanged. D3
 confirmed. D4 unchanged. D5 confirmed and widened by X2.
 
+## 12. Amendments from the Phase 2 design review (2026-09-06)
+
+These paragraphs override §3.1, §3.5–§3.8 and §7 where they differ.
+
+**12.1 The diagnostic strip.** A one-line strip sits above the tabs and is always visible:
+`location · time · outcome`. Location is the breadcrumb (`root › passengers[p2] › details`).
+Time is `live` or `pinned #rev (+N new)`. Outcome is the latest navigation result:
+`✓ next → payment`, `✗ next blocked · details · email: required`, `… next pending`, or
+`— no navigation yet`. A refusal is therefore visible on the default Graph tab without a tab
+switch; the outcome text is a button that opens the refusal in the Activity tab. Tabs never
+switch on their own. The strip's outcome segment is the `aria-live="polite"` region; it
+announces outcomes and mode changes only, never every commit.
+
+**12.2 Activity, not Commits.** The third tab is **Activity**: one ordered list of commits
+(`#rev · step · N changes`) and refusals (`✗ next · from details · invalid · email`) and
+pending intents (`… go(payment)`, replaced by its outcome). A refusal row opens a detail
+with: the attempted action, the originating step, the reason and `by`, the `errors` map, and
+the state observed at the time (`#rev` it happened after). Selecting a refusal pins the panel
+to that state. Rows are keyboard-activatable (`role="listbox"`, arrow keys, Enter).
+
+**12.3 Three independent concepts.**
+
+| Concept        | Set by                             | Reset by                                                                                 |
+| -------------- | ---------------------------------- | ---------------------------------------------------------------------------------------- |
+| observed time  | selecting an Activity row → pinned | "Return to live"; selecting the newest row                                               |
+| inspected flow | a breadcrumb crumb                 | "Follow current flow" (a button that appears once a crumb was chosen); never by a commit |
+| selected node  | click / arrows on the graph        | Escape; changing the inspected flow                                                      |
+
+A pinned row that leaves the 500-entry ring keeps its snapshot in the pin itself and is
+labelled `outside retained history`; the panel never silently shows a different state.
+
+**12.4 "Taken edge" is inferred.** The thick edge is drawn only when exactly one edge joins
+the previous commit's top step to the current one, and its `<title>` and the mirror row say
+`inferred from consecutive states`. Zero or several candidates: no edge is emphasised.
+
+**12.5 Recording carries outcomes.** The bundle grows two fields:
+
+```ts
+export interface SessionBundle {
+  flow: FlowDefinition;
+  subFlows?: SubFlows;
+  session: RecordedSession; // core format, unchanged
+  outcomes: readonly { afterRev: number; intent: NavIntent; result: NavResult }[]; // from the plugin; [] without it
+  meta: { frames: number; outcomes: number; redacted: boolean; capped: boolean; bytes: number };
+}
+```
+
+`recordSession` stops at the cap (2000 frames), marks `capped: true`, and keeps the recording
+until the person starts a new one; the §7 test "cap keeps the newest" is replaced by "cap
+stops and marks". Named resolvers are not in the bundle; the README says a bundle replays
+structure and data, not resolver behaviour.
+
+**12.6 Export preview.** "Copy JSON" opens a preview first: frame and outcome counts, size in
+kB, `redaction hook: ran / not configured`, `refusals: captured / plugin not installed`, and
+the JSON itself in a read-only `<textarea>` (which is also the fallback when the clipboard
+call is rejected: the text is selected and focus moves into it). Buttons: Copy, Close. Copy
+states: idle → copying (button disabled) → copied (2 s label) or failed (label + the textarea
+stays focused). The word "safe" appears nowhere.
+
+**12.7 More states.**
+
+| Situation                             | The person sees                                                                              |
+| ------------------------------------- | -------------------------------------------------------------------------------------------- |
+| navigation pending (`status: 'busy'`) | strip outcome `… next pending`; Activity row `… next` until replaced                         |
+| no row selected on the State tab      | "select an activity row, or stay live" (live shows the latest commit)                        |
+| selected commit changed nothing       | "no changes in this commit"                                                                  |
+| diff walk capped / rows capped        | a final row `… N paths not shown (cap)` with a "show all" button that lifts the row cap once |
+| frames dropped by redact              | strip note `⚠ N frames dropped by redact`; bundle `meta.dropped`                             |
+| plugin absent                         | Activity header: "refusals are not captured — pass `devtools()` to `createWizard`"           |
+| `when` value withheld inside a group  | inspector shows `Not evaluated (needs the group's loop scope)`, never `false`                |
+| renderer error                        | the Graph tab alone shows the boundary text; strip, State, Activity and export keep working  |
+
+**12.8 Responsive by container width** (`ResizeObserver` on the panel root; no viewport
+queries). Wide (≥ 720 px): graph left, inspector right (280 px), strip full width. Narrow
+(< 720 px): stacked — strip, tabs, content; the inspector is a bottom sheet inside the panel
+(not a portal) that returns focus to the node on close; diff rows render as `path` then two
+labelled lines `before` / `after`. Height: the panel fills its container; the content area is
+the single scrolling surface (the graph scrolls inside it). The initial zoom is "Fit graph"
+(whole graph visible) unless that makes labels smaller than 11 px, in which case it is 1×
+with the active step centred. Buttons: `+`, `−`, `Fit`, `Center` (44 px targets). Zoom anchors
+on the centre of the visible area.
+
+**12.9 The inspector.** Opens on Enter or click; lives in the right column (wide) or the bottom
+sheet (narrow); content order: id and kind; flow context (crumb); status (`active`, `visited`,
+`unvisited`); `when` printed, then `→ true` / `→ false` / `Not evaluated`; `deferred`; edges
+in and out with their `when`; for a group node, `flowId`, step count, `repeat.over` printed.
+Escape closes and returns focus to the node. It persists across commits until closed or the
+inspected flow changes.
+
+**12.10 Accessibility contract.** The `<svg>` has `role="application"`,
+`aria-roledescription="flow graph"`, `tabindex="0"`, and `aria-activedescendant` naming the
+selected node's `<g id>`; each node `<g>` has `role="img"` and `aria-label` `"step details,
+active, visited"`. Tabs: roving tabindex, `aria-controls`/`aria-labelledby`. Focus ring: 2 px
+solid `--wz-accent` outline with 2 px offset on nodes, rows and buttons. Active vs selected:
+active is a fill, selected is the ring; both can apply. Graph strokes and text meet 3:1 and
+4.5:1 against `--wz-bg`. The mirror table is reachable: a "Table" toggle beside the zoom
+buttons shows it in place of the SVG for sighted keyboard users and high-zoom readers; it is
+also always present for assistive technology. Targets ≥ 44 px on every button.
+
+**12.11 Diff presentation.** Rows: `path`, `before`, `after`; an added path shows `—` in
+`before`, a removed one `—` in `after`; `null` prints `null`, `undefined` prints `missing`;
+strings over 80 characters are cut with a "more" toggle; objects print as compact JSON with
+the same toggle. Paths use `getPath` syntax (`data.items[2].name`).
+
+**12.12 Tests added.** An e2e "diagnosis journey" in the Next.js example: start on the Graph
+tab, submit an invalid step, read the strip's refusal without changing tabs, open it, inspect
+the field, export a bundle and assert it contains the outcome. Variants: narrow container
+(390 px) and keyboard-only. Unit: the three concepts in 12.3 are independent (pinning does not
+change the inspected flow; a commit does not reset the crumb); a pinned row past the ring keeps
+its snapshot; "Not evaluated" appears inside a group; renderer error leaves Activity usable.
+
+**12.13 Default tab is `graph`.** `defaultTab` defaults to `'graph'`; the prop exists for a
+host that embeds the panel beside its own graph.
+
+**12.14 Legend.** A `<details>` labelled "Legend" sits at the end of the graph toolbar; open,
+it lists the five node shapes, the four edge styles and the three highlights (active, visited,
+selected) as the same SVG fragments the graph uses, with one word each. Closed by default;
+its state is remembered in `sessionStorage` under `wz-devtools-legend`.
+
+**12.15 Toolbar.** Under the strip, one row of tab-independent controls, left to right:
+tabs (Graph / State / Activity) · `Record` / `Stop` (with the frame count while recording) ·
+`Copy JSON` (enabled once a recording exists) · on the Graph tab only: `+`, `−`, `Fit`,
+`Center`, `Table`, Legend. Every control is a `<button>` with a visible label; icons are not
+used.
+
+**12.16 Inspection reads the observed state.** The inspector and the `when` value use the
+state the panel is observing: the live state, or the pinned row's snapshot. The inspector's
+status line says which (`live` / `pinned #rev`). Pinning does not clear the selected node;
+the inspector re-renders against the pinned state.
+
+**12.17 Opening a sub-flow before the wizard visits it.** A group node's inspector has an
+"Open sub-flow" button when the group resolves (not `opaque`); it sets the inspected flow to
+the child, with a crumb `root › passengers (preview)`; "Follow current flow" returns. No
+`loop` scope exists there, so every `when` is `Not evaluated`.
+
+**12.18 Activity tab states.** No wizard: the one-line message. Before the first
+notification: "no activity yet". At the 500-row ring: header "showing the last 500". Wizard
+destroyed: rows stay, header "wizard destroyed". Plugin absent: the header line from 12.7.
+
+**12.19 Label width.** Truncation stays character-based (24 for nodes, 32 for edges) with the
+ceiling named: a host font wider than 8 px per character at 14 px can overflow the 160-unit
+box; the text carries `textLength="144"` and `lengthAdjust="spacingAndGlyphs"` as the
+backstop so it never crosses the border.
+
+**12.20 Motion.** None, by decision; a commit-to-commit change is signalled by the strip's
+outcome text and the live region, not by animation.
+
 ---
 
 <!-- /autoplan Phase 1: CEO review (SELECTIVE EXPANSION, auto-decided). Appended 2026-09-06. -->
@@ -1211,28 +1358,267 @@ Persisted to `~/.gstack/projects/ZizzX-wizzard-packages/ceo-plans/2026-09-06-dev
 > Consensus: 3/6 confirmed (as concerns, amended), 2 disagreements → surfaced at gate,
 > 1 single-voice flag. Passing to Phase 2.
 
+---
+
+<!-- /autoplan Phase 2: design review (all 7 passes, auto-decided). Appended 2026-09-06. -->
+
+## Step 0: Design Scope Assessment
+
+**0A. Initial rating: 5/10.** Concrete on rendering (four shapes, 160×40 units, custom
+properties, keyboard bindings, contrast targets, exact error copy) and vague exactly where a
+person meets the tool: no default tab, no legend, no persistent live/pinned cue, no home for
+the record controls, an inspector that "opens" nowhere, a Commits tab missing from the state
+matrix, responsive rules by viewport instead of container, and a temporal model with two
+unreconciled selection axes. A 10 names all of those in one place and puts the refusal
+where the eye lands first.
+
+**0B. DESIGN.md: none.** S1 writes it. Until then the six custom properties in §3.8 are the
+contract; every colour in the panel is one of them.
+
+**0C. Existing design leverage.** Node shapes and edge styles are the ones S2 will draw
+(`v1-launch.md:1415`); the keyboard model is S2's (`v1-launch.md:237`); the mirror table and
+the reduced-motion posture come from `flow-inspector.md`. The 0.x panel's dark glass theme is
+not reused.
+
+**0D. Focus areas:** all seven passes (P1). Mockups: the gstack designer binary is not part
+of this pipeline run (no `DESIGN_READY`); text specification stands in.
+
+## Step 0.5: Dual Voices (design)
+
+### CODEX SAYS (design — UX challenge)
+
+Seven findings, verbatim in the session log; condensed: (1) the hierarchy mirrors the
+modules, not the question "why did Next do nothing" — put a persistent diagnostic strip above
+the tabs and rename Commits to Activity; (2) the temporal model is ambiguous — separate
+observed time, inspected flow and selected node, keep a pinned row's snapshot when it leaves
+the buffer, label "taken edge" as inferred; (3) the recording omits refusal events and the
+export needs a preview with counts, size, redaction status and omitted evidence; the cap
+behaviour contradicts itself between §7 and the appendix; (4) missing states: pending
+navigation, empty-diff distinctions, partial evidence, copy states, and a boundary that
+takes the whole panel down; (5) responsive by container width, a single scrolling surface,
+Fit and Center, readable initial zoom; (6) the a11y contract is unfinished —
+`aria-activedescendant`, inspector focus, tab roving, row activation, focus ring, stroke
+contrast, a visible text alternative, concise announcements; (7) the inspector's location,
+content order and dismissal are unspecified; diff value presentation too. Verdict: hold the
+stable release until the diagnosis journey works in the example app; not "never publish".
+
+### CLAUDE SUBAGENT (design — independent review)
+
+Nine findings: default tab unspecified (high); no legend for a 4-shape / 4-edge / 4-highlight
+grammar (critical); Commits tab absent from the state matrix (high); no persistent
+live/pinned indicator (high); no `aria-live` (medium); Record control has no home (medium);
+node selection and commit pin are two unreconciled axes, sharpened by X4's live `when`
+(high); no way to preview a group's child before visiting it (unnamed decision); character
+truncation vs pixel width (low). Litmus: 1 NO, 2 YES, 3 YES, 4 NO, 5 YES, 6 NO, 7 YES.
+
+### DESIGN LITMUS SCORECARD
+
+```
+═══════════════════════════════════════════════════════════════════════════════════
+  Litmus check                              Claude   Codex    Consensus
+  ───────────────────────────────────────── ──────── ──────── ─────────────────────────
+  1. Product unmistakable in first screen?  NO       NO       CONFIRMED NO → 12.1, 12.13, 12.14
+  2. One strong visual anchor?              YES      YES      CONFIRMED (graph, default tab)
+  3. Understandable by scanning headings?   YES      YES*     CONFIRMED (* after Commits → Activity)
+  4. Each section has one job?              NO       NO       CONFIRMED NO → 12.9, 12.15
+  5. Cards actually necessary?              YES      —        single voice (no cards used)
+  6. Motion improves hierarchy?             NO       —        single voice → 12.20 (none by decision)
+  7. Premium without decorative shadows?    YES      —        single voice (no shadows exist)
+═══════════════════════════════════════════════════════════════════════════════════
+```
+
+No DISAGREE rows: where both voices spoke they agreed. Every confirmed NO is a structural
+gap and was auto-fixed (P5) in §12 of the note. No taste decision arises from this phase;
+Codex's "hold the stable release until the journey works" is the plan's own PR 3 → R0
+sequence, restated.
+
+## Pass 1: Information Architecture — 4/10 → 9/10
+
+Was: three tabs mirroring three modules, no default, the refusal hidden in an inactive tab.
+Now (12.1, 12.13, 12.15): strip (`location · time · outcome`) → toolbar → content; the Graph
+tab by default; the latest outcome is readable without a tab change. If only three things can
+show: the active step, the latest outcome, the graph. Screen structure:
+
+```
+  ┌──────────────────────────────────────────────────────────────┐
+  │ root › passengers[p2] › details · live · ✗ next blocked · details · email: required │  strip
+  ├──────────────────────────────────────────────────────────────┤
+  │ [Graph] [State] [Activity]   [Record] [Copy JSON]   [+][−][Fit][Center][Table][Legend ▸] │ toolbar
+  ├───────────────────────────────────────────┬──────────────────┤
+  │  SVG graph (one scrolling surface)        │ inspector        │  wide ≥ 720 px
+  │                                           │ (280 px)         │
+  └───────────────────────────────────────────┴──────────────────┘
+  narrow < 720: strip / toolbar (wraps) / content; inspector as an in-panel bottom sheet
+```
+
+Remaining point: the strip's three segments compete at 320 px; decided: the location segment
+truncates from the left (`… › details`) and keeps the last crumb.
+
+## Pass 2: Interaction State Coverage — 5/10 → 9/10
+
+| Feature   | LOADING                   | EMPTY                                                                | ERROR                                | SUCCESS              | PARTIAL                                        |
+| --------- | ------------------------- | -------------------------------------------------------------------- | ------------------------------------ | -------------------- | ---------------------------------------------- |
+| strip     | `… next pending`          | `— no navigation yet`                                                | `✗ next blocked · step · field: msg` | `✓ next → step`      | `⚠ N frames dropped by redact`                 |
+| graph     | n/a (sync)                | "flow has no steps"                                                  | boundary text in the tab only        | active node filled   | opaque group dashed with reason                |
+| inspector | n/a                       | "select a node (arrows, Enter)"                                      | `when: [wizzard] …` inline           | fields in 12.9 order | `Not evaluated (needs the group's loop scope)` |
+| state tab | n/a                       | "no changes in this commit" / "select an activity row, or stay live" | n/a                                  | diff rows            | `… N paths not shown (cap)` + show all         |
+| activity  | `… next` row              | "no activity yet"                                                    | refusal rows                         | commit rows          | "showing the last 500"; plugin-absent header   |
+| record    | frame count on the button | Copy disabled                                                        | copy failed → textarea focused       | "copied" 2 s         | `capped: true` label                           |
+| no wizard | —                         | one-line message everywhere                                          | —                                    | —                    | —                                              |
+
+Remaining point: none; the two "empty" wordings on the State tab were the only ambiguity
+and are now distinct (12.7).
+
+## Pass 3: User Journey & Emotional Arc — 5/10 → 8/10
+
+| Step | User does                    | User feels                    | Plan specifies                                         |
+| ---- | ---------------------------- | ----------------------------- | ------------------------------------------------------ |
+| 1    | mounts the panel             | "what is this"                | Graph by default, active node filled, legend one click |
+| 2    | clicks Next in the app       | "did it work"                 | node moves; strip `✓ next → payment`                   |
+| 3    | clicks Next, nothing happens | "why"                         | strip `✗ next blocked · details · email: required`     |
+| 4    | opens the refusal            | "show me"                     | Activity detail: action, step, reason, errors, state   |
+| 5    | inspects the hidden step     | "is it the condition"         | `when` printed, `→ false`                              |
+| 6    | records, reproduces, copies  | "can I hand this over"        | preview with counts, redaction status; one file        |
+| 7    | pins an old commit           | "am I looking at now or then" | strip `pinned #12 (+3 new)`; Return to live            |
+
+Five-second: the filled node and the strip. Five-minute: Activity and the inspector.
+Five-year: the bundle format is what bug reports look like. Where it still breaks: step 6
+for a host without the plugin — the preview says refusals are not captured; that is honest,
+not warm. Accepted.
+
+## Pass 4: AI Slop Risk — 8/10 → 9/10
+
+Classifier: APP UI. Hard rejections: none apply (no card mosaics, no gradients, no ornamental
+icons; buttons carry words, 12.15). Universal rules: colours are custom properties; no
+default typeface is set (inherits — a deliberate non-choice for an embedded panel, which is
+the one place `system-ui` is acceptable because the host's stack wins); body 14 px, mirror
+12 px minimum; labels are visible text, never placeholders; headings sit with their content.
+Remaining point: the panel's own type scale has two sizes (14, 12); fine for a tool.
+
+## Pass 5: Design System Alignment — 3/10 → 6/10
+
+No DESIGN.md exists; S1 owns it. What the panel commits to now so S1 can absorb it: six
+custom properties, the four shapes and edge styles as one `shapes.ts` map, 2 px focus ring
+with 2 px offset, 44 px targets, a 14/12 type scale. Flagged for S1: when DESIGN.md names
+tokens, the six `--wz-*` properties map onto them in one place. `/design-consultation` is the
+right next step for the site, not for this panel. Ceiling accepted: 6/10 until S1.
+
+## Pass 6: Responsive & Accessibility — 5/10 → 9/10
+
+Responsive (12.8): container width, two layouts, one scrolling surface, Fit/Center, readable
+initial zoom, diff rows restack under 720 px, the inspector becomes an in-panel sheet that
+returns focus. A11y (12.10): `role="application"` + `aria-activedescendant`, roving tabs,
+listbox rows, focus ring, 3:1 strokes, 4.5:1 text, the Table toggle as a visible alternative,
+44 px targets, one polite live region for outcomes only. Reduced motion: nothing to honour
+(12.20). Remaining point: `role="application"` traps arrow keys inside the graph by design;
+Tab still leaves, and the Table toggle is the escape for screen-reader users who prefer
+browse mode. Documented in the README.
+
+## Pass 7: Unresolved Design Decisions
+
+```
+  DECISION NEEDED                                  | IF DEFERRED, WHAT HAPPENS                          | DECIDED HERE?
+  -------------------------------------------------|----------------------------------------------------|---------------
+  Default tab                                      | implementer picks; first impression random         | graph (12.13)
+  Where the refusal shows                          | hidden in a tab; the tool fails its own purpose    | the strip (12.1)
+  Commits vs Activity                              | refusals filed as commits                          | Activity (12.2)
+  Pin vs crumb vs node selection                   | two sources of truth in the implementation         | three concepts (12.3, 12.16)
+  Taken edge                                       | presented as execution history                     | inferred, labelled (12.4)
+  Refusals in the recording                        | the bug report omits the bug                       | outcomes in the bundle (12.5)
+  Cap behaviour                                    | tests and prose disagree                           | stop and mark (12.5)
+  Export preview                                   | PII copied without a look                          | preview (12.6)
+  Inspector home                                   | a popover, a modal, or nothing                     | right column / bottom sheet (12.9)
+  Legend                                           | shapes undecoded                                   | details in the toolbar (12.14)
+  Record controls                                  | smeared across tabs                                | toolbar (12.15)
+  Group preview before visiting                    | impossible; unnamed                                | Open sub-flow (12.17)
+  Motion                                           | ad hoc transitions                                 | none (12.20)
+  Typeface                                         | Inter by reflex                                    | inherit (Pass 4)
+```
+
+All fourteen decided; none deferred.
+
+## Required Outputs (Design)
+
+### NOT in scope (design)
+
+- A typeface and palette of its own — inherits; S1's DESIGN.md decides.
+- Animated transitions — none by decision.
+- A floating/overlay chrome — docked only (`v1-launch.md:1414`).
+- Virtualised lists — 500 rows is within DOM comfort.
+- Mockups — no designer binary in this run; the ASCII structure in Pass 1 stands in.
+
+### What already exists (design)
+
+The four shapes, the keyboard model and the mirror table from S2/`flow-inspector.md`; the
+custom-property approach from the panel's own §3.8; nothing from the 0.x theme.
+
+### TODOS.md updates (design)
+
+None proposed: every gap was fixed in §12 rather than deferred.
+
+### Phase 2 Completion Summary
+
+```
+  +====================================================================+
+  |         DESIGN PLAN REVIEW — COMPLETION SUMMARY                    |
+  +====================================================================+
+  | System Audit         | no DESIGN.md; UI scope yes                  |
+  | Step 0               | 5/10; all 7 passes                          |
+  | Pass 1  (Info Arch)  | 4/10 → 9/10 after fixes                     |
+  | Pass 2  (States)     | 5/10 → 9/10 after fixes                     |
+  | Pass 3  (Journey)    | 5/10 → 8/10 after fixes                     |
+  | Pass 4  (AI Slop)    | 8/10 → 9/10 after fixes                     |
+  | Pass 5  (Design Sys) | 3/10 → 6/10 (ceiling until S1)              |
+  | Pass 6  (Responsive) | 5/10 → 9/10 after fixes                     |
+  | Pass 7  (Decisions)  | 14 resolved, 0 deferred                     |
+  +--------------------------------------------------------------------+
+  | NOT in scope         | written (5 items)                           |
+  | What already exists  | written                                     |
+  | TODOS.md updates     | 0 items proposed                            |
+  | Approved Mockups     | 0 generated, 0 approved                     |
+  | Decisions made       | 20 added to plan (§12.1–12.20)              |
+  | Decisions deferred   | 0                                           |
+  | Overall design score | 5/10 → 8/10                                 |
+  +====================================================================+
+```
+
+> **Phase 2 complete.** Codex: 7 concerns. Claude subagent: 9 issues.
+> Consensus: 4/7 confirmed (3 single-voice), 0 disagreements. Passing to Phase 2.5.
+
 <!-- AUTONOMOUS DECISION LOG -->
 
 ## Decision Audit Trail
 
-| #   | Phase | Decision                                                             | Classification | Principle | Rationale                                                                | Rejected                           |
-| --- | ----- | -------------------------------------------------------------------- | -------------- | --------- | ------------------------------------------------------------------------ | ---------------------------------- |
-| 1   | CEO   | Mode SELECTIVE EXPANSION                                             | mechanical     | default   | rewrite of an existing package                                           | HOLD, EXPANSION                    |
-| 2   | CEO   | Approach B (A + refusal hook + bundle + headless entry)              | taste (T2)     | P1, P2    | both voices named the diagnostic chain as the value                      | A (no engine change), C (package)  |
-| 3   | CEO   | X1 refusal log with core `afterResult`                               | taste (T2)     | P1        | "why did Next do nothing" answered; +~50 B, budget 5.0 → 5.1 kB          | infer from beforeNavigate          |
-| 4   | CEO   | X2 self-contained bundle + redact                                    | mechanical     | P1        | E-M7 already requires the hook; a session without a flow is unreplayable | raw session                        |
-| 5   | CEO   | X3 headless entry                                                    | mechanical     | P2, A3    | Vue hosts record; pure modules carry no directive                        | new package                        |
-| 6   | CEO   | X4 live `when` values at root scope only                             | mechanical     | P1, P5    | `evaluate` exists; loop scope needs the traversal                        | evaluate everywhere (wrong values) |
-| 7   | CEO   | X5 crossing pass deferred, ratchet test now                          | mechanical     | P3        | ceiling stated; no fixture needs it yet                                  | implement now                      |
-| 8   | CEO   | X6 time travel skipped                                               | mechanical     | P5        | inspection never navigates (S2)                                          | rebuild from state                 |
-| 9   | CEO   | X7 theme presets skipped                                             | mechanical     | P5        | custom properties are the contract                                       | switch in panel                    |
-| 10  | CEO   | X8 diagnosis scenario tests                                          | mechanical     | P1        | Codex 5: prove diagnosis, not drawing                                    | rendering tests only               |
-| 11  | CEO   | Publish devtools in 1.0.0 (owner's direction kept)                   | taste (T1)     | P6        | voices disagree; owner decided 2026-09-06; code is identical either way  | site-only first (Claude F1)        |
-| 12  | CEO   | D1 version → gate as User Challenge                                  | user challenge | —         | plan's direction (aligned 1.0.0) is impossible on npm                    | —                                  |
-| 13  | CEO   | `record` → `recordSession`                                           | mechanical     | P5        | verb-noun like `buildGraph`                                              | `record`                           |
-| 14  | CEO   | pinned view stays pinned on new commits, `+N` badge                  | mechanical     | P5        | explicit, predictable                                                    | auto-unpin                         |
-| 15  | CEO   | `afterResult` fired from the store wrapper only                      | mechanical     | P5        | one call site; navigate.ts has six returns                               | per-return in navigate.ts          |
-| 16  | CEO   | panel reads `WizardContext` via `useContext`, exported from react/v1 | mechanical     | P5        | render a message instead of a throw                                      | try/catch around useWizard         |
-| 17  | CEO   | keep the directive test as a copy                                    | mechanical     | P5        | 15 lines, two consumers                                                  | shared helper                      |
-| 18  | CEO   | `formatExpr` as an operator map                                      | mechanical     | P5        | cyclomatic ≤ 5                                                           | switch                             |
-| 19  | CEO   | `aria-live="polite"` on the frame line                               | mechanical     | P1        | commits are announced                                                    | silent                             |
+| #   | Phase  | Decision                                                                        | Classification | Principle | Rationale                                                                | Rejected                           |
+| --- | ------ | ------------------------------------------------------------------------------- | -------------- | --------- | ------------------------------------------------------------------------ | ---------------------------------- |
+| 1   | CEO    | Mode SELECTIVE EXPANSION                                                        | mechanical     | default   | rewrite of an existing package                                           | HOLD, EXPANSION                    |
+| 2   | CEO    | Approach B (A + refusal hook + bundle + headless entry)                         | taste (T2)     | P1, P2    | both voices named the diagnostic chain as the value                      | A (no engine change), C (package)  |
+| 3   | CEO    | X1 refusal log with core `afterResult`                                          | taste (T2)     | P1        | "why did Next do nothing" answered; +~50 B, budget 5.0 → 5.1 kB          | infer from beforeNavigate          |
+| 4   | CEO    | X2 self-contained bundle + redact                                               | mechanical     | P1        | E-M7 already requires the hook; a session without a flow is unreplayable | raw session                        |
+| 5   | CEO    | X3 headless entry                                                               | mechanical     | P2, A3    | Vue hosts record; pure modules carry no directive                        | new package                        |
+| 6   | CEO    | X4 live `when` values at root scope only                                        | mechanical     | P1, P5    | `evaluate` exists; loop scope needs the traversal                        | evaluate everywhere (wrong values) |
+| 7   | CEO    | X5 crossing pass deferred, ratchet test now                                     | mechanical     | P3        | ceiling stated; no fixture needs it yet                                  | implement now                      |
+| 8   | CEO    | X6 time travel skipped                                                          | mechanical     | P5        | inspection never navigates (S2)                                          | rebuild from state                 |
+| 9   | CEO    | X7 theme presets skipped                                                        | mechanical     | P5        | custom properties are the contract                                       | switch in panel                    |
+| 10  | CEO    | X8 diagnosis scenario tests                                                     | mechanical     | P1        | Codex 5: prove diagnosis, not drawing                                    | rendering tests only               |
+| 11  | CEO    | Publish devtools in 1.0.0 (owner's direction kept)                              | taste (T1)     | P6        | voices disagree; owner decided 2026-09-06; code is identical either way  | site-only first (Claude F1)        |
+| 12  | CEO    | D1 version → gate as User Challenge                                             | user challenge | —         | plan's direction (aligned 1.0.0) is impossible on npm                    | —                                  |
+| 13  | CEO    | `record` → `recordSession`                                                      | mechanical     | P5        | verb-noun like `buildGraph`                                              | `record`                           |
+| 14  | CEO    | pinned view stays pinned on new commits, `+N` badge                             | mechanical     | P5        | explicit, predictable                                                    | auto-unpin                         |
+| 15  | CEO    | `afterResult` fired from the store wrapper only                                 | mechanical     | P5        | one call site; navigate.ts has six returns                               | per-return in navigate.ts          |
+| 16  | CEO    | panel reads `WizardContext` via `useContext`, exported from react/v1            | mechanical     | P5        | render a message instead of a throw                                      | try/catch around useWizard         |
+| 17  | CEO    | keep the directive test as a copy                                               | mechanical     | P5        | 15 lines, two consumers                                                  | shared helper                      |
+| 18  | CEO    | `formatExpr` as an operator map                                                 | mechanical     | P5        | cyclomatic ≤ 5                                                           | switch                             |
+| 19  | CEO    | `aria-live="polite"` on the frame line                                          | mechanical     | P1        | commits are announced                                                    | silent                             |
+| 20  | Design | Diagnostic strip above the tabs; refusal visible on the default tab             | mechanical     | P1, P5    | both voices: the refusal was hidden in an inactive tab                   | auto-switch tabs                   |
+| 21  | Design | Commits → Activity with refusal and pending rows                                | mechanical     | P5        | refusals are not commits                                                 | keep "Commits"                     |
+| 22  | Design | Three independent concepts: observed time, inspected flow, selected node        | mechanical     | P5        | two unreconciled selection axes in the proposal                          | crumb resets on commit             |
+| 23  | Design | Taken edge only when unique, labelled inferred                                  | mechanical     | P5        | states do not prove execution history                                    | drop the highlight                 |
+| 24  | Design | Bundle carries outcomes + meta; cap stops and marks                             | mechanical     | P1        | the recording omitted the bug; tests and prose disagreed on the cap      | keep newest                        |
+| 25  | Design | Export preview with counts, size, redaction status                              | mechanical     | P1        | PII must be looked at before it is copied                                | direct copy                        |
+| 26  | Design | Container-width responsive; inspector column / bottom sheet; Fit/Center         | mechanical     | P5        | viewport rules break for a docked panel                                  | viewport queries                   |
+| 27  | Design | A11y contract (activedescendant, roving tabs, listbox rows, ring, Table toggle) | mechanical     | P1        | keyboard model without an exposure contract is unimplementable           | hidden table only                  |
+| 28  | Design | Default tab graph; legend; toolbar placement of Record/Copy                     | mechanical     | P5        | first-screen ambiguity                                                   | implementer picks                  |
+| 29  | Design | Boundary scoped to the Graph tab                                                | mechanical     | P1        | export must stay usable when the renderer fails                          | whole-panel boundary               |
+| 30  | Design | Open sub-flow preview from a group's inspector                                  | mechanical     | P1        | previewing a child before visiting it was silently impossible            | crumbs only                        |
+| 31  | Design | Typeface inherits; motion none                                                  | mechanical     | P5        | embedded panel; the host's stack wins                                    | Inter + transitions                |
