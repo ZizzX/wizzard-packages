@@ -27,3 +27,7 @@ blob-report
 
 # Claude Code local settings (per-machine, not shared)
 .claude/settings.local.json
+
+# next.js
+.next
+next-env.d.ts
