@@ -80,7 +80,14 @@ export default [
   // the message bought 5 B. Hoisting `ctx.hooks ?? []` and inlining the `back`
   // intent were tried and reverted: both cost 3 B, because gzip already prices
   // a repeated literal lower than a new identifier.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '5.0 kB', gzip: true },
+  //
+  // 5.0 to 5.2 kB on 2026-09-07 for `onAttempt` (docs/designs/devtools.md
+  // section 14.1): the navigation wrapper reports each attempt's start and its
+  // end or error through the same dispatch `onCommit` uses, so a devtools
+  // plugin can explain a refused move that never committed. Measured 5098 B;
+  // the shared dispatch helper is where the bytes went, and it is also what
+  // keeps the two hooks from drifting apart.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '5.2 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a
