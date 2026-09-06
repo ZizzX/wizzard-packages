@@ -263,7 +263,16 @@ export async function runNav(
       commit(before, {
         status: 'idle',
         stack: [...before.stack.slice(0, -1), { flow: flow.id, step: target }],
-        history: from === null ? before.history : [...before.history, before.stack],
+        // A back stack only grows going forward. Appending on a backward move
+        // too left `canBack` true at the first step while `back()` answered
+        // `no-target`, and would make a history-driven `back()` inside a repeat
+        // oscillate between two items.
+        history:
+          from === null
+            ? before.history
+            : forward
+              ? [...before.history, before.stack]
+              : before.history.slice(0, -1),
         visited: add(before.visited, target),
         completed: forward && from !== null ? add(before.completed, from) : before.completed,
         busy: before.busy.filter((id) => id !== target),

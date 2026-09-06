@@ -383,6 +383,51 @@ describe('runNav — bookkeeping', () => {
   });
 });
 
+// wizzard-17: history grew on a backward move too, so `canBack` stayed true at
+// the first step while `back()` answered `no-target`.
+describe('runNav — the back stack', () => {
+  const flat: FlowDefinition = {
+    id: 'booking',
+    order: ['trip', 'payment'],
+    steps: { trip: {}, payment: {} },
+  };
+  const ctx: NavContext = { flow: flat };
+
+  it('pushes going forward and pops going back, ending empty', async () => {
+    const host = makeHost(on('trip'));
+    await runNav(ctx, host, { type: 'next' });
+    expect(host.read().history).toHaveLength(1);
+
+    await runNav(ctx, host, { type: 'back' });
+    expect(host.read().history).toEqual([]);
+    expect(host.read().stack).toEqual([{ flow: 'booking', step: 'trip' }]);
+  });
+
+  it('grows again after a back, rather than staying popped', async () => {
+    const host = makeHost(on('trip'));
+    await runNav(ctx, host, { type: 'next' });
+    await runNav(ctx, host, { type: 'back' });
+    await runNav(ctx, host, { type: 'next' });
+
+    expect(host.read().history).toEqual([[{ flow: 'booking', step: 'trip' }]]);
+  });
+
+  it('refuses a back at the first step, with nothing left to pop', async () => {
+    const host = makeHost(on('trip'));
+    await runNav(ctx, host, { type: 'next' });
+    await runNav(ctx, host, { type: 'back' });
+
+    expect(await runNav(ctx, host, { type: 'back' })).toMatchObject({ reason: 'no-target' });
+    expect(host.read().history).toEqual([]);
+  });
+
+  it('leaves history alone when there was nowhere to come from', async () => {
+    const host = makeHost();
+    await runNav(ctx, host, { type: 'next' });
+    expect(host.read().history).toEqual([]);
+  });
+});
+
 describe('runNav — clearOnLeave', () => {
   const branching: FlowDefinition = {
     id: 'booking',

@@ -241,6 +241,20 @@ describe('navigation through the store', () => {
     expect(w.getSnapshot().current).toBe('trip');
   });
 
+  // wizzard-17: `canBack` read a history that grew on backward moves too, so it
+  // offered a Back button at the first step that `back()` then refused.
+  it('agrees with back() once there is nowhere left to go', async () => {
+    const w = make({ payer: 'private', name: 'Ann' });
+    await w.next();
+    await w.next();
+    await w.back();
+
+    expect(w.getSnapshot().current).toBe('trip');
+    expect(w.getSnapshot().canBack).toBe(false);
+    expect(await w.back()).toMatchObject({ ok: false, reason: 'no-target' });
+    expect(w.getState().history).toEqual([]);
+  });
+
   it('jumps directly when the policy allows it', async () => {
     const w = make({ payer: 'private', name: 'Ann' });
     await w.next();
@@ -274,6 +288,43 @@ describe('patchFlow', () => {
 
     expect(applied).toBe(false);
     expect(w.getSnapshot().current).toBe('trip');
+  });
+});
+
+// The check lives in the main entry so a group flow fails before the first
+// render, rather than rendering a step type that has no `view`.
+describe('a group step with no traversal installed', () => {
+  const grouped: FlowDefinition = {
+    ...flow,
+    order: ['trip', 'extras'],
+    steps: { trip: flow.steps.trip as never, extras: { flow: { id: 'extras', steps: {} } } },
+  };
+  const refusal = /step "extras" is a group, but no traversal is installed/;
+
+  it('refuses to build a wizard for it', () => {
+    expect(() => createWizard({ flow: grouped })).toThrow(refusal);
+  });
+
+  it('names the fix and the docs anchor', () => {
+    expect(() => createWizard({ flow: grouped })).toThrow(
+      '[wizzard] step "extras" is a group, but no traversal is installed. ' +
+        'The main entry walks flat flows only. Pass `groups` from ' +
+        '@wizzard-packages/core/groups to createWizard. ' +
+        'https://github.com/ZizzX/wizzard-packages/blob/main/docs/errors.md#groups-not-installed'
+    );
+  });
+
+  it('refuses a patch that adds one, and leaves the flow as it was', async () => {
+    const w = make({ payer: 'private', name: 'Ann' });
+    await w.next();
+
+    expect(() => w.patchFlow({ steps: { extras: { flow: 'extras' } } })).toThrow(refusal);
+    expect(w.getFlow().steps).not.toHaveProperty('extras');
+    expect(w.getSnapshot().active).toEqual(['trip', 'payment']);
+  });
+
+  it('leaves a flat flow alone', () => {
+    expect(() => make()).not.toThrow();
   });
 });
 

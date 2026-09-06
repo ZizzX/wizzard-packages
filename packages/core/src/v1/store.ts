@@ -1,6 +1,6 @@
 import { commit, restart } from './commit';
 import { type SliceAt, type StepIdOf } from './define';
-import { END, type FlowDefinition, type StepDef } from './flow';
+import { END, type FlowDefinition, isGroup, type StepDef } from './flow';
 import { runNav, type Hooks, type NavContext, type NavResult } from './navigate';
 import { getPath, setPath } from './path';
 import { createSelector, type Derived } from './select';
@@ -106,7 +106,32 @@ export interface Wizard<F extends FlowDefinition = FlowDefinition> {
 
 const strictEquals = <T>(a: T, b: T): boolean => a === b;
 
+/**
+ * A group in a flow the main entry is asked to walk is a configuration error,
+ * not a navigation outcome: phase 5 would find the step, phase 9 would make it
+ * current, and the binding would then be asked to render a step type that has
+ * no `view`. So it is refused where an unknown resolver is refused — by
+ * throwing, at construction and on every patch, rather than on the first
+ * `next()`.
+ *
+ * `installed` is always `false` today. The `groups` traversal that flips it
+ * lands behind its own export, so a flat flow never pays for it.
+ */
+function assertNoGroups(flow: FlowDefinition, installed: boolean): void {
+  if (installed) return;
+  for (const [id, step] of Object.entries(flow.steps)) {
+    if (!isGroup(step)) continue;
+    throw new Error(
+      `[wizzard] step "${id}" is a group, but no traversal is installed. ` +
+        'The main entry walks flat flows only. Pass `groups` from ' +
+        '@wizzard-packages/core/groups to createWizard. ' +
+        'https://github.com/ZizzX/wizzard-packages/blob/main/docs/errors.md#groups-not-installed'
+    );
+  }
+}
+
 export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>): Wizard<F> {
+  assertNoGroups(options.flow, false);
   // Widened on purpose: `patchFlow` replaces it with something that is no longer `F`.
   let flow: FlowDefinition = options.flow;
   const registry = options.registry;
@@ -381,6 +406,7 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
       // than repaired. Silently relocating them loses a half-filled form, and a
       // backend that sends such a patch has a bug worth surfacing.
       if (current !== undefined && merged.steps[current] === undefined) return false;
+      assertNoGroups(merged, false);
       flow = merged;
       write(commit(state, {}));
       return true;
