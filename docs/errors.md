@@ -76,6 +76,8 @@ answers with the position rather than with the item.
 ```
 [wizzard] export stopped: the state holds a circular reference (<detail>). Recorded state
 must be JSON. Fix the value; redact runs after the copy and cannot remove it. …#devtools-export-failed
+[wizzard] export stopped: the state cannot be serialised as JSON (<detail>). Recorded state
+must be JSON. Fix the value; redact runs after the copy and cannot remove it. …#devtools-export-failed
 [wizzard] export stopped: redact threw <message>. Nothing was copied. The hook must return a
 SessionBundle; fix it, or remove it to export unredacted development data. …#devtools-export-failed
 ```
@@ -86,11 +88,12 @@ case.
 
 A bundle is built from a copy of the recording, never from the live frames: the copy is a
 JSON round-trip, because `WizardState` is JSON by contract, and the copy is what the `redact`
-hook receives. That order is what the two messages describe. The first fires when the copy
-itself fails, and the one way JSON fails on a state is a cycle; no devtools setting works
-around it, because the value has to be serialisable before anything can be redacted out of
-it. The second fires when the hook throws or returns something that is not a bundle; fixing
-the hook, or removing it, is the whole fix.
+hook receives. That order is what the messages describe. The first two fire when the copy
+itself fails: a cycle is the usual cause, a `BigInt` or a throwing `toJSON` the others, and
+`<detail>` carries the engine's own words. No devtools setting works around either, because
+the value has to be serialisable before anything can be redacted out of it. The last fires
+when the hook throws or returns something that is not a bundle; fixing the hook, or removing
+it, is the whole fix.
 
 ```ts
 import { recordSession } from '@wizzard-packages/devtools/headless';

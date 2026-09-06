@@ -67,6 +67,19 @@ export interface Recorder {
 const DOCS =
   'https://github.com/ZizzX/wizzard-packages/blob/main/docs/errors.md#devtools-export-failed';
 
+const isBundle = (v: unknown): v is SessionBundle => {
+  const b = v as Partial<SessionBundle> | null;
+  return (
+    typeof b === 'object' &&
+    b !== null &&
+    b.version === 1 &&
+    typeof b.flow === 'object' &&
+    b.flow !== null &&
+    Array.isArray(b.outcomes) &&
+    Array.isArray(b.session?.frames)
+  );
+};
+
 export function recordSession(wizard: WizardLike, options: RecordOptions = {}): Recorder {
   const { plugin, subFlows, redact } = options;
   const maxFrames = Math.max(1, options.limits?.frames ?? 2000);
@@ -79,14 +92,9 @@ export function recordSession(wizard: WizardLike, options: RecordOptions = {}): 
   let stopping = false;
   let ended = false;
 
-  // Only attempts that end during the recording belong to it: the plugin's
-  // ring may hold older ones, and the newest pending id is where "during" starts.
-  let firstId = 0;
-  if (plugin) {
-    const last = plugin.outcomes[plugin.outcomes.length - 1];
-    firstId = Math.max(last === undefined ? 0 : last.id + 1, plugin.pending?.id ?? 0);
-  }
-  const seen = new Set<number>();
+  // Only attempts that end during the recording belong to it. The plugin's
+  // ring holds the ones that ended before; anything else it shows is new.
+  const seen = new Set<number>(plugin?.outcomes.map((o) => o.id));
 
   const unsubscribers: (() => void)[] = [];
   const finish = (): void => {
@@ -124,7 +132,7 @@ export function recordSession(wizard: WizardLike, options: RecordOptions = {}): 
         plugin.subscribe(() => {
           if (ended) return;
           for (const o of plugin.outcomes) {
-            if (o.id < firstId || seen.has(o.id)) continue;
+            if (seen.has(o.id)) continue;
             seen.add(o.id);
             outcomes.push(o);
             if (outcomes.length >= maxOutcomes) {
@@ -170,14 +178,18 @@ export function recordSession(wizard: WizardLike, options: RecordOptions = {}): 
         meta: { frames: 0, outcomes: 0, redacted: false, capped, stopped, bytes: 0 },
       };
       // The state is JSON by contract, so a JSON round-trip is the copy: nothing
-      // live reaches the redactor, and the one thing that can fail is a cycle.
+      // live reaches the redactor. A cycle is the usual way it fails; a BigInt
+      // or a throwing `toJSON` are the others, and are named as what they are.
       let copy: SessionBundle;
       try {
         copy = JSON.parse(JSON.stringify(raw)) as SessionBundle;
       } catch (error) {
         const detail = String((error as Error).message ?? error).split('\n')[0] ?? '';
+        const cause = /circular|cyclic/i.test(detail)
+          ? 'holds a circular reference'
+          : 'cannot be serialised as JSON';
         throw new Error(
-          `[wizzard] export stopped: the state holds a circular reference (${detail}). Recorded state must be JSON. Fix the value; redact runs after the copy and cannot remove it. ${DOCS}`
+          `[wizzard] export stopped: the state ${cause} (${detail}). Recorded state must be JSON. Fix the value; redact runs after the copy and cannot remove it. ${DOCS}`
         );
       }
       let out = copy;
@@ -189,7 +201,7 @@ export function recordSession(wizard: WizardLike, options: RecordOptions = {}): 
             `[wizzard] export stopped: redact threw ${String((error as Error).message ?? error)}. Nothing was copied. The hook must return a SessionBundle; fix it, or remove it to export unredacted development data. ${DOCS}`
           );
         }
-        if (typeof out !== 'object' || out === null || !Array.isArray(out.session?.frames)) {
+        if (!isBundle(out)) {
           throw new Error(
             `[wizzard] export stopped: redact returned something that is not a SessionBundle. Nothing was copied. The hook must return the bundle it was given, changed as needed; fix it, or remove it to export unredacted development data. ${DOCS}`
           );

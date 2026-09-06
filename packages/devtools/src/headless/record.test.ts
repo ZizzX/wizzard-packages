@@ -215,6 +215,39 @@ describe('recordSession', () => {
     expect(() => wrong.bundle()).toThrow(/not a SessionBundle/);
   });
 
+  it('keeps every attempt that ends after the recording starts, older pending ones included', async () => {
+    const dt = devtools();
+    const flow = {
+      ...flowA,
+      steps: { ...flowA.steps, details: { label: 'Details', validate: { $ref: 'slow' } } },
+    };
+    const w = createWizard({ flow, registry: slowRegistry, data: dataA, plugins: [dt] });
+    await w.start();
+    const older = w.next();
+    const newer = w.next();
+    const rec = recordSession(w, { plugin: dt });
+    await Promise.all([older, newer]);
+    rec.stop();
+    expect(rec.bundle().outcomes.map((o) => o.id)).toEqual([2, 3]);
+  });
+
+  it('refuses a redactor result that is only partly a bundle, through the documented error', async () => {
+    const w = createWizard({ flow: flowA, registry: registryA, data: dataA });
+    await w.start();
+    const partial = recordSession(w, {
+      redact: (b) => ({ session: b.session }) as unknown as SessionBundle,
+    });
+    expect(() => partial.bundle()).toThrow(/not a SessionBundle/);
+  });
+
+  it('names a non-JSON value as such, not as a circular reference', async () => {
+    const w = createWizard({ flow: flowA, registry: registryA, data: { ...dataA, big: 1n } });
+    const rec = recordSession(w);
+    await w.start();
+    expect(() => rec.bundle()).toThrow(/cannot be serialised as JSON \(.*BigInt/);
+    expect(() => rec.bundle()).not.toThrow(/circular/);
+  });
+
   it('names a circular reference as the one copy failure', async () => {
     const loop: Record<string, unknown> = {};
     loop.self = loop;

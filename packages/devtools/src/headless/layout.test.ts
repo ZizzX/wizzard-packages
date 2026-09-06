@@ -6,7 +6,7 @@ import { denseFlow, flowA, flowB, flowC, subFlowsC } from '../../../../contract/
 import { layoutGraph, NODE_H, NODE_W, REPEAT_H } from './layout';
 
 import type { FlowGraph, GraphEdge } from '@wizzard-packages/core/graph';
-import type { Positioned } from './layout';
+import type { Positioned, PositionedGraph } from './layout';
 
 const overlaps = (a: Positioned, b: Positioned): boolean =>
   a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
@@ -85,6 +85,24 @@ describe('layoutGraph', () => {
     expect(laid.edges.find((e) => e.to === 'missing')?.points).toHaveLength(2);
   });
 
+  it('keeps a dangling back edge: its target is a ghost and the edge is drawn', () => {
+    const graph: FlowGraph = {
+      nodes: [
+        { id: 'a', kind: 'step' },
+        { id: 'b', kind: 'step' },
+      ],
+      edges: [
+        { from: 'a', to: 'b', kind: 'next' },
+        { from: 'b', to: 'gone', kind: 'back', dangling: true },
+      ],
+    };
+    const laid = layoutGraph(graph);
+    const y = Object.fromEntries(laid.nodes.map((n) => [n.id, n.y]));
+    expect(laid.nodes.find((n) => n.id === 'gone')).toMatchObject({ ghost: true });
+    expect(y.gone).toBeGreaterThan(y.b);
+    expect(laid.edges.find((e) => e.to === 'gone')).toMatchObject({ kind: 'back', dangling: true });
+  });
+
   it('property: no two rectangles overlap and every edge endpoint is laid out', () => {
     fc.assert(
       fc.property(graphs, (graph) => {
@@ -121,7 +139,9 @@ describe('layoutGraph', () => {
     );
   });
 
-  it('property: terminates on cycles, is deterministic, and back edges move nothing', () => {
+  it('property: terminates on cycles, is deterministic, and back edges move no flow node', () => {
+    // A dangling back edge adds a ghost, so only the flow's own nodes are compared.
+    const own = (laid: PositionedGraph) => JSON.stringify(laid.nodes.filter((n) => !n.ghost));
     fc.assert(
       fc.property(graphs, (graph) => {
         const a = layoutGraph(graph, {});
@@ -130,10 +150,7 @@ describe('layoutGraph', () => {
           { ...graph, edges: graph.edges.filter((e) => e.kind !== 'back') },
           {}
         );
-        return (
-          JSON.stringify(a) === JSON.stringify(b) &&
-          JSON.stringify(a.nodes) === JSON.stringify(without.nodes)
-        );
+        return JSON.stringify(a) === JSON.stringify(b) && own(a) === own(without);
       })
     );
   });

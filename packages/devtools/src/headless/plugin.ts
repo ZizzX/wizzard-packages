@@ -76,6 +76,7 @@ export function devtools(options: DevtoolsOptions = {}): DevtoolsPlugin {
   let attached = false;
   let lastRev = -1;
   let failure: OutcomeError | null = null;
+  let generation = 0;
 
   const notify = (): void => {
     for (const l of listeners) {
@@ -139,8 +140,10 @@ export function devtools(options: DevtoolsOptions = {}): DevtoolsPlugin {
       return () => listeners.delete(listener);
     },
     // A second `init` while attached means a second wizard (StrictMode, Fast
-    // Refresh): the plugin follows the newest one and starts its rings over.
+    // Refresh): the plugin follows the newest one and starts its rings over,
+    // and the first wizard's teardown, arriving later, is ignored.
     init(host: PluginHost) {
+      const mine = ++generation;
       guarded(() => {
         outcomes = [];
         open.clear();
@@ -150,6 +153,7 @@ export function devtools(options: DevtoolsOptions = {}): DevtoolsPlugin {
         notify();
       });
       return () => {
+        if (mine !== generation) return;
         guarded(() => {
           attached = false;
           open.clear();

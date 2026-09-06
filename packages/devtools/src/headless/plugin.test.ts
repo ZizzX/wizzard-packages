@@ -119,6 +119,28 @@ describe('devtools()', () => {
     expect(dt.outcomes.map((o) => o.id)).toEqual([1]);
   });
 
+  it('ignores the teardown of the first wizard once a second init has taken over', async () => {
+    const dt = devtools();
+    const flow = {
+      ...flowA,
+      steps: { ...flowA.steps, details: { label: 'Details', validate: { $ref: 'slow' } } },
+    };
+    const first = createWizard({ flow, registry: slow, data: dataA, plugins: [dt] });
+    const second = createWizard({ flow, registry: slow, data: dataA, plugins: [dt] });
+    await second.start();
+    const moving = second.next();
+    expect(dt.pending?.id).toBe(2);
+
+    first.destroy();
+    expect(dt.attached).toBe(true);
+    expect(dt.pending?.id).toBe(2);
+    await moving;
+    expect(dt.outcomes.map((o) => o.id)).toEqual([1, 2]);
+
+    second.destroy();
+    expect(dt.attached).toBe(false);
+  });
+
   it('lags behind the wizard when it is not the installed instance', () => {
     const installed = devtools();
     const other = devtools();
