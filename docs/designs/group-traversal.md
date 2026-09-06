@@ -412,11 +412,19 @@ export interface Traversal {
     registry?: Registry,
     subFlows?: SubFlows
   ) =>
-    | { stack: readonly Frame[]; to: string | typeof END; scope: Scope }
+    | { stack: readonly Frame[]; to: string | typeof END; flow: FlowDefinition; scope: Scope }
     | { ok: false; reason: 'invalid'; by: string; errors: Readonly<Record<string, string>> }
     | null;
 }
 ```
+
+`step().flow` was added while this was implemented, and it is the one deviation
+from the signature above as first written. It is the flow that owns the **new**
+top frame, which is not always the one `here()` named: a move that enters or
+leaves a group changes which flow phases 5 to 7 have to look the target up in,
+and without it phase 5 looks a child step up in the root and answers
+`no-target`. `here()` still answers for the frame the wizard is standing on, and
+that is what phases 2 and 3 read.
 
 `here().scope` is what phases 2, 3 and 7 evaluate against and what the selector and
 `resolverFor` are given. `step().scope` is the scope _after_ the move -- the next item's

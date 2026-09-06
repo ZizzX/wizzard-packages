@@ -1,9 +1,17 @@
 import { commit, restart } from './commit';
 import { type SliceAt, type StepIdOf } from './define';
-import { END, type FlowDefinition, type StepDef } from './flow';
-import { runNav, type Hooks, type NavContext, type NavResult } from './navigate';
+import { END, isGroup, type FlowDefinition, type StepDef } from './flow';
+import {
+  runNav,
+  type Hooks,
+  type NavContext,
+  type NavIntent,
+  type NavResult,
+  type SubFlows,
+  type Traversal,
+} from './navigate';
 import { getPath, setPath } from './path';
-import { createSelector, type Derived } from './select';
+import { createSelector, type ActiveAt, type Derived } from './select';
 import { initialState, type WizardState } from './state';
 
 import type { AsyncRegistry, Json, Scope } from './expr';
@@ -33,6 +41,37 @@ export interface WizardOptions<F extends FlowDefinition = FlowDefinition> {
   ctx?: Record<string, unknown>;
   /** A previously serialized state, for resuming a session. */
   state?: WizardState;
+  /**
+   * Group and repeat traversal, from `@wizzard-packages/core/groups`. Required
+   * by any flow containing a `GroupStep`, and carried by no flow without one -
+   * which is the whole reason it is passed in rather than imported.
+   */
+  groups?: Traversal;
+  /** Sub-flow definitions a string `GroupStep.flow` names. */
+  subFlows?: SubFlows;
+}
+
+const BACK: NavIntent = { type: 'back' };
+
+/**
+ * A group step with no traversal installed is a configuration error, not a
+ * navigation outcome: phase 5 would find the step, `reachable` would include it
+ * and the binding would be asked to render a step type that has no `view`. So
+ * it is refused where an unknown resolver is refused - by throwing, before the
+ * first render rather than on the first `next()`.
+ */
+function assertGroups(flow: FlowDefinition, installed: boolean): void {
+  if (installed) return;
+  for (const [id, step] of Object.entries(flow.steps)) {
+    if (isGroup(step)) {
+      throw new Error(
+        `[wizzard] step "${id}" is a group, but no traversal is installed. ` +
+          `The main entry walks flat flows only. ` +
+          `Pass \`groups\` from @wizzard-packages/core/groups to createWizard. ` +
+          `https://github.com/ZizzX/wizzard-packages/blob/main/docs/errors.md#groups-not-installed`
+      );
+    }
+  }
 }
 
 /**
@@ -110,10 +149,35 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
   // Widened on purpose: `patchFlow` replaces it with something that is no longer `F`.
   let flow: FlowDefinition = options.flow;
   const registry = options.registry;
+  const traversal = options.groups;
+  const subFlows = options.subFlows;
+
+  assertGroups(flow, traversal !== undefined);
 
   let state: WizardState = options.state ?? initialState(options.data ?? {}, options.ctx ?? {});
   const listeners = new Set<() => void>();
-  const select = createSelector(() => flow, registry);
+
+  /**
+   * Phase 0.5 for everything outside the pipeline. `validate`, `load` and every
+   * resolver read a step from the flow that owns the current frame and evaluate
+   * against the scope at it, which inside a group is the sub-flow and a scope
+   * carrying `loop`. Flat, it is the root flow and `{ data, ctx }` - the exact
+   * pair these three read directly before.
+   */
+  const at = (s: WizardState): { flow: FlowDefinition; scope: Scope } =>
+    traversal?.here(flow, s, registry, subFlows) ?? {
+      flow,
+      scope: { data: s.data, ctx: s.ctx },
+    };
+
+  const select = createSelector(
+    () => flow,
+    registry,
+    (s): ActiveAt =>
+      traversal === undefined
+        ? at(s)
+        : { ...at(s), canBack: traversal.step(flow, s, BACK, registry, subFlows) !== null }
+  );
 
   let batching = false;
   let dirtyWhileBatching = false;
@@ -177,8 +241,6 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
     return snapshot;
   };
 
-  const scopeOf = (): Scope => ({ data: state.data, ctx: state.ctx });
-
   const resolverFor = async (
     ref: { $ref: string; args?: Json } | undefined,
     fallback: unknown
@@ -186,11 +248,11 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
     if (!ref) return fallback;
     const fn = registry?.[ref.$ref];
     if (!fn) throw new Error(`[wizzard] unknown resolver: ${ref.$ref}`);
-    return await fn(ref.args, scopeOf());
+    return await fn(ref.args, at(state).scope);
   };
 
   const validateStep = async (stepId: string): Promise<Readonly<Record<string, string>> | null> => {
-    const step: StepDef | undefined = flow.steps[stepId];
+    const step: StepDef | undefined = at(state).flow.steps[stepId];
     const rule = step && 'validate' in step ? step.validate : undefined;
     const result = await resolverFor(rule, null);
     return (result as Readonly<Record<string, string>> | null) ?? null;
@@ -199,14 +261,17 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
   const navContext = (): NavContext => ({
     flow,
     registry,
+    ...(traversal !== undefined && { groups: traversal }),
+    ...(subFlows !== undefined && { subFlows }),
     // Disabled and post-destroy plugins are filtered here too: `fail` must mean
     // the same thing to a navigation hook as it does to `onCommit`, or a plugin
     // that threw once keeps running half its contract.
     hooks: destroyed ? [] : plugins.filter((h) => !disabled.has(h.name)),
     validate: (stepId) => validateStep(stepId),
-    load: async (stepId) => {
-      const step = flow.steps[stepId];
-      await resolverFor(step?.load, undefined);
+    // The reference arrives from the pipeline rather than being looked back up:
+    // a step inside a sub-flow has no id in the root flow.
+    load: async (_stepId, load) => {
+      await resolverFor(load as { $ref: string; args?: Json } | undefined, undefined);
     },
     signal: controller?.signal,
   });
@@ -380,7 +445,19 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
       // A patch that deletes the step the user is standing on is rejected rather
       // than repaired. Silently relocating them loses a half-filled form, and a
       // backend that sends such a patch has a bug worth surfacing.
-      if (current !== undefined && merged.steps[current] === undefined) return false;
+      // Only when the current frame is the root's: a step inside a sub-flow is
+      // never in `merged.steps`, and reading its absence as a deletion would
+      // refuse every patch made while somebody stands inside a group.
+      if (
+        current !== undefined &&
+        state.stack.length === 1 &&
+        merged.steps[current] === undefined
+      ) {
+        return false;
+      }
+      // The other place a flow arrives, so the other place a group can appear
+      // without a traversal to walk it.
+      assertGroups(merged, traversal !== undefined);
       flow = merged;
       write(commit(state, {}));
       return true;

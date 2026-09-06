@@ -37,8 +37,12 @@ export type Expr =
 export interface Scope {
   data: Record<string, unknown>;
   ctx: Record<string, unknown>;
-  /** Present inside a `repeat` group. */
-  loop?: { index: number; item: unknown };
+  /**
+   * Present inside a `repeat` group. `key` is the item's identity under
+   * `keyBy` - the one part a flow can use to address its own item's data,
+   * because `index` moves when the list is reordered.
+   */
+  loop?: { index: number; item: unknown; key: string };
 }
 
 export type Resolver = (args: Json | undefined, scope: Scope) => unknown;

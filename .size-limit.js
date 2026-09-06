@@ -21,9 +21,14 @@ export default [
   // The pipeline is the expensive part at roughly 1.4 kB of its own, which is
   // fair: it is the eleven phases everything else delegates to.
   //
-  // Group and repeat traversal is not in this entry and never will be: it goes
-  // behind its own export, so a flow that has no sub-flows pays nothing for the
-  // machinery that walks them. That is what keeps the main entry inside 4 kB.
+  // Group and repeat traversal is behind `@wizzard-packages/core/groups`, its
+  // own entry with its own budget below, so the machinery that pushes, advances
+  // and prunes frames is not here. The seam that installs it is: phase 0.5 asks
+  // the traversal which flow owns the current frame, phase 4 asks it for the
+  // move, phase 8 asks it again when the data moved under an await, phase 9
+  // commits the stack it returned, and `createWizard` refuses a group when
+  // nothing is installed. That seam is in this entry and costs what the raise
+  // below states. The flat path through all of it is unchanged.
   //
   // Raised from 3.9 kB to the roadmap's 4.0 kB on 2026-09-06 for `start`: a
   // fresh engine has an empty stack, so before it existed a binding rendered
@@ -47,12 +52,41 @@ export default [
   // backward move actually lands on, and `canBack` is now `resolveBack`'s
   // answer rather than a count that disagreed with it. Forty bytes, measured
   // 4.47 kB, for a Back button that means what it says.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '4.5 kB', gzip: true },
+  //
+  // 4.5 to 5.0 kB on 2026-09-06 for the group traversal seam, measured rather
+  // than estimated: 4.48 kB before, 4.99 kB after. Three pieces, each measured
+  // on its own. The pipeline seam - phase 0.5's `here`, phase 4's `step`, the
+  // phase-8 recheck and phase 9's stack - is 190 B. The store and selector side
+  // - the active flow and scope for `validate`, `load` and every resolver, and
+  // the breadcrumbs and `canBack` a sub-flow's steps produce - is 110 B. The
+  // remaining 200 B is the refusal a flow with a group and no traversal gets,
+  // and most of that is the message: the failure template in `AGENTS.md` is
+  // four clauses and a documentation link, and shortening it is not on offer.
+  //
+  // The design note expected 155-235 B and named 4.6-4.7 kB. The gap is the
+  // guard, which the note costed at 50-70 B before the message was written.
+  // Even so this is the cheap option: the traversal itself is 2.9 kB in its own
+  // entry, and none of it is here.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '5.0 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a
   // wizard that never draws itself should not carry the code that would.
   { name: 'core-v1 graph', path: 'packages/core/src/v1/graph.ts', limit: '800 B', gzip: true },
+
+  // Group and repeat traversal. Its own entry for the reason the budget note
+  // above gives: it walks sub-flows, and a flat flow has none to walk. Two pure
+  // functions - where the wizard is standing, and the whole of a move as a
+  // stack the pipeline commits - plus the item keying, the pruning of dead
+  // frames and the `END`-by-depth rule that the invariants in
+  // `docs/designs/group-traversal.md` describe.
+  //
+  // Measured 2026-09-06 at 2.92 kB, and most of that is not its own: it calls
+  // `resolveNext` and `resolveBack` for a single level rather than reimplementing
+  // them, and evaluates `over` and `input` with the expression evaluator, so it
+  // pulls `resolve`, `expr`, `path` and the step types in behind it. An
+  // application that already imports the engine pays for those once.
+  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '3.0 kB', gzip: true },
 
   // The recorded-session checker. Its own entry because replay is a devtools and
   // documentation concern: an application that only runs a wizard never needs to
