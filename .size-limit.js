@@ -226,6 +226,27 @@ export default [
     ignore: ['vue', '@wizzard-packages/core/v1'],
   },
 
+  // Devtools without React: the plugin that hears every navigation attempt,
+  // the recorder that turns a run into a replayable bundle, and the layout,
+  // printer and diff the docs site draws with. Its own entry because a Vue
+  // host or a Node test wants exactly this and none of the panel. A
+  // development-time dependency, so the budget exists to catch accidental
+  // growth, not to fight for bytes; the panel gets its own line when it lands.
+  //
+  // Measured 2026-09-07 at 3069 B; the limit is that plus ten percent.
+  {
+    name: 'devtools headless',
+    path: 'packages/devtools/src/headless/index.ts',
+    limit: '3.4 kB',
+    gzip: true,
+    ignore: [
+      '@wizzard-packages/core',
+      '@wizzard-packages/core/v1',
+      '@wizzard-packages/core/graph',
+      '@wizzard-packages/core/session',
+    ],
+  },
+
   // The persist plugin, measured from source like the rest of v1.
   //
   // The roadmap budgeted 0.8 kB per plugin before any of them existed. This one

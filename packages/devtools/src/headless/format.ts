@@ -27,7 +27,8 @@ const COMPARE: Readonly<Record<string, string>> = {
 
 type Node = Record<string, unknown>;
 
-const isNode = (e: Expr): e is Node => typeof e === 'object' && e !== null && !Array.isArray(e);
+const asNode = (e: Expr): Node | null =>
+  typeof e === 'object' && e !== null && !Array.isArray(e) ? (e as unknown as Node) : null;
 
 const opOf = (n: Node): string | undefined =>
   ['$get', '$ref', '$not', '$and', '$or', '$empty', ...Object.keys(COMPARE)].find((k) => k in n);
@@ -35,8 +36,9 @@ const opOf = (n: Node): string | undefined =>
 /** `$and`/`$or` inside another boolean, or anything compound under `$not`, gets parentheses. */
 const wrap = (e: Expr, when: (op: string) => boolean): string => {
   const text = print(e);
-  if (!isNode(e)) return text;
-  const op = opOf(e);
+  const node = asNode(e);
+  if (node === null) return text;
+  const op = opOf(node);
   return op !== undefined && when(op) ? `(${text})` : text;
 };
 
@@ -68,7 +70,7 @@ function print(e: Expr): string {
     default: {
       const pair = node[op];
       if (!Array.isArray(pair) || pair.length !== 2) return JSON.stringify(e);
-      const [a, b] = pair as readonly [Expr, Expr];
+      const [a, b] = pair as unknown as readonly [Expr, Expr];
       return `${wrap(a, isBool)} ${COMPARE[op]} ${wrap(b, isBool)}`;
     }
   }

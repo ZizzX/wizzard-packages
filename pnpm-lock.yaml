@@ -500,14 +500,13 @@ importers:
         version: 3.25.76
 
   packages/devtools:
-    dependencies:
-      '@wizzard-packages/react':
-        specifier: workspace:*
-        version: link:../react
     devDependencies:
       '@wizzard-packages/core':
         specifier: workspace:*
         version: link:../core
+      '@wizzard-packages/react':
+        specifier: workspace:*
+        version: link:../react
       react:
         specifier: ^19.2.0
         version: 19.2.3
