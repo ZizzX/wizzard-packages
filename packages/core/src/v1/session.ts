@@ -22,8 +22,12 @@ export interface RecordedSession {
 /** Same cap as the graph builder: thirty-two distinct flows deep is not nesting. */
 const MAX_DEPTH = 32;
 
-/** Every flow a frame may legitimately name: the root, its inline sub-flows, the registry. */
-function knownFlows(
+/**
+ * Every flow a frame may legitimately name: the root, its inline sub-flows, the
+ * registry. Exported for the same reason `checkFrames` is - `decodeSnapshot`
+ * resolves the flows a stored frame names against exactly this set.
+ */
+export function knownFlows(
   flow: FlowDefinition,
   subFlows: Readonly<Record<string, FlowDefinition>> | undefined
 ): Map<string, FlowDefinition> {
@@ -89,6 +93,97 @@ function isFrameShaped(frame: unknown): frame is WizardState {
     typeof f.rev === 'number' &&
     typeof f.nav === 'number'
   );
+}
+
+/**
+ * What a frame can be wrong about.
+ *
+ * A kind rather than a sentence, because the two callers want different things
+ * from it. `decodeSnapshot` minds fewer of them than a recording does - a frame
+ * naming a flow nobody registered is pruned by the traversal on the first
+ * navigation, where the same frame in a recording is drift worth reporting -
+ * and it prints none of them, so the prose belongs to the caller that does.
+ */
+export type FrameProblem = 'unknown-flow' | 'unknown-step' | 'not-a-group' | 'wrong-flow' | 'key';
+
+/**
+ * One stack, checked against the flows its frames may name.
+ *
+ * Exported because the snapshot decoder checks the same thing: a frame arriving
+ * as JSON is a frame arriving as JSON, and two copies of this walk would drift
+ * the way 0.x's three navigation copies drifted.
+ *
+ * It reports a kind, a depth and - for `wrong-flow` alone - the flow the group
+ * actually leads into, which is the one fact a caller cannot recover from the
+ * stack it passed in. Everything else a sentence needs is `stack[depth]`. So
+ * the sentences live in `checkSession`, where they are read, and the snapshot
+ * entry carries the walk and none of the prose it never prints.
+ *
+ * Only the bottom frame is resolved by name. Every frame above it is resolved
+ * from the group that encloses it, because `known` is keyed by a registry key
+ * *and* by each definition's `id`: a key colliding with another definition's id
+ * would otherwise resolve a child against the wrong flow and call a correct
+ * stack drift. That is what the nesting rule already says - the enclosing frame
+ * is a group into the enclosed frame's flow - so the walk reads it forwards.
+ */
+export function checkFrames(
+  stack: readonly Frame[],
+  known: Map<string, FlowDefinition>,
+  report: (depth: number, problem: FrameProblem, into?: string) => void
+): void {
+  // The bottom frame names the root, or a flow the caller registered; from
+  // there the stack resolves itself.
+  let owner = stack.length === 0 ? undefined : known.get((stack[0] as Frame).flow);
+
+  for (let depth = 0; depth < stack.length; depth++) {
+    const entry = stack[depth] as Frame;
+
+    if (owner === undefined) {
+      report(depth, 'unknown-flow');
+      return;
+    }
+
+    const step = owner.steps[entry.step];
+    if (step === undefined) {
+      report(depth, 'unknown-step');
+      return;
+    }
+
+    // `isStackEntry` already refused a `key` that is not a string, so what is
+    // left is whether the step it sits on can have one at all.
+    if (entry.key !== undefined && (!isGroup(step) || step.repeat === undefined)) {
+      report(depth, 'key');
+    }
+
+    // Only the last entry is the current step; the ones before it enclose it.
+    // A parent that is not a group, or a group leading somewhere other than
+    // where the child says it is, is a stack the engine could not have built —
+    // and the shape drift hides in when nobody stamped a version. Either way
+    // nothing above such a frame can be resolved, so the walk stops there
+    // rather than guessing at an owner for what sits on it.
+    const child = stack[depth + 1];
+    if (child === undefined) return;
+    if (!isGroup(step)) {
+      report(depth, 'not-a-group');
+      return;
+    }
+
+    // A string `flow` is the key the group is referenced by, and the definition
+    // behind that key is free to carry a different id. The frame names the id,
+    // so compare against what the reference actually resolves to, falling back
+    // to the bare reference when nothing does.
+    const ref = typeof step.flow === 'string' ? step.flow : step.flow.id;
+    const sub = typeof step.flow === 'string' ? known.get(step.flow) : step.flow;
+    const into = sub?.id ?? ref;
+    if (into !== child.flow) {
+      report(depth, 'wrong-flow', into);
+      return;
+    }
+
+    // Undefined for a reference nobody registered; the next turn reports that
+    // as an unknown flow at the child's own depth.
+    owner = sub;
+  }
 }
 
 /**
@@ -167,44 +262,21 @@ export function checkSession(
       return;
     }
 
-    frame.stack.forEach((entry, depth) => {
+    // The sentences are composed here, not in the walk: a recording checker is
+    // read by a person, and the decoder that shares the walk prints nothing.
+    checkFrames(frame.stack, known, (depth, problem, into) => {
+      const entry = frame.stack[depth] as Frame;
       const path = `${at}.stack[${depth}]`;
-      const owner = known.get(entry.flow);
-      if (owner === undefined) {
+      if (problem === 'unknown-flow') {
         report(path, `names an unknown flow: ${entry.flow}`);
-        return;
-      }
-
-      const step = owner.steps[entry.step];
-      if (step === undefined) {
+      } else if (problem === 'unknown-step') {
         report(path, `names a step ${entry.flow} does not have: ${entry.step}`);
-        return;
-      }
-
-      // Only the last entry is the current step; the ones before it enclose it.
-      // A parent that is not a group, or a group leading somewhere other than
-      // where the child says it is, is a stack the engine could not have built —
-      // and the shape drift hides in when nobody stamped a version.
-      const child = frame.stack[depth + 1];
-      if (child !== undefined) {
-        if (!isGroup(step)) {
-          report(path, `encloses another frame, but ${entry.step} is not a group`);
-        } else {
-          // A string `flow` is the key the group is referenced by, and the
-          // definition behind that key is free to carry a different id. The
-          // frame names the id, so compare against what the reference actually
-          // resolves to, falling back to the bare reference when nothing does.
-          const ref = typeof step.flow === 'string' ? step.flow : step.flow.id;
-          const into = known.get(ref)?.id ?? ref;
-          if (into !== child.flow) {
-            report(path, `is a group into ${into}, but the frame below it is in ${child.flow}`);
-          }
-        }
-      }
-
-      // `isStackEntry` already refused a `key` that is not a string, so what is
-      // left is whether the step it sits on can have one at all.
-      if (entry.key !== undefined && (!isGroup(step) || step.repeat === undefined)) {
+      } else if (problem === 'not-a-group') {
+        report(path, `encloses another frame, but ${entry.step} is not a group`);
+      } else if (problem === 'wrong-flow') {
+        const child = frame.stack[depth + 1] as Frame;
+        report(path, `is a group into ${into}, but the frame below it is in ${child.flow}`);
+      } else {
         report(`${path}.key`, `has an item key, but ${entry.step} is not a repeat group`);
       }
     });

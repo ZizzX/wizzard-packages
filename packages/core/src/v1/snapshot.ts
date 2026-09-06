@@ -1,6 +1,7 @@
-import { isStackEntry } from './session';
+import { checkFrames, isStackEntry, knownFlows, type FrameProblem } from './session';
 
 import type { FlowDefinition } from './flow';
+import type { SubFlows } from './navigate';
 import type { Frame, WizardState } from './state';
 
 /**
@@ -67,6 +68,16 @@ export interface DecodeOptions {
    * that knows every past shape.
    */
   migrate?: (snapshot: { v: number } & Record<string, unknown>) => unknown;
+  /**
+   * Sub-flow definitions a string `GroupStep.flow` names — the same registry
+   * `checkSession` takes, applied to the same walk.
+   *
+   * Without it a frame naming a flow nothing here can resolve is let through
+   * and pruned by the traversal on the first navigation, which is why omitting
+   * it is permissive rather than broken. With it, a snapshot taken inside a
+   * group is checked to the same depth a recorded session is.
+   */
+  subFlows?: SubFlows;
 }
 
 /** Bounds, so a crafted or runaway snapshot cannot hang the tab that reads it. */
@@ -171,12 +182,20 @@ export function decodeSnapshot(
     return fail('snapshot/other-flow');
   }
 
-  // Only frames belonging to this flow can be checked here. A frame naming a
-  // sub-flow is checked by whoever can resolve that sub-flow; rejecting it
-  // would refuse every legitimate snapshot taken inside a group.
-  const frames = [...snapshot.stack, ...snapshot.history.flat()];
-  const mine = frames.filter((f) => f.flow === flow.id);
-  if (mine.some((f) => flow.steps[f.step] === undefined)) return fail('snapshot/unknown-step');
+  // Every frame, not only the root's. A snapshot taken inside a group carries
+  // the group's frames too, and `checkFrames` is the walk `checkSession` runs,
+  // so the decoder and the recording checker cannot disagree about what a legal
+  // stack is. A frame naming a flow nothing resolves is the one kind let
+  // through: 4.10 of the group-traversal note prunes it on the first
+  // navigation, and refusing it would throw away every snapshot taken inside a
+  // sub-flow the host did not hand us.
+  const known = knownFlows(flow, options.subFlows);
+  const found: FrameProblem[] = [];
+  const note = (_depth: number, problem: FrameProblem): void => {
+    found.push(problem);
+  };
+  for (const stack of [snapshot.stack, ...snapshot.history]) checkFrames(stack, known, note);
+  if (found.some((problem) => problem !== 'unknown-flow')) return fail('snapshot/unknown-step');
 
   // The whole snapshot, not only what a host put in it: a stack or a history
   // can run away just as easily as a data blob can.

@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
+import { groups } from './groups';
 import { decodeSnapshot, toSnapshot, type Snapshot } from './snapshot';
 import { initialState } from './state';
+import { createWizard } from './store';
 
 import type { FlowDefinition } from './flow';
+import type { WizardState } from './state';
 
 const flow: FlowDefinition = {
   id: 'signup',
@@ -246,9 +249,9 @@ describe('the epoch and the frames it restores', () => {
     expect(result.state.nav).toBe(10);
   });
 
-  it('leaves a frame from a sub-flow to whoever can resolve it', () => {
-    // Rejecting this would refuse every snapshot taken inside a group: the step
-    // belongs to the child's steps, which this flow does not contain.
+  it('refuses a frame enclosed by a step that is not a group', () => {
+    // A stack the engine could not have built: only a group encloses anything,
+    // so this is drift or a hand-written snapshot, not a session.
     const snapshot = {
       ...toSnapshot(live(), flow),
       stack: [
@@ -257,7 +260,10 @@ describe('the epoch and the frames it restores', () => {
       ],
     };
 
-    expect(decodeSnapshot(flow, snapshot).restored).toBe(true);
+    expect(decodeSnapshot(flow, snapshot)).toEqual({
+      restored: false,
+      reason: 'snapshot/unknown-step',
+    });
   });
 
   it('still refuses a runaway stack, not only runaway data', () => {
@@ -279,5 +285,185 @@ describe('the epoch and the frames it restores', () => {
     (snapshot.data.name as { full: string }).full = 'Grace';
 
     expect((state.data.name as { full: string }).full).toBe('Ada');
+  });
+});
+
+/**
+ * A booking with a repeat group over its passengers, and the sub-flow each one
+ * runs. The group is referenced by name, so a decoder only resolves it when the
+ * host hands over the registry - which is the whole of 4.10.
+ */
+const passenger: FlowDefinition = {
+  id: 'passenger',
+  order: ['seat', 'meal'],
+  steps: { seat: {}, meal: {} },
+  policy: 'free',
+};
+
+const booking: FlowDefinition = {
+  id: 'booking',
+  version: 1,
+  order: ['who', 'trip', 'review'],
+  steps: {
+    who: {},
+    trip: {
+      flow: 'passenger',
+      repeat: { over: { $get: 'data.passengers' }, keyBy: 'id' },
+    },
+    review: {},
+  },
+  policy: 'free',
+};
+
+/** Standing on the second passenger's last step, two frames deep. */
+const inGroup = (): WizardState => ({
+  ...initialState({ passengers: [{ id: 'p1' }, { id: 'p2' }] }),
+  status: 'idle',
+  stack: [
+    { flow: 'booking', step: 'trip', key: 'p2' },
+    { flow: 'passenger', step: 'meal' },
+  ],
+  history: [[{ flow: 'booking', step: 'who' }]],
+  visited: ['who', 'trip', 'seat', 'meal'],
+  rev: 4,
+  nav: 2,
+});
+
+const stored = (state = inGroup()): unknown =>
+  JSON.parse(JSON.stringify(toSnapshot(state, booking)));
+
+describe('decodeSnapshot, inside a group', () => {
+  it('round-trips a snapshot taken inside a group and resumes on the same item', async () => {
+    const result = decodeSnapshot(booking, stored(), { subFlows: { passenger } });
+
+    expect(result).toEqual({
+      restored: true,
+      state: expect.objectContaining({
+        stack: [
+          { flow: 'booking', step: 'trip', key: 'p2' },
+          { flow: 'passenger', step: 'meal' },
+        ],
+      }) as unknown,
+    });
+    if (!result.restored) return;
+
+    const wizard = createWizard({
+      flow: booking,
+      state: result.state,
+      groups,
+      subFlows: { passenger },
+    });
+    await wizard.start();
+
+    expect(wizard.getSnapshot().current).toBe('meal');
+    expect(wizard.getState().stack[0]?.key).toBe('p2');
+
+    // p2 is the last passenger, so finishing its sub-flow leaves the group
+    // rather than advancing it - which is the proof that the restored frame
+    // was the second item and not the first.
+    await wizard.next();
+    expect(wizard.getSnapshot().current).toBe('review');
+    wizard.destroy();
+  });
+
+  it('refuses a child frame naming a step the sub-flow no longer has', () => {
+    const trimmed: FlowDefinition = { ...passenger, order: ['seat'], steps: { seat: {} } };
+
+    expect(decodeSnapshot(booking, stored(), { subFlows: { passenger: trimmed } })).toEqual({
+      restored: false,
+      reason: 'snapshot/unknown-step',
+    });
+  });
+
+  it('restores the same snapshot without the registry, and prunes it on the first move', async () => {
+    // Permissive by design: without `subFlows` nothing here can resolve
+    // `passenger`, and refusing would throw away every snapshot taken inside a
+    // group whose definitions live somewhere else.
+    const result = decodeSnapshot(booking, stored());
+    expect(result.restored).toBe(true);
+    if (!result.restored) return;
+
+    const wizard = createWizard({ flow: booking, state: result.state, groups });
+    await wizard.start();
+    await wizard.next();
+
+    // The dead child frame is gone with everything above it, and the move
+    // resolved from the group step in the root.
+    expect(wizard.getState().stack).toEqual([{ flow: 'booking', step: 'review' }]);
+    wizard.destroy();
+  });
+
+  it('refuses a key that is not a string, at the shape check', () => {
+    const snapshot = {
+      ...(stored() as Snapshot),
+      stack: [{ flow: 'booking', step: 'trip', key: 3 }],
+    };
+
+    expect(decodeSnapshot(booking, snapshot, { subFlows: { passenger } })).toEqual({
+      restored: false,
+      reason: 'snapshot/unreadable',
+    });
+  });
+
+  it('refuses an item key on a step that is not a repeat group', () => {
+    const snapshot = {
+      ...(stored() as Snapshot),
+      stack: [{ flow: 'booking', step: 'who', key: 'p1' }],
+    };
+
+    expect(decodeSnapshot(booking, snapshot, { subFlows: { passenger } })).toEqual({
+      restored: false,
+      reason: 'snapshot/unknown-step',
+    });
+  });
+
+  it('resolves a child frame through its group, not through a colliding id', () => {
+    // `knownFlows` registers a definition under its reference key and its own
+    // id at once, so `alias` and `traveller` both answer here. Resolving the
+    // child by name would pick the wrong one and refuse a valid snapshot.
+    const viaAlias: FlowDefinition = {
+      ...booking,
+      steps: {
+        ...booking.steps,
+        trip: { flow: 'alias', repeat: { over: { $get: 'data.passengers' }, keyBy: 'id' } },
+      },
+    };
+    const alias: FlowDefinition = { id: 'traveller', order: ['seat'], steps: { seat: {} } };
+    const other: FlowDefinition = { id: 'traveller', order: ['other'], steps: { other: {} } };
+    const state: WizardState = {
+      ...inGroup(),
+      stack: [
+        { flow: 'booking', step: 'trip', key: 'p2' },
+        { flow: 'traveller', step: 'seat' },
+      ],
+    };
+    const snapshot = JSON.parse(JSON.stringify(toSnapshot(state, viaAlias))) as unknown;
+
+    expect(
+      decodeSnapshot(viaAlias, snapshot, { subFlows: { alias, traveller: other } }).restored
+    ).toBe(true);
+
+    const emptied: FlowDefinition = { ...alias, order: [], steps: {} };
+    expect(
+      decodeSnapshot(viaAlias, snapshot, { subFlows: { alias: emptied, traveller: other } })
+    ).toEqual({ restored: false, reason: 'snapshot/unknown-step' });
+  });
+
+  it('checks the history of a group run the same way as the stack', () => {
+    const state = inGroup();
+    const snapshot = {
+      ...(stored(state) as Snapshot),
+      history: [
+        [
+          { flow: 'booking', step: 'trip', key: 'p1' },
+          { flow: 'passenger', step: 'gone' },
+        ],
+      ],
+    };
+
+    expect(decodeSnapshot(booking, snapshot, { subFlows: { passenger } })).toEqual({
+      restored: false,
+      reason: 'snapshot/unknown-step',
+    });
   });
 });

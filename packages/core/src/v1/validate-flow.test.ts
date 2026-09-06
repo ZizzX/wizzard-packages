@@ -117,6 +117,114 @@ describe('validateFlow', () => {
   });
 });
 
+describe('validateFlow, on a repeat group', () => {
+  const repeat = { over: { $get: 'data.passengers' }, keyBy: 'id' } as const;
+
+  const grouped = (extra: Record<string, unknown> = {}): FlowDefinition => ({
+    id: 'booking',
+    version: 3,
+    order: ['trip', 'review'],
+    steps: {
+      trip: { flow: 'passenger', repeat, ...extra },
+      review: {},
+    },
+  });
+
+  it('asks a repeat group to say when it is there at all', () => {
+    // Reachability reads `when`, never `over`, so an unguarded repeat over an
+    // empty list draws a breadcrumb for a section with nothing in it.
+    expect(problems(grouped())).toContain(
+      'steps.trip: is a repeat group with no when — an empty over is walked past, but the group ' +
+        'still draws a breadcrumb and counts towards progress; guard it with ' +
+        '{ $not: { $empty: <the same expression as over> } }'
+    );
+  });
+
+  it('is satisfied by the guard it suggests', () => {
+    expect(
+      validateFlow(grouped({ when: { $not: { $empty: { $get: 'data.passengers' } } } }))
+    ).toEqual([]);
+  });
+
+  it('says nothing about a plain group, which has no items to be empty of', () => {
+    const flow: FlowDefinition = {
+      id: 'booking',
+      order: ['trip'],
+      steps: { trip: { flow: 'passenger' } },
+    };
+    expect(validateFlow(flow)).toEqual([]);
+  });
+
+  it('asks a flow with a repeat group to stamp a version', () => {
+    const flow = grouped({ when: { $not: { $empty: { $get: 'data.passengers' } } } });
+    expect(problems({ ...flow, version: undefined })).toEqual([
+      'version: flow has a repeat group but no version, so a snapshot taken inside it cannot be ' +
+        'refused when keyBy changes — stamp a version and bump it with the shape',
+    ]);
+  });
+
+  it('leaves an unversioned flat flow alone', () => {
+    expect(validateFlow(good)).toEqual([]);
+  });
+
+  // An inline sub-flow definition is carried inside this flow, so a repeat two
+  // levels down is still this flow's to stamp: `toSnapshot` writes the root's
+  // version and no other.
+  const nested = (version?: number): FlowDefinition => ({
+    id: 'booking',
+    ...(version === undefined ? {} : { version }),
+    order: ['trip'],
+    steps: {
+      trip: {
+        flow: {
+          id: 'leg',
+          order: ['seats'],
+          steps: {
+            seats: {
+              flow: 'seat',
+              when: { $not: { $empty: { $get: 'data.passengers' } } },
+              repeat,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  it('asks for a version when the repeat is two levels down an inline sub-flow', () => {
+    expect(problems(nested())).toEqual([
+      'version: flow has a repeat group but no version, so a snapshot taken inside it cannot be ' +
+        'refused when keyBy changes — stamp a version and bump it with the shape',
+    ]);
+  });
+
+  it('is satisfied once the root that carries it is versioned', () => {
+    expect(validateFlow(nested(4))).toEqual([]);
+  });
+
+  it('names the nesting when the buried repeat has no when', () => {
+    const bare = nested(4);
+    const leg = (bare.steps.trip as { flow: FlowDefinition }).flow;
+    const unguarded: FlowDefinition = {
+      ...bare,
+      steps: { trip: { flow: { ...leg, steps: { seats: { flow: 'seat', repeat } } } } },
+    };
+
+    expect(problems(unguarded)[0]).toMatch(/^steps\.trip\.flow\.steps\.seats: is a repeat group/);
+  });
+
+  it('cannot see inside a sub-flow named by reference, and does not pretend to', () => {
+    // The definition behind a string lives wherever it was written, and is
+    // validated there. Reporting this flow for it would be a guess.
+    const byRef: FlowDefinition = {
+      id: 'booking',
+      order: ['trip'],
+      steps: { trip: { flow: 'leg' } },
+    };
+    expect(validateFlow(byRef)).toEqual([]);
+  });
+});
+
 describe('assertFlow', () => {
   it('says nothing about a valid flow', () => {
     expect(() => {

@@ -120,6 +120,44 @@ const full = useField<string>('name.full');
 Those three files are `examples/quickstart`. CI runs them on both bindings and fails if this
 README drifts from them, so what you paste is what is tested.
 
+## Groups and repeat
+
+A repeated section — one block of steps per passenger — is a sub-flow entered once per item.
+The traversal that walks it is a separate entry, so a flat flow never carries it:
+
+```ts
+import { createWizard } from '@wizzard-packages/core/v1';
+import { groups } from '@wizzard-packages/core/groups';
+
+const passenger = {
+  id: 'passenger',
+  order: ['seat', 'meal'],
+  steps: { seat: {}, meal: {} },
+};
+
+const trip = {
+  id: 'trip',
+  version: 1,
+  order: ['passengers', 'review'],
+  steps: {
+    passengers: {
+      flow: 'passenger',
+      when: { $not: { $empty: { $get: 'data.passengers' } } },
+      repeat: { over: { $get: 'data.passengers' }, keyBy: 'id' },
+    },
+    review: {},
+  },
+};
+
+const wizard = createWizard({ flow: trip, groups, subFlows: { passenger } });
+```
+
+`keyBy` names the field that identifies an item. The stack stores that key and nothing else, so
+reordering the list moves the person with their item and removing one they are not on leaves
+them where they are. Inside the sub-flow, `{ $get: 'loop.item' }`, `loop.index` and `loop.key`
+are in scope for guards, conditions and validators. `docs/designs/group-traversal.md` is the
+full set of rules.
+
 ## Why this and not something else
 
 **No stale async transitions.** Validation, guards and loading are eleven phases of one

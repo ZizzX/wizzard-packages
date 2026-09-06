@@ -3,7 +3,7 @@
 Date: 2026-09-06
 Branch: `docs/group-traversal-design` at `b3366b9`
 Task: `wizzard-12` · Plan of record: [`v1-launch.md`](v1-launch.md) row **L9** (gate)
-Status: design note, no implementation
+Status: implemented in #39, #40, #41
 
 ## 1. Why a note lands first
 
@@ -501,6 +501,26 @@ allow to be shortened.
 -- is 500-900 B. `core-v1` becomes roughly 5.1-5.3 kB, which is the outcome `ROADMAP.md` already
 examined and rejected: "The alternatives were raising the budget to 5 kB for everyone, or
 dropping `repeat`."
+
+**Measured.** `pnpm size` after #40, 2026-09-06: `core-v1` moved 4.48 kB -> 4.96 kB against a
+limit raised 4.5 -> 5.0 kB, and the seam is the 478 B the estimate above called ~200 B. Taken
+by removing each piece and re-measuring: **278 B** the seam itself -- phase 0.5's `here`, phase
+4's `step`, the flow and scope phases 5 to 7 read, the phase-8 recheck, phase 9's stack and the
+active flow the store hands the selector; **156 B** the message a flow with a group and no
+traversal is refused with; **44 B** the scan that finds the group and throws it. The estimate
+was low on the seam and right that the message would be the largest single piece. The traversal
+itself is `core-v1 groups` at 2.98 kB against a 3.0 kB limit -- more than the 500-900 B option
+(b) estimated, because it calls `resolveNext`, `resolveBack` and the expression evaluator rather
+than reimplementing them, and so pulls `resolve`, `expr` and `path` in behind it. A flat flow
+still carries none of it, which was the whole argument for (a).
+
+This PR adds to two more entries, both of them development or persistence concerns rather than
+runtime ones: `core-v1 snapshot` 1.05 -> 1.38 kB against a limit raised 1.1 -> 1.4 kB, for the
+shared frame walk of 4.10; `core-v1 session` 1.01 -> 1.13 kB against 1.1 -> 1.2 kB, because the
+sentences a bad frame is reported with live there rather than in the shared walk, which is
+120 B the decoder would otherwise carry to print nothing; and `core-v1 validate-flow` 887 B ->
+1.21 kB against 1 -> 1.3 kB, for the two reports proposed in 4.5 and 4.10 and the walk that
+finds a repeat inside an inline sub-flow. `core-v1` did not move.
 
 **Recommendation: (a), and the comment at `.size-limit.js:24-26` is corrected anyway.** The seam
 keeps 500-900 B out of every flat bundle, which is the whole argument, and it is the only option

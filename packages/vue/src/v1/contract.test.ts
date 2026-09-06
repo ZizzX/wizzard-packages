@@ -1,12 +1,25 @@
 import { mount } from '@vue/test-utils';
-import { defineComponent, h, nextTick, onMounted, onUpdated } from 'vue';
+import { computed, defineComponent, h, nextTick, onMounted, onUpdated } from 'vue';
 
 import {
   describeBindingContract,
   type BindingHarness,
   type Probe,
 } from '../../../../contract/binding-suite';
-import { provideWizard, useErrors, useField, useNavigation, useStep } from './index';
+import {
+  provideWizard,
+  useErrors,
+  useField,
+  useNavigation,
+  useStep,
+  useWizard,
+  useWizardSnapshot,
+} from './index';
+
+interface Passenger {
+  id: string;
+  name?: string;
+}
 
 let renders = 0;
 
@@ -26,6 +39,22 @@ const ProbeComponent = defineComponent({
     const nav = useNavigation();
     const errors = useErrors();
     const name = useField<string>('name');
+
+    // The repeat-group probe, read entirely out of the engine - the same values
+    // the React probe derives, from the same two places: the key off the stack,
+    // and its position in the list the group repeats over.
+    const wizard = useWizard();
+    const snapshot = useWizardSnapshot();
+    const items = computed(() => (snapshot.value.data.passengers as Passenger[] | undefined) ?? []);
+    const itemKey = computed(
+      () => [...snapshot.value.stack].reverse().find((frame) => frame.key !== undefined)?.key ?? ''
+    );
+    const itemIndex = computed(() =>
+      itemKey.value === '' ? -1 : items.value.findIndex((p) => p.id === itemKey.value)
+    );
+    const itemName = computed(() =>
+      itemIndex.value < 0 ? '' : (items.value[itemIndex.value]?.name ?? '')
+    );
 
     return () =>
       h('div', [
@@ -50,16 +79,55 @@ const ProbeComponent = defineComponent({
         }),
         h('button', { 'data-testid': 'next', onClick: () => void nav.next() }, 'next'),
         h('button', { 'data-testid': 'back', onClick: () => void nav.back() }, 'back'),
+
+        h('span', { 'data-testid': 'item-key' }, itemKey.value),
+        h(
+          'span',
+          { 'data-testid': 'item-index' },
+          itemIndex.value < 0 ? '' : String(itemIndex.value)
+        ),
+        h('span', { 'data-testid': 'item-name' }, itemName.value),
+        h('input', {
+          'data-testid': 'item-input',
+          value: itemName.value,
+          onInput: (event: Event) => {
+            if (itemIndex.value < 0) return;
+            wizard.set(
+              `passengers.${itemIndex.value}.name`,
+              (event.target as HTMLInputElement).value
+            );
+          },
+        }),
+        h(
+          'button',
+          {
+            'data-testid': 'add-item',
+            onClick: () => {
+              wizard.set('passengers', [...items.value, { id: `p${items.value.length + 1}` }]);
+            },
+          },
+          'add'
+        ),
+        h(
+          'button',
+          {
+            'data-testid': 'remove-item',
+            onClick: () => {
+              wizard.set('passengers', items.value.slice(1));
+            },
+          },
+          'remove'
+        ),
       ]);
   },
 });
 
 const harness: BindingHarness = {
   name: 'vue',
-  mount: async ({ flow, registry, data }) => {
+  mount: async ({ flow, registry, data, groups, subFlows }) => {
     const Root = defineComponent({
       setup() {
-        provideWizard({ flow, registry, data });
+        provideWizard({ flow, registry, data, groups, subFlows });
         return () => h(ProbeComponent);
       },
     });

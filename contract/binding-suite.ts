@@ -1,6 +1,7 @@
+import { groups } from '@wizzard-packages/core/groups';
 import { describe, expect, it } from 'vitest';
 
-import type { FlowDefinition } from '@wizzard-packages/core/v1';
+import type { FlowDefinition, SubFlows, Traversal } from '@wizzard-packages/core/v1';
 
 /**
  * The contract every framework binding owes.
@@ -32,6 +33,10 @@ export interface BindingHarness {
     flow: FlowDefinition;
     registry?: Record<string, (args: unknown, scope: { data: Record<string, unknown> }) => unknown>;
     data?: Record<string, unknown>;
+    /** `@wizzard-packages/core/groups`, forwarded to `createWizard` untouched. */
+    groups?: Traversal;
+    /** Sub-flow definitions a string `GroupStep.flow` names. */
+    subFlows?: SubFlows;
   }) => Promise<Probe>;
 }
 
@@ -39,6 +44,16 @@ export interface BindingHarness {
  * Test ids a probe must render:
  *   step, progress, can-back, busy, errors, renders
  *   name-input (bound to the `name` field), next, back
+ *
+ * And, for the repeat group below - all of it read from the engine, never kept
+ * beside it, because a binding that remembers which item it is on is the 0.x
+ * bug this suite exists to prevent:
+ *   item-key    the `key` of the deepest stack frame that carries one, or ''
+ *   item-index  that key's position in `data.passengers`, or '' with no key
+ *   item-name   `passengers[item-index].name`
+ *   item-input  writes that same path
+ *   add-item    appends `{ id: 'p<n+1>' }` to `data.passengers`
+ *   remove-item drops `data.passengers[0]`
  */
 
 const flow: FlowDefinition = {
@@ -84,6 +99,39 @@ const until = async (predicate: () => boolean, what: string): Promise<void> => {
   }
   throw new Error(`timed out waiting for ${what}`);
 };
+
+/**
+ * R-C, small enough to assert on: a repeat group over passengers, a two-step
+ * sub-flow for each, and a step after the group to leave it for.
+ *
+ * JSON, like every flow. The group names its sub-flow by string, so the
+ * registry is what resolves it - the same pair a host passes `createWizard`.
+ */
+const passengerFlow: FlowDefinition = {
+  id: 'passenger',
+  order: ['seat', 'meal'],
+  steps: { seat: { label: 'Seat' }, meal: { label: 'Meal' } },
+  policy: 'free',
+};
+
+const tripFlow: FlowDefinition = {
+  id: 'trip',
+  version: 1,
+  order: ['passengers', 'review'],
+  steps: {
+    passengers: {
+      flow: 'passenger',
+      when: { $not: { $empty: { $get: 'data.passengers' } } },
+      repeat: { over: { $get: 'data.passengers' }, keyBy: 'id' },
+    },
+    review: { label: 'Review' },
+  },
+  policy: 'free',
+};
+
+const people = (...ids: string[]): Record<string, unknown> => ({
+  passengers: ids.map((id) => ({ id })),
+});
 
 export function describeBindingContract(harness: BindingHarness): void {
   const mount = (data: Record<string, unknown> = { name: 'Ann' }): Promise<Probe> =>
@@ -215,6 +263,85 @@ export function describeBindingContract(harness: BindingHarness): void {
       await probe.fill('name-input', 'Ann');
 
       expect(probe.renders()).toBe(before);
+      probe.unmount();
+    });
+  });
+
+  describe(`binding contract, repeat groups: ${harness.name}`, () => {
+    const enter = (...ids: string[]): Promise<Probe> =>
+      harness.mount({
+        flow: tripFlow,
+        data: people(...ids),
+        groups,
+        subFlows: { passenger: passengerFlow },
+      });
+
+    it('gains an item when one is added, and reaches it', async () => {
+      // The list is data, so adding to it is a `set()` and nothing else. The
+      // proof that the group saw it is where the second Next lands: with one
+      // passenger it leaves the group for `review`.
+      const probe = await enter('p1');
+      expect(probe.text('item-key')).toBe('p1');
+      expect(probe.text('item-index')).toBe('0');
+
+      await probe.click('add-item');
+      await probe.click('next');
+      await probe.click('next');
+
+      expect(probe.text('step')).toBe('seat');
+      expect(probe.text('item-key')).toBe('p2');
+      expect(probe.text('item-index')).toBe('1');
+      probe.unmount();
+    });
+
+    it('stays on the current item when another one is removed', async () => {
+      const probe = await enter('p1', 'p2', 'p3');
+      await probe.click('next');
+      await probe.click('next');
+      expect(probe.text('item-key')).toBe('p2');
+      expect(probe.text('item-index')).toBe('1');
+
+      // p1 goes. The frame names the key, not the position, so the person does
+      // not move - only the position they are at does.
+      await probe.click('remove-item');
+
+      expect(probe.text('step')).toBe('seat');
+      expect(probe.text('item-key')).toBe('p2');
+      expect(probe.text('item-index')).toBe('0');
+      probe.unmount();
+    });
+
+    it('still has the second passenger’s answers after the third is reached', async () => {
+      const probe = await enter('p1', 'p2', 'p3');
+      await probe.click('next');
+      await probe.click('next');
+      await probe.fill('item-input', 'Bo');
+      expect(probe.text('item-name')).toBe('Bo');
+
+      await probe.click('next');
+      await probe.click('next');
+      expect(probe.text('item-key')).toBe('p3');
+
+      await probe.click('back');
+
+      expect(probe.text('item-key')).toBe('p2');
+      expect(probe.text('item-name')).toBe('Bo');
+      probe.unmount();
+    });
+
+    it('lands on a surviving item when the current one is removed mid-edit', async () => {
+      const probe = await enter('p1', 'p2');
+      await probe.fill('item-input', 'Ann');
+      expect(probe.text('item-key')).toBe('p1');
+
+      await probe.click('remove-item');
+      await probe.click('next');
+
+      // The dead frame is dropped with everything above it and the group is
+      // re-entered at its first surviving item - never a crash, never a frame
+      // naming a passenger that is gone.
+      expect(probe.text('item-key')).toBe('p2');
+      expect(probe.text('step')).toBe('seat');
       probe.unmount();
     });
   });

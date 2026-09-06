@@ -185,6 +185,47 @@ describe('sub-flows by reference', () => {
   });
 });
 
+describe('flows that answer to more than one name', () => {
+  // `knownFlows` registers a definition under the key it is referenced by and
+  // under its own id, so a registry key can collide with another definition's
+  // id. The child frame is resolved from the group that encloses it, never by
+  // looking its own name up, or the collision would make a correct recording
+  // read as drift.
+  it('resolves a child frame through its group, not through a colliding id', () => {
+    const alias: FlowDefinition = { id: 'traveller', order: ['seat'], steps: { seat: {} } };
+    const other: FlowDefinition = { id: 'traveller', order: ['other'], steps: { other: {} } };
+    const viaAlias: FlowDefinition = {
+      ...booking,
+      steps: {
+        ...booking.steps,
+        passengers: { flow: 'alias', repeat: { over: { $get: 'data.p' } } },
+      },
+    };
+    const recorded: RecordedSession = {
+      flow: 'booking',
+      version: 2,
+      frames: [
+        frame({
+          stack: [
+            { flow: 'booking', step: 'passengers', key: 'p1' },
+            { flow: 'traveller', step: 'seat' },
+          ],
+          visited: ['passengers', 'seat'],
+          rev: 1,
+          nav: 1,
+        }),
+      ],
+    };
+
+    expect(checkSession(recorded, viaAlias, { alias, traveller: other })).toEqual([]);
+
+    const emptied: FlowDefinition = { ...alias, order: [], steps: {} };
+    expect(
+      messages(checkSession(recorded, viaAlias, { alias: emptied, traveller: other }))
+    ).toContain('does not have: seat');
+  });
+});
+
 describe('stacks the engine could not have built', () => {
   // `state.ts`: the last entry is the current step, the ones before it enclose
   // it. An atom cannot enclose anything.

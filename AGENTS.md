@@ -23,7 +23,8 @@ directory is the new engine; everything beside it is the line being retired.
 
 ```
 packages/core/src/v1/   the engine: expr, resolve, navigate, commit, select, store, state, path
-                        plus its own entries - validate-flow, graph, session, snapshot, expr
+                        plus its own entries - validate-flow, graph, groups, session,
+                        snapshot, expr
 packages/core/src/      0.x. Being deleted; do not build on it
 packages/react/src/v1/  the React binding, ~200 lines. packages/react/src/* is 0.x
 packages/vue/src/v1/    the Vue binding, same shape
@@ -52,8 +53,8 @@ docs/designs/           the plan of record: v1-launch.md, flow-inspector.md
 5. **Logic belongs in core, not in a binding.** If React and Vue both need it, it is a core
    concern. 0.x has `next`/`prev` implemented three times and the copies disagree; that class
    of bug is not allowed back.
-6. **Every `core` sub-entry is its own budget.** `validate-flow`, `graph`, `session`,
-   `snapshot` and `expr` are separate entries so a runtime bundle never carries them; re-exporting one from
+6. **Every `core` sub-entry is its own budget.** `validate-flow`, `graph`, `groups`,
+   `session`, `snapshot` and `expr` are separate entries so a runtime bundle never carries them; re-exporting one from
    `v1/index.ts` silently moves it into everyone's bundle. Adding an entry means a tsup
    entry, an `exports` key and a `.size-limit.js` line in the same PR. Budgets are ratchets
    set just above what a thing measures once it is correct - raise one with a stated reason
