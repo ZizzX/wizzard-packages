@@ -77,6 +77,20 @@ describe('validateFlow', () => {
     expect(problems(flow)[0]).toMatch(/cannot be serialized/);
   });
 
+  it('catches a clearOnLeave that is neither true nor a list of paths', () => {
+    const withClear = (clearOnLeave: unknown): FlowDefinition => ({
+      ...good,
+      steps: { ...good.steps, company: { clearOnLeave: clearOnLeave as never } },
+    });
+    for (const bad of ['company', false, ['vat', 1]]) {
+      expect(problems(withClear(bad))).toEqual([
+        'steps.company.clearOnLeave: must be true or a list of data paths',
+      ]);
+    }
+    expect(problems(withClear(true))).toEqual([]);
+    expect(problems(withClear(['vat']))).toEqual([]);
+  });
+
   it('catches order problems', () => {
     expect(problems({ id: 'f', order: ['a', 'ghost'], steps: { a: {} } })).toContain(
       'order: unknown step: ghost'

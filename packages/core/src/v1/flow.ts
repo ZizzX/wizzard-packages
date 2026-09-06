@@ -39,6 +39,14 @@ interface StepBase {
   load?: { $ref: string; args?: Json };
   /** The body of this step arrives later, from the host. */
   deferred?: boolean;
+  /**
+   * What to forget when this step is left, forwards or backwards. Data is
+   * kept by default: a person who goes back and returns expects their answers
+   * to still be there. `true` drops the step's whole slice (`slice`, or the
+   * step id); a list drops those `data` paths, in the same path language as
+   * `set()`. Nothing is cleared on completion — that data is the submission.
+   */
+  clearOnLeave?: readonly string[] | true;
 }
 
 export interface AtomStep extends StepBase {

@@ -54,3 +54,21 @@ export function setPath<T extends object>(target: T, path: string, value: unknow
   (cur as Record<string, unknown>)[keys[keys.length - 1] as string] = value;
   return root as T;
 }
+
+/**
+ * Immutable delete. Returns the same reference when there was nothing at the
+ * path, for the same reason `setPath` does.
+ */
+export function unsetPath<T extends object>(target: T, path: string): T {
+  const keys = parse(path);
+  const last = keys.pop();
+  const at = keys.join('.');
+  const parent = getPath(target, at) as Record<string, unknown> | null | undefined;
+  if (last === undefined || !parent || !Object.prototype.hasOwnProperty.call(parent, last)) {
+    return target;
+  }
+  const rest = Array.isArray(parent)
+    ? parent.filter((_, i) => String(i) !== last)
+    : (({ [last]: _, ...kept }) => kept)(parent);
+  return at ? setPath(target, at, rest) : (rest as T);
+}

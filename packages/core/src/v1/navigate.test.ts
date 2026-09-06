@@ -382,3 +382,88 @@ describe('runNav — bookkeeping', () => {
     expect(host.writes[1]?.status).toBe('idle');
   });
 });
+
+describe('runNav — clearOnLeave', () => {
+  const branching: FlowDefinition = {
+    id: 'booking',
+    order: ['trip', 'company', 'payment'],
+    steps: {
+      trip: {},
+      company: { clearOnLeave: true },
+      payment: {},
+    },
+  };
+  const filled = {
+    payer: 'business',
+    trip: { city: 'Oslo' },
+    company: { name: 'Acme', vat: 'NO123' },
+  };
+
+  it('keeps the data of a step it leaves, by default', async () => {
+    const host = makeHost({ ...on('trip'), data: filled });
+    await runNav({ flow: branching }, host, { type: 'next' });
+    expect(host.read().data).toBe(filled);
+  });
+
+  it('clears the whole slice on `true`, forwards and backwards', async () => {
+    const host = makeHost({ ...on('company'), data: filled });
+    await runNav({ flow: branching }, host, { type: 'next' });
+    expect(host.read().data).toEqual({ payer: 'business', trip: { city: 'Oslo' } });
+
+    const back = makeHost({
+      ...on('company'),
+      data: filled,
+      history: [[{ flow: 'booking', step: 'trip' }]],
+    });
+    await runNav({ flow: branching }, back, { type: 'back' });
+    expect(back.read().stack[0]?.step).toBe('trip');
+    expect(back.read().data).toEqual({ payer: 'business', trip: { city: 'Oslo' } });
+  });
+
+  it('clears the declared `slice`, not the step id', async () => {
+    const flow: FlowDefinition = {
+      ...branching,
+      steps: { ...branching.steps, company: { slice: 'org', clearOnLeave: true } },
+    };
+    const host = makeHost({ ...on('company'), data: { ...filled, org: { name: 'Acme' } } });
+    await runNav({ flow }, host, { type: 'next' });
+    expect(host.read().data).toEqual(filled);
+  });
+
+  it('clears only the listed paths on an array, and leaves the rest of the slice', async () => {
+    const flow: FlowDefinition = {
+      ...branching,
+      steps: {
+        ...branching.steps,
+        company: { clearOnLeave: ['company.vat', 'payer', 'nowhere.x'] },
+      },
+    };
+    const host = makeHost({ ...on('company'), data: filled });
+    await runNav({ flow }, host, { type: 'next' });
+    expect(host.read().data).toEqual({ trip: { city: 'Oslo' }, company: { name: 'Acme' } });
+    // Untouched branches keep their identity, so selectors over them stay memoized.
+    expect(host.read().data['trip']).toBe(filled.trip);
+  });
+
+  it('keeps everything on completion: the data is what the host submits', async () => {
+    const flow: FlowDefinition = {
+      ...branching,
+      steps: { ...branching.steps, payment: { clearOnLeave: true } },
+    };
+    const host = makeHost({ ...on('payment'), data: { ...filled, payment: { card: '4242' } } });
+    const result = await runNav({ flow }, host, { type: 'next' });
+    expect(result).toEqual({ ok: true, from: 'payment', to: END });
+    expect(host.read().data['payment']).toEqual({ card: '4242' });
+  });
+
+  it('does not clear when the navigation fails', async () => {
+    const host = makeHost({ ...on('company'), data: filled });
+    const result = await runNav(
+      { flow: branching, validate: async () => ({ name: 'required' }) },
+      host,
+      { type: 'next' }
+    );
+    expect(result.ok).toBe(false);
+    expect(host.read().data).toBe(filled);
+  });
+});

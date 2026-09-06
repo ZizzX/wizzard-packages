@@ -94,6 +94,17 @@ export function validateFlow(
       if (!(to in flow.steps)) report(`${at}.on.back`, `unknown target: ${to}`);
     }
 
+    // A flow from a backend has no types behind it, so the shape is checked here
+    // rather than discovered as a TypeError in the middle of a navigation.
+    const clear = step_.clearOnLeave as unknown;
+    if (
+      clear !== undefined &&
+      clear !== true &&
+      !(Array.isArray(clear) && clear.every((p) => typeof p === 'string'))
+    ) {
+      report(`${at}.clearOnLeave`, 'must be true or a list of data paths');
+    }
+
     // Both mechanisms at once is legal but almost always a mistake: the branch
     // wins and the reachability rule is silently ignored.
     if (step_.when !== undefined && step_.on?.next !== undefined) {

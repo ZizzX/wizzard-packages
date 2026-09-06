@@ -36,7 +36,12 @@ export default [
   // plugin disabled rather than taking the write down with it, is what makes
   // a persist plugin possible at all. Two hundred bytes, once, for every
   // plugin the library will ever have.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '4.3 kB', gzip: true },
+  //
+  // 4.3 to 4.5 kB on 2026-09-06 for `clearOnLeave`: an immutable delete on a
+  // path and its application in the navigation commit, 133 bytes measured.
+  // The 4.3 had 34 bytes of headroom, and the field was already promised by
+  // the API behaviour table and the "clear abandoned branch data" task page.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '4.5 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a
