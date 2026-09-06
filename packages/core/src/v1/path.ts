@@ -67,6 +67,8 @@ export function unsetPath<T extends object>(target: T, path: string): T {
   if (last === undefined || !parent || !Object.prototype.hasOwnProperty.call(parent, last)) {
     return target;
   }
-  const { [last]: _, ...rest } = parent;
+  const rest = Array.isArray(parent)
+    ? parent.filter((_, i) => String(i) !== last)
+    : (({ [last]: _, ...kept }) => kept)(parent);
   return at ? setPath(target, at, rest) : (rest as T);
 }
