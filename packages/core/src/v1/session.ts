@@ -96,38 +96,44 @@ function isFrameShaped(frame: unknown): frame is WizardState {
 }
 
 /**
- * What a frame can be wrong about, so a caller can decide which ones it minds.
+ * What a frame can be wrong about.
  *
- * `decodeSnapshot` minds fewer of them than a recording does: a frame naming a
- * flow nobody registered is pruned by the traversal on the first navigation,
- * where the same frame in a recording is drift worth reporting.
+ * A kind rather than a sentence, because the two callers want different things
+ * from it. `decodeSnapshot` minds fewer of them than a recording does - a frame
+ * naming a flow nobody registered is pruned by the traversal on the first
+ * navigation, where the same frame in a recording is drift worth reporting -
+ * and it prints none of them, so the prose belongs to the caller that does.
  */
-export type FrameProblem = 'unknown-flow' | 'unknown-step' | 'nesting' | 'key';
+export type FrameProblem = 'unknown-flow' | 'unknown-step' | 'not-a-group' | 'wrong-flow' | 'key';
 
 /**
  * One stack, checked against the flows its frames may name.
  *
  * Exported because the snapshot decoder checks the same thing: a frame arriving
  * as JSON is a frame arriving as JSON, and two copies of this walk would drift
- * the way 0.x's three navigation copies drifted. The kind is reported beside
- * the message rather than baked into it, because the two callers disagree about
- * which kinds are fatal and neither should have to parse a sentence to find out.
+ * the way 0.x's three navigation copies drifted.
+ *
+ * It reports a kind, a depth and - for `wrong-flow` alone - the flow the group
+ * actually leads into, which is the one fact a caller cannot recover from the
+ * stack it passed in. Everything else a sentence needs is `stack[depth]`. So
+ * the sentences live in `checkSession`, where they are read, and the snapshot
+ * entry carries the walk and none of the prose it never prints.
  */
 export function checkFrames(
   stack: readonly Frame[],
   known: Map<string, FlowDefinition>,
-  report: (depth: number, problem: FrameProblem, message: string) => void
+  report: (depth: number, problem: FrameProblem, into?: string) => void
 ): void {
   stack.forEach((entry, depth) => {
     const owner = known.get(entry.flow);
     if (owner === undefined) {
-      report(depth, 'unknown-flow', `names an unknown flow: ${entry.flow}`);
+      report(depth, 'unknown-flow');
       return;
     }
 
     const step = owner.steps[entry.step];
     if (step === undefined) {
-      report(depth, 'unknown-step', `names a step ${entry.flow} does not have: ${entry.step}`);
+      report(depth, 'unknown-step');
       return;
     }
 
@@ -138,7 +144,7 @@ export function checkFrames(
     const child = stack[depth + 1];
     if (child !== undefined) {
       if (!isGroup(step)) {
-        report(depth, 'nesting', `encloses another frame, but ${entry.step} is not a group`);
+        report(depth, 'not-a-group');
       } else {
         // A string `flow` is the key the group is referenced by, and the
         // definition behind that key is free to carry a different id. The
@@ -146,20 +152,14 @@ export function checkFrames(
         // resolves to, falling back to the bare reference when nothing does.
         const ref = typeof step.flow === 'string' ? step.flow : step.flow.id;
         const into = known.get(ref)?.id ?? ref;
-        if (into !== child.flow) {
-          report(
-            depth,
-            'nesting',
-            `is a group into ${into}, but the frame below it is in ${child.flow}`
-          );
-        }
+        if (into !== child.flow) report(depth, 'wrong-flow', into);
       }
     }
 
     // `isStackEntry` already refused a `key` that is not a string, so what is
     // left is whether the step it sits on can have one at all.
     if (entry.key !== undefined && (!isGroup(step) || step.repeat === undefined)) {
-      report(depth, 'key', `has an item key, but ${entry.step} is not a repeat group`);
+      report(depth, 'key');
     }
   });
 }
@@ -240,8 +240,23 @@ export function checkSession(
       return;
     }
 
-    checkFrames(frame.stack, known, (depth, problem, message) => {
-      report(`${at}.stack[${depth}]${problem === 'key' ? '.key' : ''}`, message);
+    // The sentences are composed here, not in the walk: a recording checker is
+    // read by a person, and the decoder that shares the walk prints nothing.
+    checkFrames(frame.stack, known, (depth, problem, into) => {
+      const entry = frame.stack[depth] as Frame;
+      const path = `${at}.stack[${depth}]`;
+      if (problem === 'unknown-flow') {
+        report(path, `names an unknown flow: ${entry.flow}`);
+      } else if (problem === 'unknown-step') {
+        report(path, `names a step ${entry.flow} does not have: ${entry.step}`);
+      } else if (problem === 'not-a-group') {
+        report(path, `encloses another frame, but ${entry.step} is not a group`);
+      } else if (problem === 'wrong-flow') {
+        const child = frame.stack[depth + 1] as Frame;
+        report(path, `is a group into ${into}, but the frame below it is in ${child.flow}`);
+      } else {
+        report(`${path}.key`, `has an item key, but ${entry.step} is not a repeat group`);
+      }
     });
 
     // `select.ts` reads `visited` to colour every breadcrumb. A current step

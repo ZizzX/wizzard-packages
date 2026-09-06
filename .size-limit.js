@@ -110,11 +110,15 @@ export default [
   // in with it. That is the cost of checking a recording against the definition
   // it claims to belong to, and it is paid only by a page that replays one.
   //
-  // 1.05 kB the same day, once the frame walk became `checkFrames` and the flow
+  // 1.1 to 1.2 kB the same day. The frame walk became `checkFrames` and the flow
   // registry `knownFlows`, both exported so `decodeSnapshot` runs the same two
-  // rather than a second copy. Held at 1.1 kB: the extra 20 B is the callback
-  // the two callers report through.
-  { name: 'core-v1 session', path: 'packages/core/src/v1/session.ts', limit: '1.1 kB', gzip: true },
+  // rather than a second copy - and the four sentences a bad frame is reported
+  // with moved here, out of the walk, because this is the entry that prints
+  // them and the snapshot entry never does. Measured 1098 B, which passes the
+  // old 1.1 kB by two bytes; two bytes is not a budget, so the ratchet moves to
+  // where the next honest change can land.
+
+  { name: 'core-v1 session', path: 'packages/core/src/v1/session.ts', limit: '1.2 kB', gzip: true },
 
   // The durable snapshot format. Its own entry because an application that
   // never persists a wizard should not carry the validator that decides whether
@@ -126,22 +130,22 @@ export default [
   // prototype, cycles, and anything past its bounds. Refusing a bad snapshot
   // costs more than writing a good one, which is the right way round.
   //
-  // 1.1 to 1.5 kB on 2026-09-06 for the group frames of `group-traversal.md`
-  // 4.10. Measured 1.05 kB before, 1.46 kB after. The decoder now resolves
+  // 1.1 to 1.4 kB on 2026-09-06 for the group frames of `group-traversal.md`
+  // 4.10. Measured 1.05 kB before, 1.35 kB after. The decoder now resolves
   // every frame against `knownFlows` and walks each stack with `checkFrames`,
   // both imported from `session.ts` rather than copied: L4a asks for one frame
   // checker, and two would drift the way 0.x's three navigation copies did.
-  // `checkSession` itself is tree-shaken out - the entry contains none of its
-  // strings - so what arrives is the walk, the flow registry and the messages.
-  // Of the 410 B, 120 B is those messages, which the decoder never prints: it
-  // reports `snapshot/unknown-step` and no new reason. Reporting only the kind
-  // and formatting in `checkSession` would buy those 120 B back at the price of
-  // a second format function and a checker nobody can read the output of, which
-  // is not a trade a snapshot entry should make.
+  // `checkSession` is tree-shaken out, and so is every sentence it reports a
+  // bad frame with: `checkFrames` yields a kind, a depth and the one fact a
+  // caller cannot recover from the stack it passed in, and the recording
+  // checker composes the prose. That is 120 B measured, and it is 120 B this
+  // entry would have carried to print nothing - the decoder answers
+  // `snapshot/unknown-step` and no new reason. What is left is the walk and the
+  // flow registry, which is the whole of what a decoder needs.
   {
     name: 'core-v1 snapshot',
     path: 'packages/core/src/v1/snapshot.ts',
-    limit: '1.5 kB',
+    limit: '1.4 kB',
     gzip: true,
   },
 

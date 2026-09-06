@@ -515,9 +515,12 @@ than reimplementing them, and so pulls `resolve`, `expr` and `path` in behind it
 still carries none of it, which was the whole argument for (a).
 
 This PR adds to two more entries, both of them development or persistence concerns rather than
-runtime ones: `core-v1 snapshot` 1.05 -> 1.46 kB against a limit raised 1.1 -> 1.5 kB, for the
-shared frame walk of 4.10, and `core-v1 validate-flow` 887 B -> 1.12 kB against 1 -> 1.2 kB,
-for the two reports proposed in 4.5 and 4.10. `core-v1` did not move.
+runtime ones: `core-v1 snapshot` 1.05 -> 1.35 kB against a limit raised 1.1 -> 1.4 kB, for the
+shared frame walk of 4.10; `core-v1 session` 1.01 -> 1.1 kB against 1.1 -> 1.2 kB, because the
+sentences a bad frame is reported with live there rather than in the shared walk, which is
+120 B the decoder would otherwise carry to print nothing; and `core-v1 validate-flow` 887 B ->
+1.12 kB against 1 -> 1.2 kB, for the two reports proposed in 4.5 and 4.10. `core-v1` did not
+move.
 
 **Recommendation: (a), and the comment at `.size-limit.js:24-26` is corrected anyway.** The seam
 keeps 500-900 B out of every flat bundle, which is the whole argument, and it is the only option
