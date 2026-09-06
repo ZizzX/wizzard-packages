@@ -62,7 +62,11 @@ function knownFlows(
 export const isStackEntry = (entry: unknown): entry is Frame => {
   if (entry === null || typeof entry !== 'object') return false;
   const e = entry as Partial<Frame>;
-  return typeof e.flow === 'string' && typeof e.step === 'string';
+  return (
+    typeof e.flow === 'string' &&
+    typeof e.step === 'string' &&
+    (e.key === undefined || typeof e.key === 'string')
+  );
 };
 
 /**
@@ -198,11 +202,10 @@ export function checkSession(
         }
       }
 
-      if (entry.i === undefined) return;
-      if (!Number.isInteger(entry.i) || entry.i < 0) {
-        report(`${path}.i`, `is not an iteration index: ${entry.i}`);
-      } else if (!isGroup(step) || step.repeat === undefined) {
-        report(`${path}.i`, `has an iteration index, but ${entry.step} is not a repeat group`);
+      // `isStackEntry` already refused a `key` that is not a string, so what is
+      // left is whether the step it sits on can have one at all.
+      if (entry.key !== undefined && (!isGroup(step) || step.repeat === undefined)) {
+        report(`${path}.key`, `has an item key, but ${entry.step} is not a repeat group`);
       }
     });
 

@@ -41,6 +41,12 @@ export default [
   // path and its application in the navigation commit, 133 bytes measured.
   // The 4.3 had 34 bytes of headroom, and the field was already promised by
   // the API behaviour table and the "clear abandoned branch data" task page.
+  //
+  // Held at 4.5 kB on 2026-09-06 while the back stack was made to behave like
+  // one: history is pushed on a forward move and truncated to the record the
+  // backward move actually lands on, and `canBack` is now `resolveBack`'s
+  // answer rather than a count that disagreed with it. Forty bytes, measured
+  // 4.47 kB, for a Back button that means what it says.
   { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '4.5 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:

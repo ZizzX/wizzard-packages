@@ -122,6 +122,23 @@ function leave(flow: FlowDefinition, from: string, data: WizardState['data']): W
   return paths.reduce((acc, path) => unsetPath(acc, path), data);
 }
 
+/**
+ * The back stack a backward move to `target` leaves behind.
+ *
+ * `resolveBack` walks `order`, so it skips records for steps that have since
+ * become unreachable: returning to `a` from `c` with `b`'s `when` now false has
+ * to drop `[b]`'s record as well, or `canBack` keeps offering a step `back()`
+ * would refuse. A target no record names — an `on.back` to somewhere never
+ * visited — pops one, which is all there is to go on.
+ */
+function rewind(history: WizardState['history'], target: string): WizardState['history'] {
+  for (let i = history.length - 1; i >= 0; i--) {
+    const stack = history[i];
+    if (stack !== undefined && stack[stack.length - 1]?.step === target) return history.slice(0, i);
+  }
+  return history.slice(0, -1);
+}
+
 const superseded: NavResult = { ok: false, reason: 'superseded' };
 const aborted: NavResult = { ok: false, reason: 'aborted' };
 
@@ -263,7 +280,16 @@ export async function runNav(
       commit(before, {
         status: 'idle',
         stack: [...before.stack.slice(0, -1), { flow: flow.id, step: target }],
-        history: from === null ? before.history : [...before.history, before.stack],
+        // A back stack only grows going forward. Appending on a backward move
+        // too left `canBack` true at the first step while `back()` answered
+        // `no-target`, and would make a history-driven `back()` inside a repeat
+        // oscillate between two items.
+        history:
+          from === null
+            ? before.history
+            : forward
+              ? [...before.history, before.stack]
+              : rewind(before.history, target),
         visited: add(before.visited, target),
         completed: forward && from !== null ? add(before.completed, from) : before.completed,
         busy: before.busy.filter((id) => id !== target),

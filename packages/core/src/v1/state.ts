@@ -8,11 +8,12 @@
  * with values that disagreed with the data they were computed from.
  */
 
-/** One level of the flow stack. `i` is the iteration index inside a `repeat`. */
+/** One level of the flow stack. */
 export interface Frame {
   flow: string;
   step: string;
-  i?: number;
+  /** The item's identity under `keyBy`. Stable across reorder and removal. */
+  key?: string;
 }
 
 export type WizardStatus = 'init' | 'idle' | 'busy' | 'done';
@@ -21,7 +22,8 @@ export interface WizardState {
   status: WizardStatus;
   /** Last element is the current step; earlier elements are enclosing groups. */
   stack: readonly Frame[];
-  /** A real back stack: whole stacks, so leaving a sub-flow returns correctly. */
+  /** A real back stack: whole stacks, pushed on a forward move and popped on a
+   * backward one, so leaving a sub-flow returns correctly. */
   history: readonly (readonly Frame[])[];
   data: Readonly<Record<string, unknown>>;
   ctx: Readonly<Record<string, unknown>>;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { FlowDefinition } from './flow';
-import { checkSession, type RecordedSession } from './session';
+import { checkSession, isStackEntry, type RecordedSession } from './session';
 import { initialState, type WizardState } from './state';
 import type { FlowProblem } from './validate-flow';
 
@@ -12,7 +12,7 @@ const passenger: FlowDefinition = {
 };
 
 // The fixture carries a `repeat` on purpose: iteration state lives in the frame
-// (`Frame.i`), so a checker that never sees one is a checker the flagship demo
+// (`Frame.key`), so a checker that never sees one is a checker the flagship demo
 // would walk straight past.
 const booking: FlowDefinition = {
   id: 'booking',
@@ -38,7 +38,7 @@ const clean: RecordedSession = {
     frame({ stack: [{ flow: 'booking', step: 'who' }], visited: ['who'], rev: 1, nav: 1 }),
     frame({
       stack: [
-        { flow: 'booking', step: 'passengers', i: 0 },
+        { flow: 'booking', step: 'passengers', key: 'p1' },
         { flow: 'passenger', step: 'name' },
       ],
       visited: ['who', 'passengers', 'name'],
@@ -47,7 +47,7 @@ const clean: RecordedSession = {
     }),
     frame({
       stack: [
-        { flow: 'booking', step: 'passengers', i: 1 },
+        { flow: 'booking', step: 'passengers', key: 'p2' },
         { flow: 'passenger', step: 'name' },
       ],
       visited: ['who', 'passengers', 'name'],
@@ -155,7 +155,7 @@ describe('sub-flows by reference', () => {
       frames: [
         frame({
           stack: [
-            { flow: 'booking', step: 'passengers', i: 0 },
+            { flow: 'booking', step: 'passengers', key: 'p1' },
             { flow: 'passenger', step: 'seat' },
             { flow: 'seat', step: 'pick' },
           ],
@@ -206,7 +206,7 @@ describe('stacks the engine could not have built', () => {
     const problems = checkSession(
       withFrame(1, {
         stack: [
-          { flow: 'booking', step: 'passengers', i: 0 },
+          { flow: 'booking', step: 'passengers', key: 'p1' },
           { flow: 'seat', step: 'pick' },
         ],
         visited: ['passengers', 'pick'],
@@ -219,7 +219,7 @@ describe('stacks the engine could not have built', () => {
   it('still allows a group as the current step, with nothing below it', () => {
     const problems = checkSession(
       withFrame(1, {
-        stack: [{ flow: 'booking', step: 'passengers', i: 0 }],
+        stack: [{ flow: 'booking', step: 'passengers', key: 'p1' }],
         visited: ['who', 'passengers'],
       }),
       booking
@@ -264,12 +264,23 @@ describe('frames that could not have come from the engine', () => {
     expect(checkSession(boot, booking)).toEqual([]);
   });
 
-  it('rejects an iteration index on a step that is not a repeat group', () => {
+  it('rejects an item key on a step that is not a repeat group', () => {
     const problems = checkSession(
-      withFrame(0, { stack: [{ flow: 'booking', step: 'who', i: 0 }], visited: ['who'] }),
+      withFrame(0, { stack: [{ flow: 'booking', step: 'who', key: 'p1' }], visited: ['who'] }),
       booking
     );
     expect(messages(problems)).toContain('not a repeat group');
+  });
+
+  it('accepts an item key on a repeat group', () => {
+    const problems = checkSession(
+      withFrame(0, {
+        stack: [{ flow: 'booking', step: 'passengers', key: 'p1' }],
+        visited: ['who', 'passengers'],
+      }),
+      booking
+    );
+    expect(problems).toEqual([]);
   });
 });
 
@@ -304,5 +315,19 @@ describe('recordings that are not recordings', () => {
       expect(() => checkSession(broken, booking)).not.toThrow();
       expect(messages(checkSession(broken, booking))).toContain('corrupt');
     }
+  });
+});
+
+// Shared with the snapshot decoder, so a hole here is a hole in what stored
+// JSON is allowed to become.
+describe('isStackEntry', () => {
+  it('accepts a frame with no key, and one with a string key', () => {
+    expect(isStackEntry({ flow: 'booking', step: 'who' })).toBe(true);
+    expect(isStackEntry({ flow: 'booking', step: 'passengers', key: 'p1' })).toBe(true);
+  });
+
+  it('rejects a key that is not a string', () => {
+    expect(isStackEntry({ flow: 'booking', step: 'passengers', key: 3 })).toBe(false);
+    expect(isStackEntry({ flow: 'booking', step: 'passengers', key: null })).toBe(false);
   });
 });

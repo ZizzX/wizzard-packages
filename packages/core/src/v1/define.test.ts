@@ -11,6 +11,19 @@ const signup = defineFlow({
     name: step<{ full: string }>({ label: 'Your name' }),
     plan: step<{ tier: 'free' | 'pro' }>(),
     review: step(),
+  },
+});
+
+/**
+ * A group step is refused by `createWizard` — the main entry walks flat flows
+ * only — so what `group<T>()` contributes to `StepIdOf`, `DataOf` and the `go`
+ * parameter is checked on the types alone, with no engine built.
+ */
+const booking = defineFlow({
+  id: 'booking',
+  order: ['who', 'extras'],
+  steps: {
+    who: step<{ name: string }>(),
     extras: group<{ items: string[] }>({ flow: { id: 'extras', steps: {} } }),
   },
 });
@@ -113,15 +126,12 @@ describe('typed wizard', () => {
   it('threads the flow through createWizard', async () => {
     const wizard = createWizard({ flow: signup });
 
-    expectTypeOf<StepIdOf<typeof signup>>().toEqualTypeOf<'name' | 'plan' | 'review' | 'extras'>();
+    expectTypeOf<StepIdOf<typeof signup>>().toEqualTypeOf<'name' | 'plan' | 'review'>();
     expectTypeOf<DataOf<typeof signup>['plan']>().toEqualTypeOf<{ tier: 'free' | 'pro' }>();
-    expectTypeOf<DataOf<typeof signup>['extras']>().toEqualTypeOf<{ items: string[] }>();
     expectTypeOf(wizard.get('name')).toEqualTypeOf<{ full: string } | undefined>();
     expectTypeOf(wizard.get('review')).toEqualTypeOf<unknown>();
     expectTypeOf(wizard.get('name.full')).toEqualTypeOf<unknown>();
-    expectTypeOf(wizard.go)
-      .parameter(0)
-      .toEqualTypeOf<'name' | 'plan' | 'review' | 'extras' | typeof END>();
+    expectTypeOf(wizard.go).parameter(0).toEqualTypeOf<'name' | 'plan' | 'review' | typeof END>();
 
     // @ts-expect-error not a step of this flow
     void wizard.go('nope');
@@ -136,6 +146,15 @@ describe('typed wizard', () => {
     wizard.set('name.full', 'Grace');
     expect(wizard.get('name')).toEqual({ full: 'Grace' });
     expect(await wizard.go(END)).toMatchObject({ ok: true, to: END });
+  });
+
+  it('types a group step like any other, without building a wizard for it', () => {
+    expect(Object.keys(booking.steps)).toEqual(['who', 'extras']);
+    expectTypeOf<StepIdOf<typeof booking>>().toEqualTypeOf<'who' | 'extras'>();
+    expectTypeOf<DataOf<typeof booking>['extras']>().toEqualTypeOf<{ items: string[] }>();
+    expectTypeOf<Parameters<Wizard<typeof booking>['go']>[0]>().toEqualTypeOf<
+      'who' | 'extras' | typeof END
+    >();
   });
 
   it('is still the untyped Wizard a binding stores', () => {

@@ -241,6 +241,20 @@ describe('navigation through the store', () => {
     expect(w.getSnapshot().current).toBe('trip');
   });
 
+  // wizzard-17: `canBack` read a history that grew on backward moves too, so it
+  // offered a Back button at the first step that `back()` then refused.
+  it('agrees with back() once there is nowhere left to go', async () => {
+    const w = make({ payer: 'private', name: 'Ann' });
+    await w.next();
+    await w.next();
+    await w.back();
+
+    expect(w.getSnapshot().current).toBe('trip');
+    expect(w.getSnapshot().canBack).toBe(false);
+    expect(await w.back()).toMatchObject({ ok: false, reason: 'no-target' });
+    expect(w.getState().history).toEqual([]);
+  });
+
   it('jumps directly when the policy allows it', async () => {
     const w = make({ payer: 'private', name: 'Ann' });
     await w.next();
@@ -286,6 +300,19 @@ describe('start', () => {
       expect(r).toEqual({ ok: true, from: null, to: 'trip' });
       expect(w.getSnapshot().current).toBe('trip');
     });
+  });
+
+  // A binding reads the snapshot on its first render, before `start()` has
+  // resolved. Nothing is current yet, so there is nothing to go back from.
+  it('leaves canBack false until something is current', async () => {
+    const w = make();
+    expect(w.getSnapshot().canBack).toBe(false);
+
+    await w.start();
+    expect(w.getSnapshot().canBack).toBe(false);
+
+    await w.next();
+    expect(w.getSnapshot().canBack).toBe(true);
   });
 
   it('is idempotent: a second call navigates nowhere', async () => {
