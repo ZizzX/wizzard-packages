@@ -79,8 +79,9 @@ function derive(flow: FlowDefinition, state: WizardState, registry?: Registry): 
     // The answer `back()` would give, not a guess at it. `index > 0 ||
     // history.length > 0` disagreed with the engine whenever a step behind the
     // current one stopped being reachable: the button was enabled and the move
-    // then answered `no-target`.
-    canBack: resolveBack(flow, state, scope, registry) !== null,
+    // then answered `no-target`. Before `start()` there is nothing to go back
+    // from, so a fresh wizard says no rather than painting a button it flips.
+    canBack: current !== null && resolveBack(flow, state, scope, registry) !== null,
     isBusy: state.status === 'busy' || state.busy.length > 0,
     hasErrors: Object.values(state.errors).some((e) => Object.keys(e).length > 0),
   };

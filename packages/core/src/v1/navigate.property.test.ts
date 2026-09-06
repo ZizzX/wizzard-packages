@@ -58,6 +58,9 @@ const arbOps: fc.Arbitrary<readonly Op[]> = fc.array(
  * What `back()` actually answers, without moving the session on. The state is
  * immutable, so a host holding a copy of it throws every write away.
  */
+const currentOf = (state: WizardState): string | null =>
+  state.stack[state.stack.length - 1]?.step ?? null;
+
 async function backWouldMove(ctx: NavContext, state: WizardState): Promise<boolean> {
   let probe: WizardState = { ...state };
   const result = await runNav(
@@ -73,7 +76,11 @@ async function backWouldMove(ctx: NavContext, state: WizardState): Promise<boole
   return result.ok;
 }
 
-/** Runs one generated session, calling back on every state it passes through. */
+/**
+ * Runs one generated session, calling back on every state it passes through.
+ * The session is started first: a wizard nobody has entered is the one state
+ * where `canBack` deliberately answers `false` without asking `resolveBack`.
+ */
 async function walk(
   flow: FlowDefinition,
   ops: readonly Op[],
@@ -88,6 +95,9 @@ async function walk(
     },
   };
 
+  await runNav(ctx, host, { type: 'next' });
+  await at(state);
+
   for (const op of ops) {
     if (op.type === 'set') {
       state = commit(state, { data: { ...state.data, [op.flag]: op.value } });
@@ -101,13 +111,14 @@ async function walk(
 describe('the generated sessions themselves', () => {
   // A property that only ever sees sessions where back() always fails proves
   // nothing about the states where the two answers could disagree.
-  it('reach states where back() moves and states where it does not', async () => {
+  it('reach started states where back() moves and started states where it does not', async () => {
     let moved = 0;
     let refused = 0;
 
     await fc.assert(
       fc.asyncProperty(arbFlow, arbOps, async (flow, ops) => {
         await walk(flow, ops, async (state) => {
+          if (currentOf(state) === null) return;
           if (await backWouldMove({ flow }, state)) moved++;
           else refused++;
         });
@@ -126,7 +137,11 @@ describe('canBack', () => {
       fc.asyncProperty(arbFlow, arbOps, async (flow, ops) => {
         const select = createSelector(() => flow);
         await walk(flow, ops, async (state) => {
-          expect(select(state).canBack).toBe(await backWouldMove({ flow }, state));
+          // The one exception is a stack nobody has entered yet: `back()` would
+          // land on the last reachable step, and a button offering that before
+          // the first step is drawn is the bug this clause exists for.
+          const expected = currentOf(state) !== null && (await backWouldMove({ flow }, state));
+          expect(select(state).canBack).toBe(expected);
         });
       }),
       { numRuns: 300 }

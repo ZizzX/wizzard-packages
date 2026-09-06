@@ -302,6 +302,19 @@ describe('start', () => {
     });
   });
 
+  // A binding reads the snapshot on its first render, before `start()` has
+  // resolved. Nothing is current yet, so there is nothing to go back from.
+  it('leaves canBack false until something is current', async () => {
+    const w = make();
+    expect(w.getSnapshot().canBack).toBe(false);
+
+    await w.start();
+    expect(w.getSnapshot().canBack).toBe(false);
+
+    await w.next();
+    expect(w.getSnapshot().canBack).toBe(true);
+  });
+
   it('is idempotent: a second call navigates nowhere', async () => {
     const w = make();
     await w.start();
