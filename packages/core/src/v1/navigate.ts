@@ -56,6 +56,28 @@ export type NavIntent =
 /** What a plugin may answer from beforeNavigate. */
 export type NavDecision = void | false | { block: string } | { redirect: string };
 
+/**
+ * One navigation attempt as `onAttempt` reports it: once when it starts and
+ * once when it ends, with the result, or errors, with what was thrown.
+ *
+ * `id` counts attempts on one wizard, so a plugin can pair an end with its
+ * start when two overlap - a superseded attempt ends after the one that
+ * superseded it began. `source` is `'start'` for the engine's own first move,
+ * so a log can tell it from a call the application made. `rev` is the state's
+ * revision at the moment of the event.
+ */
+export type AttemptPhase =
+  | { phase: 'start' }
+  | { phase: 'end'; result: NavResult }
+  | { phase: 'error'; error: unknown };
+
+export type Attempt = {
+  id: number;
+  intent: NavIntent;
+  source: 'call' | 'start';
+  rev: number;
+} & AttemptPhase;
+
 export interface Hooks {
   name: string;
   /**
@@ -82,6 +104,15 @@ export interface Hooks {
     state: WizardState;
   }) => NavDecision | Promise<NavDecision>;
   afterNavigate?: (e: { from: string | null; to: string | typeof END; state: WizardState }) => void;
+  /**
+   * Every attempt to move, whether or not it commits. A refused `next()` never
+   * writes, so `onCommit` cannot report it; this can, with the reason. Fired
+   * by the store around the whole pipeline, never from inside it, and never
+   * for `cancel()` - the aborted attempt ends here with its `aborted` result.
+   *
+   * Observation only, like `onCommit`: throwing disables the plugin.
+   */
+  onAttempt?: (attempt: Attempt) => void;
   /** Supplies the body of a deferred step, typically over the network. */
   loadStep?: (stepId: string, signal: AbortSignal) => Promise<StepDef | undefined>;
 }
