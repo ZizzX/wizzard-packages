@@ -743,6 +743,206 @@ backstop so it never crosses the border.
 **12.20 Motion.** None, by decision; a commit-to-commit change is signalled by the strip's
 outcome text and the live region, not by animation.
 
+## 13. Amendments from the Phase 2.5 developer-experience review (2026-09-06)
+
+These paragraphs override §3.7, §5.1, §5.2, §11 (X2, X3) and §12.5–§12.7 where they differ.
+They exist because both DX voices found the same thing: the note describes the panel well
+and the developer's path to it badly. §5.1's prop list was stale against §11/§12, `record`
+and `recordSession` both appeared, `RecordedSession` and `SessionBundle` were used for the
+same value, the refusal plugin was reachable from React only, and the one error message with
+an anchor pointed at a section nobody had written.
+
+**13.1 One authoritative surface.** This block replaces every earlier signature. Anything
+not listed here is not exported.
+
+```ts
+// @wizzard-packages/devtools            ('use client'; React peers)
+export function WizardDevtools(props: WizardDevtoolsProps): ReactNode;
+export function FlowGraphView(props: FlowGraphViewProps): ReactNode;
+export { devtools, recordSession } from './headless'; // same objects, one import for React hosts
+
+export interface WizardDevtoolsProps {
+  wizard?: WizardLike;          // default: WizardContext; with neither, the one-line message (13.2)
+  plugin?: DevtoolsPlugin;      // the object passed to createWizard({ plugins: [dt] }); absent → no refusal rows
+  subFlows?: SubFlows;          // resolves string groups, as in createWizard
+  layout?: (graph: FlowGraph) => PositionedGraph;     // default: layoutGraph
+  redact?: (bundle: SessionBundle) => SessionBundle;  // runs once, at export; default: identity
+  onRecord?: (bundle: SessionBundle) => void;         // receives the redacted bundle
+  defaultTab?: 'graph' | 'state' | 'activity';        // default: 'graph'
+  limits?: { activity?: number; frames?: number; diffRows?: number }; // defaults 500, 2000, 200
+}
+
+// @wizzard-packages/devtools/headless   (no directive, no React; Node, Vue and tests)
+export function devtools(): DevtoolsPlugin;
+export function recordSession(wizard: WizardLike, options?: RecordOptions): Recorder;
+export function diffState(previous: WizardState, next: WizardState, cap?: number): Change[];
+export function layoutGraph(graph: FlowGraph, opts?: { gapX?: number; gapY?: number }): PositionedGraph;
+export function formatExpr(expr: Expr, max?: number): { short: string; full: string };
+
+export type WizardLike = Pick<Wizard, 'subscribe' | 'getState' | 'getFlow'> &
+  Partial<Pick<Wizard, 'isDestroyed'>>;
+
+export interface DevtoolsPlugin extends Hooks {
+  readonly name: 'devtools';
+  readonly outcomes: readonly Outcome[];   // ring of `limits.activity`; newest last
+  readonly pending: { from: string | null; to: string | typeof END | null } | null;
+  subscribe(listener: () => void): () => void; // fires on every outcome and pending change
+}
+export interface Outcome { afterRev: number; intent: NavIntent; result: NavResult }
+
+export interface RecordOptions {
+  plugin?: DevtoolsPlugin;   // outcomes come from here; [] without it
+  subFlows?: SubFlows;       // copied into the bundle so it replays alone
+  redact?: (bundle: SessionBundle) => SessionBundle;
+  limit?: number;            // frames; default 2000
+}
+export interface Recorder {
+  bundle(): SessionBundle;   // applies redact, computes meta, returns; never mutates the frames
+  stop(): void;              // idempotent; unsubscribes from the wizard and the plugin
+  readonly frames: number;
+  readonly capped: boolean;
+}
+export interface SessionBundle {
+  version: 1;                // the format; a reader rejects any other number (13.2)
+  flow: FlowDefinition;
+  subFlows?: SubFlows;
+  session: RecordedSession;  // core's format, unchanged
+  outcomes: readonly Outcome[];
+  meta: { frames: number; outcomes: number; redacted: boolean; capped: boolean; bytes: number };
+}
+```
+
+What changed and why, one line each:
+
+- `session()` → `bundle()`; there is one exported value and it has one name. `RecordedSession`
+  survives inside it as core's format.
+- `redact` takes the whole bundle, once, at export — not one frame at a time as X2 said.
+  Outcome error messages and flow literals can carry values too (Codex 5), and one hook over
+  one object is what a host can reason about. Frames in memory are unredacted until export;
+  the README says so in the redaction recipe. §12.7's "frames dropped by redact" row is
+  replaced: `meta` is computed after `redact` ran, so the preview's counts are the counts of
+  what leaves. If the hook throws, nothing is copied and the preview shows 13.2's message.
+- `devtools()` lives in `/headless` and is re-exported by the client entry, so a Vue or Node
+  host captures refusals with the same object a React host does (Codex 3).
+- `plugin` is a prop. The panel reads `plugin.outcomes` for Activity rows and `plugin.pending`
+  for the strip's `… → payment pending` segment. The plugin fills `pending` from
+  `beforeNavigate` (`from`, `to`) and clears it in `afterResult`; `status: 'busy'` alone never
+  names a target, which is what Codex 2 caught. Without the plugin the strip shows `… pending`
+  from `status` and the Activity header shows 13.2's `devtools-no-plugin` line.
+- `limits` and `RecordOptions.limit` make the three caps overridable; the defaults stay.
+- Stability: `WizardDevtools`, `FlowGraphView`, `devtools`, `recordSession`, `SessionBundle`
+  and the types above are the public API under semver. `layoutGraph`, `formatExpr`,
+  `diffState`, `PositionedGraph`, `Positioned` and `Change` are exported for the docs site and
+  documented as "may change in a minor" — the note is narrowed from the whole headless entry
+  (X3 said the entry) to those three functions, so the recorder is a stable API for bug reports.
+- `activity` replaces `commits` as the tab value everywhere (§12.2 renamed the tab and §5.1
+  still said `'commits'`).
+
+**13.2 Every message follows the template and has a section.** `docs/errors.md` gains five
+sections in PR 2, each with the message, the cause paragraph and the fix, in the shape
+`[wizzard] <what went wrong>. <why>. <the fix>. <url>#<code>` (AGENTS.md). Drafted here so
+the implementer copies rather than invents:
+
+| Code                         | Message (the fix clause names both halves where two exist)                                                                                                                                                                                  | Where it shows                                                             |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `devtools-no-wizard`         | `[wizzard] devtools has no wizard to watch. It reads WizardContext or the wizard prop, and neither is set. Render <WizardDevtools/> inside <WizardProvider>, or pass wizard={wizard}. …#devtools-no-wizard`                                  | the whole panel, one line                                                  |
+| `devtools-no-plugin`         | `[wizzard] refusals are not captured. The wizard was created without the devtools plugin, so a refused next() never reaches this panel. const dt = devtools(); createWizard({ flow, plugins: [dt] }); <WizardDevtools plugin={dt}/>. …#devtools-no-plugin` | Activity header; export preview line `refusals: not captured`              |
+| `devtools-render-failed`     | `[wizzard] the graph could not be drawn: <message>. A layout override or a flow shape the renderer has not seen threw; the wizard, the strip, State and Activity are unaffected. Remove the layout prop to use the built-in layout, or record a session and attach it to an issue. …#devtools-render-failed` | the Graph tab only (§12.7)                                                 |
+| `devtools-redact-failed`     | `[wizzard] export stopped: redact threw <message>. Nothing was copied. The hook must return a SessionBundle; fix it, or remove it to export development data unredacted. …#devtools-redact-failed`                                            | the export preview, in place of the JSON                                   |
+| `devtools-bundle-unsupported`| `[wizzard] this bundle is version <n>; this reader understands version 1. Export it again with a matching @wizzard-packages/devtools, or upgrade the reader. …#devtools-bundle-unsupported`                                                   | S2's replay loader; the section is written now because the format is born here |
+
+Refusal rows print what the engine gives and say when it gives less: `✗ next blocked · by
+<plugin> · <reason>` when `by` is set; `✗ next invalid · details · email: required` from
+`errors`; and when a result carries a reason and nothing else, `✗ next <reason> · the engine
+reported no field or plugin` — the panel never guesses a cause. A test asserts that every
+string beginning `[wizzard]` under `packages/devtools/src` matches the template regex and
+that its anchor exists as a heading in `docs/errors.md` (the same check `groups.test.ts`
+does by hand for one message, made general).
+
+**13.3 The README is the getting-started path.** D4's 60-line cap is replaced by a shape:
+under 150 lines, and the first screen is the path. Order: one line of what it is; a
+compatibility matrix (`devtools 3.x ↔ core 1.x, react 1.x ↔ React ≥ 18`); the three steps
+below; then five recipes as `##` sections, each one copy-paste-complete: **refusal
+diagnosis** (the strip → Activity → inspector, with the planted-fault fixture), **headless
+recording** (Node or Vue, `recordSession` with the plugin, `bundle()` to a file), **redaction**
+(a `redact` that drops `data.card`, and the sentence that frames are unredacted in memory until
+export), **placement** (Next.js: a client component under the form, `'use client'` in the
+host file, dev gating with `process.env.NODE_ENV !== 'production'`; Vite: `import.meta.env.DEV`),
+and **migration from 0.x** (13.4). The limitation Codex 4 asked for sits beside the export
+example: a bundle replays states and outcomes; it does not re-run resolvers.
+
+The three steps, with the first result named so the person knows it worked:
+
+```bash
+pnpm add -D @wizzard-packages/devtools   # peers: @wizzard-packages/core ^1, @wizzard-packages/react ^1, react >= 18
+```
+
+```tsx
+import { createWizard } from '@wizzard-packages/core/v1';
+import { WizardProvider } from '@wizzard-packages/react/v1';
+import { WizardDevtools, devtools } from '@wizzard-packages/devtools';
+import { flow } from './flow';
+
+const dt = devtools();
+const wizard = createWizard({ flow, plugins: [dt] });
+
+export function App() {
+  return (
+    <WizardProvider wizard={wizard}>
+      <MyForm />
+      <div style={{ height: 360 }}>
+        <WizardDevtools plugin={dt} />
+      </div>
+    </WizardProvider>
+  );
+}
+```
+
+Step 3 is a sentence: "Click Next with the email field empty. The strip reads
+`✗ next blocked · details · email: required`; open it to see the refused intent and the
+state it was refused in." The snippet is not typed into the README: it lives in
+`examples/quickstart/src/Devtools.tsx`, is type-checked by the existing `type-check`
+script and embedded by the `<!-- example:quickstart-devtools -->` marker the root README
+already uses for the other quickstart files. No new starter package: `examples/next-app` is
+the runnable one (§5.6, §12.12) and the README links it; the "outside the monorepo" proof is
+R0's consumer fixture (E-M5/E-M6), which gains devtools' two entries as §9 of the Phase 1
+review already states.
+
+**13.4 Upgrading is a table, not a search.** The `major` changeset body and the README's
+last recipe carry the same table:
+
+| 0.x                                          | 3.0                                                                                          |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `import { WizardDevTools }`                  | `import { WizardDevtools }` — one identifier; TypeScript reports the missing export at build |
+| `?devtools=true` in the URL                  | removed; render the panel where you want it, gate it yourself (13.3 placement)               |
+| floating overlay, `position: fixed`          | docked; fills its container, so the container needs a height                                 |
+| Actions tab (`subscribeToActions`)           | Activity: commits and refusals; refusals need `devtools()` in `plugins`                      |
+| Jump (`RESTORE_SNAPSHOT`)                    | removed; rebuild a wizard from a state with `createWizard({ state })`                        |
+| `@wizzard-packages/react` as a dependency    | peer `^1.0.0`; install it beside devtools                                                    |
+| no recording                                 | `Record` → `Copy JSON`, or `recordSession()`; the file is a `SessionBundle` `version: 1`     |
+
+No codemod: the migration is one renamed import and two deletions, and a codemod for one
+identifier is ceremony. No alias for the old name (§5.7 stands): the compile error is the
+deprecation warning, and it names the fix in the README's first recipe. Peer ranges are
+written out in `package.json`: `@wizzard-packages/core ^1.0.0`, `@wizzard-packages/react
+^1.0.0`, `react` and `react-dom` `>=18`. A 0.x host that installs 3.0 sees the peer warning
+before the compile error.
+
+**13.5 Entries stay unversioned** — `@wizzard-packages/devtools` and `/headless`, not
+`/v1`. Devtools' own major is its version; `core/v1` and `react/v1` are the transition
+aliases L8 flips to the root export, not a convention to copy into a package that has no 0.x
+API to keep alive. Single-voice finding; carried to the gate as TASTE T3 because it is a
+naming decision the next rewrite inherits.
+
+**13.6 Tests added by this review.** The template-and-anchor test (13.2); `Devtools.tsx` in
+quickstart type-checks; the migration table's seven rows are each a sentence in the changeset
+(reviewed, not tested); `recordSession` from `/headless` in a Node test with no DOM produces a
+bundle whose `outcomes` has the planted refusal (the Codex release gate's "same capture from
+Node without React"); `bundle()` with a throwing `redact` returns nothing and the preview
+shows `devtools-redact-failed`; `limits` are honoured (a 3-row activity ring). The Phase 2
+e2e "diagnosis journey" already measures the getting-started claim end to end: it is the
+TTHW test.
+
 ---
 
 <!-- /autoplan Phase 1: CEO review (SELECTIVE EXPANSION, auto-decided). Appended 2026-09-06. -->
@@ -1585,6 +1785,489 @@ None proposed: every gap was fixed in §12 rather than deferred.
 > **Phase 2 complete.** Codex: 7 concerns. Claude subagent: 9 issues.
 > Consensus: 4/7 confirmed (3 single-voice), 0 disagreements. Passing to Phase 2.5.
 
+---
+
+<!-- /autoplan Phase 2.5: developer-experience review (DX POLISH, all 8 passes, auto-decided). Appended 2026-09-06. -->
+
+## Step 0: DX Scope Assessment
+
+**Product type: Library/SDK** — a React component plus a React-free API, installed from npm,
+imported into an existing app. Secondary: Documentation (the README is the only entry point
+until S3 exists). Not a CLI, not a platform. Prior DX reviews on this project: none logged
+(`gstack-review-read` has no `plan-devex-review` rows), so every score below has no trend.
+
+**Pre-review audit, what the developer meets today.** `packages/devtools/README.md` (39 lines)
+teaches `WizardDevTools` and `?devtools=true`, both removed by this plan; `package.json` says
+`2.0.1`, depends on `@wizzard-packages/react` and peers `core`; `CHANGELOG.md` last entry is
+the 2.0.1 types fix; `docs/errors.md` has two sections (`groups-not-installed`,
+`repeat-keys`) and the plan named one more (`devtools-no-wizard`) without drafting it;
+`examples/quickstart` is type-check only, `examples/next-app` runs under Playwright;
+`react/v1` exports `useWizard` but not `WizardContext` (added by §11); `Hooks` has
+`beforeNavigate`/`afterNavigate` and no `afterResult` (added by §11). `jq` is installed on
+this machine now, so the tasks JSONL below is written with it.
+
+**0A. Persona** (auto-selected, P6: the most common developer for a React panel is the one
+who already has a wizard and cannot see why it stalled):
+
+```
+TARGET DEVELOPER PERSONA
+========================
+Who:       React application developer with a v1 wizard already mounted; TypeScript; pnpm or npm
+Context:   a step will not advance and the form shows nothing; they install devtools to see why
+Tolerance: ~5 minutes and one README screen; a second config decision ("where does it mount,
+           how big, how do I gate it") is where they close the tab
+Expects:   one install, one component, the answer visible without reading a second page;
+           types that autocomplete the props; nothing that ships to production by accident
+```
+
+Second persona, weighted lower: a Vue or Node user who wants the same bug-report file
+without React (the headless entry exists for them; the persona shapes recipes 2 and 3).
+
+**0B. Empathy narrative** (the path as the note stood at `3069ddf`, before §13):
+
+I have a wizard that stops on step two and I do not know why. I search the package, find
+`@wizzard-packages/devtools`, and the README on npm shows `import { WizardDevTools }` and a
+URL flag. I install 3.0.0 and the import does not exist; nothing tells me the new name. I open
+the design note instead of a README, because that is what there is. §5.1 gives me props:
+`wizard`, `subFlows`, `layout`, `onRecord`, `defaultTab`. I mount `<WizardDevtools />` under my
+form and see a graph and a state tab; the strip says `— no navigation yet`, then after a click
+`… pending`, then nothing. My refusal is not there. Somewhere in §11 there is a `devtools()`
+plugin that I must pass to `createWizard` **and** to the panel as `plugin`, but §5.1 does not
+have a `plugin` prop and the in-panel hint tells me half of it. I get it working on the third
+try, about twelve minutes in. Then I want to send the recording to a colleague: `onRecord`
+gives me a `RecordedSession` in one section and a `SessionBundle` in another, and `record` and
+`recordSession` are both names for the thing. I copy the JSON, and only then wonder whether my
+users' card numbers are in it. The tool is good once it is on; the road to "on" is where I
+nearly stopped.
+
+**0C. Competitive benchmark.** Search was not run in this pipeline (P3: the four closest
+tools' setups are stated in their own READMEs and have not changed this year); reference
+values:
+
+```
+COMPETITIVE DX BENCHMARK
+=========================
+Tool                          | TTHW    | Notable DX choice                                    | Source
+TanStack Query Devtools       | ~1 min  | one component, mounts itself, dev-only build by default | package README
+React Hook Form DevTool       | ~1 min  | <DevTool control={control} />; one prop                 | package README
+Redux DevTools                | ~3 min  | browser extension + composeWithDevTools; time travel    | extension docs
+XState / Stately inspector    | ~3 min  | createBrowserInspector(); the graph view is now hosted, paid tier | @statelyai/inspect README
+THIS PLAN (before §13)        | ~7 min  | bare panel 4 steps; diagnostics needs 2 unsignposted steps | note §5.1/§11
+THIS PLAN (after §13)         | ~4 min  | 3 steps; plugin named in the same snippet; first result named | §13.3
+```
+
+Target tier: **Competitive (2–5 min)** for the diagnostic path, not the bare panel — the
+bare panel is not the product's value (Phase 1, both voices). Champion (< 2 min) would need
+the panel to self-install into `createWizard`, which crosses the "devtools never mutates the
+wizard" invariant (§4.1) and is not taken.
+
+**0D. Magical moment.** The strip reading `✗ next blocked · details · email: required` the
+first time the person clicks Next with a bad field — the question they installed the tool to
+answer, answered on the default tab without a tab switch (§12.1). Delivery vehicle: **copy-paste
+snippet with the first result named** (option B in the skill's terms; P5, lowest effort that
+reaches the tier), backed by the runnable `examples/next-app` and its diagnosis-journey e2e
+(§12.12). No playground: there is no site yet (S3), and a hosted sandbox for a dev panel is
+out of proportion.
+
+**0E. Mode: DX POLISH** (override; enhancement of an existing published package). No scope
+additions beyond what a finding requires; every touchpoint made exact.
+
+**0F. Journey map** (9 stages; friction points auto-decided, each one's fix cited):
+
+| Stage           | Developer does                                        | Friction found (evidence)                                                                                          | Status            |
+| --------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ----------------- |
+| 1. Discover     | npm search / the root README's Packages table         | the npm README describes 0.x; `2.0.1` is `latest`                                                                  | fixed (13.3, 13.4; version D1 at gate) |
+| 2. Evaluate     | reads the README's first screen                       | no compatibility matrix; "≤ 60 lines" had no content plan (Codex 4, Claude MEDIUM)                                 | fixed (13.3)      |
+| 3. Install      | `pnpm add -D @wizzard-packages/devtools`              | peer range for `@wizzard-packages/react` unspecified (Claude MEDIUM)                                               | fixed (13.4)      |
+| 4. Hello world  | mounts `<WizardDevtools/>`                            | container needs a height; nobody said so; dev gating undecided (Codex 1)                                           | fixed (13.3 snippet + placement recipe) |
+| 5. Integrate    | wants refusals                                        | two connections (`plugins: [dt]` and `plugin={dt}`), §5.1 had no `plugin` prop, the hint stated half (both voices) | fixed (13.1, 13.2 `devtools-no-plugin`) |
+| 6. Debug        | reads a refusal row / an error line                   | `blocked` without `by` had no wording; boundary text said "file an issue" with no link (both voices)               | fixed (13.2)      |
+| 7. Upgrade      | 2.0.1 → 3.0.0                                         | no migration contract: rename, URL flag, Jump, placement, exports, format (both voices)                            | fixed (13.4)      |
+| 8. Scale        | long sessions, big states                             | caps fixed at 500/2000/200 (Claude MEDIUM)                                                                         | fixed (13.1 `limits`) |
+| 9. Migrate away | stops using devtools                                  | nothing to undo: no runtime coupling; the core hook is optional and inert                                          | ok                |
+
+**0G. First-time developer confusion report** (annotated with the fix):
+
+```
+FIRST-TIME DEVELOPER REPORT
+============================
+Persona: React app developer, wizard stuck on step two
+Attempting: install devtools, see why Next does nothing
+
+CONFUSION LOG:
+T+0:00  npm page shows WizardDevTools + ?devtools=true. Installs 3.0.0. Import fails.        → 13.4 table, README first recipe
+T+0:45  Finds WizardDevtools in the .d.ts. Mounts it. Sees nothing: container has no height. → 13.3 snippet wraps it in a sized div
+T+1:30  Panel visible. Clicks Next. Strip says "… pending" then "— no navigation yet" again.  → 13.1 pending from the plugin; 13.2 no-plugin line
+T+3:00  Reads Activity header: "pass devtools() to createWizard". Does that. Still no row.    → 13.2 message names both halves (plugins: [dt] AND plugin={dt})
+T+5:30  Finds `plugin` in §11 prose. Adds the prop. Refusal row appears with the field.       → 13.1 `plugin` in the props type; autocomplete shows it
+T+7:00  Wants to share. onRecord gives RecordedSession? SessionBundle? record or recordSession? → 13.1 one name, one type
+T+8:00  Copies JSON; wonders about PII; finds `redact` mentioned per frame, then per bundle. → 13.1 one hook at export; 13.3 redaction recipe
+T+9:00  Succeeded, annoyed. Would not have finished without the design note open.           → 13.3 the README is the path; TTHW target 4 min
+```
+
+All eight confusion points are addressed in §13 (P1: fix every one; none is a taste call).
+
+## Step 0.5: Dual Voices (DX)
+
+Both voices ran against the plan at `3069ddf` (§1–12 plus the Phase 1/2 appendix). Verbatim
+transcripts are in the session log; condensed here with their numbering kept.
+
+### CODEX SAYS (DX — developer experience challenge)
+
+Verdict: a promising diagnostic UI that does not yet meet the five-minute setup or the
+confident-upgrade target. Five findings, High unless noted:
+
+1. **Hello-world path missing.** About seven steps (app, install + peers, flow, provider +
+   form, a stable plugin instance, connecting the plugin to the engine and to the panel,
+   navigate); dev-only mounting and container sizing add decisions. The 0.x README teaches the
+   old component; `examples/quickstart` is type-check only. Required: one runnable starter and
+   one copy-paste-complete example (versions, imports, plugin lifetime, provider wiring, panel
+   dimensions, dev gating, expected first result), tested from the published package outside
+   the monorepo.
+2. **Errors.** `blocked`, `by`, `errors` do not always say why a guard refused or what to
+   change; the plugin-absent hint omits the `plugins: [dt]` shape and the `plugin={dt}`
+   connection; `docs/errors.md` covers groups only; the renderer fallback has no docs link;
+   redaction failures need a visible recovery instruction. When the engine cannot distinguish
+   causes, say so. Contract gap: `afterResult` runs after resolution, yet the UI promises
+   pending action names; `status: 'busy'` cannot supply them.
+3. **API.** `devtools()` is exported from the React entry only — a Vue/Node user has no
+   React-free route to refusal capture. Unresolved: how `recordSession` receives the plugin
+   and `subFlows`; whether `session()` returns `RecordedSession` or `SessionBundle`; where
+   `plugin` and redaction appear in the final props; `'commits'` vs `'activity'`; how redaction
+   "drops frames" when it returns a state. Required: one authoritative export list with
+   complete signatures; export the plugin from `/headless`; show reduced capability without it.
+4. **Docs (Medium).** "≤ 60 lines" has no findability criteria. Required: a short README with a
+   compatibility matrix at the top linking five recipes (install, refusal diagnosis, headless
+   recording, redaction, migration); complete React and headless examples; Next.js placement;
+   the "inspects recorded states, does not re-execute resolvers" limitation beside the export.
+5. **Upgrade.** 3.0.0 is understandable; the migration contract is missing (capitalisation,
+   URL activation, placement, Jump, split exports, recording format). "/headless may change in
+   a minor" while it is the recording API makes upgrades unpredictable: stabilise the recorder,
+   isolate the renderer helpers. Add a bundle-format version and reject unsupported recordings
+   with an actionable message. Redaction must cover the whole artefact.
+
+Release gate proposed: a fresh install diagnoses a refusal and exports a redacted bundle in
+under five minutes; the same capture from Node without React; a tested migration recipe.
+
+### CLAUDE SUBAGENT (DX — independent review)
+
+- **Getting started:** 4 steps for the bare panel (plausibly under 5 min). MEDIUM: no
+  copy-paste snippet anywhere; the 60-line README is unproven. HIGH: the product's own value
+  needs two unsignposted steps (plugin into `createWizard` and `plugin={dt}`); the in-panel
+  hint states only half.
+- **API:** CRITICAL: `WizardDevtoolsProps` (§5.1) is stale against §11/§12 — no `plugin`
+  prop; `onRecord` typed with `RecordedSession` while §11/§12 say `SessionBundle`. HIGH:
+  `record` vs `recordSession` inconsistent across the document. HIGH: no bridge from
+  `WizardDevTools` to `WizardDevtools` plus the 3.0.0 jump. MEDIUM: entries unversioned while
+  the family uses `/v1`. MEDIUM: caps not configurable.
+- **Errors:** HIGH: boundary text has no docs link ("file an issue" is not a fix); HIGH: the
+  plugin-absent header lacks the `[wizzard]` prefix, a link and half the fix; the
+  `devtools-no-wizard` section was never drafted; no anchors planned for the other messages.
+- **Docs:** MEDIUM: no information architecture or example content beyond "≤ 60 lines".
+- **Escape hatches:** caps and truncation lengths not overridable; MEDIUM: the peer range for
+  `@wizzard-packages/react` is unspecified.
+- Verdict: getting started YES (bare) / NO (diagnostics); naming NO; errors NO; docs NO;
+  upgrade NO; dev environment YES (peer-range caveat).
+
+### DX DUAL VOICES — CONSENSUS TABLE
+
+```
+═══════════════════════════════════════════════════════════════════════════════════════
+  Dimension                           Claude      Codex   Consensus
+  ──────────────────────────────────── ─────────── ─────── ────────────────────────────────
+  1. Getting started < 5 min?          YES* / NO   NO      CONFIRMED NO for the diagnostic path
+                                                           (* bare panel only) → 13.3
+  2. API/CLI naming guessable?         NO          NO      CONFIRMED NO → 13.1
+  3. Error messages actionable?        NO          NO      CONFIRMED NO → 13.2
+  4. Docs findable & complete?         NO          NO (M)  CONFIRMED NO → 13.3
+  5. Upgrade path safe?                NO          NO      CONFIRMED NO → 13.4, 13.1 (version: 1,
+                                                           stable recorder)
+  6. Dev environment friction-free?    YES         YES†    CONFIRMED YES († implicit: no finding)
+═══════════════════════════════════════════════════════════════════════════════════════
+```
+
+5/6 confirmed as gaps and fixed in §13; 1/6 confirmed sound; **0 DISAGREE rows**. Single-voice
+items: unversioned entries (Claude, MEDIUM) → **TASTE T3** at the gate with "keep unversioned"
+recommended (13.5); configurable caps (Claude) → `limits` (13.1, P1, cheap); pending-intent
+capture (Codex 2) → `plugin.pending` from `beforeNavigate` (13.1); redaction over the whole
+artefact (Codex 5) → one bundle hook at export (13.1). Codex's release gate is adopted as the
+tests in 13.6 plus the Phase 2 e2e. Not a User Challenge: neither voice asked to change the
+owner's direction (publish, docked panel, no time travel); both asked for the path to it.
+
+## Pass 1: Getting Started Experience — 4/10 → 8/10
+
+Was a 4: the bare panel took four steps and produced a graph with no story; the diagnostic
+path took about seven, two of them discoverable only from §11 prose; container height and dev
+gating were left to the person (0F rows 4–5, 0G T+0:45–T+5:30). Competitors mount in one line
+(0C), but none of them has to be told about a plugin, so the fair comparison is the three-step
+snippet in 13.3, which names the plugin in the same file and names the first result. TTHW
+estimate after §13: ~4 minutes (install 1, paste 1, click and read 1, one wrong turn budgeted)
+— Competitive tier, the tier chosen in 0C. Magical moment (0D) is in the plan: the strip's
+refusal on the default tab, with the e2e as its proof. Stripe test: yes, one terminal and one
+editor session, no second page. What keeps it from 10: the peers must be installed by hand
+(the family is separate packages by design, §5.2), and the panel needs a sized container —
+both stated in the snippet, neither removed. Auto-decided (P5): no auto-mount, no
+self-installing plugin (§4.1).
+
+## Pass 2: API/CLI/SDK Design — 3/10 → 9/10
+
+Was a 3, and both voices said so: the props type in §5.1 contradicted §11 and §12
+(no `plugin`, `onRecord(RecordedSession)`, `'commits'`), two names for the recorder, two
+types for its output, the plugin reachable from React only, and caps with no override. The
+"one example" test failed: a person who read §5.1 could not reach the refusal log. 13.1 is
+the fix: one surface, one name per thing, the same object exported from both entries, every
+prop with a default, `limits` as the escape hatch, stability stated per export. Consistency
+with the family: `recordSession` and `diffState` follow `buildGraph`/`checkSession`
+(verb-noun); `devtools()` returns a `Hooks` object like `persist()` and `groups`, so
+`plugins: [dt]` is the shape a v1 user already knows; `WizardLike` is the `Pick` the invariant
+§4.1 already required. Progressive disclosure: `<WizardDevtools/>` alone shows the graph and
+state; `plugin` adds refusals; `redact`/`limits`/`layout` are the third layer. What keeps it
+from 10: the two-object handshake (`plugins: [dt]` and `plugin={dt}`) is inherent to "devtools
+never mutates the wizard" and cannot be one step without the engine knowing about devtools
+(rejected, hard rule 3 spirit); it is now one snippet and one error message. Auto-decided
+(P5): `bundle()` over `session()`; `plugin` prop over a global registry; `activity` everywhere.
+
+## Pass 3: Error Messages & Debugging — 3/10 → 9/10
+
+Three error paths traced, before and after:
+
+| Path                              | The developer saw (before §13)                                                        | Sees now (13.2)                                                                         | Tier   |
+| --------------------------------- | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------ |
+| panel mounted, plugin missing     | "refusals are not captured — pass `devtools()` to `createWizard`" (half the fix, no prefix, no link) | `[wizzard] refusals are not captured. … const dt = devtools(); createWizard({…, plugins: [dt] }); <WizardDevtools plugin={dt}/>. …#devtools-no-plugin` | Tier 2 |
+| renderer throws                   | "failed to render: <message>. … Record a session and file an issue." (no link, no fix) | `[wizzard] the graph could not be drawn: … Remove the layout prop …, or record a session … …#devtools-render-failed`; Graph tab only | Tier 2 |
+| `redact` throws at export         | "frame dropped, console.error once" (Phase 1 §2) — the person copies a partial bundle unaware | `[wizzard] export stopped: redact threw … Nothing was copied. … …#devtools-redact-failed` in the preview | Tier 2 |
+
+Every message now has what happened, why, the fix and the anchor; the anchor sections are
+drafted, not promised; a test enforces the template and the anchor's existence (13.2). The
+refusal rows print the engine's `reason`, `by` and `errors` and say when the engine gave
+less, instead of inferring a cause. Blast radius is stated in each message ("the wizard … is
+unaffected"). Debug mode: none needed; the panel is the debug mode, and its own failures are
+visible in it (Phase 1 §8). Stack traces: the boundary shows `<message>` only; the full error
+goes to `console.error` once, which a developer tool may do. What keeps it from 10: Tier 1
+(Elm-style, pointing at the line of the host's code) is not reachable from a runtime panel.
+Auto-decided (P1): five anchors, not one; the template test.
+
+## Pass 4: Documentation & Learning — 2/10 → 8/10
+
+Was a 2: a 39-line README about a product this plan deletes, and a line budget in place of a
+plan for the new one. 13.3 gives the README a shape (matrix → three steps → five recipes), a
+first screen that is the path, copy-paste-complete recipes that are type-checked from
+`examples/quickstart` and embedded by the marker the root README already uses (reuse, P4),
+the runnable `examples/next-app` linked, and the replay limitation beside the export example.
+Versioning: the matrix row is the version story (D1 at the gate). Tutorial vs reference: the
+recipes are the tutorial; the `.d.ts` with doc comments is the reference until S5 renders it.
+Interactive: none until S3 (out of scope, stated). What keeps it from 10: no site, no search,
+no live example — S1–S5 own those. Auto-decided (P5, P4): README under 150 lines with the
+shape above rather than a `docs/devtools/` tree; the snippet lives in quickstart, not typed twice.
+
+## Pass 5: Upgrade & Migration Path — 2/10 → 8/10
+
+Was a 2: a breaking major with the version question open, no migration text, the recorder on
+an entry labelled unstable, an unversioned file format. 13.4 writes the seven-row migration
+table into the changeset and the README; 13.1 versions the bundle (`version: 1`) and moves
+the stability line from the entry to the three renderer helpers so `recordSession` is under
+semver; 13.2 gives the reader of a future bundle a message; peer ranges are explicit. No
+codemod (one identifier; P5) and no alias (§5.7): TypeScript's missing-export error is the
+deprecation warning and the README's first recipe names the fix. Semver is followed: 3.0.0
+above 2.0.1 for a breaking change (D1, gate). What keeps it from 10: the number does not
+match the family's, which is the User Challenge the gate decides, and there is no deprecation
+period — 2.x cannot warn about 3.x because 2.x is the dead 0.x panel.
+
+## Pass 6: Developer Environment & Tooling — 7/10 → 9/10
+
+Both voices: sound. Types ship (`.d.ts` and `.d.cts`, publint and attw in `check:pack`);
+autocomplete shows `plugin` now that it is in the props type; CI needs nothing special (the
+e2e runs in the existing Playwright `next` project); the directive test guards RSC; Windows,
+mac and Linux are the same code (no native deps); testing support is `recordSession` from
+`/headless` in any Node test with no DOM, plus `contract/fixtures.ts` with the planted faults
+(X8) as ready-made cases; observability is the panel itself and the bundle. The peer range
+was the one gap (13.4). What keeps it from 10: no watch-mode story for the panel's own
+development beyond `tsup --watch` (fine for a package this size) and the build-before-test
+order the worktree learning records (`pnpm build` before cross-package tests).
+
+## Pass 7: Community & Ecosystem — 5/10 → 6/10
+
+MIT, public repository, issues open, `CONTRIBUTING`-level guidance in `AGENTS.md`;
+`examples/next-app` is a real-usage example once it mounts the panel; extension points are
+the `layout` prop and the `redact` hook, both documented. No community channel exists and
+none is created here (out of scope; a channel for a package with bot-level downloads is
+noise). The bundle format is the ecosystem hook: an issue template that asks for a
+`SessionBundle` is one file in `.github/` and is added to PR 3 (P2: in blast radius, ten
+lines). Ceiling accepted at 6 until there are users.
+
+## Pass 8: DX Measurement & Feedback Loops — 4/10 → 7/10
+
+TTHW is measured by the diagnosis-journey e2e (§12.12): its step count and its wall time are
+the instrument, run on every PR; the README's three steps are asserted by the quickstart
+type-check and the embed marker. Journey analytics: none — a development tool sends nothing
+(Phase 1 §8), and that is a feature. Feedback mechanism: the issue template with the bundle
+(Pass 7). Friction audit: `/devex-review` against the built package after PR 3, logged with
+this review as the baseline (the review log below carries `tthw_current` and `tthw_target`).
+What keeps it from 10: no telemetry by decision, so real-world TTHW stays anecdotal.
+
+## Required Outputs (DX)
+
+### Developer persona card, empathy narrative, benchmark, magical moment, journey map, confusion report
+
+Above, in Step 0 (0A–0G), each grounded in the files named in the pre-review audit.
+
+### NOT in scope (DX)
+
+- A hosted playground or sandbox — no site yet (S3); a panel does not need one.
+- A codemod — one renamed import.
+- An alias for `WizardDevTools` — decided against in §5.7; the compile error is the notice.
+- Auto-mounting or a self-installing plugin — crosses "devtools never mutates the wizard".
+- A community channel — nothing to moderate yet.
+- Telemetry or usage analytics — a development tool sends nothing.
+- `/v1`-versioned entries — TASTE T3 at the gate; recommendation is no.
+
+### What already exists (DX)
+
+The A4 message template and `docs/errors.md` with two worked sections; `groups.test.ts`'s
+anchor assertion as the model for the template test; the root README's `<!-- example:… -->`
+embed markers and `examples/quickstart`'s "one source, three consumers" pattern; the
+`plugins: [...]` shape from `persist()` and `groups`; `examples/next-app` with its Playwright
+project; `check:pack` (publint, attw) for the entries; the fast-check and worktree-build
+learnings.
+
+### TODOS.md updates (DX)
+
+None proposed: every gap is fixed in §13 rather than deferred. The one deferrable item
+(issue template) is small enough to land in PR 3.
+
+### DX Scorecard
+
+```
++====================================================================+
+|              DX PLAN REVIEW — SCORECARD                             |
++====================================================================+
+| Dimension            | Score  | Prior  | Trend  |
+|----------------------|--------|--------|--------|
+| Getting Started      |  8/10  |  4/10  | +4 ↑   |
+| API/CLI/SDK          |  9/10  |  3/10  | +6 ↑   |
+| Error Messages       |  9/10  |  3/10  | +6 ↑   |
+| Documentation        |  8/10  |  2/10  | +6 ↑   |
+| Upgrade Path         |  8/10  |  2/10  | +6 ↑   |
+| Dev Environment      |  9/10  |  7/10  | +2 ↑   |
+| Community            |  6/10  |  5/10  | +1 ↑   |
+| DX Measurement       |  7/10  |  4/10  | +3 ↑   |
++--------------------------------------------------------------------+
+| TTHW                 | ~4 min | ~7 min | -3 ↑   |  (diagnostic path; bare panel ~2 min)
+| Competitive Rank     | Competitive (2-5 min)                        |
+| Magical Moment       | designed via copy-paste snippet + next-app e2e |
+| Product Type         | Library/SDK (React component + headless API) |
+| Mode                 | POLISH                                       |
+| Overall DX           |  8/10  |  4/10  | +4 ↑   |
++====================================================================+
+| DX PRINCIPLE COVERAGE                                               |
+| Zero Friction      | covered (3 steps, first result named)          |
+| Learn by Doing     | covered (quickstart file, next-app, fixtures)  |
+| Fight Uncertainty  | covered (5 anchors, template test, honest rows)|
+| Opinionated + Escape Hatches | covered (defaults + limits/layout/redact) |
+| Code in Context    | covered (placement recipe: Next.js and Vite)   |
+| Magical Moments    | covered (the strip on the default tab)         |
++====================================================================+
+```
+
+"Prior" is the plan at `3069ddf`, not an earlier review (none exists). No dimension is below
+6; nothing is flagged as critical DX debt. TTHW is under 5 minutes: not blocking.
+
+### DX Implementation Checklist
+
+```
+DX IMPLEMENTATION CHECKLIST
+============================
+[x] Time to hello world < 5 min (diagnostic path ~4 min; asserted by the diagnosis-journey e2e)
+[x] Installation is one command (peers listed on the same line)
+[x] First run produces meaningful output (the strip's refusal; named in step 3)
+[x] Magical moment delivered via copy-paste snippet + runnable example
+[x] Every error message has: problem + cause + fix + docs link (five anchors, template test)
+[x] API naming is guessable without docs (verb-noun; plugins: [dt]; one name per thing)
+[x] Every parameter has a sensible default (13.1 lists each)
+[x] Docs have copy-paste examples that actually work (type-checked in quickstart; embedded)
+[x] Examples show real use cases (planted-fault fixtures; next-app journey)
+[x] Upgrade path documented with migration guide (13.4 table in changeset + README)
+[~] Breaking changes have deprecation warnings + codemods (compile error as the warning; no codemod by decision)
+[x] TypeScript types included (.d.ts + .d.cts; publint/attw)
+[x] Works in CI/CD without special configuration (existing Playwright project)
+[x] Free tier available (MIT)
+[x] Changelog exists and is maintained (changesets)
+[ ] Search works in documentation (no site yet — S3)
+[ ] Community channel exists and is monitored (none; out of scope)
+```
+
+## Implementation Tasks (DX)
+
+Synthesized from this review's findings. Each task derives from a specific finding above.
+
+- [ ] **T1 (P1, human: ~3h / CC: ~25min)** — devtools — Rewrite the public surface to §13.1: `WizardDevtoolsProps` with `plugin`, `redact`, `limits`, `onRecord(bundle)`, `defaultTab` incl. `'activity'`; `DevtoolsPlugin` with `outcomes`, `pending`, `subscribe`; `Recorder.bundle()`; `SessionBundle` `version: 1`; `devtools`/`recordSession` on `/headless`, re-exported by the client entry
+  - Surfaced by: Pass 2 — both voices: §5.1 stale, two names, React-only plugin
+  - Files: `packages/devtools/src/index.ts`, `packages/devtools/src/headless/index.ts`, `packages/devtools/src/headless/record.ts`, `packages/devtools/src/headless/plugin.ts`, `packages/devtools/src/WizardDevtools.tsx`
+  - Verify: `pnpm --filter @wizzard-packages/devtools type-check`; a type-level test that the export list equals 13.1
+- [ ] **T2 (P1, human: ~1h / CC: ~10min)** — devtools — `devtools()` implements `beforeNavigate` to set `pending {from,to}` and `afterResult` to push the outcome and clear it; the strip reads `… → <to> pending` from the plugin, `… pending` from `status` without it
+  - Surfaced by: Step 0.5 — Codex 2: `afterResult` cannot supply pending names
+  - Files: `packages/devtools/src/headless/plugin.ts`, `packages/devtools/src/Strip.tsx`
+  - Verify: unit — a slow `beforeNavigate` guard leaves the strip at `… → payment pending`, then `✓ next → payment`
+- [ ] **T3 (P1, human: ~2h / CC: ~20min)** — devtools + docs — Five `docs/errors.md` sections from the 13.2 table, the messages in code, refusal-row wording incl. "the engine reported no field or plugin", and the template-and-anchor test over `packages/devtools/src`
+  - Surfaced by: Pass 3 — both voices: half-fixes, no links, undrafted anchor
+  - Files: `docs/errors.md`, `packages/devtools/src/messages.ts`, `packages/devtools/src/messages.test.ts`, `packages/devtools/src/boundary.tsx`, `packages/devtools/src/Activity.tsx`
+  - Verify: `pnpm --filter @wizzard-packages/devtools test:run` — the template test fails on any `[wizzard]` string without a heading
+- [ ] **T4 (P1, human: ~1.5h / CC: ~15min)** — devtools — `redact` applied once in `bundle()`; `meta` computed after it; a throwing hook aborts the export and the preview shows `devtools-redact-failed`; the preview's counts are post-redaction; `limits`/`limit` honoured for the three caps
+  - Surfaced by: Step 0.5 — Codex 5 (whole-artefact redaction), Claude (caps not configurable)
+  - Files: `packages/devtools/src/headless/record.ts`, `packages/devtools/src/ExportPreview.tsx`, `packages/devtools/src/Activity.tsx`
+  - Verify: unit — `bundle()` with a redact that drops `data.card` yields a bundle without it and `meta.redacted: true`; a throwing redact copies nothing; a 3-row activity ring
+- [ ] **T5 (P1, human: ~3h / CC: ~30min)** — docs + examples — README per 13.3 (matrix, three steps, five recipes, replay limitation, under 150 lines); `examples/quickstart/src/Devtools.tsx` type-checked and embedded via `<!-- example:quickstart-devtools -->`; the next-app link
+  - Surfaced by: Pass 1, Pass 4 — both voices: no hello-world path, no README plan
+  - Files: `packages/devtools/README.md`, `examples/quickstart/src/Devtools.tsx`, `examples/quickstart/package.json` (devtools dep), the README embed script
+  - Verify: `pnpm --filter @examples/quickstart type-check`; the embed check the root README already runs
+- [ ] **T6 (P1, human: ~1h / CC: ~10min)** — devtools — Migration table 13.4 in the `major` changeset body and the README's last recipe; `package.json` peers `@wizzard-packages/core ^1.0.0`, `@wizzard-packages/react ^1.0.0`, `react`/`react-dom` `>=18`; `exports` for `.` and `./headless` with split types; stability note narrowed to the three helpers
+  - Surfaced by: Pass 5 — both voices: no migration contract; Claude: peer range unspecified
+  - Files: `.changeset/*.md`, `packages/devtools/package.json`, `packages/devtools/README.md`
+  - Verify: `pnpm check:pack` clean; `pnpm changeset status` lists devtools as major
+- [ ] **T7 (P2, human: ~1h / CC: ~10min)** — devtools — Headless Node test: `recordSession(wizard, { plugin: dt })` with no DOM produces a bundle whose `outcomes` carries the planted `flowA` refusal and passes `checkSession`
+  - Surfaced by: Step 0.5 — Codex release gate: "same capture from Node without React"
+  - Files: `packages/devtools/src/headless/record.test.ts`, `contract/fixtures.ts`
+  - Verify: `pnpm --filter @wizzard-packages/devtools test:run` under the node environment
+- [ ] **T8 (P2, human: ~30min / CC: ~5min)** — repo — Issue template asking for a `SessionBundle` (how to record it, the redaction sentence); `devtools-bundle-unsupported` section reserved for S2's loader
+  - Surfaced by: Pass 7, Pass 8 — feedback loop is the bundle
+  - Files: `.github/ISSUE_TEMPLATE/bug-report.md`, `docs/errors.md`
+  - Verify: the template renders on the "New issue" page
+
+_No new tasks from Pass 6 (peer range is in T6)._
+
+### Phase 2.5 Completion Summary
+
+```
+  +====================================================================+
+  |          DEVEX PLAN REVIEW — COMPLETION SUMMARY                    |
+  +====================================================================+
+  | Product type         | Library/SDK; mode POLISH; persona: React dev |
+  | Step 0               | 4/10 initial; TTHW ~7 min → ~4 min (target <5) |
+  | Pass 1  (Start)      | 4/10 → 8/10                                 |
+  | Pass 2  (API)        | 3/10 → 9/10                                 |
+  | Pass 3  (Errors)     | 3/10 → 9/10                                 |
+  | Pass 4  (Docs)       | 2/10 → 8/10                                 |
+  | Pass 5  (Upgrade)    | 2/10 → 8/10                                 |
+  | Pass 6  (Env)        | 7/10 → 9/10                                 |
+  | Pass 7  (Community)  | 5/10 → 6/10 (ceiling until users)           |
+  | Pass 8  (Measure)    | 4/10 → 7/10                                 |
+  +--------------------------------------------------------------------+
+  | NOT in scope         | written (7 items)                           |
+  | What already exists  | written                                     |
+  | TODOS.md updates     | 0 items proposed                            |
+  | Decisions made       | 6 amendments (§13.1–13.6), 8 tasks          |
+  | Taste at the gate    | 1 (T3 unversioned entries)                  |
+  | Dual voices          | ran (codex + claude subagent)               |
+  | Overall DX score     | 4/10 → 8/10                                 |
+  +====================================================================+
+```
+
+> **Phase 2.5 complete.** DX overall: 8/10. TTHW: ~7 min → ~4 min (target < 5).
+> Codex: 5 concerns. Claude subagent: 11 issues.
+> Consensus: 5/6 confirmed as gaps (fixed in §13), 1/6 confirmed sound, 0 disagreements;
+> 1 single-voice taste item (T3) → surfaced at gate.
+> Passing to Phase 3 (Eng Review — the required gate reviews the final amended plan).
+
 <!-- AUTONOMOUS DECISION LOG -->
 
 ## Decision Audit Trail
@@ -1622,3 +2305,20 @@ None proposed: every gap was fixed in §12 rather than deferred.
 | 29  | Design | Boundary scoped to the Graph tab                                                | mechanical     | P1        | export must stay usable when the renderer fails                          | whole-panel boundary               |
 | 30  | Design | Open sub-flow preview from a group's inspector                                  | mechanical     | P1        | previewing a child before visiting it was silently impossible            | crumbs only                        |
 | 31  | Design | Typeface inherits; motion none                                                  | mechanical     | P5        | embedded panel; the host's stack wins                                    | Inter + transitions                |
+| 32  | DX     | Mode DX POLISH; persona React app developer with a stalled wizard               | mechanical     | override  | enhancement of an existing package; most common developer for a React panel | EXPANSION; Vue/Node as primary  |
+| 33  | DX     | One authoritative surface (§13.1); `bundle()` replaces `session()`; `activity` everywhere | mechanical | P5   | both voices: §5.1 stale, two names for the recorder, two types for its output | keep §5.1 + prose amendments   |
+| 34  | DX     | `redact(bundle)` once at export; frames unredacted in memory, README says so     | mechanical     | P1, P5    | outcomes and flow literals carry values too (Codex 5); one hook over one object | per-frame `redact(state)` (X2)  |
+| 35  | DX     | `devtools()` on `/headless`, re-exported by the client entry                    | mechanical     | P1        | Vue/Node hosts capture refusals with the same object (Codex 3)          | React-only export                  |
+| 36  | DX     | `plugin.pending` from `beforeNavigate`; strip shows `… → <to> pending`          | mechanical     | P1        | `status: 'busy'` cannot name a target (Codex 2)                          | infer from status only             |
+| 37  | DX     | `limits` prop and `RecordOptions.limit`; defaults 500/2000/200 unchanged        | mechanical     | P1        | escape hatch for the three caps (Claude); ten lines                      | fixed caps                         |
+| 38  | DX     | Stability note narrowed to `layoutGraph`/`formatExpr`/`diffState`; recorder under semver | mechanical | P1   | the recording API is what bug reports depend on (Codex 5)                | whole headless entry "may change"  |
+| 39  | DX     | Five `docs/errors.md` anchors drafted in the note; template-and-anchor test     | mechanical     | P1        | one anchor was named and none drafted; both voices                       | `devtools-no-wizard` only          |
+| 40  | DX     | Refusal rows say when the engine gave no field or plugin                        | mechanical     | P5        | never guess a cause (Codex 2)                                            | infer a cause                      |
+| 41  | DX     | README shape: matrix → 3 steps → 5 recipes, < 150 lines; snippet in quickstart, embedded | mechanical | P4, P5 | D4's 60-line cap had no content plan (both voices); reuse the embed marker | `docs/devtools/` tree; typed twice |
+| 42  | DX     | No new starter package; `examples/next-app` + R0 consumer fixture are the proofs | mechanical    | P4        | Codex 1 asked for a starter; the runnable one exists and the fixture is planned | new `examples/devtools-starter` |
+| 43  | DX     | Migration table 13.4 in changeset + README; no codemod; no alias                 | mechanical     | P5        | one renamed import; §5.7 stands; the compile error is the notice         | codemod; `WizardDevTools` alias    |
+| 44  | DX     | Peer ranges written: core ^1.0.0, react ^1.0.0, react/react-dom >=18            | mechanical     | P1        | unspecified range (Claude); a 0.x host sees the warning first            | `workspace:*` only                 |
+| 45  | DX     | Bundle `version: 1`; `devtools-bundle-unsupported` reserved for S2's loader     | mechanical     | P1        | reject unsupported recordings with a message (Codex 5)                   | unversioned format                 |
+| 46  | DX     | Entries stay unversioned (`/headless`, not `/v1`)                               | taste (T3)     | P5        | devtools' own major is the version; `/v1` is L8's transition alias        | `/v1` entries (Claude MEDIUM)      |
+| 47  | DX     | Competitive tier target (2–5 min) for the diagnostic path; no auto-mount        | mechanical     | P5        | Champion needs the engine to know devtools (§4.1)                        | self-installing plugin             |
+| 48  | DX     | Issue template asking for a `SessionBundle` in PR 3                             | mechanical     | P2        | the bundle is the feedback loop; ten lines, in blast radius              | defer to TODOS.md                  |
