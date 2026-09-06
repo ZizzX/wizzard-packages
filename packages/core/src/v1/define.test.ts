@@ -116,7 +116,7 @@ describe('typed wizard', () => {
     expectTypeOf<StepIdOf<typeof signup>>().toEqualTypeOf<'name' | 'plan' | 'review' | 'extras'>();
     expectTypeOf<DataOf<typeof signup>['plan']>().toEqualTypeOf<{ tier: 'free' | 'pro' }>();
     expectTypeOf<DataOf<typeof signup>['extras']>().toEqualTypeOf<{ items: string[] }>();
-    expectTypeOf(wizard.get('name')).toEqualTypeOf<{ full: string }>();
+    expectTypeOf(wizard.get('name')).toEqualTypeOf<{ full: string } | undefined>();
     expectTypeOf(wizard.get('review')).toEqualTypeOf<unknown>();
     expectTypeOf(wizard.get('name.full')).toEqualTypeOf<unknown>();
     expectTypeOf(wizard.go)
@@ -127,6 +127,8 @@ describe('typed wizard', () => {
     void wizard.go('nope');
     // @ts-expect-error not the shape `plan` declared
     wizard.set('plan', { tier: 'gold' });
+    // @ts-expect-error a nested path is untyped, a step id is not
+    wizard.set('plan', 'pro');
     // @ts-expect-error not a step of this flow
     await wizard.validate('nope');
 
@@ -152,7 +154,7 @@ describe('typed wizard', () => {
 
   it('stays at inference depth one on a forty-step flow', () => {
     const wizard = createWizard({ flow: forty });
-    expectTypeOf(wizard.get('s40')).toEqualTypeOf<{ v40: number }>();
+    expectTypeOf(wizard.get('s40')).toEqualTypeOf<{ v40: number } | undefined>();
     wizard.set('s01', { v1: 1 });
     expect(wizard.get('s01')).toEqual({ v1: 1 });
   });

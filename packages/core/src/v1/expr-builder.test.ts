@@ -14,6 +14,9 @@ interface Twin {
   json: Expr;
 }
 
+/** A hand-written node, widened through `unknown`: the key is computed, so the compiler cannot see the operator. */
+const node = (op: string, operand: unknown): Expr => ({ [`$${op}`]: operand }) as unknown as Expr;
+
 const paths = ['data', 'data.a', 'data.b.c', 'ctx.x', 'loop.index', 'loop.item.k'] as const;
 // Round-tripped once: `jsonValue` can yield `-0`, which JSON cannot represent.
 const args = fc.option(
@@ -35,17 +38,20 @@ const twin = fc.letrec<{ expr: Twin }>((tie) => {
   );
   const unary = fc
     .tuple(fc.constantFrom('not', 'empty'), expr)
-    .map(([op, e]): Twin => ({ built: b[op](e.built), json: { [`$${op}`]: e.json } as Expr }));
+    .map(([op, e]): Twin => ({ built: b[op](e.built), json: node(op, e.json) }));
   const nary = fc.tuple(fc.constantFrom('and', 'or'), fc.array(expr, { maxLength: 3 })).map(
     ([op, es]): Twin => ({
       built: b[op](...es.map((e) => e.built)),
-      json: { [`$${op}`]: es.map((e) => e.json) } as Expr,
+      json: node(
+        op,
+        es.map((e) => e.json)
+      ),
     })
   );
   const binary = fc.tuple(fc.constantFrom('eq', 'ne', 'gt', 'gte', 'lt', 'lte'), expr, expr).map(
     ([op, l, r]): Twin => ({
       built: b[op](l.built, r.built),
-      json: { [`$${op}`]: [l.json, r.json] } as Expr,
+      json: node(op, [l.json, r.json]),
     })
   );
   const isIn = fc

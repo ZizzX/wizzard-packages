@@ -1,5 +1,5 @@
 import { commit, restart } from './commit';
-import { type DataOf, type StepIdOf } from './define';
+import { type SliceAt, type StepIdOf } from './define';
 import { END, type FlowDefinition, type StepDef } from './flow';
 import { runNav, type Hooks, type NavContext, type NavResult } from './navigate';
 import { getPath, setPath } from './path';
@@ -77,11 +77,15 @@ export interface Wizard<F extends FlowDefinition = FlowDefinition> {
   /** Aborts the navigation in flight, if any. */
   cancel: () => void;
 
-  /** A step id reads that step's slice, typed; any other path reads `unknown`. */
-  get<K extends StepIdOf<F>>(path: K): DataOf<F>[K];
-  get(path: string): unknown;
-  set<K extends StepIdOf<F>>(path: K, value: DataOf<F>[K]): void;
-  set(path: string, value: unknown): void;
+  /**
+   * A step id reads that step's slice as `step<T>` declared it - or
+   * `undefined`, before the slice is first written and after `clearOnLeave`
+   * drops it. Any other path reads `unknown`. One signature rather than a
+   * typed overload with an untyped fallback: a fallback is what a wrong value
+   * for a known step would resolve to.
+   */
+  get<P extends string>(path: P): SliceAt<F, P> | undefined;
+  set<P extends string>(path: P, value: SliceAt<F, P>): void;
   patch: (partial: Record<string, unknown>) => void;
   /** Applies several writes and notifies once. */
   batch: (fn: () => void) => void;
