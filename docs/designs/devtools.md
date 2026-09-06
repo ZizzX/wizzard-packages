@@ -5,7 +5,7 @@
 Date: 2026-09-06
 Branch: `docs/devtools-design` at `814dc8c`
 Task: L5 · Plan of record: [`v1-launch.md`](v1-launch.md) row **L5** (absorbs T6, T15, T33, E4)
-Status: proposal, review pending
+Status: approved 2026-09-06 (`/autoplan`, four phases; gate decisions in the review report at the end)
 
 ## 1. Why a note lands first
 
@@ -2976,10 +2976,10 @@ set on 2026-09-06.
 
 | Review        | Trigger               | Why                             | Runs | Status                                        | Findings                                                                 |
 | ------------- | --------------------- | ------------------------------- | ---- | --------------------------------------------- | ------------------------------------------------------------------------ |
-| CEO Review    | `/plan-ceo-review`    | Scope & strategy                | 1    | CLEAR (via /autoplan, pending the gate)       | 8 proposals, 5 accepted, 1 deferred, 2 skipped; 0 critical gaps          |
+| CEO Review    | `/plan-ceo-review`    | Scope & strategy                | 1    | CLEAR (via /autoplan)                         | 8 proposals, 5 accepted, 1 deferred, 2 skipped; 0 critical gaps          |
 | Design Review | `/plan-design-review` | UI/UX gaps                      | 1    | CLEAR (via /autoplan)                         | score 5/10 → 8/10, 20 amendments (§12)                                   |
 | DX Review     | `/plan-devex-review`  | Developer experience gaps       | 1    | CLEAR (via /autoplan)                         | score 4/10 → 8/10, TTHW ~7 min → ~4 min, 6 amendments (§13)              |
-| Eng Review    | `/plan-eng-review`    | Architecture & tests (required) | 1    | CLEAR (via /autoplan, pending the gate)       | 7 issues, 0 critical gaps, 13 amendments (§14), 14 Codex findings verified |
+| Eng Review    | `/plan-eng-review`    | Architecture & tests (required) | 1    | CLEAR (via /autoplan)                         | 7 issues, 0 critical gaps, 13 amendments (§14), 14 Codex findings verified |
 | Outside Voice | dual voices           | Independent 2nd opinion         | 8    | issues_found                                  | 7 + 6, 7 + 9, 5 + 11, 14 + 9 concerns across the four phases             |
 
 **CROSS-MODEL:** eight runs, no shared context. Agreement on: the refusal contract (the
@@ -2989,13 +2989,21 @@ publish decision (Phase 1, T1: carried with the owner's direction as default) an
 rows where one voice read the source and the other did not; each was settled by the cited
 line, and the two that carry a tunable number or order are gate items T4 and T5.
 
-**VERDICT:** CEO + DESIGN + DX + ENG CLEARED — ready to implement once the five gate items
-below are decided. Eng review required: satisfied by this run.
+**VERDICT:** CEO + DESIGN + DX + ENG CLEARED — ready to implement. Eng review required:
+satisfied by this run.
 
-**UNRESOLVED DECISIONS:**
+**GATE DECISIONS (owner, 2026-09-06) — all six resolved as recommended:**
 
-- D1 (User Challenge) — the version: `1.0.0` and `2.0.1` exist on npm; the note recommends `3.0.0`.
-- T1 (taste) — publish `@wizzard-packages/devtools` in the 1.0.0 release, or site-only first; the owner's direction (publish) is the default.
-- T2 (taste) — the core hook `onAttempt` and the `core-v1` budget 5.0 → ~5.2 kB, measured in PR 1.
-- T3 (taste) — entries stay unversioned (`/headless`, not `/v1`); recommended.
-- T4 (taste) — the 1 500-edge draw cap; T5 (taste) — PR 1 keeps the 0.x panel, PR 2 replaces it.
+- **D1 — version:** `@wizzard-packages/devtools` ships as **`3.0.0`** with the family's
+  1.0.0; outside the changeset `fixed` group; the README's compatibility row
+  (`devtools 3.x ↔ core 1.x`) is the alignment T6 asked for.
+- **T1 — publish:** devtools is published in the 1.0.0 release (direction of 2026-09-05 kept).
+- **T2 — core hook:** `Hooks.onAttempt(Attempt)` lands in core from the store wrapper; the
+  `core-v1` budget moves 5.0 → ~5.2 kB, the exact number measured in PR 1 and written beside
+  the line with §14.1 as the reason.
+- **T3 — entries:** `@wizzard-packages/devtools` and `/headless`, unversioned.
+- **T4 — draw cap:** 1 500 edges, toolbar text names the total.
+- **T5 — PR order:** PR 1 keeps the 0.x panel beside the new headless entry; PR 2 replaces
+  the panel and carries the `major` changeset; PR 3 is the consumer proof.
+
+NO UNRESOLVED DECISIONS
