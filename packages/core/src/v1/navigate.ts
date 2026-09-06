@@ -1,6 +1,7 @@
 import { add, beginNav, commit, isCurrent } from './commit';
 import { testAsync, type AsyncRegistry, type Scope } from './expr';
 import { END, type FlowDefinition, type StepDef } from './flow';
+import { unsetPath } from './path';
 import { allowedByPolicy, reachable, resolveBack, resolveNext } from './resolve';
 
 import type { WizardState } from './state';
@@ -111,6 +112,15 @@ export interface NavContext {
 
 const scopeOf = (s: WizardState): Scope => ({ data: s.data, ctx: s.ctx });
 const currentOf = (s: WizardState): string | null => s.stack[s.stack.length - 1]?.step ?? null;
+
+/** Applies the left step's `clearOnLeave`. Pure: the commit below writes the result. */
+function leave(flow: FlowDefinition, from: string, data: WizardState['data']): WizardState['data'] {
+  const step = flow.steps[from];
+  const clear = step?.clearOnLeave;
+  if (clear === undefined) return data;
+  const paths = clear === true ? [step.slice ?? from] : clear;
+  return paths.reduce((acc, path) => unsetPath(acc, path), data);
+}
 
 const superseded: NavResult = { ok: false, reason: 'superseded' };
 const aborted: NavResult = { ok: false, reason: 'aborted' };
@@ -257,6 +267,7 @@ export async function runNav(
         visited: add(before.visited, target),
         completed: forward && from !== null ? add(before.completed, from) : before.completed,
         busy: before.busy.filter((id) => id !== target),
+        data: from === null ? before.data : leave(flow, from, before.data),
       })
     );
 

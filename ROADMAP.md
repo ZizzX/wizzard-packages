@@ -41,7 +41,7 @@ Dependencies point one way — into core. Core has no runtime dependencies.
 
 | Package                      | Role                                                                                                                | Budget (gzip)     |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| `@wizzard-packages/core`     | flow types, expression evaluator, engine, navigation pipeline, selectors, `defineFlow`, `patchFlow`, `validateFlow` | 4.3 kB            |
+| `@wizzard-packages/core`     | flow types, expression evaluator, engine, navigation pipeline, selectors, `defineFlow`, `patchFlow`, `validateFlow` | 4.5 kB            |
 | `@wizzard-packages/react`    | provider, hooks, `useSyncExternalStore` bridge                                                                      | 1.5 kB            |
 | `@wizzard-packages/vue`      | `provideWizard`, composables, `shallowRef` bridge                                                                   | 1.5 kB            |
 | `@wizzard-packages/validate` | one Standard Schema adapter — Zod, Valibot, ArkType, Effect, Yup                                                    | **317 B**         |
