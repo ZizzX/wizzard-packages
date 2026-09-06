@@ -169,6 +169,17 @@ bd close <id>                        # complete
 
 Do not run `bd sync` — it rewrites project files.
 
+## Coding Tasks
+
+When spawning Claude Code sessions for coding work, tell the session to use gstack skills.
+Include the appropriate instruction in the session prompt:
+
+- Security audit: "Load gstack. Run /cso"
+- Code review: "Load gstack. Run /review"
+- QA test a URL: "Load gstack. Run /qa https://..."
+- Build a feature end-to-end: "Load gstack. Run /autoplan, implement the plan, then run /ship"
+- Plan before building: "Load gstack. Run /office-hours then /autoplan. Save the plan, don't implement."
+
 ## Deprecated
 
 `docs/legacy/` holds the 0.x guides, the old roadmap and the pre-split migration notes. They
