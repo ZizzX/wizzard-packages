@@ -220,10 +220,10 @@ export interface Recorder {
   session: () => RecordedSession;
   stop: () => void;
 }
-export function record(wizard: Wizard): Recorder;
+export function recordSession(wizard: Wizard): Recorder;
 ```
 
-`record` pushes `getState()` at subscription and after every notification, and `session()`
+`recordSession` pushes `getState()` at subscription and after every notification, and `session()`
 returns `{ flow: getFlow().id, version: getFlow().version, frames }`. It is pure over the
 `Wizard` interface, so a test or an e2e spec can call it without React, and its output passes
 `checkSession` by construction (monotonic `rev` and `nav`, current step in `visited`) — a test
@@ -514,7 +514,7 @@ alone.
     layoutGraph(graph)                          layout.test.ts (property)
     formatExpr(expr)                            format.test.ts (table)
     diffState(prev, next)                       diff.test.ts
-    record(wizard)                              record.test.ts (property vs checkSession)
+    recordSession(wizard)                              record.test.ts (property vs checkSession)
     FlowGraphView                               FlowGraphView.test.tsx
     StatePanel, CommitLog                       panel tests
     fixtures flowA/B/C                          used by every test above
@@ -535,3 +535,704 @@ Three PRs, in order:
 3. **Consumer proof.** `examples/next-app` mounts the panel; the Playwright spec; the
    `major` changeset with the version from D1; the L5 row in `v1-launch.md` amended with what
    changed (renderer home, version, printer home).
+
+## 11. Amendments from the Phase 1 review (2026-09-06)
+
+The review below amended the proposal. These paragraphs override the sections they name.
+
+**§3.6, §3.7 — the refusal log (X1).** A navigation that is refused never commits, so
+`subscribe` cannot report it. Core gains one optional hook:
+
+```ts
+// core — navigate.ts Hooks (addition)
+afterResult?: (intent: NavIntent, result: NavResult) => void;
+```
+
+fired from the store's single navigation wrapper after `next`/`back`/`go` resolve, for every
+outcome including `superseded`; never from `navigate.ts`, never for `cancel()`. Cost ~50 B in
+`core-v1`; the budget line moves 5.0 → 5.1 kB with this reason. Devtools exports
+`devtools(): Hooks & { refusals: readonly Refusal[] }`; a host passes it to `createWizard` and
+to the panel (`plugin={dt}`), and the Commits tab lists `✗ next: invalid (email) by details`
+rows between commits. Without the plugin the tab says what to install.
+
+**§3.7 — the export is self-contained and redactable (X2).** `record` is renamed
+`recordSession(wizard, { redact? })`; `redact(state) => state` runs on every frame before it
+is stored (E-M7). "Copy JSON" and `onRecord` hand over a bundle:
+
+```ts
+export interface SessionBundle {
+  flow: FlowDefinition;
+  subFlows?: SubFlows;
+  session: RecordedSession;
+}
+```
+
+which is what S2's replay mode loads. A bug report is one file.
+
+**§5.1 — two entries (X3).** `@wizzard-packages/devtools` (client directive; `WizardDevtools`,
+`FlowGraphView`, `devtools`) and `@wizzard-packages/devtools/headless` (no directive, no React;
+`recordSession`, `diffState`, `layoutGraph`, `formatExpr`, `checkSession` re-exported for
+convenience is **not** done — import it from core). The headless exports are documented as
+"used by the docs site; may change in a minor". Each entry has its own `.size-limit.js` line.
+
+**§3.1 — live `when` values (X4).** Inspecting a node shows `formatExpr(when).full` and, when
+`stack.length === 1`, `evaluate(when, { data, ctx })` as `→ true` / `→ false`; inside a group
+the value is replaced by "value needs the group's loop scope". `ExprError` is shown inline.
+
+**§7 — diagnosis scenarios (X8).** Three planted faults in `contract/fixtures.ts`: `flowA`
+with a `validate` that fails on `email`; `flowB` with a `when` that hides the next step under
+the fixture's data; `flowC` with a duplicate `keyBy` value. One test per fault asserts the
+panel's text names the cause: the refusal row's field, the node's `→ false`, the
+`repeat-keys` refusal.
+
+**§5.2 — `WizardContext` is exported from `react/v1`** so the panel can read it with
+`useContext` and render a message instead of letting `useWizard()` throw.
+
+**§1 — competitive note.** Stately discontinued its free graph inspector for a paid product.
+This project is MIT with no hosted service, so the graph view stays free; the same fact means
+it must stay cheap, which is what the headless entry, the `layout` prop and the deferred
+crossing pass are for.
+
+**§6 — decisions restated.** D1 unchanged (owner's call at the gate). D2 unchanged. D3
+confirmed. D4 unchanged. D5 confirmed and widened by X2.
+
+---
+
+<!-- /autoplan Phase 1: CEO review (SELECTIVE EXPANSION, auto-decided). Appended 2026-09-06. -->
+
+## Pre-review system audit
+
+- Branch `docs/devtools-design` at `a3f42d2` on top of `main` `814dc8c`; worktree clean.
+- `CLAUDE.md` (21 lines) routes skills; `AGENTS.md` (175 lines) carries the hard rules: one
+  entry per size boundary (A3: tsup entry + `exports` + `.size-limit.js` in the same PR), the
+  error-message template (A4), no assistant attribution. `TODOS.md` holds two P2 items
+  (`url-sync`, a11y contract), neither blocking L5.
+- Design docs: `v1-launch.md` (plan of record), `group-traversal.md` (L9, shipped),
+  `flow-inspector.md` (S2, superseded in parts by `v1-launch.md`).
+- UI scope: yes (layout ×25, component ×7, button ×4). DX scope: yes (a published npm
+  package with a React API and a headless API).
+- Codex: `codex-cli 0.153.0`, auth and model probe OK. Both voices run per phase.
+
+## Step 0A. Premise Challenge
+
+| #   | Premise (from the note)                                  | Verdict                                                                                                                                                        |
+| --- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P1  | Devtools ships in 1.0.0 (gate decision of 2026-09-06)    | accepted; settled at the v1-launch gate, not re-litigated                                                                                                      |
+| P2  | The renderer must be written here because no site exists | verified: no `site/`, no `buildGraph(` caller outside core tests                                                                                               |
+| P3  | The panel can be built on `subscribe` + `getState` alone | **partly wrong.** A refused navigation (`{ ok: false, reason }`) never commits, so the panel cannot say _why_ Next did nothing. Amended in 0D (X1).            |
+| P4  | A `RecordedSession` is a usable bug report               | **wrong as stated.** It carries states, not the flow; a reader cannot replay it. Amended in 0D (X2): the export bundles `flow` and `subFlows`.                 |
+| P5  | Devtools' bytes do not matter                            | accepted with a bound: a measured budget line exists to catch a JSON viewer or a theme system sneaking in                                                      |
+| P6  | Devtools is React                                        | **half wrong.** The panel is React; `record`, `diffState`, `layoutGraph`, `formatExpr` are not, and Vue hosts need `record` for the same bug reports. 0D (X3). |
+| P7  | Version alignment (T6) is achievable                     | verified impossible: `1.0.0`, `2.0.0`, `2.0.1` are on npm. Queued for the Final Gate as a User Challenge (the plan's stated direction cannot be followed).     |
+
+Real pain if nothing is done: 0.x devtools imports `useWizardContext` and `subscribeToActions`,
+neither of which exist in v1, so the package is dead code the moment L8 flips the root export.
+The problem is real, and the shape (graph + state + commits) is the one 0.x users already had.
+
+## Step 0B. Existing Code Leverage
+
+| Sub-problem                 | Existing code                               | Reused?                                      |
+| --------------------------- | ------------------------------------------- | -------------------------------------------- |
+| structural graph            | `core/graph` `buildGraph`                   | yes, unchanged                               |
+| resolve frame → flow        | `core/session` `knownFlows`                 | yes                                          |
+| validate a recording        | `core/session` `checkSession`               | yes, as the recorder's test oracle           |
+| get the wizard in React     | `react/v1` `useWizard`, `WizardContext`     | yes (peer)                                   |
+| `'use client'` survival     | `react/tsup.config.ts`, `directive.test.ts` | copied                                       |
+| evaluate `when` for display | `core` `evaluate(expr, scope, registry)`    | **not in the note; added in 0D (X4)**        |
+| R-C fixture                 | `contract/binding-suite.ts:101-107`         | moved to `contract/fixtures.ts`              |
+| redaction hook requirement  | `v1-launch.md` E-M7                         | **not in the note; added in 0D (X2)**        |
+| layout                      | none in tree                                | written                                      |
+| infix printer               | none in tree                                | written                                      |
+| state diff                  | none in tree                                | written                                      |
+| 0.x panel                   | `WizardDevTools.tsx`                        | deleted; nothing salvageable (0.x store API) |
+
+Nothing is rebuilt that exists. `subscribeToActions` is not rebuilt: the commit log replaces it.
+
+## Step 0C. Dream State
+
+```
+  CURRENT STATE                       THIS PLAN                             12-MONTH IDEAL
+  0.x panel, dead on v1;      --->    docked panel: graph of the      --->  the same panel embedded in the
+  no renderer anywhere;               active flow, per-commit diff,         docs site's inspector (S2), replay
+  RecordedSession has no              commit log, refusal log, record       from any bug report's bundle,
+  producer; bug reports are           to a self-contained bundle;           a Vue host records the same
+  prose                               headless entry for Vue hosts          bundle; layout with crossing
+                                                                            minimisation when a flow needs it
+```
+
+Delta: the plan reaches the ideal's diagnostic core (see a refusal, hand over a replayable
+bundle). It leaves crossing minimisation and the site embedding for later, by design.
+
+## Step 0C-bis. Implementation Alternatives
+
+```
+APPROACH A: Panel over subscribe only (the note as written)
+  Summary: React panel + pure modules; everything derived from getState() per notification.
+  Effort:  M (human ~4 days / CC ~2 h)      Risk: Low
+  Pros:    zero engine change; no plugin to install; works with any Wizard-shaped object
+  Cons:    cannot explain a refused navigation; recorder output not self-contained
+  Reuses:  graph, session, react/v1
+
+APPROACH B: A + a devtools plugin for refusals + self-contained export + headless entry
+  Summary: A, plus a `devtools()` Hooks object that receives every NavResult through a new
+           optional core hook `afterResult(intent, result)` fired from the store's one dispatch
+           site; the export bundles flow + subFlows + session through an optional redact();
+           the pure modules sit on a second entry without React.
+  Effort:  M (human ~5 days / CC ~2.5 h)    Risk: Low-Med (one core hook, ~50 B, budget 5.0 -> 5.1 kB)
+  Pros:    answers "why did Next do nothing"; a bug report replays without the sender's app;
+           Vue hosts record; the React-free modules never carry the client directive
+  Cons:    a core change in a budget with 40 B of headroom; two-step install for the refusal log
+  Reuses:  everything in A; the store's single navigation dispatch
+
+APPROACH C: Separate `@wizzard-packages/graph-react` + thin devtools
+  Summary: renderer/layout/printer in their own published package, devtools imports it.
+  Effort:  L      Risk: Med (a publish target for one consumer pair; version skew)
+  Pros:    the site imports a package named for what it is
+  Cons:    hard rule 6 says packages exist for size boundaries, and none exists here; more CI
+  Reuses:  as A
+```
+
+**RECOMMENDATION: B** — completeness (P1) at marginal cost, and the two additions are the
+ones the outside voice independently named as the product's actual value. C is rejected on
+hard rule 6. Auto-decided; the core hook is surfaced at the Final Gate as a taste item because
+it raises the `core-v1` budget.
+
+## Step 0D. SELECTIVE EXPANSION analysis
+
+**Complexity check.** Ten source files in one package plus one fixtures file, one core hook,
+one example edit: over the 8-file smell line, but every file is one module with one test, and
+the package is a rewrite. Not reducible without merging modules for their own sake.
+
+**Minimum set.** `layoutGraph`, `FlowGraphView`, `StatePanel` with `diffState`, `WizardDevtools`,
+fixtures, budget line. Deferrable without blocking the core objective: `CommitLog` pinning,
+zoom buttons, the e2e. None deferred (P1).
+
+**Expansion scan and decisions (cherry-picks auto-decided; blast radius + under a day of CC):**
+
+| #   | Opportunity                                                                                                                                                                                     | Felt experience                                                                 | Effort                      | Decision                                                                                                               |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| X1  | **Refusal log.** `devtools()` plugin + core `Hooks.afterResult(intent, result)`; the Commits tab lists refusals as `✗ next: invalid (email) by details` between commits                         | "Why did Next do nothing?" is answered in the panel, with the field             | S (CC ~25 min) + core ~50 B | **ACCEPTED** (P1, P2). Taste at the gate: budget 5.0 -> 5.1 kB with the reason stated in `.size-limit.js`              |
+| X2  | **Self-contained export with redaction.** "Copy JSON" emits `{ flow, subFlows, session }`; `record(wizard, { redact })` applies E-M7's hook to every frame before it is stored                  | A bug report is a file anyone can replay; no PII leaves unless the host lets it | S (CC ~15 min)              | **ACCEPTED** (P1)                                                                                                      |
+| X3  | **Headless entry** `@wizzard-packages/devtools/headless`: `record`, `diffState`, `layoutGraph`, `formatExpr`, no React, no directive                                                            | A Vue host records bug reports; a test imports the layout without jsdom         | S (CC ~15 min)              | **ACCEPTED** (P2; hard rule A3: entry + exports + size line in the same PR)                                            |
+| X4  | **Live `when` values.** Inspecting a node shows `when` printed and, at the root flow, its value under `{ data, ctx }` via `evaluate`                                                            | "Why is this step hidden?" is one click                                         | S (CC ~20 min)              | **ACCEPTED** (P1). Inside a group the value is withheld (no `loop` scope without the traversal), and the panel says so |
+| X5  | **Crossing-minimisation pass** (barycenter ordering)                                                                                                                                            | Branch-and-rejoin flows draw cleanly                                            | S (CC ~30 min)              | **DEFERRED to TODOS.md** — the ceiling is stated; a ratchet test on crossing counts for the three fixtures lands now   |
+| X6  | **Time travel** (rebuild a wizard from a selected commit)                                                                                                                                       | "Jump" from 0.x                                                                 | M                           | **SKIPPED** — inspection never navigates (S2 principle); the site's replay mode owns it                                |
+| X7  | **Theme presets** (light/dark switch inside the panel)                                                                                                                                          | Matches the host at a click                                                     | S                           | **SKIPPED** — six custom properties are the contract; a switch is host UI                                              |
+| X8  | **Diagnosis scenarios as tests** — three fixtures with a planted fault (a failing `validate`, a `when` that hides the next step, a wrong `keyBy`) and a test that the panel surfaces each cause | The suite proves the panel diagnoses, not only draws                            | S (CC ~30 min)              | **ACCEPTED** (P1) — the outside voice's finding 5                                                                      |
+
+Platform potential: the headless entry (X3) is the piece other features build on; the site's
+inspector, an e2e reporter, and a future Vue panel all consume it.
+
+## Step 0E. Temporal Interrogation
+
+```
+  HOUR 1 (foundations):    the fixtures file and the four pure modules; decide `Positioned`
+                           units (user units, 160x40) before the first test is written.
+  HOUR 2-3 (core logic):   cycle breaking in layering (DFS, mark on-stack); diffState's path
+                           syntax (`data.items[2].name`) must match `getPath`'s so a row is
+                           copy-pastable into `wizard.get()`.
+  HOUR 4-5 (integration):  the plugin/panel pairing (X1) — the panel must render without the
+                           plugin and say what is missing; `afterResult` fires from ONE site in
+                           store.ts, after next/back/go resolve, including `superseded`.
+  HOUR 6+ (polish/tests):  jsdom has no layout, so keyboard tests select by order, not
+                           geometry; the directive test needs a build step in CI before
+                           vitest (as react's does); the e2e needs a devtools build before
+                           `next build`.
+```
+
+Human ~6 h per PR becomes CC ~40 min. The decisions above are resolved in the note, not deferred.
+
+## Step 0F. Mode Confirmation
+
+SELECTIVE EXPANSION (feature rewrite on an existing system), approach B. Committed.
+
+## Step 0.5. Dual Voices (CEO)
+
+### CODEX SAYS (CEO — strategy challenge)
+
+Seven findings (verbatim in the session log; condensed here, numbering kept):
+
+1. **The panel shows consequences, not causes.** States from `subscribe` carry no intent, no
+   guard results, no resolver reasons; `batch` hides intermediate writes. "Why did Next not
+   move me?" can go unanswered with a fully working UI. The stronger goal is _explaining a
+   refused transition_; check what the engine can expose and put that scenario in acceptance.
+2. **"A record for every bug report" is not backed by the format.** `RecordedSession` has a
+   flow id, an optional version and states; no flow definition, sub-flows, resolver versions or
+   external results. `checkSession` checks compatibility, not reproducibility. Either give a
+   concrete scenario where another developer diagnoses from the file alone, or narrow the claim.
+3. **Export is designed before it can be shared safely.** "Copy JSON" dumps `data` and `ctx`
+   whole; the API has no redaction, while the plan of record already requires one (E-M7).
+4. **A framework-neutral product gets React as the only road to diagnostics.** The pure modules
+   and `record` sit on one client entry with React peers; Vue is a supported binding today.
+   A separate headless entry, not a new package, is the minimal alternative the note skipped.
+5. **Internal examples are dressed as user value.** Tests count nodes and keys; none proves a
+   developer found a wrong condition, a stuck transition or a group problem. Test diagnosis
+   tasks with a known planted cause.
+6. **A future site dictates the public API of an absent product.** `Positioned`, layout, printer
+   and diff are exported for a consumer that does not exist; separate the public contract from
+   the UI's building blocks.
+7. **Maintenance is priced by first-implementation line counts.** "30 lines", "40 lines" ignore
+   redaction, recording compatibility across flow versions, large states and custom layouts;
+   the 2000-frame cap bounds count, not bytes; a 200-node chain proves nothing about a
+   branching graph.
+
+Closing: the decision to ship devtools is settled; it does not justify _this_ feature set.
+Prove "failure → explanation → shareable recording → diagnosis by someone else" first, then
+fix the graphical surface and public extensions.
+
+### CLAUDE SUBAGENT (CEO — strategic independence)
+
+Six findings:
+
+- **F1 (critical) — wrong-sized bet on unproven demand.** Downloads are bot traffic (memory
+  `v1-showcase-is-the-flow-graph`: core 52/month); the same evidence killed the compat package
+  and was never applied to devtools. Fix: build the renderer inside `site/` only; extract a
+  package when a user asks.
+- **F2 (high) — the dependency reversal** (L5 builds what S2 was to own) was done in a design
+  note, not flagged back to the plan; publishing first freezes an API before the site iterates.
+- **F3 (medium) — D1 is a symptom of committing too early**; no publish, no version puzzle.
+- **F4 (medium) — no competitors named**; the one data point on record (Stately deprecated its
+  free graph inspector for a paid product) cuts against the plan and is not engaged with.
+- **F5 (high) — §8 lists implementation variants, never "do not publish".**
+- **F6 (medium) — production-library rigor for a deferrable dev tool.**
+
+6-month regret: a version-mirroring tax and a peer-dependency promise for a package nobody
+installs beyond the site.
+
+Verdicts: CONCERN on all six dimensions.
+
+### CEO DUAL VOICES — CONSENSUS TABLE
+
+```
+═══════════════════════════════════════════════════════════════════════════════════════
+  Dimension                             Claude    Codex     Consensus
+  ───────────────────────────────────── ───────── ───────── ────────────────────────────
+  1. Premises valid?                    CONCERN   CONCERN   CONFIRMED (concern) — P3/P4 wrong;
+                                                            amended (X1, X2). Claude's "demand"
+                                                            premise → TASTE T1 at the gate
+  2. Right problem to solve?            CONCERN   CONCERN   DISAGREE in direction — Claude: do not
+                                                            publish; Codex: publish, but prove the
+                                                            diagnostic chain → TASTE T1; X1/X2/X8
+  3. Scope calibration correct?         CONCERN   CONCERN   DISAGREE — smaller (Claude) vs
+                                                            re-prioritised (Codex). Resolved by
+                                                            adding evidence (X8), not size
+  4. Alternatives sufficiently explored? CONCERN  CONCERN   CONFIRMED (concern) — headless entry
+                                                            (X3) added; site-only → TASTE T1
+  5. Competitive/market risks covered?  CONCERN   —         single voice — flagged; a competitive
+                                                            paragraph is added to the note (§1)
+  6. 6-month trajectory sound?          CONCERN   CONCERN   CONFIRMED (concern) — the version tax
+                                                            (D1) and the public-API freeze (Codex 6)
+                                                            → gate items D1 and TASTE T2
+═══════════════════════════════════════════════════════════════════════════════════════
+```
+
+**Not a User Challenge.** The two voices do not agree on changing the owner's direction
+(publish in 1.0.0): Codex accepts it, Claude rejects it. It is carried as **TASTE T1** with the
+owner's direction as the default. Amendments applied to the note from the voices: X1 (refusal
+log), X2 (self-contained export with redaction), X3 (headless entry), X8 (diagnosis tests),
+plus: the public surface is split — `WizardDevtools`, `FlowGraphView`, `recordSession` and the
+`devtools()` plugin are the supported API; `layoutGraph`, `formatExpr`, `diffState` on the
+headless entry are documented as "used by the docs site; may change in a minor" (Codex 6).
+Competitive note added to §1: Stately's free inspector was discontinued for a paid product;
+this project's economics differ only in that nothing here is a business (MIT, no hosted
+service), which is the reason a graph view can stay free and the reason it must stay cheap.
+
+## Review Sections 1-11
+
+### Section 1: Architecture Review
+
+Dependency graph after the plan (arrows = imports; `*` = new):
+
+```
+  @wizzard-packages/devtools*
+    ├── index.ts ('use client')  ──▶ react/v1 (peer: useWizard)      ──▶ core
+    │     WizardDevtools, FlowGraphView, devtools() plugin*
+    │     ──▶ ./headless
+    └── headless.ts* (no directive) ──▶ core/graph (buildGraph)
+          layoutGraph, formatExpr,   ──▶ core/session (knownFlows, checkSession)
+          diffState, recordSession  ──▶ core (types, evaluate)
+  core*: Hooks.afterResult?(intent, result) — one call site in store.ts (X1)
+  contract/fixtures.ts* ◀── devtools tests, binding-suite (moved R-C)
+  examples/next-app ──▶ devtools (e2e consumer)
+```
+
+Data flows, four paths each:
+
+```
+  commit flow      subscribe ──▶ getState() ──▶ diffState(prev, next) ──▶ commits[] ──▶ render
+    nil:   no wizard (no provider, no prop)      → one-line message, nothing subscribed
+    empty: flow.steps = {}                       → "flow has no steps"; graph empty; diff works
+    error: diffState throws (non-plain value)    → the walker treats non-plain values as leaves;
+                                                   cannot throw by construction; boundary anyway
+  refusal flow*    next()/back()/go() ──▶ store dispatch ──▶ afterResult(intent, result) ──▶ plugin buffer ──▶ Commits tab
+    nil:   plugin not installed                  → tab shows "install devtools() to see refusals"
+    empty: result ok                             → a normal commit row follows; no refusal row
+    error: plugin listener throws                → store's existing fail(): plugin disabled, console.error
+  record flow      recordSession(w, {redact}) ──▶ frames[] ──▶ session() ──▶ bundle {flow, subFlows, session} ──▶ clipboard | onRecord
+    nil:   no redact                             → frames stored as is; README PII note
+    empty: stopped before any commit             → one frame (the mount state); checkSession passes
+    error: redact throws                         → frame dropped, console.error once per recorder;
+           clipboard rejected                    → fallback textarea with the JSON selected
+  layout flow      buildGraph(flow, subFlows) ──▶ layoutGraph | layout prop ──▶ PositionedGraph ──▶ SVG
+    nil:   layout prop returns a graph missing a node → renderer draws known nodes, lists missing ids in the mirror, no throw
+    empty: no nodes                              → empty svg with a text child
+    error: layout prop throws                    → boundary
+```
+
+Panel state machine:
+
+```
+  view:     live ──(select older row)──▶ pinned ──(click live | select newest)──▶ live
+            pinned + new commit: stays pinned, "live" button shows "+N"
+  record:   idle ──(Record)──▶ recording ──(Stop)──▶ stopped ──(Copy | onRecord)──▶ stopped ──(Record)──▶ recording (fresh)
+            recording + 2000 frames: button reads "2000 (cap)"; frames stop accumulating
+  invalid:  pinned with a row whose step is not in the current flow (after patchFlow) → the
+            graph highlights nothing and the frame line says "step X not in flow"; no throw
+```
+
+Coupling: new edge core → devtools is **not** created; `afterResult` is an optional hook in
+core, devtools depends on core. Site → devtools is deferred to S2. Scaling: layout is
+O(V+E) per flow object; diff is O(keys) per commit with a 10k-key walk cap; the commit log
+is a 500-entry ring; the recorder holds ≤ 2000 whole states. What breaks first at 10× is
+memory in the recorder with large `data`; at 100× it is the same. SPOF: none. Security: 3.
+Production failure: a host passes a `layout` that returns NaN coordinates → SVG attributes
+NaN → browser draws nothing; the renderer validates finite numbers and falls back to the
+built-in layout with a mirror-table note. Rollback: `git revert`, no migration; on npm,
+`npm deprecate` + patch.
+
+Findings, auto-decided:
+
+- **1.1** pinned view on a new commit — decided: stay pinned, badge `+N` (P5, explicit).
+- **1.2** layout memo key — decided: the `FlowDefinition` object returned by `getFlow()`
+  (stable until `patchFlow`), via a `WeakMap` (P3).
+- **1.3** `afterResult` must have exactly one call site — decided: the store's navigation
+  wrapper, never `navigate.ts` (which has six return sites) (P5).
+- **1.4** NaN guard on custom layouts — decided: validate, fall back, note (P1).
+- **1.5** `isDestroyed` — decided: optional in the `Pick`; when present and true, the frame line
+  reads `destroyed` (P1).
+
+### Section 2: Error & Rescue Map
+
+```
+  METHOD/CODEPATH                | WHAT CAN GO WRONG                          | ERROR
+  -------------------------------|--------------------------------------------|---------------------------
+  layoutGraph                    | cycle among next edges                     | none — broken during DFS
+                                 | edge to unknown node                       | none — skipped; dangling already flagged by buildGraph
+  formatExpr                     | unknown operator / non-object expr         | none — JSON fallback / String()
+  diffState                      | class instance, Map, circular ref in data  | none — non-plain values are leaves; depth cap 32
+  recordSession                  | redact throws                              | caught: frame dropped, console.error once
+                                 | wizard destroyed while recording           | subscribe returns; stop() idempotent
+  evaluate(when) on inspect      | ExprError (unknown op, missing resolver)   | caught: shown as `when: <message>`
+  knownFlows lookup              | frame names an unknown flow                | none — breadcrumb "unknown flow x"; graph = root
+  clipboard write                | rejected (permission, insecure context)    | caught: fallback textarea
+  FlowGraphView render           | layout prop throws / NaN                   | boundary / validated fallback
+  devtools() plugin              | listener throws                            | store fail(): plugin disabled, console.error
+  useWizard in the panel         | outside a provider, no prop                | caught: one-line message (not the hook's throw)
+```
+
+```
+  ERROR                          | RESCUED? | RESCUE ACTION                     | USER SEES
+  -------------------------------|----------|-----------------------------------|--------------------------------
+  ExprError on inspect           | Y        | show message inline               | "when: [wizzard] unknown op $foo"
+  redact throws                  | Y        | drop frame, log once              | console line; recording continues
+  clipboard rejected             | Y        | textarea fallback                 | JSON to copy by hand
+  layout throws                  | Y        | boundary                          | the 3.8 message; host unaffected
+  layout NaN                     | Y        | built-in layout + mirror note     | graph drawn; note "custom layout rejected"
+  plugin throws                  | Y (core) | disable plugin                    | console.error from core
+  useWizard throws               | Y        | try/catch around the hook via context read (useContext, not useWizard) | message
+```
+
+No GAP rows remain. Decided: the panel reads `WizardContext` through `useContext` and checks
+for `null` itself instead of calling `useWizard()`, so the "outside a provider" case is a
+render, not a throw (P5). `WizardContext` must therefore be exported from `react/v1` — a
+one-line export, in blast radius.
+
+### Section 3: Security & Threat Model
+
+| Threat                                           | Likelihood | Impact | Mitigated                                                                                                               |
+| ------------------------------------------------ | ---------- | ------ | ----------------------------------------------------------------------------------------------------------------------- |
+| PII leaves the app in a copied bundle            | High       | High   | Y — `redact` hook (X2); README says devtools is a development tool; the Copy button shows a size + "contains data" note |
+| XSS via step ids / labels                        | Low        | High   | Y — text nodes only; test 4.5                                                                                           |
+| Prototype pollution via diff paths (`__proto__`) | Low        | Med    | Y — diff reads only; paths are strings for display                                                                      |
+| A host ships devtools to production              | Med        | Med    | partial — documented; no runtime guard (a `NODE_ENV` check is a false comfort in ESM bundles). Noted in README          |
+| Plugin receives `errors` (validation messages)   | Low        | Low    | Y — messages, not values; redact covers `data`                                                                          |
+| New dependencies                                 | —          | —      | none added                                                                                                              |
+
+No catch-all handlers anywhere; every rescue names its error above.
+
+### Section 4: Data Flow & Interaction Edge Cases
+
+| Interaction            | Edge case                            | Handled | How                                                               |
+| ---------------------- | ------------------------------------ | ------- | ----------------------------------------------------------------- |
+| commit burst           | 100 commits in one tick              | Y       | subscribe is sync; the ring append is O(1); React batches renders |
+| panel unmount          | mid-recording                        | Y       | unsubscribe on unmount; recorder kept if the host holds it        |
+| wizard replaced        | `wizard` prop changes                | Y       | effect re-subscribes; log cleared; note "wizard changed"          |
+| patchFlow while pinned | pinned step absent from the new flow | Y       | 1 state machine "invalid"                                         |
+| zero commits           | panel mounted before `start()`       | Y       | "no commits yet"                                                  |
+| 10,000 commits         | long session                         | Y       | 500-row ring; oldest dropped; header says "showing last 500"      |
+| huge `data`            | 10k keys                             | Y       | diff walk cap 10k; "… walk capped" row                            |
+| keyboard               | ArrowDown at the last node           | Y       | stays; no wrap (predictable)                                      |
+| keyboard               | Enter on END                         | Y       | inspects END: "flow ends here"                                    |
+| zoom                   | `+` past 4× / `−` below 0.25×        | Y       | clamped                                                           |
+| copy                   | double click on Copy                 | Y       | idempotent; button disabled while awaiting clipboard              |
+
+No unhandled edge cases remain; each row is a test in Section 6.
+
+### Section 5: Code Quality Review
+
+- **5.1** Naming: `record` → **`recordSession`** (verb-noun like `buildGraph`, `checkSession`);
+  `WizardDevtools` keeps the new casing (breaking release anyway). Decided (P5).
+- **5.2** DRY: the directive test is a 15-line copy of react's — decided: keep the copy; a shared
+  helper would be a third file for two consumers (P5). Node-shape drawing lives in one
+  `shapes.ts` map consumed by the renderer and the mirror table, so the four shapes cannot drift.
+- **5.3** `formatExpr` as a switch with ten cases — decided: an operator → template map; the
+  function is one lookup plus recursion (cyclomatic ≤ 5) (P5).
+- **5.4** Under-engineering: array diff by index reports a shift as N changes — accepted and
+  documented in the README ("arrays are compared by position").
+- **5.5** Over-engineering check: `CommitLog` pinning and the ring buffer are needed by
+  Section 4 rows; the boundary is one class; nothing abstract without a second use.
+- **5.6** Existing ASCII diagram in `store.ts` header (lines ~20-30) lists what the store does;
+  adding `afterResult` must update it in the same commit (stale-diagram rule).
+
+### Section 6: Test Review
+
+```
+  NEW UX FLOWS:
+    inspect a node (mouse, keyboard); switch tabs; pin/unpin a commit; record/stop/copy;
+    drill in/out of a group via crumbs; zoom
+  NEW DATA FLOWS:
+    commit → diff → log; refusal → plugin → log; record → redact → bundle → clipboard/onRecord
+  NEW CODEPATHS:
+    layoutGraph (layering, cycle break, memo); formatExpr (map, truncate); diffState (walk,
+    caps); recordSession (cap, redact, stop); FlowGraphView (shapes, highlight, keys, mirror,
+    NaN guard); StatePanel; CommitLog (ring, pin); boundary; devtools() plugin;
+    core: store afterResult dispatch
+  NEW BACKGROUND / ASYNC: clipboard write (promise); nothing else
+  NEW INTEGRATIONS: none (peers only)
+  NEW ERROR PATHS: the Section 2 table, every row
+```
+
+| Item                     | Test type           | In plan?  | Happy                                                            | Failure                  | Edge                                                |
+| ------------------------ | ------------------- | --------- | ---------------------------------------------------------------- | ------------------------ | --------------------------------------------------- |
+| layoutGraph              | unit + property     | yes       | fixtures lay out                                                 | cycle terminates         | 0 nodes; 200-node branching graph; crossing ratchet |
+| formatExpr               | unit table          | yes       | every operator                                                   | unknown op → JSON        | truncation at exactly `max`                         |
+| diffState                | unit                | yes       | add/remove/change                                                | non-plain leaf           | 10k-key cap; depth 32                               |
+| recordSession            | unit + property     | yes       | checkSession passes                                              | redact throws → dropped  | 2000 cap; destroyed wizard                          |
+| FlowGraphView            | unit (jsdom)        | yes       | R-A/B/C shapes                                                   | NaN layout → fallback    | hostile label; opaque; dangling                     |
+| keyboard                 | unit                | yes       | arrows/Enter/Escape                                              | —                        | last node; END                                      |
+| mirror table             | unit                | yes       | rows = nodes + edges                                             | —                        | full labels when truncated                          |
+| StatePanel / CommitLog   | unit                | yes       | live updates                                                     | pinned + patchFlow       | ring at 500; batch = 1 row                          |
+| devtools() plugin + core | unit (core + panel) | **added** | refusal row with reason                                          | plugin throws → disabled | superseded; no plugin → hint                        |
+| store afterResult        | unit (core)         | **added** | fires once per attempt                                           | —                        | fires for `superseded`; not for `cancel()`          |
+| diagnosis scenarios (X8) | unit                | yes       | panel names the planted cause                                    | —                        | three fixtures                                      |
+| directive                | build assertion     | yes       | first two lines, both formats                                    | —                        | headless entry has NO directive                     |
+| next-app e2e             | e2e                 | yes       | Next → active node moves                                         | —                        | —                                                   |
+| size                     | size-limit          | yes       | under limit                                                      | —                        | headless entry has its own line                     |
+| chaos                    | property (panel)    | **added** | random ops, mounted panel: no throw; log length == notifications | —                        | seeded (fast-check memory)                          |
+
+2 am test: the directive test plus the e2e. Hostile QA: a `layout` prop returning duplicate
+ids — decided: the renderer de-duplicates by first occurrence and notes it (P1). Chaos: the
+seeded property test above. Pyramid: many unit, one property per pure module, one e2e.
+Flakiness: none time-based; property seeds pinned in CI per the fast-check memory.
+
+### Section 7: Performance Review
+
+- Layout: memoised per flow object; a 200-node branching graph under 50 ms asserted.
+- Diff: O(keys) per commit; 10k walk cap; runs only when the panel is mounted.
+- Render: 200 SVG nodes and 500 log rows are within DOM comfort; no virtualisation (P5).
+- `evaluate` per node runs on inspect, not on render.
+- Recorder memory: bounded by frames × state size; the cap is by count, the README states the
+  bytes trade-off (Codex 7); a byte cap is not added (P3: count is what the person sees).
+
+### Section 8: Observability & Debuggability Review
+
+The panel is the library's dashboard (`v1-launch.md:825-831`). Its own failure modes are
+visible: the boundary text, one `console.error` per recorder for redact failures, core's
+existing `console.error` for a disabled plugin, and the mirror table's notes. A bug reported
+three weeks later arrives as a bundle that `checkSession` validates and S2 replays. No
+telemetry; a development tool sends nothing anywhere.
+
+### Section 9: Deployment & Rollout Review
+
+The deploy is `npm publish` via changesets. Sequence: PR 1 → PR 2 → PR 3 → R0 builds final
+artefacts to the `next` tag with devtools' two entries in the consumer fixtures (E-M5/E-M6)
+→ R1 promotes. The core hook is additive and optional: an older devtools against a newer core
+or the reverse degrades to "no refusal log", never a throw. Feature flag: none needed.
+Rollback: `npm deprecate @wizzard-packages/devtools@3.0.0` + a patch; `git revert` in tree.
+Post-deploy check: install the tarball in a clean Vite app, mount the panel, click Next.
+
+### Section 10: Long-Term Trajectory Review
+
+Debt introduced: no crossing minimisation (TODO), index-based array diff (documented).
+Path dependency: the site will import devtools' headless entry; that is workspace-local and
+reversible. Reversibility: 4/5 (delete the package; the core hook stays harmless).
+Knowledge: this note plus the README; the four shapes and the keyboard model are written once
+here and cited by S2. Ecosystem: React 18+ `useSyncExternalStore`, SVG, no layout dependency.
+The 1-year question: a new engineer reads §3 and the Puzzle map and knows which file does
+what. Retrospective on the cherry-picks: X1/X2/X8 are load-bearing for the product's value
+(both voices); X3 is what makes X2 reachable from Vue; X5 was rightly deferred.
+
+### Section 11: Design & UX Review (CEO-level)
+
+Information architecture: graph → state → commits, as tabs, with the frame line always
+visible above the tabs. State coverage: the 3.8 table. Journey: install → mount → see the
+graph with the active node → click Next in the app → the node moves and a commit row appears
+→ something refuses → the refusal row names the field. Slop risk: low (no cards, no gradient,
+no hero); the risk is the opposite, an unstyled table. DESIGN.md: none exists; the six custom
+properties are the contract until S1 writes it. Responsive: a host-sized container, min 320 px;
+below 480 px the graph scrolls and the tabs stay. A11y: keyboard model, mirror table, 4.5:1,
+44 px targets for the zoom and tab buttons, `aria-live="polite"` on the frame line (added, P1).
+User flow:
+
+```
+  [mount] → Graph tab (active node) ──Next in app──▶ node moves, commit row
+      │                                   └──refused──▶ refusal row "invalid (email) by details"
+      ├── ArrowDown/Enter → inspect: id, kind, when (+ value at root), deferred
+      ├── crumb → child/parent graph
+      ├── State tab → frame line, diff rows, full state <details>
+      └── Commits tab → rows; select → pinned; live → back
+  [Record] → recording → [Stop] → [Copy] / onRecord
+```
+
+Phase 2 (design review) runs next with the full seven passes.
+
+## Required Outputs (Phase 1)
+
+### NOT in scope
+
+- Crossing minimisation (X5) — deferred to TODOS.md with a ratchet test in place.
+- Time travel (X6) — inspection never navigates; replay is S2's.
+- Theme presets (X7) — custom properties are the contract.
+- Compound (nested) group nodes (Q1) — drill-in; revisit when S2 needs the inside at a glance.
+- A Vue panel — the headless entry makes it possible; nobody has asked.
+- A layout dependency (dagre/elk) — the `layout` prop admits one; none is bundled.
+- A production-mode guard — documented, not enforced.
+- Site embedding — S2.
+
+### What already exists
+
+See Step 0B. Everything reusable is reused; the one engine change is an optional hook.
+
+### Dream state delta
+
+See Step 0C. The plan ships the diagnostic core; the site embedding and crossing
+minimisation remain for S2 and a follow-up.
+
+### Error & Rescue Registry
+
+Section 2's two tables; no GAP rows.
+
+### Failure Modes Registry
+
+```
+  CODEPATH              | FAILURE MODE                    | RESCUED? | TEST? | USER SEES?                 | LOGGED?
+  ----------------------|---------------------------------|----------|-------|----------------------------|--------
+  layoutGraph           | cycle                           | Y        | Y     | graph drawn                | n/a
+  layout prop           | throws / NaN / dup ids          | Y        | Y     | boundary / fallback + note | n/a
+  formatExpr            | unknown op                      | Y        | Y     | JSON text                  | n/a
+  diffState             | non-plain / huge / deep         | Y        | Y     | leaf / cap row             | n/a
+  recordSession         | redact throws                   | Y        | Y     | recording continues        | console once
+  recordSession         | cap reached                     | Y        | Y     | button reads "2000 (cap)"  | n/a
+  evaluate on inspect   | ExprError                       | Y        | Y     | message inline             | n/a
+  knownFlows            | unknown flow in a frame         | Y        | Y     | "unknown flow"             | n/a
+  clipboard             | rejected                        | Y        | Y     | textarea fallback          | n/a
+  devtools() plugin     | throws                          | Y (core) | Y     | refusal log stops          | console (core)
+  panel                 | no wizard                       | Y        | Y     | one-line message           | n/a
+  store afterResult     | listener throws                 | Y (core) | Y     | nothing                    | console (core)
+```
+
+No row is RESCUED=N / TEST=N / Silent. **0 CRITICAL GAPS.**
+
+### TODOS.md updates (proposed, auto-decided → written in Phase 3's collection)
+
+1. **Crossing-minimisation pass in `layoutGraph`** — What: barycenter ordering within layers.
+   Why: branch-and-rejoin flows draw crossings today. Pros: readable graphs for R-A-like flows.
+   Cons: ~40 lines, a second property. Context: `packages/devtools/src/headless/layout.ts`,
+   rule 2; the crossing-count ratchet test names the current numbers. Effort: S → S. P3.
+   Blocked by: L5 PR 1.
+
+### Scope Expansion Decisions
+
+- Accepted: X1 refusal log (+ core `afterResult`), X2 self-contained export with redaction,
+  X3 headless entry, X4 live `when` values, X8 diagnosis scenarios.
+- Deferred: X5 crossing minimisation.
+- Skipped: X6 time travel, X7 theme presets.
+
+### Diagrams
+
+Architecture (§3 and Section 1), data flow with shadow paths (Section 1), panel state machine
+(Section 1), error flow (Section 2), deployment sequence and rollback (Section 9), user flow
+(Section 11). Stale-diagram audit: `store.ts` header must gain `afterResult` (5.6);
+`navigate.ts`'s phase list is untouched by design (1.3); `graph.ts` comments are untouched.
+
+### CEO plan
+
+Persisted to `~/.gstack/projects/ZizzX-wizzard-packages/ceo-plans/2026-09-06-devtools.md`
+(scope decisions X1–X8, vision, deferrals).
+
+### Completion Summary (CEO)
+
+```
+  +====================================================================+
+  |            MEGA PLAN REVIEW — COMPLETION SUMMARY                   |
+  +====================================================================+
+  | Mode selected        | SELECTIVE EXPANSION, approach B             |
+  | System Audit         | no site; 0.x panel dead on v1; T6 impossible|
+  | Step 0               | 7 premises: 3 amended, 1 → gate (D1)        |
+  | Section 1  (Arch)    | 5 issues found, all decided                 |
+  | Section 2  (Errors)  | 11 error paths mapped, 0 GAPS               |
+  | Section 3  (Security)| 5 threats, 1 High (PII) mitigated           |
+  | Section 4  (Data/UX) | 12 edge cases mapped, 0 unhandled           |
+  | Section 5  (Quality) | 6 issues found, all decided                 |
+  | Section 6  (Tests)   | Diagram produced, 3 gaps → added            |
+  | Section 7  (Perf)    | 0 issues (5 bounds stated)                  |
+  | Section 8  (Observ)  | 0 gaps                                      |
+  | Section 9  (Deploy)  | 1 risk (version skew) — additive hook       |
+  | Section 10 (Future)  | Reversibility: 4/5, debt items: 2           |
+  | Section 11 (Design)  | 1 issue (aria-live) → Phase 2 runs          |
+  +--------------------------------------------------------------------+
+  | NOT in scope         | written (8 items)                           |
+  | What already exists  | written                                     |
+  | Dream state delta    | written                                     |
+  | Error/rescue registry| 11 paths, 0 CRITICAL GAPS                   |
+  | Failure modes        | 12 total, 0 CRITICAL GAPS                   |
+  | TODOS.md updates     | 1 item proposed                             |
+  | Scope proposals      | 8 proposed, 5 accepted, 1 deferred, 2 skip  |
+  | CEO plan             | written                                     |
+  | Outside voice        | ran (codex + claude subagent)               |
+  | Lake Score           | 5/5 recommendations chose complete option   |
+  | Diagrams produced    | 6 (arch, data flow, state, error, deploy, user flow) |
+  | Stale diagrams found | 1 (store.ts header, update with X1)         |
+  | Unresolved decisions | 3 → Final Gate (D1 version, T1 publish, T2 core hook) |
+  +====================================================================+
+```
+
+> **Phase 1 complete.** Codex: 7 concerns. Claude subagent: 6 issues.
+> Consensus: 3/6 confirmed (as concerns, amended), 2 disagreements → surfaced at gate,
+> 1 single-voice flag. Passing to Phase 2.
+
+<!-- AUTONOMOUS DECISION LOG -->
+
+## Decision Audit Trail
+
+| #   | Phase | Decision                                                             | Classification | Principle | Rationale                                                                | Rejected                           |
+| --- | ----- | -------------------------------------------------------------------- | -------------- | --------- | ------------------------------------------------------------------------ | ---------------------------------- |
+| 1   | CEO   | Mode SELECTIVE EXPANSION                                             | mechanical     | default   | rewrite of an existing package                                           | HOLD, EXPANSION                    |
+| 2   | CEO   | Approach B (A + refusal hook + bundle + headless entry)              | taste (T2)     | P1, P2    | both voices named the diagnostic chain as the value                      | A (no engine change), C (package)  |
+| 3   | CEO   | X1 refusal log with core `afterResult`                               | taste (T2)     | P1        | "why did Next do nothing" answered; +~50 B, budget 5.0 → 5.1 kB          | infer from beforeNavigate          |
+| 4   | CEO   | X2 self-contained bundle + redact                                    | mechanical     | P1        | E-M7 already requires the hook; a session without a flow is unreplayable | raw session                        |
+| 5   | CEO   | X3 headless entry                                                    | mechanical     | P2, A3    | Vue hosts record; pure modules carry no directive                        | new package                        |
+| 6   | CEO   | X4 live `when` values at root scope only                             | mechanical     | P1, P5    | `evaluate` exists; loop scope needs the traversal                        | evaluate everywhere (wrong values) |
+| 7   | CEO   | X5 crossing pass deferred, ratchet test now                          | mechanical     | P3        | ceiling stated; no fixture needs it yet                                  | implement now                      |
+| 8   | CEO   | X6 time travel skipped                                               | mechanical     | P5        | inspection never navigates (S2)                                          | rebuild from state                 |
+| 9   | CEO   | X7 theme presets skipped                                             | mechanical     | P5        | custom properties are the contract                                       | switch in panel                    |
+| 10  | CEO   | X8 diagnosis scenario tests                                          | mechanical     | P1        | Codex 5: prove diagnosis, not drawing                                    | rendering tests only               |
+| 11  | CEO   | Publish devtools in 1.0.0 (owner's direction kept)                   | taste (T1)     | P6        | voices disagree; owner decided 2026-09-06; code is identical either way  | site-only first (Claude F1)        |
+| 12  | CEO   | D1 version → gate as User Challenge                                  | user challenge | —         | plan's direction (aligned 1.0.0) is impossible on npm                    | —                                  |
+| 13  | CEO   | `record` → `recordSession`                                           | mechanical     | P5        | verb-noun like `buildGraph`                                              | `record`                           |
+| 14  | CEO   | pinned view stays pinned on new commits, `+N` badge                  | mechanical     | P5        | explicit, predictable                                                    | auto-unpin                         |
+| 15  | CEO   | `afterResult` fired from the store wrapper only                      | mechanical     | P5        | one call site; navigate.ts has six returns                               | per-return in navigate.ts          |
+| 16  | CEO   | panel reads `WizardContext` via `useContext`, exported from react/v1 | mechanical     | P5        | render a message instead of a throw                                      | try/catch around useWizard         |
+| 17  | CEO   | keep the directive test as a copy                                    | mechanical     | P5        | 15 lines, two consumers                                                  | shared helper                      |
+| 18  | CEO   | `formatExpr` as an operator map                                      | mechanical     | P5        | cyclomatic ≤ 5                                                           | switch                             |
+| 19  | CEO   | `aria-live="polite"` on the frame line                               | mechanical     | P1        | commits are announced                                                    | silent                             |
