@@ -74,6 +74,19 @@ export default [
     gzip: true,
   },
 
+  // The typed expression builder. Its own entry because it is an authoring
+  // concern: `eq(get('data.plan'), 'pro')` compiles to the JSON the evaluator
+  // reads, so a flow that arrives as JSON was built elsewhere and its runtime
+  // pays nothing for the functions that would have written it.
+  //
+  // Measured 2026-09-06 at 147 B: thirteen one-line functions and a type.
+  {
+    name: 'core-v1 expr',
+    path: 'packages/core/src/v1/expr-builder.ts',
+    limit: '200 B',
+    gzip: true,
+  },
+
   // Development and server-driven use only. Measured, but never counted against
   // the runtime budget, because shipping it to a browser is a mistake the
   // separate entry makes hard to commit by accident.

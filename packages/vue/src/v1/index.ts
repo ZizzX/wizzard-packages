@@ -1,6 +1,7 @@
 import {
   createWizard,
   getPath,
+  type FlowDefinition,
   type Snapshot,
   type Wizard,
   type WizardOptions,
@@ -34,9 +35,11 @@ import {
 
 const KEY: InjectionKey<Wizard> = Symbol('wizzard');
 
-export function provideWizard(source: Wizard | WizardOptions): Wizard {
+export function provideWizard<F extends FlowDefinition>(
+  source: Wizard<F> | WizardOptions<F>
+): Wizard<F> {
   const owned = !('getSnapshot' in source);
-  const wizard = owned ? createWizard(source) : (source as Wizard);
+  const wizard = owned ? createWizard(source) : (source as Wizard<F>);
   provide(KEY, wizard);
   // An engine this call created is this scope's to dispose, or a plugin's
   // teardown never runs. One the caller passed in is theirs.
@@ -55,10 +58,11 @@ export function provideWizard(source: Wizard | WizardOptions): Wizard {
   return wizard;
 }
 
-export function useWizard(): Wizard {
+/** `useWizard<typeof signup>()` types `go`, `get` and `set` against that flow. */
+export function useWizard<F extends FlowDefinition = FlowDefinition>(): Wizard<F> {
   const wizard = inject(KEY, null);
   if (!wizard) throw new Error('[wizzard] useWizard must be used under provideWizard');
-  return wizard;
+  return wizard as Wizard<F>;
 }
 
 /**

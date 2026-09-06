@@ -3,6 +3,7 @@
 import {
   createWizard,
   getPath,
+  type FlowDefinition,
   type Snapshot,
   type Wizard,
   type WizardOptions,
@@ -98,10 +99,11 @@ export function WizardProvider({ wizard, children, ...options }: WizardProviderP
   return createElement(WizardContext.Provider, { value: engine }, children);
 }
 
-export function useWizard(): Wizard {
+/** `useWizard<typeof signup>()` types `go`, `get` and `set` against that flow. */
+export function useWizard<F extends FlowDefinition = FlowDefinition>(): Wizard<F> {
   const wizard = useContext(WizardContext);
   if (!wizard) throw new Error('[wizzard] useWizard must be used inside a WizardProvider');
-  return wizard;
+  return wizard as Wizard<F>;
 }
 
 /**

@@ -31,10 +31,24 @@ export function group<T = unknown>(def: GroupStep): GroupStep & Slice<T> {
   return def;
 }
 
+/**
+ * What `get` and `set` see at a path: the slice a step declared when the path
+ * is that step's id, `unknown` for anything else - a nested field, a key no
+ * step owns. An index into an intersection rather than a conditional type,
+ * because a conditional on `F` makes the compiler treat `Wizard<F>` as
+ * invariant, and a typed wizard could no longer be stored as a plain `Wizard`.
+ */
+export type SliceAt<F extends FlowDefinition, P extends string> = (DataOf<F> &
+  Record<string, unknown>)[P];
+
 /** The union of step ids in a flow. `go` accepts nothing else. */
 export type StepIdOf<F extends FlowDefinition> = Extract<keyof F['steps'], string>;
 
-/** The data shape a flow writes, one key per step slice. */
+/**
+ * The data shape a flow writes, one key per step. Keyed by step id: a `slice`
+ * override moves the data at runtime but not in the type, because `step<T>()`
+ * has no way to see the literal it was handed once `T` is supplied by hand.
+ */
 export type DataOf<F extends FlowDefinition> = {
   [K in keyof F['steps']]: F['steps'][K] extends Slice<infer T> ? T : unknown;
 };

@@ -1,4 +1,5 @@
 import { commit, restart } from './commit';
+import { type SliceAt, type StepIdOf } from './define';
 import { END, type FlowDefinition, type StepDef } from './flow';
 import { runNav, type Hooks, type NavContext, type NavResult } from './navigate';
 import { getPath, setPath } from './path';
@@ -23,8 +24,8 @@ import type { AsyncRegistry, Json, Scope } from './expr';
 
 export type Snapshot = WizardState & Derived;
 
-export interface WizardOptions {
-  flow: FlowDefinition;
+export interface WizardOptions<F extends FlowDefinition = FlowDefinition> {
+  flow: F;
   /** Named resolvers for everything a flow cannot serialize. */
   registry?: AsyncRegistry;
   plugins?: readonly Hooks[];
@@ -34,7 +35,18 @@ export interface WizardOptions {
   state?: WizardState;
 }
 
-export interface Wizard {
+/**
+ * Typed against its flow. `F` is what `defineFlow` returned, so `go` accepts
+ * only the step ids that exist and `get`/`set` know the slice each `step<T>`
+ * declared. A flow that arrived as JSON is a plain `FlowDefinition`, and the
+ * same methods accept any string.
+ *
+ * The members that name a step are methods rather than function-typed
+ * properties on purpose: a method parameter is checked bivariantly, which is
+ * what lets a `Wizard<typeof signup>` still satisfy the `Wizard` a binding
+ * stores in its context.
+ */
+export interface Wizard<F extends FlowDefinition = FlowDefinition> {
   getState: () => WizardState;
   /** State and derived values in one object, identical between commits. */
   getSnapshot: () => Snapshot;
@@ -58,20 +70,30 @@ export interface Wizard {
   start: () => Promise<NavResult>;
   next: (opts?: { validate?: boolean }) => Promise<NavResult>;
   back: () => Promise<NavResult>;
-  go: (to: string, opts?: { validate?: boolean; force?: boolean }) => Promise<NavResult>;
+  go(
+    to: StepIdOf<F> | typeof END,
+    opts?: { validate?: boolean; force?: boolean }
+  ): Promise<NavResult>;
   /** Aborts the navigation in flight, if any. */
   cancel: () => void;
 
-  get: (path: string) => unknown;
-  set: (path: string, value: unknown) => void;
+  /**
+   * A step id reads that step's slice as `step<T>` declared it - or
+   * `undefined`, before the slice is first written and after `clearOnLeave`
+   * drops it. Any other path reads `unknown`. One signature rather than a
+   * typed overload with an untyped fallback: a fallback is what a wrong value
+   * for a known step would resolve to.
+   */
+  get<P extends string>(path: P): SliceAt<F, P> | undefined;
+  set<P extends string>(path: P, value: SliceAt<F, P>): void;
   patch: (partial: Record<string, unknown>) => void;
   /** Applies several writes and notifies once. */
   batch: (fn: () => void) => void;
   setCtx: (ctx: Record<string, unknown>) => void;
   reset: (data?: Record<string, unknown>) => void;
 
-  validate: (stepId?: string) => Promise<boolean>;
-  setErrors: (stepId: string, errors: Readonly<Record<string, string>> | null) => void;
+  validate(stepId?: StepIdOf<F>): Promise<boolean>;
+  setErrors(stepId: StepIdOf<F>, errors: Readonly<Record<string, string>> | null): void;
 
   /** Replaces steps by id. Refuses a patch that would remove the current step. */
   patchFlow: (patch: Partial<FlowDefinition>) => boolean;
@@ -84,8 +106,9 @@ export interface Wizard {
 
 const strictEquals = <T>(a: T, b: T): boolean => a === b;
 
-export function createWizard(options: WizardOptions): Wizard {
-  let flow = options.flow;
+export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>): Wizard<F> {
+  // Widened on purpose: `patchFlow` replaces it with something that is no longer `F`.
+  let flow: FlowDefinition = options.flow;
   const registry = options.registry;
 
   let state: WizardState = options.state ?? initialState(options.data ?? {}, options.ctx ?? {});
@@ -284,9 +307,11 @@ export function createWizard(options: WizardOptions): Wizard {
     go: (to, opts) => navigate({ type: 'go', to, force: opts?.force }, opts),
     cancel: () => controller?.abort(),
 
-    get: (path) => getPath(state.data, path),
+    // The typed overload's return is the phantom slice type; at runtime it is
+    // whatever sits at the path.
+    get: ((path: string) => getPath(state.data, path)) as Wizard<F>['get'],
 
-    set(path, value) {
+    set(path: string, value: unknown) {
       const data = setPath(state.data as Record<string, unknown>, path, value);
       // A write that changes nothing must not invalidate every memoized
       // selector downstream.
