@@ -128,7 +128,7 @@ describe('recordSession', () => {
       capped: false,
       stopped: null,
     });
-    expect(bundle.meta.bytes).toBeGreaterThan(100);
+    expect(bundle.meta.bytes).toBe(new TextEncoder().encode(JSON.stringify(bundle)).length);
     expect(checkSession(bundle.session, flowA)).toEqual([]);
   });
 
@@ -238,6 +238,16 @@ describe('recordSession', () => {
       redact: (b) => ({ session: b.session }) as unknown as SessionBundle,
     });
     expect(() => partial.bundle()).toThrow(/not a SessionBundle/);
+    const hollow = recordSession(w, {
+      redact: () =>
+        ({
+          version: 1,
+          flow: {},
+          outcomes: [],
+          session: { frames: [] },
+        }) as unknown as SessionBundle,
+    });
+    expect(() => hollow.bundle()).toThrow(/not a SessionBundle/);
   });
 
   it('names a non-JSON value as such, not as a circular reference', async () => {

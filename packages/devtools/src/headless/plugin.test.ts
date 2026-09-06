@@ -141,6 +141,15 @@ describe('devtools()', () => {
     expect(dt.attached).toBe(false);
   });
 
+  it('keeps exactly one outcome at the smallest cap', async () => {
+    const dt = devtools({ outcomes: 1 });
+    const w = createWizard({ flow: flowA, registry: registryA, data: dataA, plugins: [dt] });
+    await w.start();
+    await w.next();
+    await w.next();
+    expect(dt.outcomes.map((o) => o.id)).toEqual([3]);
+  });
+
   it('lags behind the wizard when it is not the installed instance', () => {
     const installed = devtools();
     const other = devtools();

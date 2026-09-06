@@ -73,10 +73,12 @@ const isBundle = (v: unknown): v is SessionBundle => {
     typeof b === 'object' &&
     b !== null &&
     b.version === 1 &&
-    typeof b.flow === 'object' &&
-    b.flow !== null &&
+    typeof b.flow?.id === 'string' &&
+    typeof b.flow.steps === 'object' &&
+    b.flow.steps !== null &&
     Array.isArray(b.outcomes) &&
-    Array.isArray(b.session?.frames)
+    typeof b.session?.flow === 'string' &&
+    Array.isArray(b.session.frames)
   );
 };
 
@@ -216,7 +218,15 @@ export function recordSession(wizard: WizardLike, options: RecordOptions = {}): 
         bytes: 0,
       };
       const done = { ...out, meta };
-      meta.bytes = new TextEncoder().encode(JSON.stringify(done)).length;
+      // `bytes` counts itself: measured with the field at 0, then widened by
+      // the digits the final number takes, so the value is the exact size.
+      const base = new TextEncoder().encode(JSON.stringify(done)).length - 1;
+      for (let digits = 1; ; digits++) {
+        if (String(base + digits).length === digits) {
+          meta.bytes = base + digits;
+          break;
+        }
+      }
       return done;
     },
   };

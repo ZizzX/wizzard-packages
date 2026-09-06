@@ -110,8 +110,7 @@ export function devtools(options: DevtoolsOptions = {}): DevtoolsPlugin {
         rev: a.rev,
         ...(a.phase === 'end' ? { result: a.result } : { error: toOutcomeError(a.error) }),
       };
-      outcomes =
-        outcomes.length >= cap ? [...outcomes.slice(1 - cap), outcome] : [...outcomes, outcome];
+      outcomes = [...outcomes, outcome].slice(-cap);
     }
     notify();
   };
@@ -141,7 +140,9 @@ export function devtools(options: DevtoolsOptions = {}): DevtoolsPlugin {
     },
     // A second `init` while attached means a second wizard (StrictMode, Fast
     // Refresh): the plugin follows the newest one and starts its rings over,
-    // and the first wizard's teardown, arriving later, is ignored.
+    // and the first wizard's teardown, arriving later, is ignored. Ceiling: an
+    // attempt of the first wizard that is still in flight at that moment ends
+    // into the second's ring, because the hook payload names no wizard.
     init(host: PluginHost) {
       const mine = ++generation;
       guarded(() => {
