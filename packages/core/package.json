@@ -83,6 +83,16 @@
         "types": "./dist/v1/snapshot.d.cts",
         "default": "./dist/v1/snapshot.cjs"
       }
+    },
+    "./expr": {
+      "import": {
+        "types": "./dist/v1/expr-builder.d.ts",
+        "default": "./dist/v1/expr-builder.js"
+      },
+      "require": {
+        "types": "./dist/v1/expr-builder.d.cts",
+        "default": "./dist/v1/expr-builder.cjs"
+      }
     }
   },
   "files": [

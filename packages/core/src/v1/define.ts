@@ -34,7 +34,11 @@ export function group<T = unknown>(def: GroupStep): GroupStep & Slice<T> {
 /** The union of step ids in a flow. `go` accepts nothing else. */
 export type StepIdOf<F extends FlowDefinition> = Extract<keyof F['steps'], string>;
 
-/** The data shape a flow writes, one key per step slice. */
+/**
+ * The data shape a flow writes, one key per step. Keyed by step id: a `slice`
+ * override moves the data at runtime but not in the type, because `step<T>()`
+ * has no way to see the literal it was handed once `T` is supplied by hand.
+ */
 export type DataOf<F extends FlowDefinition> = {
   [K in keyof F['steps']]: F['steps'][K] extends Slice<infer T> ? T : unknown;
 };
