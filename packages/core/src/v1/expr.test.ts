@@ -8,7 +8,7 @@ const scope: Scope = {
     empty: { list: [], str: '', obj: {} },
   },
   ctx: { role: 'admin' },
-  loop: { index: 1, item: { name: 'Ann' } },
+  loop: { index: 1, item: { name: 'Ann' }, key: 'ann' },
 };
 
 describe('evaluate', () => {

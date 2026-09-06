@@ -63,7 +63,7 @@ const twin = fc.letrec<{ expr: Twin }>((tie) => {
 const scope: Scope = {
   data: { a: 1, b: { c: 'pro' } },
   ctx: { x: [1, 2, 3] },
-  loop: { index: 2, item: { k: 'v' } },
+  loop: { index: 2, item: { k: 'v' }, key: 'v' },
 };
 const registry: Registry = {
   len: (a) => (Array.isArray(a) ? a.length : String(a ?? '').length),

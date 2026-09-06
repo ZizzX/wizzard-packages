@@ -56,9 +56,25 @@ const statusOf = (
   return at < index ? 'visited' : 'upcoming';
 };
 
-function derive(flow: FlowDefinition, state: WizardState, registry?: Registry): Derived {
-  const scope: Scope = { data: state.data, ctx: state.ctx };
-  const active = reachable(flow, scope, registry);
+/**
+ * Where the wizard is standing, when that is not simply the root flow.
+ *
+ * Supplied by the store, computed by whatever traversal is installed. Inside a
+ * repeat group the breadcrumbs are the sub-flow's steps and `index` counts
+ * within it — "step 2 of 3 for this passenger" — because a child step id is not
+ * in the root's `order` at all and every derived value would otherwise read as
+ * `-1` and `0%`.
+ */
+export interface ActiveAt {
+  flow: FlowDefinition;
+  scope: Scope;
+  /** What `back()` would answer. Only a traversal can say, once inside a group. */
+  canBack?: boolean;
+}
+
+function derive(state: WizardState, at: ActiveAt, registry?: Registry): Derived {
+  const { flow: owner, scope } = at;
+  const active = reachable(owner, scope, registry);
   const current = state.stack[state.stack.length - 1]?.step ?? null;
   const index = current === null ? -1 : active.indexOf(current);
 
@@ -71,9 +87,9 @@ function derive(flow: FlowDefinition, state: WizardState, registry?: Registry): 
     // Progress counts steps left behind, not the current one, so a wizard shows
     // 0% on the first step and 100% only once the last is finished.
     progress: active.length === 0 ? 0 : Math.round((Math.max(index, 0) / active.length) * 100),
-    breadcrumbs: active.map((id, at) => {
-      const label = flow.steps[id]?.label;
-      const status = statusOf(id, current, state, index, at);
+    breadcrumbs: active.map((id, position) => {
+      const label = owner.steps[id]?.label;
+      const status = statusOf(id, current, state, index, position);
       return label === undefined ? { id, status } : { id, label, status };
     }),
     // The answer `back()` would give, not a guess at it. `index > 0 ||
@@ -81,7 +97,8 @@ function derive(flow: FlowDefinition, state: WizardState, registry?: Registry): 
     // current one stopped being reachable: the button was enabled and the move
     // then answered `no-target`. Before `start()` there is nothing to go back
     // from, so a fresh wizard says no rather than painting a button it flips.
-    canBack: current !== null && resolveBack(flow, state, scope, registry) !== null,
+    canBack:
+      current !== null && (at.canBack ?? resolveBack(owner, state, scope, registry) !== null),
     isBusy: state.status === 'busy' || state.busy.length > 0,
     hasErrors: Object.values(state.errors).some((e) => Object.keys(e).length > 0),
   };
@@ -93,14 +110,19 @@ function derive(flow: FlowDefinition, state: WizardState, registry?: Registry): 
  */
 export function createSelector(
   flow: () => FlowDefinition,
-  registry?: AsyncRegistry
+  registry?: AsyncRegistry,
+  at?: (state: WizardState) => ActiveAt
 ): (state: WizardState) => Derived {
   let cachedRev = -1;
   let cached: Derived | undefined;
 
   return (state) => {
     if (cached !== undefined && cachedRev === state.rev) return cached;
-    cached = derive(flow(), state, registry as Registry);
+    cached = derive(
+      state,
+      at?.(state) ?? { flow: flow(), scope: { data: state.data, ctx: state.ctx } },
+      registry as Registry
+    );
     cachedRev = state.rev;
     return cached;
   };

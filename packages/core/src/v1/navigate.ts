@@ -1,10 +1,10 @@
 import { add, beginNav, commit, isCurrent } from './commit';
-import { testAsync, type AsyncRegistry, type Scope } from './expr';
+import { testAsync, type AsyncRegistry, type Registry, type Scope } from './expr';
 import { END, type FlowDefinition, type StepDef } from './flow';
 import { unsetPath } from './path';
 import { allowedByPolicy, reachable, resolveBack, resolveNext } from './resolve';
 
-import type { WizardState } from './state';
+import type { Frame, WizardState } from './state';
 
 /**
  * The navigation pipeline.
@@ -21,9 +21,13 @@ import type { WizardState } from './state';
  * The second is the single commit in phase 9. Nothing is written in between, so
  * a navigation that loses the race, throws, or is aborted leaves no trace.
  *
- * Sub-flows and repeat groups push frames onto the stack. This pass handles a
- * single level and carries the stack through unchanged; group traversal arrives
- * with the frame-stack work and slots into phases 4 and 9.
+ * Sub-flows and repeat groups push frames onto the stack, and this pass walks a
+ * single level on its own. The traversal that walks the rest lives behind
+ * `@wizzard-packages/core/groups` and is installed as `ctx.groups`: phase 0.5
+ * asks it which flow owns the current frame and what the scope there is, phase
+ * 4 asks it for the whole move, phase 8 asks it again when the data moved under
+ * an await, and phase 9 commits the stack it returned. With nothing installed
+ * every one of those falls back to the flat expression it replaced.
  */
 
 export type NavReason =
@@ -96,6 +100,53 @@ export interface NavHost {
   write: (next: WizardState) => void;
 }
 
+/**
+ * Sub-flow definitions by the key a `GroupStep.flow` string names them by. The
+ * same registry `checkSession` and `buildGraph` take: the expression `Registry`
+ * holds resolver functions, not definitions, so a group referenced by id has
+ * nothing else that could resolve it.
+ */
+export type SubFlows = Readonly<Record<string, FlowDefinition>>;
+
+/**
+ * Group and repeat traversal, installed rather than imported.
+ *
+ * The implementation is `@wizzard-packages/core/groups`, its own entry with its
+ * own budget, so a flat flow carries none of it. The type lives here because a
+ * type costs a bundle nothing and this entry has to be able to accept one.
+ */
+export interface Traversal {
+  /** Phase 0.5: the flow that owns the top frame, and the scope at that frame. */
+  here: (
+    root: FlowDefinition,
+    state: WizardState,
+    registry?: Registry,
+    subFlows?: SubFlows
+  ) => { flow: FlowDefinition; scope: Scope };
+  /**
+   * Phase 4: the whole move, pure. `null` means no target.
+   *
+   * `flow` is the flow that owns the *new* top frame, which is not always the
+   * one `here` named: a move that enters or leaves a group changes which flow
+   * phases 5-7 have to look the target up in.
+   */
+  step: (
+    root: FlowDefinition,
+    state: WizardState,
+    intent: NavIntent,
+    registry?: Registry,
+    subFlows?: SubFlows
+  ) =>
+    | { stack: readonly Frame[]; to: string | typeof END; flow: FlowDefinition; scope: Scope }
+    | {
+        ok: false;
+        reason: 'invalid' | 'not-reachable';
+        by: string;
+        errors?: Readonly<Record<string, string>>;
+      }
+    | null;
+}
+
 export interface NavContext {
   flow: FlowDefinition;
   registry?: AsyncRegistry;
@@ -105,8 +156,20 @@ export interface NavContext {
     stepId: string,
     state: WizardState
   ) => Promise<Readonly<Record<string, string>> | null>;
-  /** Runs the load of a step before entering it. */
-  load?: (stepId: string, args: unknown, signal: AbortSignal) => Promise<void>;
+  /**
+   * Runs the load of a step before entering it.
+   *
+   * Both the reference and the scope arrive from the pipeline rather than being
+   * looked back up. A step inside a sub-flow has no id in the root flow, and
+   * the scope the resolver needs is the one *after* the move: on entry to a
+   * repeat, `loop` does not exist in the committed state at all, and on an
+   * advance it still names the item being left.
+   */
+  load?: (stepId: string, load: unknown, scope: Scope, signal: AbortSignal) => Promise<void>;
+  /** Group and repeat traversal. Absent means flat flows only. */
+  groups?: Traversal;
+  /** Sub-flow definitions a string `GroupStep.flow` names. */
+  subFlows?: SubFlows;
   signal?: AbortSignal;
 }
 
@@ -148,7 +211,7 @@ export async function runNav(
   intent: NavIntent,
   opts: { validate?: boolean } = {}
 ): Promise<NavResult> {
-  const { flow } = ctx;
+  const { flow, groups: traversal, registry, subFlows } = ctx;
 
   // 0. Acquire.
   const { state: locked, token } = beginNav(host.read());
@@ -166,7 +229,10 @@ export async function runNav(
 
   try {
     // 1. beforeNavigate. Plugins run in registration order and may veto.
-    let redirect: string | undefined;
+    // A redirect replaces the intent rather than overriding the answer to it:
+    // the traversal has to see a jump as a jump, or a redirect into or out of a
+    // group resolves `next` and skips the frames the move should push or pop.
+    let want: NavIntent = intent;
     for (const h of ctx.hooks ?? []) {
       if (!h.beforeNavigate) continue;
       const decision = await h.beforeNavigate({
@@ -179,7 +245,7 @@ export async function runNav(
       if (decision && 'block' in decision) {
         return fail({ ok: false, reason: 'blocked', by: decision.block });
       }
-      if (decision && 'redirect' in decision) redirect = decision.redirect;
+      if (decision && 'redirect' in decision) want = { type: 'go', to: decision.redirect };
     }
 
     // 2. Validate the step being left.
@@ -196,25 +262,37 @@ export async function runNav(
       }
     }
 
+    // 0.5. The flow that owns the current frame, and the scope at it. Without a
+    // traversal that is the root flow and `{ data, ctx }`, which is what phases
+    // 3 to 9 read directly before groups existed.
+    const at0 = host.read();
+    const at = traversal?.here(flow, at0, registry, subFlows) ?? {
+      flow,
+      scope: scopeOf(at0),
+    };
+
     // 3. Exit guard.
     if (from !== null) {
-      const exit = flow.steps[from]?.guards?.exit;
-      const allowed = await testAsync(exit, scopeOf(host.read()), ctx.registry);
+      const exit = at.flow.steps[from]?.guards?.exit;
+      const allowed = await testAsync(exit, at.scope, registry);
       if (stale()) return superseded;
       if (!allowed) return fail({ ok: false, reason: 'blocked', by: from });
     }
 
     // 4. Resolve the target. Pure, and therefore testable on its own.
     const state = host.read();
-    const target =
-      redirect ??
-      (intent.type === 'go'
-        ? intent.to
-        : intent.type === 'back'
-          ? resolveBack(flow, state, scopeOf(state), ctx.registry)
-          : resolveNext(flow, state, scopeOf(state), ctx.registry));
+    const move = traversal?.step(flow, state, want, registry, subFlows);
+    if (move && 'ok' in move) return fail(move);
 
-    if (target === null) return fail({ ok: false, reason: 'no-target' });
+    const target = move
+      ? move.to
+      : want.type === 'go'
+        ? want.to
+        : want.type === 'back'
+          ? resolveBack(at.flow, state, at.scope, registry)
+          : resolveNext(at.flow, state, at.scope, registry);
+
+    if (target === null || move === null) return fail({ ok: false, reason: 'no-target' });
 
     if (target === END) {
       host.write(
@@ -227,14 +305,20 @@ export async function runNav(
       return { ok: true, from, to: END };
     }
 
-    // 5. Reachability, then policy.
-    const step = flow.steps[target];
+    // 5. Reachability, then policy. Inside a group both are the sub-flow's
+    // question: `reachable` on the root would not contain a child step at all.
+    const where = move ?? at;
+    const step = where.flow.steps[target];
     if (!step) return fail({ ok: false, reason: 'no-target' });
 
-    const active = reachable(flow, scopeOf(state), ctx.registry);
+    const active = reachable(where.flow, where.scope, registry);
     if (!active.includes(target)) return fail({ ok: false, reason: 'not-reachable', by: target });
 
-    if (intent.type === 'go' && !intent.force && !allowedByPolicy(flow, state, target, active)) {
+    if (
+      intent.type === 'go' &&
+      !intent.force &&
+      !allowedByPolicy(where.flow, state, target, active)
+    ) {
       return fail({ ok: false, reason: 'blocked', by: target });
     }
 
@@ -256,7 +340,7 @@ export async function runNav(
           }
         }
         if (step.load !== undefined && ctx.load) {
-          await ctx.load(target, step.load.args, controller.signal);
+          await ctx.load(target, step.load, where.scope, controller.signal);
         }
       } finally {
         ctx.signal?.removeEventListener('abort', onAbort);
@@ -266,20 +350,45 @@ export async function runNav(
       if (ctx.signal?.aborted === true) return fail(aborted);
     }
 
-    // 7. Enter guard.
-    const canEnter = await testAsync(step.guards?.enter, scopeOf(host.read()), ctx.registry);
+    // 7. Enter guard. A group move brings its own scope, because the target's
+    // `loop` does not exist anywhere until the move that creates it.
+    const canEnter = await testAsync(
+      step.guards?.enter,
+      move ? move.scope : scopeOf(host.read()),
+      registry
+    );
     if (stale()) return superseded;
     if (!canEnter) return fail({ ok: false, reason: 'blocked', by: target });
 
     // 8. Last check before anything is written.
     if (ctx.signal?.aborted === true) return fail(aborted);
 
-    // 9. Commit. One write, one notification.
+    // The state phase 9 commits from, read here because phase 8 needs it too
+    // and the recheck between them is pure.
     const before = host.read();
+
+    // `store.set` during phases 6 and 7 bumps `rev` and not `nav`, so the stale
+    // check above does not see it. A flat target is a step id and no write can
+    // move it; a group move is a stack computed from a list that may no longer
+    // exist, so it is recomputed and superseded when the answer changed.
+    if (move && before.rev !== state.rev) {
+      const again = traversal?.step(flow, before, want, registry, subFlows);
+      // The stacks are serialized rather than walked frame by frame: both come
+      // out of the same `step()`, which builds every frame from one of two
+      // literals, so the key order is fixed. A false difference would only
+      // supersede, which is the safe direction.
+      if (!again || 'ok' in again || JSON.stringify(again.stack) !== JSON.stringify(move.stack)) {
+        return fail(superseded);
+      }
+    }
+
+    // 9. Commit. One write, one notification.
     host.write(
       commit(before, {
         status: 'idle',
-        stack: [...before.stack.slice(0, -1), { flow: flow.id, step: target }],
+        stack: move
+          ? move.stack
+          : [...before.stack.slice(0, -1), { flow: at.flow.id, step: target }],
         // A back stack only grows going forward. Appending on a backward move
         // too left `canBack` true at the first step while `back()` answered
         // `no-target`, and would make a history-driven `back()` inside a repeat
@@ -293,7 +402,7 @@ export async function runNav(
         visited: add(before.visited, target),
         completed: forward && from !== null ? add(before.completed, from) : before.completed,
         busy: before.busy.filter((id) => id !== target),
-        data: from === null ? before.data : leave(flow, from, before.data),
+        data: from === null ? before.data : leave(at.flow, from, before.data),
       })
     );
 

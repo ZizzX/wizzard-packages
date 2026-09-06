@@ -64,6 +64,16 @@
         "default": "./dist/v1/graph.cjs"
       }
     },
+    "./groups": {
+      "import": {
+        "types": "./dist/v1/groups.d.ts",
+        "default": "./dist/v1/groups.js"
+      },
+      "require": {
+        "types": "./dist/v1/groups.d.cts",
+        "default": "./dist/v1/groups.cjs"
+      }
+    },
     "./session": {
       "import": {
         "types": "./dist/v1/session.d.ts",
