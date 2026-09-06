@@ -62,12 +62,12 @@ const BACK: NavIntent = { type: 'back' };
  */
 function assertGroups(flow: FlowDefinition, installed: boolean): void {
   if (installed) return;
-  for (const [id, step] of Object.entries(flow.steps)) {
-    if (isGroup(step)) {
+  for (const id in flow.steps) {
+    if (isGroup(flow.steps[id] as StepDef)) {
       throw new Error(
         `[wizzard] step "${id}" is a group, but no traversal is installed. ` +
-          `The main entry walks flat flows only. ` +
-          `Pass \`groups\` from @wizzard-packages/core/groups to createWizard. ` +
+          `Without one the engine walks flat flows only. ` +
+          `Pass groups from @wizzard-packages/core/groups to createWizard. ` +
           `https://github.com/ZizzX/wizzard-packages/blob/main/docs/errors.md#groups-not-installed`
       );
     }
@@ -173,10 +173,15 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
   const select = createSelector(
     () => flow,
     registry,
-    (s): ActiveAt =>
-      traversal === undefined
-        ? at(s)
-        : { ...at(s), canBack: traversal.step(flow, s, BACK, registry, subFlows) !== null }
+    (s) => {
+      const active: ActiveAt = at(s);
+      // Only a traversal can answer this once the stack is deeper than one frame;
+      // left absent, `select.ts` falls back to the order walk it always used.
+      if (traversal !== undefined) {
+        active.canBack = traversal.step(flow, s, BACK, registry, subFlows) !== null;
+      }
+      return active;
+    }
   );
 
   let batching = false;
@@ -261,8 +266,8 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
   const navContext = (): NavContext => ({
     flow,
     registry,
-    ...(traversal !== undefined && { groups: traversal }),
-    ...(subFlows !== undefined && { subFlows }),
+    groups: traversal,
+    subFlows,
     // Disabled and post-destroy plugins are filtered here too: `fail` must mean
     // the same thing to a navigation hook as it does to `onCommit`, or a plugin
     // that threw once keeps running half its contract.

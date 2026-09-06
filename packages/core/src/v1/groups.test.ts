@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { isGroup, type FlowDefinition } from './flow';
 import { groups, here, itemsOf, step, walk } from './groups';
 import { checkSession } from './session';
 import { createWizard } from './store';
 import { initialState } from './state';
 
 import type { AsyncRegistry } from './expr';
-import type { FlowDefinition } from './flow';
 import type { SubFlows } from './navigate';
 import type { Frame, WizardState } from './state';
 
@@ -550,8 +550,8 @@ describe('5.1 the active flow and scope', () => {
 describe('5.2 the guard', () => {
   const message =
     '[wizzard] step "each" is a group, but no traversal is installed. ' +
-    'The main entry walks flat flows only. ' +
-    'Pass `groups` from @wizzard-packages/core/groups to createWizard. ' +
+    'Without one the engine walks flat flows only. ' +
+    'Pass groups from @wizzard-packages/core/groups to createWizard. ' +
     'https://github.com/ZizzX/wizzard-packages/blob/main/docs/errors.md#groups-not-installed';
 
   it('throws from createWizard when a flow has a group and nothing walks it', () => {
@@ -567,6 +567,50 @@ describe('5.2 the guard', () => {
 
   it('does not throw once `groups` is installed', () => {
     expect(() => build(booking())).not.toThrow();
+  });
+});
+
+describe('the frame a binding is asked to render', () => {
+  /** The top frame's step, looked up in the flow that actually owns it. */
+  const topStep = (
+    wizard: ReturnType<typeof createWizard>
+  ): { id: string | undefined; group: boolean } => {
+    const state = wizard.getState();
+    const levels = walk(wizard.getFlow(), state);
+    const top = levels[levels.length - 1];
+    const frame = top?.frame;
+    const step = top === undefined || frame === undefined ? undefined : top.flow.steps[frame.step];
+    return { id: frame?.step, group: step !== undefined && isGroup(step) };
+  };
+
+  it('is never a group, through an entry, an advance, an exit and a dead key', async () => {
+    const wizard = build(booking());
+    await wizard.start();
+    expect(topStep(wizard)).toEqual({ id: 'who', group: false });
+
+    // Entering, advancing between items, and leaving at the end.
+    for (const expected of ['seat', 'meal', 'seat', 'meal', 'seat', 'meal', 'review']) {
+      await wizard.next();
+      expect(topStep(wizard)).toEqual({ id: expected, group: false });
+    }
+  });
+
+  it('is never a group after the item under it is removed', async () => {
+    const wizard = await enterGroup();
+    wizard.set('passengers', [{ id: 'p2' }]);
+    // Pruned to the group frame, which is exactly the shape that must not be
+    // committed: the next move resolves past it before phase 9 writes anything.
+    expect(walk(wizard.getFlow(), wizard.getState())[0]?.frame).toEqual({
+      flow: 'booking',
+      step: 'each',
+    });
+
+    await wizard.next();
+    expect(topStep(wizard).group).toBe(false);
+
+    wizard.set('passengers', []);
+    await wizard.next();
+    expect(topStep(wizard)).toEqual({ id: 'review', group: false });
   });
 });
 

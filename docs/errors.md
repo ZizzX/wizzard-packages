@@ -13,8 +13,8 @@ here carry the part that does not fit in one line.
 ## groups-not-installed
 
 ```
-[wizzard] step "<id>" is a group, but no traversal is installed. The main entry
-walks flat flows only. Pass `groups` from @wizzard-packages/core/groups to
+[wizzard] step "<id>" is a group, but no traversal is installed. Without one the
+engine walks flat flows only. Pass groups from @wizzard-packages/core/groups to
 createWizard. …#groups-not-installed
 ```
 

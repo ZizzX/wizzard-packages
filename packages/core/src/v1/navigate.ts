@@ -164,14 +164,6 @@ export interface NavContext {
   signal?: AbortSignal;
 }
 
-/** Frame-by-frame equality, for the phase-8 recheck. */
-const sameStack = (a: readonly Frame[], b: readonly Frame[]): boolean =>
-  a.length === b.length &&
-  a.every((f, i) => {
-    const g = b[i];
-    return g !== undefined && f.flow === g.flow && f.step === g.step && f.key === g.key;
-  });
-
 const scopeOf = (s: WizardState): Scope => ({ data: s.data, ctx: s.ctx });
 const currentOf = (s: WizardState): string | null => s.stack[s.stack.length - 1]?.step ?? null;
 
@@ -210,7 +202,7 @@ export async function runNav(
   intent: NavIntent,
   opts: { validate?: boolean } = {}
 ): Promise<NavResult> {
-  const { flow } = ctx;
+  const { flow, groups: traversal, registry, subFlows } = ctx;
 
   // 0. Acquire.
   const { state: locked, token } = beginNav(host.read());
@@ -265,7 +257,7 @@ export async function runNav(
     // traversal that is the root flow and `{ data, ctx }`, which is what phases
     // 3 to 9 read directly before groups existed.
     const at0 = host.read();
-    const at = ctx.groups?.here(flow, at0, ctx.registry, ctx.subFlows) ?? {
+    const at = traversal?.here(flow, at0, registry, subFlows) ?? {
       flow,
       scope: scopeOf(at0),
     };
@@ -273,14 +265,14 @@ export async function runNav(
     // 3. Exit guard.
     if (from !== null) {
       const exit = at.flow.steps[from]?.guards?.exit;
-      const allowed = await testAsync(exit, at.scope, ctx.registry);
+      const allowed = await testAsync(exit, at.scope, registry);
       if (stale()) return superseded;
       if (!allowed) return fail({ ok: false, reason: 'blocked', by: from });
     }
 
     // 4. Resolve the target. Pure, and therefore testable on its own.
     const state = host.read();
-    const move = ctx.groups?.step(flow, state, want, ctx.registry, ctx.subFlows);
+    const move = traversal?.step(flow, state, want, registry, subFlows);
     if (move && 'ok' in move) return fail(move);
 
     const target = move
@@ -288,8 +280,8 @@ export async function runNav(
       : want.type === 'go'
         ? want.to
         : want.type === 'back'
-          ? resolveBack(at.flow, state, at.scope, ctx.registry)
-          : resolveNext(at.flow, state, at.scope, ctx.registry);
+          ? resolveBack(at.flow, state, at.scope, registry)
+          : resolveNext(at.flow, state, at.scope, registry);
 
     if (target === null || move === null) return fail({ ok: false, reason: 'no-target' });
 
@@ -310,7 +302,7 @@ export async function runNav(
     const step = where.flow.steps[target];
     if (!step) return fail({ ok: false, reason: 'no-target' });
 
-    const active = reachable(where.flow, where.scope, ctx.registry);
+    const active = reachable(where.flow, where.scope, registry);
     if (!active.includes(target)) return fail({ ok: false, reason: 'not-reachable', by: target });
 
     if (
@@ -354,7 +346,7 @@ export async function runNav(
     const canEnter = await testAsync(
       step.guards?.enter,
       move ? move.scope : scopeOf(host.read()),
-      ctx.registry
+      registry
     );
     if (stale()) return superseded;
     if (!canEnter) return fail({ ok: false, reason: 'blocked', by: target });
@@ -362,17 +354,26 @@ export async function runNav(
     // 8. Last check before anything is written.
     if (ctx.signal?.aborted === true) return fail(aborted);
 
+    // The state phase 9 commits from, read here because phase 8 needs it too
+    // and the recheck between them is pure.
+    const before = host.read();
+
     // `store.set` during phases 6 and 7 bumps `rev` and not `nav`, so the stale
     // check above does not see it. A flat target is a step id and no write can
     // move it; a group move is a stack computed from a list that may no longer
     // exist, so it is recomputed and superseded when the answer changed.
-    if (move && host.read().rev !== state.rev) {
-      const again = ctx.groups?.step(flow, host.read(), want, ctx.registry, ctx.subFlows);
-      if (!again || 'ok' in again || !sameStack(again.stack, move.stack)) return fail(superseded);
+    if (move && before.rev !== state.rev) {
+      const again = traversal?.step(flow, before, want, registry, subFlows);
+      // The stacks are serialized rather than walked frame by frame: both come
+      // out of the same `step()`, which builds every frame from one of two
+      // literals, so the key order is fixed. A false difference would only
+      // supersede, which is the safe direction.
+      if (!again || 'ok' in again || JSON.stringify(again.stack) !== JSON.stringify(move.stack)) {
+        return fail(superseded);
+      }
     }
 
     // 9. Commit. One write, one notification.
-    const before = host.read();
     host.write(
       commit(before, {
         status: 'idle',

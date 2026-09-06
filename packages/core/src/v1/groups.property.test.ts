@@ -1,11 +1,11 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
-import { groups } from './groups';
+import { isGroup, type FlowDefinition } from './flow';
+import { groups, walk } from './groups';
 import { createWizard, type Wizard } from './store';
 
 import type { AsyncRegistry } from './expr';
-import type { FlowDefinition } from './flow';
 import type { Frame, WizardState } from './state';
 
 /**
@@ -89,6 +89,28 @@ const currentIds = (state: WizardState): readonly string[] =>
   ((state.data.items ?? []) as { id?: unknown }[]).map((i) => String(i.id));
 
 /**
+ * A committed stack never stands on a group.
+ *
+ * Phase 9 writes what `step()` returned, and `step()` resolves past a group
+ * before it lands - into it, or over it when there is nothing to enter - so the
+ * frame a binding is asked to render is always an atom. A stack whose walk is
+ * shorter than itself has a dead frame in it, which is 4.2's documented window
+ * between a `set()` and the navigation that prunes it, not a group at the top.
+ */
+function standsOnAGroup(
+  root: FlowDefinition,
+  state: WizardState,
+  subFlows?: Record<string, FlowDefinition>
+): boolean {
+  const levels = walk(root, state, undefined, subFlows);
+  if (levels.length !== state.stack.length) return false;
+  const top = levels[levels.length - 1];
+  const frame = top?.frame;
+  const step = top === undefined || frame === undefined ? undefined : top.flow.steps[frame.step];
+  return step !== undefined && isGroup(step);
+}
+
+/**
  * A wizard whose three deferred resolvers all yield, and exactly one of which
  * writes the item list while it is yielded. The write goes through `set`, which
  * is the only way a host has of changing a list mid-navigation and the reason
@@ -129,6 +151,7 @@ describe('a navigation with the item list changing under it', () => {
         await wizard.start();
         for (let i = 0; i < n; i++) {
           const result = await wizard.next();
+          expect(standsOnAGroup(root, wizard.getState())).toBe(false);
           if (!result.ok) continue;
           const state = wizard.getState();
           const live = currentIds(state);
@@ -180,6 +203,7 @@ describe('a navigation with the item list changing under it', () => {
         for (let i = 0; i < n; i++) {
           const result = await wizard.next();
           expect(typeof result.ok).toBe('boolean');
+          expect(standsOnAGroup(root, wizard.getState())).toBe(false);
           if (!result.ok) {
             expect(['superseded', 'no-target', 'blocked', 'invalid', 'not-reachable']).toContain(
               result.reason
@@ -237,6 +261,7 @@ describe('nesting', () => {
           for (let i = 0; i < 40; i++) {
             await wizard.next();
             expect(wizard.getState().stack.length).toBeLessThanOrEqual(32);
+            expect(standsOnAGroup(flow, wizard.getState(), subFlows)).toBe(false);
           }
           return true;
         }

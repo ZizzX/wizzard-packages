@@ -53,20 +53,32 @@ export default [
   // answer rather than a count that disagreed with it. Forty bytes, measured
   // 4.47 kB, for a Back button that means what it says.
   //
-  // 4.5 to 5.0 kB on 2026-09-06 for the group traversal seam, measured rather
-  // than estimated: 4.48 kB before, 4.99 kB after. Three pieces, each measured
-  // on its own. The pipeline seam - phase 0.5's `here`, phase 4's `step`, the
-  // phase-8 recheck and phase 9's stack - is 190 B. The store and selector side
-  // - the active flow and scope for `validate`, `load` and every resolver, and
-  // the breadcrumbs and `canBack` a sub-flow's steps produce - is 110 B. The
-  // remaining 200 B is the refusal a flow with a group and no traversal gets,
-  // and most of that is the message: the failure template in `AGENTS.md` is
-  // four clauses and a documentation link, and shortening it is not on offer.
+  // 4.5 to 5.0 kB on 2026-09-06 for the group traversal seam. Measured, then
+  // trimmed and measured again: 4.48 kB before, 4991 B on the first pass, 4938 B
+  // after the trim. Where the 458 B sits, each figure taken by removing that
+  // piece and re-measuring:
   //
-  // The design note expected 155-235 B and named 4.6-4.7 kB. The gap is the
-  // guard, which the note costed at 50-70 B before the message was written.
-  // Even so this is the cheap option: the traversal itself is 2.9 kB in its own
-  // entry, and none of it is here.
+  //   258 B  the seam itself - phase 0.5's `here`, phase 4's `step`, the flow
+  //          and scope phases 5 to 7 read, the phase-8 recheck against a
+  //          `set()` that landed under an await, phase 9's stack, and the
+  //          active flow the store hands `validate`, `load` and the selector.
+  //   156 B  the message a flow with a group and no traversal is refused with.
+  //   44 B   the scan that finds the group and throws it.
+  //
+  // The message is the piece that will not move. `AGENTS.md` requires four
+  // clauses and a documentation link, and the link alone is 101 characters. It
+  // is the only such URL in this entry, so hoisting it into a shared `DOCS`
+  // constant would have nothing to share it with. Dropping to 4.8 kB would mean
+  // deleting seven eighths of that message or half the seam, and neither is a
+  // size decision.
+  //
+  // The trim that paid was structural, not verbal: comparing the two stacks of
+  // the phase-8 recheck by serializing them rather than walking them frame by
+  // frame, and writing `groups`/`subFlows` onto the nav context as plain
+  // properties instead of two conditional spreads, together 44 B. Shortening
+  // the message bought 5 B. Hoisting `ctx.hooks ?? []` and inlining the `back`
+  // intent were tried and reverted: both cost 3 B, because gzip already prices
+  // a repeated literal lower than a new identifier.
   { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '5.0 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
@@ -81,7 +93,7 @@ export default [
   // frames and the `END`-by-depth rule that the invariants in
   // `docs/designs/group-traversal.md` describe.
   //
-  // Measured 2026-09-06 at 2.92 kB, and most of that is not its own: it calls
+  // Measured 2026-09-06 at 2917 B, and most of that is not its own: it calls
   // `resolveNext` and `resolveBack` for a single level rather than reimplementing
   // them, and evaluates `over` and `input` with the expression evaluator, so it
   // pulls `resolve`, `expr`, `path` and the step types in behind it. An

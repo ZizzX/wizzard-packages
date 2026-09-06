@@ -72,14 +72,8 @@ export interface ActiveAt {
   canBack?: boolean;
 }
 
-function derive(
-  flow: FlowDefinition,
-  state: WizardState,
-  registry?: Registry,
-  at?: ActiveAt
-): Derived {
-  const scope: Scope = at?.scope ?? { data: state.data, ctx: state.ctx };
-  const owner = at?.flow ?? flow;
+function derive(state: WizardState, at: ActiveAt, registry?: Registry): Derived {
+  const { flow: owner, scope } = at;
   const active = reachable(owner, scope, registry);
   const current = state.stack[state.stack.length - 1]?.step ?? null;
   const index = current === null ? -1 : active.indexOf(current);
@@ -104,7 +98,7 @@ function derive(
     // then answered `no-target`. Before `start()` there is nothing to go back
     // from, so a fresh wizard says no rather than painting a button it flips.
     canBack:
-      current !== null && (at?.canBack ?? resolveBack(owner, state, scope, registry) !== null),
+      current !== null && (at.canBack ?? resolveBack(owner, state, scope, registry) !== null),
     isBusy: state.status === 'busy' || state.busy.length > 0,
     hasErrors: Object.values(state.errors).some((e) => Object.keys(e).length > 0),
   };
@@ -124,7 +118,11 @@ export function createSelector(
 
   return (state) => {
     if (cached !== undefined && cachedRev === state.rev) return cached;
-    cached = derive(flow(), state, registry as Registry, at?.(state));
+    cached = derive(
+      state,
+      at?.(state) ?? { flow: flow(), scope: { data: state.data, ctx: state.ctx } },
+      registry as Registry
+    );
     cachedRev = state.rev;
     return cached;
   };
