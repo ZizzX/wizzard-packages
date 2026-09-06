@@ -109,6 +109,11 @@ export default [
   // it walks a stack against the flow, so it pulls `isGroup` and the step types
   // in with it. That is the cost of checking a recording against the definition
   // it claims to belong to, and it is paid only by a page that replays one.
+  //
+  // 1.05 kB the same day, once the frame walk became `checkFrames` and the flow
+  // registry `knownFlows`, both exported so `decodeSnapshot` runs the same two
+  // rather than a second copy. Held at 1.1 kB: the extra 20 B is the callback
+  // the two callers report through.
   { name: 'core-v1 session', path: 'packages/core/src/v1/session.ts', limit: '1.1 kB', gzip: true },
 
   // The durable snapshot format. Its own entry because an application that
@@ -120,10 +125,23 @@ export default [
   // a walk that refuses values JSON cannot round-trip, keys that reach a
   // prototype, cycles, and anything past its bounds. Refusing a bad snapshot
   // costs more than writing a good one, which is the right way round.
+  //
+  // 1.1 to 1.5 kB on 2026-09-06 for the group frames of `group-traversal.md`
+  // 4.10. Measured 1.05 kB before, 1.46 kB after. The decoder now resolves
+  // every frame against `knownFlows` and walks each stack with `checkFrames`,
+  // both imported from `session.ts` rather than copied: L4a asks for one frame
+  // checker, and two would drift the way 0.x's three navigation copies did.
+  // `checkSession` itself is tree-shaken out - the entry contains none of its
+  // strings - so what arrives is the walk, the flow registry and the messages.
+  // Of the 410 B, 120 B is those messages, which the decoder never prints: it
+  // reports `snapshot/unknown-step` and no new reason. Reporting only the kind
+  // and formatting in `checkSession` would buy those 120 B back at the price of
+  // a second format function and a checker nobody can read the output of, which
+  // is not a trade a snapshot entry should make.
   {
     name: 'core-v1 snapshot',
     path: 'packages/core/src/v1/snapshot.ts',
-    limit: '1.1 kB',
+    limit: '1.5 kB',
     gzip: true,
   },
 
@@ -143,10 +161,19 @@ export default [
   // Development and server-driven use only. Measured, but never counted against
   // the runtime budget, because shipping it to a browser is a mistake the
   // separate entry makes hard to commit by accident.
+  //
+  // 1 to 1.2 kB on 2026-09-06 for the two repeat-group reports of
+  // `group-traversal.md` 4.5 and 4.10. Measured 887 B before, 1.12 kB after,
+  // and almost all of it is the two sentences: reachability reads `when` and
+  // never `over`, so an unguarded repeat draws a breadcrumb for an empty
+  // section, and an unversioned flow with a repeat group cannot refuse a
+  // snapshot written before its `keyBy` changed. A report that names neither
+  // the cause nor the fix is a report people learn to ignore, and this entry
+  // is the one place in the tree where a sentence costs a reader nothing.
   {
     name: 'core-v1 validate-flow',
     path: 'packages/core/src/v1/validate-flow.ts',
-    limit: '1 kB',
+    limit: '1.2 kB',
     gzip: true,
   },
 

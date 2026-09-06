@@ -1,4 +1,4 @@
-import type { FlowDefinition } from './flow';
+import { isGroup, type FlowDefinition } from './flow';
 
 /**
  * Checks a flow before it is trusted.
@@ -30,6 +30,7 @@ export function validateFlow(
   };
 
   if (ids.length === 0) report('steps', 'flow has no steps');
+  let repeats = false;
 
   if (flow.order) {
     for (const id of flow.order) {
@@ -110,6 +111,35 @@ export function validateFlow(
     if (step_.when !== undefined && step_.on?.next !== undefined) {
       report(at, 'has both when and on.next — on.next wins, and when is ignored here');
     }
+
+    if (isGroup(step_) && step_.repeat !== undefined) {
+      repeats = true;
+      // Reachability reads `when` and nothing else, so a repeat over an empty
+      // list is still an active step: it draws a breadcrumb for a section with
+      // nothing in it and counts towards progress. Teaching reachability about
+      // `over` would put group code in the entry every flat flow carries, so
+      // the fix is the author's, and it is one line.
+      if (step_.when === undefined) {
+        report(
+          at,
+          'is a repeat group with no when — an empty over is walked past, but the group still ' +
+            'draws a breadcrumb and counts towards progress; guard it with ' +
+            '{ $not: { $empty: <the same expression as over> } }'
+        );
+      }
+    }
+  }
+
+  // A repeat frame stores the item key its `keyBy` produced, so the stored
+  // state depends on a field of the definition — the only construct in the flow
+  // that does. Unversioned, a snapshot written before `keyBy` changed restores
+  // clean and lands on an item that no longer means what it meant.
+  if (repeats && flow.version === undefined) {
+    report(
+      'version',
+      'flow has a repeat group but no version, so a snapshot taken inside it cannot be refused ' +
+        'when keyBy changes — stamp a version and bump it with the shape'
+    );
   }
 
   return problems;

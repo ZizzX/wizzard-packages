@@ -117,6 +117,57 @@ describe('validateFlow', () => {
   });
 });
 
+describe('validateFlow, on a repeat group', () => {
+  const repeat = { over: { $get: 'data.passengers' }, keyBy: 'id' } as const;
+
+  const grouped = (extra: Record<string, unknown> = {}): FlowDefinition => ({
+    id: 'booking',
+    version: 3,
+    order: ['trip', 'review'],
+    steps: {
+      trip: { flow: 'passenger', repeat, ...extra },
+      review: {},
+    },
+  });
+
+  it('asks a repeat group to say when it is there at all', () => {
+    // Reachability reads `when`, never `over`, so an unguarded repeat over an
+    // empty list draws a breadcrumb for a section with nothing in it.
+    expect(problems(grouped())).toContain(
+      'steps.trip: is a repeat group with no when — an empty over is walked past, but the group ' +
+        'still draws a breadcrumb and counts towards progress; guard it with ' +
+        '{ $not: { $empty: <the same expression as over> } }'
+    );
+  });
+
+  it('is satisfied by the guard it suggests', () => {
+    expect(
+      validateFlow(grouped({ when: { $not: { $empty: { $get: 'data.passengers' } } } }))
+    ).toEqual([]);
+  });
+
+  it('says nothing about a plain group, which has no items to be empty of', () => {
+    const flow: FlowDefinition = {
+      id: 'booking',
+      order: ['trip'],
+      steps: { trip: { flow: 'passenger' } },
+    };
+    expect(validateFlow(flow)).toEqual([]);
+  });
+
+  it('asks a flow with a repeat group to stamp a version', () => {
+    const flow = grouped({ when: { $not: { $empty: { $get: 'data.passengers' } } } });
+    expect(problems({ ...flow, version: undefined })).toEqual([
+      'version: flow has a repeat group but no version, so a snapshot taken inside it cannot be ' +
+        'refused when keyBy changes — stamp a version and bump it with the shape',
+    ]);
+  });
+
+  it('leaves an unversioned flat flow alone', () => {
+    expect(validateFlow(good)).toEqual([]);
+  });
+});
+
 describe('assertFlow', () => {
   it('says nothing about a valid flow', () => {
     expect(() => {
