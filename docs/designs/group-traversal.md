@@ -62,27 +62,30 @@ Four modules already describe this feature. Nothing populates `scope.loop`, and 
 ever pushed: `navigate.ts:265` replaces the top of the stack with `{ flow: flow.id, step:
 target }` and always names the root flow. L9 is the module that makes the other four true.
 
-### What the types need added
+### What the types need changed
 
-One field, and it is the whole identity decision.
+One field swapped for another, and it is the whole identity decision.
 
-**Proposal.** `Frame` gains `key?: string` (`state.ts:11-16`):
+**Proposal.** `Frame` loses `i` and gains `key` (`state.ts:11-16`):
 
 ```ts
 export interface Frame {
   flow: string;
   step: string;
-  /** Position of this frame's item in `over`, right now. A cache of `key`. */
-  i?: number;
   /** The item's identity under `keyBy`. Stable across reorder and removal. */
   key?: string;
 }
 ```
 
-`i` alone cannot be the identity: it moves when the list is reordered and dangles when an item
-is removed. `key` is computed once, on entry, and `i` is recomputed from `key` and the current
-items on every navigation. `i` stays on the frame because `scope.loop.index` has to come from
-somewhere and recomputing it in a selector would mean group code in the main entry.
+`i` cannot be the identity: it moves when the list is reordered and dangles when an item is
+removed. It cannot be a cache either. A host that inserts, removes or reorders items with
+`set()` and renders before the next navigation would read a stale index from the frame, and
+hard rule 4 forbids storing a derived value for exactly that reason. So the frame stores
+identity only: `key`, computed once when the frame is pushed. The index is derived from `key`
+against the current items wherever the repeat scope is built (5.2, `here()`), which is code in
+the `groups` entry, not the main one. `i` is removed rather than left optional: nothing has ever
+written it, so no `v: 1` snapshot carries it and no migration is needed; `session.ts:201-205`,
+which validates it today, validates `key` instead.
 
 **Proposal.** `Scope.loop` gains `key: string` (`expr.ts:36-42`), so a flow can address its own
 item's data: `{ $get: 'loop.key' }`. Without it, an author inside a repeat can name the item and
@@ -108,15 +111,14 @@ frame that encloses another must be a group, and the group's resolved sub-flow i
 enclosed frame's `flow`. So, for a group `G` in flow `P` over sub-flow `C`:
 
 ```
-stack = [ { flow: 'P', step: 'G', i: 1, key: 'p2' },   <- the group, and which item
-          { flow: 'C', step: 'seat' } ]                 <- the current step, inside it
+stack = [ { flow: 'P', step: 'G', key: 'p2' },   <- the group, and which item
+          { flow: 'C', step: 'seat' } ]           <- the current step, inside it
 ```
 
 | Field  | On a flat frame | On a group frame         | On the child frame |
 | ------ | --------------- | ------------------------ | ------------------ |
 | `flow` | root id         | the flow the group is in | the sub-flow id    |
 | `step` | the step id     | the group step id        | the child step id  |
-| `i`    | absent          | present with `repeat`    | absent             |
 | `key`  | absent          | present with `repeat`    | absent             |
 
 **Stack vs history.** The stack is where you are; the history is where you were, as whole stacks
@@ -142,12 +144,36 @@ the ceiling an author accepts by omitting `keyBy`.
 
 ### 4.1 Stable item identity
 
-**Rule.** `key` is computed once, when the frame is pushed, and never recomputed. `i` is
-recomputed from `key` against the current items at the start of every navigation.
+**Rule.** `key` is computed once, when the frame is pushed, and never recomputed. The index is
+never stored: it is derived from `key` against the current items every time the repeat scope is
+built -- in phase 0.5 of a navigation and in the selector, which recomputes on every `rev`.
 
 **Outcome.** Standing on passenger `p2` at index 1, write `data.passengers` in a different
-order, press Next: the frame's `key` is still `p2`, `i` is now 0, and `scope.loop.item` is the
-same passenger object. Nothing about the answers already given moves.
+order: the very next render reads `loop.index` as 0 and `loop.item` as the same passenger
+object, before any navigation. Press Next: the frame's `key` is still `p2`. Nothing about the
+answers already given moves.
+
+### 4.1b Keys are unique
+
+**Rule.** Within one evaluation of `over`, keys are unique after `String()`. Numeric `1` and
+string `'1'` are one key. An item whose `keyBy` reads `undefined`, `null` or `''` has no
+identity. Either condition is a data error, refused deterministically rather than resolved
+silently: `here()` binds a colliding `key` to the first item that carries it, so selectors and
+guards never throw, and `step()` refuses every move that would enter, advance or resolve inside
+that group with
+
+```ts
+{ ok: false, reason: 'invalid', by: 'G',
+  errors: { G: { [keyBy]: '[wizzard] repeat keys collide: "1" at 0 and 2. …' } } }
+```
+
+in the `AGENTS.md` message shape, naming the group, the field and the positions. The existing
+`invalid` result already carries `errors` keyed by step and field (`navigate.ts:178`), so the
+bindings display it with no new surface. Without `keyBy` there is nothing to collide.
+
+**Outcome.** Two passengers with the same id: the group cannot be entered, the result names the
+positions, and fixing either id makes the same `next()` succeed. No silent fallback to the index,
+because that fallback is the stale-position bug 4.1 exists to remove.
 
 ### 4.2 Removal of the active item
 
@@ -158,9 +184,10 @@ A dead frame is never committed and never throws.
 **Outcome.** Remove the passenger being edited, then `next()`: the wizard lands on the passenger
 that took that position, or leaves the group if none survive. Between the `set()` and the
 navigation the stack still names the dead item -- `store.set` bumps `rev` only, and no selector
-recomputes the stack. Selectors do not throw on it, because they read only `frame.step`, a
-string (`select.ts:62`). R-C's remove button therefore removes and navigates in the same turn;
-the pruning rule is the guarantee for every host that does not.
+recomputes the stack. Selectors do not throw on it: `here()` finds no item for the `key` and
+hands back the scope of the deepest surviving frame, the same answer pruning will commit.
+R-C's remove button therefore removes and navigates in the same turn; the pruning rule is the
+guarantee for every host that does not.
 
 ### 4.3 Reordering
 
@@ -178,7 +205,7 @@ by id, to a flow already on the stack is refused at entry rather than entered, m
 
 **Outcome.** A group inside a repeat group inside the root gives a three-frame stack;
 `checkSession` reports zero problems on a recording of that run. Finishing the innermost
-sub-flow advances the innermost `i`; the outer group's `i` does not move.
+sub-flow advances the innermost group to its next item; the outer group's `key` does not move.
 
 ### 4.5 An empty `over`
 
@@ -284,15 +311,16 @@ sub-flow "is checked by whoever can resolve that sub-flow". So group frames deco
 `stack`/`history` names a step of the flow -- reusing `session.ts`'s frame checker, not a second
 copy -- nesting is legal, repeat keys resolve". Today it reuses `isStackEntry` and nothing else,
 and `isStackEntry` checks only that `flow` and `step` are strings: `{ flow: 'a', step: 'b', i:
-'x' }` decodes clean. (L4a also specifies `{ state, diagnostics } | { reset, reason }`; the
-shipped decoder returns `{ restored, state } | { restored, reason }`. Naming it here so the row
-and the code can be reconciled in one pass.)
+'x' }` decodes clean. `checkSession` does check `i` (`session.ts:201-205`), but that block is
+not shared with the decoder. (L4a also specifies `{ state, diagnostics } | { reset, reason }`;
+the shipped decoder returns `{ restored, state } | { restored, reason }`. Naming it here so the
+row and the code can be reconciled in one pass.)
 
 **Rules.**
 
 | Case                                  | Rule                                                                                                                                                                                                                                        |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `isStackEntry` and `i`/`key`          | Both are validated when present: `i` a non-negative integer, `key` a string. Two lines in `session.ts`, which both decoders already share.                                                                                                  |
+| `isStackEntry` and `key`              | `key`, when present, is a string. One line in `isStackEntry`, which both decoders already share; the `session.ts:201-205` block then checks `key` only on repeat groups, as it checks `i` today.                                            |
 | Frames naming a sub-flow              | `decodeSnapshot` takes the same optional `subFlows` registry `checkSession` takes (`session.ts:102-106`) and applies the same walk. Absent, behaviour is unchanged -- permissive -- and the frame is pruned by 4.9 on the first navigation. |
 | Items changed since the snapshot      | Cannot happen in isolation: `data` is restored from the same snapshot, so keys and items move together. A host that mutates `data` after decode is case 4.2.                                                                                |
 | The key is no longer present          | 4.9 prunes it. **No new `RestoreReason`** -- the existing set stays as shipped.                                                                                                                                                             |
@@ -323,19 +351,35 @@ short by five phases. Every phase that looks a step up reads the **root** flow:
 | 9     | the one commit; top frame replaced with `{ flow: flow.id, step: target }` (`navigate.ts:265`) | **yes**                 |
 | 10    | `afterNavigate`, which cannot fail the navigation                                             | no                      |
 
-So there are three injection points, not two:
+And every phase that evaluates an expression builds its scope with `scopeOf` (`navigate.ts:113`,
+`store.ts:180`), which is `{ data, ctx }` and nothing else. A child step whose `validate`, exit
+guard, enter guard or `input`-fed expression reads `loop.item` sees `undefined` in phases 2, 3
+and 7, and so does every selector.
 
-- **0.5 -- the owning flow.** One lookup after the lock: the flow that owns the current top
-  frame. Phases 2, 3, 5, 6, 7 then read it instead of `flow`, which is a rename at six sites.
-  `store.ts:192-197` (`validateStep`) reads `flow.steps[stepId]` from the root and needs the same
-  value; so does `createSelector` (`store.ts:116`), which already takes a _getter_, so passing
-  one that returns the active flow costs `select.ts` nothing and gives breadcrumbs and progress
-  inside a group -- today `derive` computes `index: -1` and `progress: 0` for every child step,
-  because a child step id is not in the root's `order` (`select.ts:59-73`). The memo stays sound:
-  the stack only changes on a commit, and a commit moves `rev`.
+So there are four injection points, not two:
+
+- **0.5 -- the owning flow and the active scope.** One lookup after the lock: the flow that owns
+  the current top frame, and the scope at that frame -- `data`, `ctx`, and `loop` derived from
+  the frame's `key` against the current items (4.1). Phases 2, 3, 5, 6, 7 then read that flow
+  instead of `flow`, which is a rename at six sites, and phases 2, 3 and 7 read that scope
+  instead of `scopeOf`. `store.ts` needs the same pair: `validateStep` (`store.ts:192-197`) and
+  the `load` callback (`store.ts:207-210`) both read `flow.steps[stepId]` from the root, and
+  `resolverFor` (`store.ts:182-190`) hands every resolver `scopeOf()`. `createSelector`
+  (`store.ts:116`) already takes a _getter_, so passing one that returns the active flow and
+  scope costs `select.ts` nothing and gives breadcrumbs and progress inside a group -- today
+  `derive` computes `index: -1` and `progress: 0` for every child step, because a child step id
+  is not in the root's `order` (`select.ts:59-73`). The memo stays sound: the stack and the items
+  only change on a commit, and a commit moves `rev`.
 - **4 -- resolution.** The traversal answers the whole intent, including prune, enter, advance,
   pop, and what `END` means at this depth. The flat path is untouched when no traversal is
   installed.
+- **8 -- the recheck.** Phases 6 and 7 await. `store.set` during that wait bumps `rev` but not
+  `nav` (`store.ts:314-320`, `commit.ts:14-16`), so the stale check passes and phase 9 would
+  commit a stack computed from a list that no longer exists. For a group move, phase 8 compares
+  `rev` with the value phase 4 read; if it moved, `step()` runs again on the fresh state, and a
+  different stack means `superseded`. A structural write during a group navigation therefore
+  supersedes it, like a newer navigation would. Flat moves skip the recheck: their target is a
+  step id, and a `set()` cannot move it.
 - **9 -- the commit.** The stack the move produced replaces the `slice(0, -1)` expression.
   Nothing else about phase 9 changes: it is still one write, computed from a pure function, which
   is what keeps hard rule 2 intact.
@@ -343,43 +387,74 @@ So there are three injection points, not two:
 ### 5.2 The seam (proposal)
 
 A new entry `packages/core/src/v1/groups.ts`, exported as `@wizzard-packages/core/groups`,
-exporting one object with two pure functions. Handed to `createWizard` and threaded to
-`NavContext` beside `registry` and `hooks`:
+exporting one object with two pure functions. Handed to `createWizard` as `groups`, beside a
+`subFlows` registry -- the same `Readonly<Record<string, FlowDefinition>>` that `checkSession`
+takes (`session.ts:102-106`) and that 4.10 gives `decodeSnapshot` -- and threaded to
+`NavContext` beside `registry` and `hooks`. Both functions take `subFlows`, because a
+`GroupStep.flow` that is a string names a sub-flow nothing else can resolve: the expression
+`Registry` holds resolver functions, not definitions.
 
 ```ts
 // proposal -- groups.ts
 export interface Traversal {
-  /** Phase 0.5: which flow owns the top frame. */
-  owner: (root: FlowDefinition, stack: readonly Frame[]) => FlowDefinition;
+  /** Phase 0.5: the flow that owns the top frame, and the scope at that frame. */
+  here: (
+    root: FlowDefinition,
+    state: WizardState,
+    registry?: Registry,
+    subFlows?: SubFlows
+  ) => { flow: FlowDefinition; scope: Scope };
   /** Phase 4: the whole move, pure. `null` means no target. */
   step: (
     root: FlowDefinition,
     state: WizardState,
     intent: NavIntent,
-    scope: Scope,
-    registry?: Registry
-  ) => { stack: readonly Frame[]; to: string | typeof END; scope: Scope } | null;
+    registry?: Registry,
+    subFlows?: SubFlows
+  ) =>
+    | { stack: readonly Frame[]; to: string | typeof END; scope: Scope }
+    | { ok: false; reason: 'invalid'; by: string; errors: Readonly<Record<string, string>> }
+    | null;
 }
 ```
 
+`here().scope` is what phases 2, 3 and 7 evaluate against and what the selector and
+`resolverFor` are given. `step().scope` is the scope _after_ the move -- the next item's
+`loop` -- which the phase-7 enter guard of the target needs before anything is committed. It is
+transient by design: after the commit the next `here()` rebuilds the same value from the
+committed stack, so nothing is lost and nothing derived is stored.
+
 ```ts
 // proposal -- the whole of the seam inside navigate.ts
-const here = ctx.groups?.owner(flow, locked.stack) ?? flow;          // phases 2,3,5,6,7 read `here`
-const move = ctx.groups?.step(flow, state, intent, scopeOf(state), ctx.registry);
+const at = ctx.groups?.here(flow, locked, ctx.registry, ctx.subFlows)
+  ?? { flow, scope: scopeOf(locked) };                              // phases 2,3,5,6,7 read `at`
+const move = ctx.groups?.step(flow, state, intent, ctx.registry, ctx.subFlows);
+if (move && 'ok' in move) return fail(move);                        // 4.1b
 const target = move ? move.to : /* the three-way resolution as today */;
+// phase 8, group moves only:
+if (move && host.read().rev !== state.rev) { /* re-run step(); different stack -> superseded */ }
 // phase 9:
-stack: move ? move.stack : [...before.stack.slice(0, -1), { flow: here.id, step: target }],
+stack: move ? move.stack : [...before.stack.slice(0, -1), { flow: at.flow.id, step: target }],
 ```
 
-Plus one guard the flat path needs whether or not traversal is installed. Without it, a flow
+Plus one check the flat path needs whether or not traversal is installed. Without it, a flow
 containing a `GroupStep` and no traversal fails silently and expensively: phase 5 finds the step,
 `reachable` includes it, phase 9 makes it current, and the binding is asked to render a step
-whose type has no `view` field. A new `NavReason` of `'groups-unsupported'` is a short string
-literal; the sentence explaining it lives in the docs under that code, which is what the fourth
-clause of the `AGENTS.md` error template is for.
+whose type has no `view` field. That is a configuration error, not a navigation outcome, so it
+is refused where `resolverFor` refuses an unknown resolver (`store.ts:188`): by throwing. The
+check runs in `createWizard` and again in `patchFlow` (`store.ts:373`), which is the only other
+place a flow arrives, so it fails before the first render rather than on the first `next()`:
+
+```
+[wizzard] step "G" is a group, but no traversal is installed. The main entry walks flat flows
+only. Pass `groups` from @wizzard-packages/core/groups to createWizard. <docs>#groups-not-installed
+```
+
+No new `NavReason`: `'groups-unsupported'` was considered and dropped, because a returned code
+with the explanation on a page is the single-clause failure the `AGENTS.md` template forbids.
 
 Rule 2 holds: `step` returns a stack, phase 9 commits it. Rule 4 holds: nothing derived is
-stored; `i` is a cache with a stated recompute point, and `key` is identity, not a derivation.
+stored; `key` is identity, and the index is rebuilt from it on every read.
 
 ### 5.3 The size decision
 
@@ -398,17 +473,20 @@ Two options were on the table.
 **(a) Traversal behind `@wizzard-packages/core/groups`, phase 9 falling back to flat traversal.**
 The estimate for the seam itself, which is what a flat flow pays:
 
-| Piece                                                     | Estimate (gzip) |
-| --------------------------------------------------------- | --------------- |
-| `owner()` call plus the rename at six sites               | 15-30 B         |
-| the `move` binding and two ternaries (phases 4, 9)        | 30-50 B         |
-| `isGroup` guard plus the `'groups-unsupported'` literal   | 20-35 B         |
-| `groups` threaded through `WizardOptions` -> `navContext` | 10-20 B         |
-| **total**                                                 | **75-135 B**    |
+| Piece                                                                    | Estimate (gzip) |
+| ------------------------------------------------------------------------ | --------------- |
+| `here()` call, the rename at six sites, the scope threaded into `store`  | 25-40 B         |
+| the `move` binding, the `invalid` return, two ternaries (phases 4, 9)    | 40-60 B         |
+| the phase-8 `rev` recheck                                                | 25-40 B         |
+| `isGroup` scan at `createWizard` and `patchFlow`, with its message       | 50-70 B         |
+| `groups` and `subFlows` threaded through `WizardOptions` -> `navContext` | 15-25 B         |
+| **total**                                                                | **155-235 B**   |
 
-Types are free; the identifiers repeat, and gzip is kind to that. Call it ~100 B, and it must be
+Types are free; the identifiers repeat, and gzip is kind to that. Call it ~200 B, and it must be
 **measured before the budget line is written, not guessed**. Against 70 B of headroom, the
-honest expectation is that `core-v1` moves to 4.6 kB.
+honest expectation is that `core-v1` moves to 4.6 kB, and 4.7 kB is not out of the question.
+The message is the largest single piece; it is also the one the `AGENTS.md` template does not
+allow to be shortened.
 
 **(b) Traversal in the main entry, budget raised deliberately.** The traversal itself -- evaluate
 `over`, build and compare keys, push, advance, pop, prune, resolve `END` by depth, pipe `input`
@@ -439,10 +517,11 @@ five modules describing a feature the engine refuses, and Premise 6 then require
 `validateFlow` to reject the construct those modules exist to handle.
 
 **Cost of including it:** the `groups.ts` entry (500-900 B, its own budget, its own
-`.size-limit.js` line, tsup entry and `exports` key, per hard rule 6); ~100 B of seam and a
+`.size-limit.js` line, tsup entry and `exports` key, per hard rule 6); ~200 B of seam and a
 `core-v1` budget raise to 4.6 kB with the reason stated in the PR; the phase-9 history fix (3.
-above); `decodeSnapshot` taking `subFlows` and `isStackEntry` learning two fields; the
-`navigate.ts:24-26` header comment updated; contract tests on both bindings.
+above); `Frame.i` replaced by `key` in `state.ts` and `session.ts`; `decodeSnapshot` taking
+`subFlows` and `isStackEntry` learning one field; the `navigate.ts:24-26` header comment
+updated; contract tests on both bindings.
 
 **Cost of deferring:** R-C is replaced as release evidence, and the plan's "three demanding
 reference applications" become two. `validateFlow` grows a `flow/groups-unsupported` problem, the
@@ -462,37 +541,48 @@ file needs an edit, the seam is in the wrong place.
 **New property tests -- structural change during a pending navigation.** The hazard is precise
 and comes from `commit.ts`: `store.set` bumps `rev` but not `nav` (`store.ts:314-320`,
 `commit.ts:14-16`), so mutating the item list while a navigation is in flight does **not**
-supersede it, and phase 4 resolves against data that changed after phase 2 read it. Generate an
-item list and a sub-flow, start a navigation whose phase-2 validation is a deferred promise,
-add / remove / reorder items while it is outstanding, then resolve. Properties:
+supersede it, and phase 4 resolves against data that changed after phase 2 read it -- or, worse,
+phase 9 commits a stack that phase 4 computed before a `set()` in phase 6 or 7 removed its item.
+Generate an item list and a sub-flow, start a navigation, and pick the window at random: a
+deferred phase-2 `validate`, a deferred phase-6 `load`, or a deferred phase-7 async enter guard.
+Add / remove / reorder items while the window is open, then resolve. The phase-2 window is the
+easy one, because phase 4 has not run yet; the phase-6 and phase-7 windows are the ones the
+phase-8 recheck exists for, and the test is only worth having if it opens all three. Properties:
 
 1. The committed stack never names a `key` absent from the final item list.
 2. A navigation completes exactly once, and `rev` moves exactly once for it.
 3. A navigation whose active item vanished mid-flight resolves to `superseded`, or lands on a
    surviving item -- never throws, never commits a dead frame.
 4. Depth never exceeds 32 for any generated nesting.
+5. With duplicate keys generated into the list, no move into or inside the group succeeds, the
+   result is `invalid` naming the group, and selectors still produce a value.
 
 **One test per invariant:**
 
-| §    | Test                                                                             |
-| ---- | -------------------------------------------------------------------------------- |
-| 4.1  | reorder while inside an item; `key` fixed, `i` moved, `loop.item` identical      |
-| 4.2  | remove the active item, then navigate; land on its successor or leave the group  |
-| 4.3  | reorder mid-group; Next follows the moved item, not the old index                |
-| 4.4  | three-frame nesting; `checkSession` clean; inner `i` advances, outer does not    |
-| 4.4  | a sub-flow naming an ancestor by id is refused at entry, not entered             |
-| 4.5  | `over: []` walks past; `G` never in `visited`                                    |
-| 4.6  | `back()` from the first step of item 3 lands where item 2 actually stopped       |
-| 4.6  | `back()` twice does not oscillate -- the phase-9 history fix                     |
-| 4.7  | `go` a step of an ancestor pops frames and keeps `data`; `go` a sibling stays    |
-| 4.7  | `sequential` policy inside a group compares against the sub-flow's `active`      |
-| 4.8  | child `END` with a following step lands there, `status: 'idle'`                  |
-| 4.8  | child `END` as the last step sets `status: 'done'` once                          |
-| 4.9  | dead frame plus everything above it dropped; history skips a dead recorded stack |
-| 4.10 | round-trip a snapshot taken inside a group; frames and `key` survive             |
-| 4.10 | decode with `subFlows` and a deleted child step -> `snapshot/unknown-step`       |
-| 4.10 | decode without `subFlows` -> restored, then pruned on the first navigation       |
-| 4.10 | `isStackEntry` rejects `i: 'x'` and `key: 3`                                     |
+| §    | Test                                                                                    |
+| ---- | --------------------------------------------------------------------------------------- |
+| 4.1  | reorder while inside an item; `key` fixed, `loop.index` moved before any navigation     |
+| 4.1b | two items with one key: entry refused as `invalid`; `1` and `'1'` collide; `''` refused |
+| 4.2  | remove the active item, then navigate; land on its successor or leave the group         |
+| 4.3  | reorder mid-group; Next follows the moved item, not the old index                       |
+| 4.4  | three-frame nesting; `checkSession` clean; inner item advances, outer `key` fixed       |
+| 4.4  | a sub-flow naming an ancestor by id is refused at entry, not entered                    |
+| 4.5  | `over: []` walks past; `G` never in `visited`                                           |
+| 4.6  | `back()` from the first step of item 3 lands where item 2 actually stopped              |
+| 4.6  | `back()` twice does not oscillate -- the phase-9 history fix                            |
+| 4.7  | `go` a step of an ancestor pops frames and keeps `data`; `go` a sibling stays           |
+| 4.7  | `sequential` policy inside a group compares against the sub-flow's `active`             |
+| 4.8  | child `END` with a following step lands there, `status: 'idle'`                         |
+| 4.8  | child `END` as the last step sets `status: 'done'` once                                 |
+| 4.9  | dead frame plus everything above it dropped; history skips a dead recorded stack        |
+| 4.10 | round-trip a snapshot taken inside a group; frames and `key` survive                    |
+| 4.10 | decode with `subFlows` and a deleted child step -> `snapshot/unknown-step`              |
+| 4.10 | decode without `subFlows` -> restored, then pruned on the first navigation              |
+| 4.10 | `isStackEntry` rejects `key: 3`; `checkSession` reports `key` on a non-repeat step      |
+| 5.1  | a child `validate`, exit guard and enter guard each read `loop.item` and see it         |
+| 5.1  | a child step with `load` runs its resolver; the child id is absent from the root        |
+| 5.1  | a string `GroupStep.flow` resolves through `subFlows` on entry and on decode            |
+| 5.2  | `createWizard` and `patchFlow` throw the template message on a group without `groups`   |
 
 **Contract tests on both bindings, driven by R-C.** In `contract/binding-suite.ts`, which each
 binding runs against its own harness. New probe test ids: `add-item`, `remove-item`,
@@ -503,27 +593,30 @@ fails the test its sibling passes -- which is the whole reason that file exists.
 
 ## 8. Open questions
 
-| #   | Question                                                                                                                                                           | Default if nobody decides                                                                                                                         |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Q1  | Is `keyBy` an item-relative path or an `Expr`?                                                                                                                     | Item-relative dotted path. The type is already `string`, not `Expr` (`flow.ts:65`); read with `expr.ts`'s walker.                                 |
-| Q2  | Non-string keys -- numeric ids, objects                                                                                                                            | `String(value)`; a key that stringifies to `''` or `'undefined'` falls back to the index and is reported through the L6 diagnostics channel.      |
-| Q3  | `visited` / `completed` per item                                                                                                                                   | No. Per step id, ceiling documented (4.8). Revisit only if R-C's UI cannot be built without it.                                                   |
-| Q4  | Where does `GroupStep.input` land? Nothing reads it today.                                                                                                         | Evaluated on entry and merged into the `Scope.ctx` the traversal hands the child frames. `state.ctx` is untouched -- derived, not stored.         |
-| Q5  | `go` id collision between a child flow and an ancestor                                                                                                             | Innermost wins (4.7).                                                                                                                             |
-| Q6  | `validate-flow.ts:20` accepts a `step` root that `Scope` does not have and `expr.ts:53-78` cannot read -- `$get: 'step.x'` validates and evaluates to `undefined`. | Out of L9's scope. File it separately, per the `AGENTS.md` Scope rule.                                                                            |
-| Q7  | Breadcrumbs inside a group: the child's steps or the parent's?                                                                                                     | The child's, via the active-flow getter in 5.1 -- "step 2 of 3 for this passenger". A site that wants both composes them from `getState().stack`. |
+| #   | Question                                                                                                                                                           | Default if nobody decides                                                                                                                          |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Q1  | Is `keyBy` an item-relative path or an `Expr`?                                                                                                                     | Item-relative dotted path. The type is already `string`, not `Expr` (`flow.ts:65`); read with `expr.ts`'s walker.                                  |
+| Q2  | Non-string keys -- numeric ids, objects                                                                                                                            | `String(value)`, so `1` and `'1'` collide and `[object Object]` collides with every other object. `undefined`, `null` and `''` are refused (4.1b). |
+| Q3  | `visited` / `completed` per item                                                                                                                                   | No. Per step id, ceiling documented (4.8). Revisit only if R-C's UI cannot be built without it.                                                    |
+| Q4  | Where does `GroupStep.input` land? Nothing reads it today.                                                                                                         | Evaluated on entry and merged into the `Scope.ctx` the traversal hands the child frames. `state.ctx` is untouched -- derived, not stored.          |
+| Q5  | `go` id collision between a child flow and an ancestor                                                                                                             | Innermost wins (4.7).                                                                                                                              |
+| Q6  | `validate-flow.ts:20` accepts a `step` root that `Scope` does not have and `expr.ts:53-78` cannot read -- `$get: 'step.x'` validates and evaluates to `undefined`. | Out of L9's scope. File it separately, per the `AGENTS.md` Scope rule.                                                                             |
+| Q7  | Breadcrumbs inside a group: the child's steps or the parent's?                                                                                                     | The child's, via the active-flow getter in 5.1 -- "step 2 of 3 for this passenger". A site that wants both composes them from `getState().stack`.  |
 
 ## 9. What the code says that the plan does not
 
 Collected so the rows can be corrected in one pass rather than rediscovered per PR.
 
-| Finding                                                                                                                                 | Where                       |
-| --------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
-| `wizzard-12` and row L9 say "phases 4 and 9"; phases 2, 3, 5, 6, 7 all read the root flow, and so do `store.ts:193` and `store.ts:116`. | 5.1                         |
-| L4a says the decoder reuses `session.ts`'s frame checker; it reuses only `isStackEntry`, and group frames decode unchecked.             | 4.10, `snapshot.ts:174-179` |
-| L4a specifies `{ state, diagnostics } \| { reset, reason }`; the shipped decoder returns `{ restored, … }`.                             | 4.10, `snapshot.ts:52-54`   |
-| `state.ts:24` calls `history` "a real back stack"; `resolveBack` never reads it, and phase 9 appends on a backward move too.            | 3, 4.6                      |
-| `canBack` is true at the first step after a `back()`, while `back()` answers `no-target`.                                               | 3, `select.ts:79`           |
-| `.size-limit.js:24-26` says a flat flow "pays nothing"; the seam lives in the budgeted entry either way.                                | 5.3                         |
-| `Scope.loop` and the `loop` root ship in two modules and are populated by nothing.                                                      | 2                           |
-| `isStackEntry` validates neither `i` nor `key`, so `{ flow, step, i: 'x' }` decodes clean.                                              | 4.10, `session.ts:62-66`    |
+| Finding                                                                                                                                                                                | Where                                  |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| `wizzard-12` and row L9 say "phases 4 and 9"; phases 2, 3, 5, 6, 7 all read the root flow, and so do `store.ts:193`, `store.ts:207-210` and `store.ts:116`.                            | 5.1                                    |
+| Every expression in a navigation and every selector is evaluated against `{ data, ctx }`; nothing builds a `loop` scope, so a child step's guards and `validate` cannot read its item. | 5.1, `navigate.ts:113`, `store.ts:180` |
+| A `set()` during phase 6 or 7 bumps `rev`, not `nav`; the stale check does not see it, so a move computed in phase 4 commits against data that changed after it.                       | 5.1, `commit.ts:14-16`                 |
+| L4a says the decoder reuses `session.ts`'s frame checker; it reuses only `isStackEntry`, and group frames decode unchecked.                                                            | 4.10, `snapshot.ts:174-179`            |
+| L4a specifies `{ state, diagnostics } \| { reset, reason }`; the shipped decoder returns `{ restored, … }`.                                                                            | 4.10, `snapshot.ts:52-54`              |
+| `state.ts:24` calls `history` "a real back stack"; `resolveBack` never reads it, and phase 9 appends on a backward move too.                                                           | 3, 4.6                                 |
+| `canBack` is true at the first step after a `back()`, while `back()` answers `no-target`.                                                                                              | 3, `select.ts:79`                      |
+| `.size-limit.js:24-26` says a flat flow "pays nothing"; the seam lives in the budgeted entry either way.                                                                               | 5.3                                    |
+| `Scope.loop` and the `loop` root ship in two modules and are populated by nothing.                                                                                                     | 2                                      |
+| `isStackEntry` validates only `flow` and `step`, so `{ flow, step, i: 'x' }` decodes clean; the `i` check at `session.ts:201-205` is reachable from `checkSession` only.               | 4.10, `session.ts:62-66`               |
+| `Frame.i` is a stored derived value (hard rule 4) that nothing writes; it goes, `key` replaces it.                                                                                     | 2, `state.ts:11-16`                    |
