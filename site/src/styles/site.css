@@ -63,11 +63,21 @@ body {
   caret-color: var(--accent);
 }
 
-/* Underlines sit clear of descenders and match the hairline weight the rest
-   of the page is drawn with. */
+/* Links. DESIGN.md gives `--accent` to the active step, the primary action and
+   links, and nothing implemented the third: every anchor outside the top bar
+   was shipping the browser's own blue. `:where` keeps this at zero specificity
+   so Starlight's own link colours and the button classes still win.
+
+   Underlines sit clear of descenders and match the hairline weight the rest of
+   the page is drawn with. */
 :where(a) {
+  color: var(--accent);
   text-underline-offset: 0.18em;
   text-decoration-thickness: from-font;
+}
+
+:where(a):hover {
+  text-decoration-thickness: 2px;
 }
 
 /* Digits that are read in columns line up in columns: the graph's counts, the
