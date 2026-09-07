@@ -4,7 +4,7 @@ import '@fontsource/ibm-plex-mono/400.css';
 import '@fontsource/ibm-plex-mono/500.css';
 import '../styles/tokens.css';
 import '../styles/site.css';
-import FlowGraph from '../components/FlowGraph.astro';
+import HeroFlow from '../components/HeroFlow';
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const title = 'wizzard - headless multi-step flows for React and Vue';
@@ -40,22 +40,16 @@ const description =
             The graph beside this form is that definition, running.
           </p>
 
-          <div class="hero-stage">
-            <div>
-              <p class="eyebrow">Try it</p>
-              <p class="lede">
-                Change the payer type and the route changes: <code>Company</code> exists only
-                while <code>payer</code> is <code>business</code>.
-              </p>
-              <div class="actions">
-                <a class="button button-primary" href={`${base}/docs/start/`}>Get started</a>
-                <a class="button button-secondary" href={`${base}/docs/start/#the-flow`}>Explore this flow</a>
-              </div>
-            </div>
-            <FlowGraph />
-          </div>
+          <p class="lede">
+            Change the payer type and the route changes: <code>Company</code> exists only while
+            <code>payer</code> is <code>business</code>.
+          </p>
+
+          <HeroFlow client:load />
 
           <div class="actions">
+            <a class="button button-primary" href={`${base}/docs/start/`}>Get started</a>
+            <a class="button button-secondary" href={`${base}/docs/start/#the-flow`}>Explore this flow</a>
             <span class="install">
               <span class="tag">install</span>
               <span>npm i @wizzard-packages/core @wizzard-packages/react</span>

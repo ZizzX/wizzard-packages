@@ -115,13 +115,6 @@ body {
   color: var(--fg-muted);
 }
 
-.hero-stage {
-  display: grid;
-  grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
-  gap: var(--space-8);
-  align-items: start;
-}
-
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -218,8 +211,267 @@ body {
 }
 
 @media (max-width: 900px) {
-  .hero-stage,
   .rows > article {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* -------------------------------------------------------------------------
+   The hero island: the form on the engine, and the graph of the definition
+   it runs. Not scoped by Astro, because the island is React - so every rule
+   below is namespaced under `.hero-flow`.
+   ------------------------------------------------------------------------- */
+
+.hero-flow {
+  display: grid;
+  grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: start;
+}
+
+.flow-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.flow-form .field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.flow-form .field-label {
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+}
+
+.flow-form input {
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--fg);
+  background: var(--bg);
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-control);
+  padding: 0 var(--space-3);
+  min-height: var(--target-min);
+  width: 100%;
+}
+
+.flow-form input[aria-invalid='true'] {
+  border-color: var(--st-error);
+}
+
+.flow-form .segmented {
+  display: flex;
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+}
+
+.flow-form .segmented button {
+  flex: 1;
+  font: inherit;
+  font-size: var(--text-xs);
+  min-height: var(--target-min);
+  background: transparent;
+  color: var(--fg-muted);
+  border: 0;
+  cursor: pointer;
+}
+
+.flow-form .segmented button[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: var(--weight-strong);
+}
+
+.flow-form .button[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.flow-message {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: var(--leading-code);
+  /* Reserved, so a message arriving does not move the buttons above it. */
+  min-height: 2.6em;
+}
+
+.flow-message.idle {
+  color: var(--fg-muted);
+}
+
+.flow-message.ok {
+  color: var(--accent);
+}
+
+.flow-message.err {
+  color: var(--st-error);
+}
+
+.hero-flow .graph {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.hero-flow .graph-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.hero-flow .rebuild {
+  font: inherit;
+  background: transparent;
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-control);
+  color: var(--fg-muted);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+}
+
+.hero-flow .frame {
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  padding: var(--space-4);
+  overflow-x: auto;
+}
+
+.hero-flow svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-width: 240px;
+}
+
+.hero-flow .node {
+  transition:
+    opacity var(--dur-graph) var(--ease-out),
+    transform var(--dur-graph) var(--ease-out);
+}
+
+.hero-flow .node rect,
+.hero-flow .node circle {
+  fill: var(--surface-raised);
+  stroke: var(--line-strong);
+  stroke-width: 1.5;
+  transition:
+    fill var(--dur-graph) var(--ease-out),
+    stroke var(--dur-graph) var(--ease-out);
+}
+
+.hero-flow .node text {
+  fill: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.hero-flow .node.active rect {
+  stroke: var(--st-active);
+  stroke-width: var(--border-selected);
+  fill: var(--accent-soft);
+}
+
+.hero-flow .node.error rect {
+  stroke: var(--st-blocked);
+  stroke-width: var(--border-selected);
+  fill: var(--st-blocked-soft);
+}
+
+.hero-flow .node.visited rect {
+  stroke: var(--st-visited);
+}
+
+/* Not upcoming and not passed: this step's `when` is false, so it is not on
+   the route at all. The dashed outline is what says so without colour. */
+.hero-flow .node.skipped {
+  opacity: 0.34;
+}
+
+.hero-flow .node.skipped rect {
+  stroke-dasharray: 4 4;
+}
+
+.hero-flow .node.group rect.inner {
+  fill: none;
+  stroke: var(--st-group);
+}
+
+.hero-flow .node.end.done circle {
+  fill: var(--st-active);
+  stroke: var(--st-active);
+}
+
+.hero-flow .edge polyline {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: var(--edge-width);
+  /* `pathLength` normalises every polyline to 100 units, so one dash length
+     draws them all and no measurement in JavaScript is needed. */
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: wz-draw var(--dur-edge-draw) var(--ease-out) forwards;
+  transition: stroke var(--dur-graph) var(--ease-out);
+}
+
+@keyframes wz-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.hero-flow .edge.live polyline {
+  stroke: var(--st-active);
+}
+
+.hero-flow .edge.dim {
+  opacity: 0.22;
+}
+
+.hero-flow .edge.back polyline {
+  stroke-dasharray: 4 4;
+  animation: none;
+  stroke-dashoffset: 0;
+}
+
+.hero-flow .node-when {
+  fill: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+}
+
+.hero-flow .node.active .node-when {
+  fill: var(--accent);
+}
+
+/* The screen reader's path through the graph. */
+.hero-flow .mirror {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 900px) {
+  .hero-flow {
     grid-template-columns: minmax(0, 1fr);
   }
 }
