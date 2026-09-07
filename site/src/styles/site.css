@@ -123,6 +123,35 @@ body {
   color: var(--fg);
 }
 
+/* The footer had a class and no rule, so three inline children ran together:
+   "MIT licensedSourceDocumentation". It is the topbar the other way up - the
+   same row, the same gap, the same muted links - with the licence held left
+   and the links pushed right. */
+.site-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-6);
+  min-height: 60px;
+  margin-top: var(--space-12);
+  border-top: var(--border) solid var(--line);
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+}
+
+.site-footer a {
+  color: var(--fg-muted);
+  text-decoration: none;
+}
+
+.site-footer a:first-of-type {
+  margin-left: auto;
+}
+
+.site-footer a:hover {
+  color: var(--fg);
+}
+
 .wordmark {
   display: inline-flex;
   align-items: center;
@@ -250,11 +279,15 @@ body {
   border-bottom: var(--border) solid var(--line);
 }
 
+/* Capped at the widest graph the page draws - 788 user units plus the frame's
+   padding and border, 51.375rem - so the claim and the picture under it share
+   a right edge as well as a left one, and a row reads as one object. */
 .flow-row-text {
   display: grid;
-  grid-template-columns: minmax(0, 24rem) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 18rem) minmax(0, 1fr);
   gap: var(--space-8);
   align-items: baseline;
+  max-width: 51.375rem;
 }
 
 .flow-row h2 {
