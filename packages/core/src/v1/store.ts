@@ -3,6 +3,7 @@ import { type SliceAt, type StepIdOf } from './define';
 import { END, isGroup, type FlowDefinition, type StepDef } from './flow';
 import {
   runNav,
+  type AttemptPhase,
   type Hooks,
   type NavContext,
   type NavIntent,
@@ -28,6 +29,11 @@ import type { AsyncRegistry, Json, Scope } from './expr';
  * `rev` moves exactly once per change and listeners are called exactly once.
  * The 0.x store notified twice on every validation action, and both bindings
  * carried guards to undo the second render.
+ *
+ * One hook fires from outside `write`: `onAttempt`, reported by the navigation
+ * wrapper when an attempt starts and when it ends or throws, so a plugin can
+ * explain a refused move that never committed. Both go through the same
+ * dispatch, so a plugin disabled in one hook is silent in the other.
  */
 
 export type Snapshot = WizardState & Derived;
@@ -214,15 +220,24 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
   const write = (next: WizardState): void => {
     const previous = state;
     state = next;
+    dispatch('onCommit', (h) => h.onCommit?.(state, previous));
+    notify();
+  };
+
+  /**
+   * The one way a hook is called back: skips plugins that are disabled, have
+   * no such hook, or are still initialising, and disables the one that throws.
+   * `onCommit` and `onAttempt` share it so the two cannot drift apart.
+   */
+  const dispatch = (at: 'onCommit' | 'onAttempt', call: (h: Hooks) => void): void => {
     for (const h of plugins) {
-      if (initializing || destroyed || h.onCommit === undefined || disabled.has(h.name)) continue;
+      if (initializing || destroyed || h[at] === undefined || disabled.has(h.name)) continue;
       try {
-        h.onCommit(state, previous);
+        call(h);
       } catch (error) {
-        fail(h.name, 'onCommit', error);
+        fail(h.name, at, error);
       }
     }
-    notify();
   };
 
   /**
@@ -289,12 +304,26 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
     signal: controller?.signal,
   });
 
+  let attempts = 0;
   const navigate = async (
-    intent: Parameters<typeof runNav>[2],
-    opts?: { validate?: boolean }
+    intent: NavIntent,
+    opts?: { validate?: boolean },
+    source: 'call' | 'start' = 'call'
   ): Promise<NavResult> => {
     controller = new AbortController();
-    return runNav(navContext(), { read: () => state, write }, intent, opts ?? {});
+    const id = ++attempts;
+    const report = (phase: AttemptPhase): void => {
+      dispatch('onAttempt', (h) => h.onAttempt?.({ id, intent, source, rev: state.rev, ...phase }));
+    };
+    report({ phase: 'start' });
+    try {
+      const result = await runNav(navContext(), { read: () => state, write }, intent, opts ?? {});
+      report({ phase: 'end', result });
+      return result;
+    } catch (error) {
+      report({ phase: 'error', error });
+      throw error;
+    }
   };
 
   // Plugins are initialised before the engine is handed out, so a restored
@@ -375,7 +404,7 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
         return Promise.resolve({ ok: true, from: current, to: current ?? END });
       }
 
-      starting = navigate({ type: 'next' }, { validate: false }).finally(() => {
+      starting = navigate({ type: 'next' }, { validate: false }, 'start').finally(() => {
         starting = undefined;
       });
       return starting;

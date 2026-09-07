@@ -1,6 +1,8 @@
 import { groups } from '@wizzard-packages/core/groups';
 import { describe, expect, it } from 'vitest';
 
+import { flowC as tripFlow, subFlowsC } from './fixtures';
+
 import type { FlowDefinition, SubFlows, Traversal } from '@wizzard-packages/core/v1';
 
 /**
@@ -100,34 +102,9 @@ const until = async (predicate: () => boolean, what: string): Promise<void> => {
   throw new Error(`timed out waiting for ${what}`);
 };
 
-/**
- * R-C, small enough to assert on: a repeat group over passengers, a two-step
- * sub-flow for each, and a step after the group to leave it for.
- *
- * JSON, like every flow. The group names its sub-flow by string, so the
- * registry is what resolves it - the same pair a host passes `createWizard`.
- */
-const passengerFlow: FlowDefinition = {
-  id: 'passenger',
-  order: ['seat', 'meal'],
-  steps: { seat: { label: 'Seat' }, meal: { label: 'Meal' } },
-  policy: 'free',
-};
-
-const tripFlow: FlowDefinition = {
-  id: 'trip',
-  version: 1,
-  order: ['passengers', 'review'],
-  steps: {
-    passengers: {
-      flow: 'passenger',
-      when: { $not: { $empty: { $get: 'data.passengers' } } },
-      repeat: { over: { $get: 'data.passengers' }, keyBy: 'id' },
-    },
-    review: { label: 'Review' },
-  },
-  policy: 'free',
-};
+// R-C - a repeat group over passengers, a two-step sub-flow for each, and a
+// step after the group to leave it for - lives in `./fixtures` beside R-A and
+// R-B, so the devtools tests and the site draw the same flow this suite drives.
 
 const people = (...ids: string[]): Record<string, unknown> => ({
   passengers: ids.map((id) => ({ id })),
@@ -273,7 +250,7 @@ export function describeBindingContract(harness: BindingHarness): void {
         flow: tripFlow,
         data: people(...ids),
         groups,
-        subFlows: { passenger: passengerFlow },
+        subFlows: subFlowsC,
       });
 
     it('gains an item when one is added, and reaches it', async () => {
