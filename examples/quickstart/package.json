@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@wizzard-packages/core": "workspace:*",
+    "@wizzard-packages/devtools": "workspace:*",
     "@wizzard-packages/react": "workspace:*",
     "@wizzard-packages/vue": "workspace:*",
     "react": "^19.2.0",

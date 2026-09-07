@@ -109,6 +109,18 @@ export function useWizard<F extends FlowDefinition = FlowDefinition>(): Wizard<F
 }
 
 /**
+ * The wizard above, or null outside a provider.
+ *
+ * `useWizard` throws, which is right for a component that cannot work without
+ * one. Devtools can: it says so in a line and keeps the rest of the panel
+ * working, and a tool that crashes the app it is diagnosing is worse than one
+ * that reports it has nothing to watch.
+ */
+export function useOptionalWizard(): Wizard | null {
+  return useContext(WizardContext);
+}
+
+/**
  * Subscribes to a slice of the snapshot.
  *
  * The cache is the documented shape for a selector over `useSyncExternalStore`:

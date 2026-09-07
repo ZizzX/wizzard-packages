@@ -233,13 +233,49 @@ export default [
   // development-time dependency, so the budget exists to catch accidental
   // growth, not to fight for bytes; the panel gets its own line when it lands.
   //
-  // Measured 2026-09-07 at 3069 B; the limit is that plus ten percent.
+  // Measured 2026-09-07 at 3069 B, and again at 3379 B once the review rounds
+  // on that PR had landed - the attempt-generation guard, the seen-set the
+  // recorder starts from and the whole-shape bundle check. The limit is the
+  // second number plus ten percent, so the next honest fix does not spend its
+  // first minute on a budget line.
   {
     name: 'devtools headless',
     path: 'packages/devtools/src/headless/index.ts',
-    limit: '3.4 kB',
+    limit: '3.7 kB',
     gzip: true,
     ignore: [
+      '@wizzard-packages/core',
+      '@wizzard-packages/core/v1',
+      '@wizzard-packages/core/graph',
+      '@wizzard-packages/core/session',
+    ],
+  },
+
+  // The panel itself: the React entry, with the headless modules it consumes
+  // and the stylesheet it injects. React, the binding and core are the host's,
+  // so they are ignored here; what is measured is what devtools adds.
+  //
+  // Measured 2026-09-07 at 13 308 B; the limit is that plus ten percent.
+  //
+  // The note's honest expectation was 5-7 kB and the measurement is twice it,
+  // so the number is written here with what it bought rather than quietly
+  // rounded up. Roughly a third is the headless layer the panel re-exports
+  // (3.4 kB on its own line), and the rest is five views over one snapshot -
+  // graph, state, activity, inspector, export preview - plus the stylesheet
+  // the panel injects, which is a string in the bundle because a .css file
+  // would make every consumer configure a bundler for it and inline styles
+  // cannot express a focus ring. It is a development-time dependency: the
+  // budget catches accidental growth, it is not a fight for bytes.
+  {
+    name: 'devtools panel',
+    path: 'packages/devtools/src/index.ts',
+    limit: '14.6 kB',
+    gzip: true,
+    ignore: [
+      'react',
+      'react-dom',
+      '@wizzard-packages/react',
+      '@wizzard-packages/react/v1',
       '@wizzard-packages/core',
       '@wizzard-packages/core/v1',
       '@wizzard-packages/core/graph',

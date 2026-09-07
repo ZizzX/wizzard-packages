@@ -283,6 +283,9 @@ importers:
       '@wizzard-packages/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@wizzard-packages/devtools':
+        specifier: workspace:*
+        version: link:../../packages/devtools
       '@wizzard-packages/react':
         specifier: workspace:*
         version: link:../../packages/react

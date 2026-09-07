@@ -1,7 +1,7 @@
 {
   "name": "@wizzard-packages/devtools",
   "version": "2.0.1",
-  "description": "DevTools UI for Wizzard Stepper.",
+  "description": "Devtools panel for Wizzard: the flow graph, the state diff and the refusals, for the v1 engine.",
   "keywords": [
     "wizard",
     "stepper",
@@ -62,10 +62,10 @@
     "type-check": "tsc --noEmit"
   },
   "peerDependencies": {
-    "@wizzard-packages/core": "workspace:*",
-    "@wizzard-packages/react": "workspace:*",
-    "react": ">=18.0.0",
-    "react-dom": ">=18.0.0"
+    "@wizzard-packages/core": "workspace:^",
+    "@wizzard-packages/react": "workspace:^",
+    "react": ">=18",
+    "react-dom": ">=18"
   },
   "devDependencies": {
     "@wizzard-packages/core": "workspace:*",

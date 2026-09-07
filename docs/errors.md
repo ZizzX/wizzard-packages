@@ -114,3 +114,97 @@ const rec = recordSession(wizard, {
 The hook runs on every `bundle()` call, on a fresh copy each time, so it may mutate what it
 is given. Until export, the frames in memory are unredacted: the recorder is a development
 tool, and the panel says so where it offers the copy.
+
+## devtools-no-wizard
+
+```
+[wizzard] devtools has no wizard to watch. It reads WizardContext or the wizard prop, and
+neither is set. Render <WizardDevtools/> inside <WizardProvider>, or pass wizard={wizard}.
+…#devtools-no-wizard
+```
+
+Shown by `<WizardDevtools/>` in place of the panel. The panel watches one wizard and reads it
+two ways: the React context a `<WizardProvider>` puts in place, or the `wizard` prop. With
+neither there is nothing to draw, and drawing an empty panel would read as a wizard that
+committed nothing.
+
+The usual cause is placement: the panel is a sibling of the provider rather than a child of
+it. A panel rendered beside the form, in a layout file or a portal, is outside the context
+even though it looks adjacent on screen. Passing `wizard={wizard}` works from anywhere and is
+what a host with several wizards does; the context is the convenience for the common one.
+
+## devtools-no-plugin
+
+```
+[wizzard] refusals are not captured. The wizard was created without the devtools plugin, so a
+refused next() never reaches this panel. const dt = devtools(); createWizard({ flow, plugins:
+[dt] }); <WizardDevtools plugin={dt}/>. …#devtools-no-plugin
+[wizzard] refusals are not captured. The plugin object passed to the panel is not the one
+installed on this wizard, so its rings stay empty. Pass the same devtools() instance to
+createWizard({ plugins: [dt] }) and to <WizardDevtools plugin={dt}/>. …#devtools-no-plugin
+```
+
+Shown in the Activity tab's header and as `refusals: not captured` in the export preview. The
+panel still works: commits, the graph, the state and the diff need no plugin.
+
+A refusal is not a commit. `next()` that a validator blocks changes no state, so `subscribe`
+never fires and a panel built on state alone cannot see it — which is the case the plugin
+exists for. It sits in `createWizard({ plugins: [dt] })`, receives the engine's attempt hook,
+and keeps the rings the panel reads.
+
+The second form fires when a plugin is passed but its `attached` is false, or its `lastRev`
+stays behind the wizard's `rev` after a commit. Both mean two different `devtools()` objects:
+one installed on the engine, another handed to the panel. One instance goes to both places.
+
+## devtools-render-failed
+
+```
+[wizzard] the graph could not be drawn: <message>. A layout override or a flow shape the
+renderer has not seen threw; the wizard, the strip, State and Activity are unaffected. Remove
+the layout prop to use the built-in layout, or record a session and attach it to an issue.
+…#devtools-render-failed
+```
+
+Shown by the Graph tab in place of the graph. It is an error boundary around the renderer
+alone, so the diagnostic strip, the State tab, the Activity tab and the export keep working;
+a graph that cannot be drawn is not a reason to lose the refusal that was being diagnosed.
+
+Two causes, in order of likelihood. A `layout` prop that threw or returned something the
+renderer cannot read: the built-in `layoutGraph` is the way to confirm it, since removing the
+prop restores the drawing. Or a flow shape the renderer has not met — a node kind, an edge
+target or a `when` expression from a newer core than the installed devtools.
+
+## devtools-stopped
+
+```
+[wizzard] diagnostics stopped: <message>. A devtools listener threw; the wizard is unaffected
+and this panel no longer updates. Reload the page, and record a session and attach it to an
+issue if it happens again. …#devtools-stopped
+```
+
+Shown in the diagnostic strip. The panel keeps what it had; it stops subscribing.
+
+The engine calls its subscribers bare, so a listener that throws surfaces inside the host's
+own `set()` or navigation. Devtools registers several — the store subscription, the plugin's
+subscription, `onRecord`, the legend's `sessionStorage` read — and each runs under its own
+catch. When one throws, the panel unsubscribes rather than throwing into the host: the
+diagnostic tool never becomes the fault. The plugin catches inside its hook bodies for the
+same reason, so the engine's `fail()` never has to disable it for a devtools bug.
+
+The wizard is unaffected in every case: it committed what it was going to commit before the
+listener ran, and its next commit lands normally.
+
+## devtools-bundle-unsupported
+
+```
+[wizzard] this bundle is version <n>; this reader understands version 1. Export it again with
+a matching @wizzard-packages/devtools, or upgrade the reader. …#devtools-bundle-unsupported
+```
+
+Reported by a reader of a `SessionBundle` — the docs site's replay mode, or a host that loads
+a recording from a bug report. `version` is the format, not the package version: it is `1`
+today and changes only when the shape changes in a way a reader cannot ignore.
+
+A bundle carries the flow definition, the recorded frames and the outcomes, so it replays
+structure and data. It does not carry resolver behaviour: a named resolver is not in the
+bundle, and a replay of a flow that fetches its options shows the options it recorded.
