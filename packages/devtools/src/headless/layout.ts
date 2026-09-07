@@ -191,40 +191,66 @@ function layout(
     height = Math.max(height, n.y + n.h);
   }
 
-  // Edges leave the border the next layer lies beyond and arrive at the facing
-  // one. A `back` edge is an override rather than a route, so it leaves from
-  // the side and returns along a rail clear of the graph - to the right of a
-  // column, below a row.
-  const rail = row ? height + gapY : width + gapX;
+  // One routing rule. An edge leaves the border its target lies beyond and
+  // arrives at the facing one. It may go straight only when its target is
+  // exactly one layer on; anything else - a layer skipped, a cycle closed, a
+  // back edge - has a node standing on the straight line, so it detours: out
+  // into the empty band between two layers, along a lane, and back in through
+  // another band. The bands are empty by construction, since a node spans
+  // NODE_W of a pitch of NODE_W + gap along the layers and ROW_H of a pitch of
+  // ROW_H + gap across them, so a detour never crosses a box.
+  //
+  // A `back` edge is an override rather than a route, so its lane is the rail
+  // clear of the whole graph - to the right of a column, below a row - and it
+  // returns to the border it left from. A skipping edge takes the band just
+  // past the later of its two ends, which can lie past the last node, so the
+  // box is grown before the rail is measured against it.
+  const gapAlong = row ? gapX : gapY;
+  const gapCross = row ? gapY : gapX;
+  const along = (n: Positioned): number => (row ? n.x : n.y);
+  const cross = (n: Positioned): number => (row ? n.y : n.x);
+  const centre = (n: Positioned): number => cross(n) + (row ? n.h : n.w) / 2;
+  const far = (n: Positioned): number => along(n) + (row ? n.w : n.h);
+  /** The middle of the band after a node's layer, and of the one before it. */
+  const after = (n: Positioned): number => along(n) + (row ? NODE_W : ROW_H) + gapAlong / 2;
+  const before = (n: Positioned): number => along(n) - gapAlong / 2;
+  const straight = (f: Positioned, t: Positioned): boolean => along(t) - along(f) === layerPitch;
+  const lane = (f: Positioned, t: Positioned): number =>
+    Math.max(cross(f), cross(t)) + (row ? ROW_H : NODE_W) + gapCross / 2;
+  const pt = (a: number, c: number): readonly [number, number] => (row ? [a, c] : [c, a]);
+
+  for (const e of graph.edges) {
+    const f = at.get(e.from);
+    const t = at.get(e.to);
+    if (f === undefined || t === undefined || e.kind === 'back' || straight(f, t)) continue;
+    const past = lane(f, t) + gapCross / 2;
+    if (row) height = Math.max(height, past);
+    else width = Math.max(width, past);
+  }
+
+  const rail = (row ? height : width) + gapCross;
   const edges: PositionedEdge[] = [];
   for (const e of graph.edges) {
     const from = at.get(e.from);
     const to = at.get(e.to);
     if (from === undefined || to === undefined) continue;
-    const points: (readonly [number, number])[] = row
-      ? e.kind === 'back'
-        ? [
-            [from.x + from.w / 2, from.y + from.h],
-            [from.x + from.w / 2, rail],
-            [to.x + to.w / 2, rail],
-            [to.x + to.w / 2, to.y + to.h],
-          ]
-        : [
-            [from.x + from.w, from.y + from.h / 2],
-            [to.x, to.y + to.h / 2],
-          ]
-      : e.kind === 'back'
-        ? [
-            [from.x + from.w, from.y + from.h / 2],
-            [rail, from.y + from.h / 2],
-            [rail, to.y + to.h / 2],
-            [to.x + to.w, to.y + to.h / 2],
-          ]
-        : [
-            [from.x + from.w / 2, from.y + from.h],
-            [to.x + to.w / 2, to.y],
-          ];
-    edges.push({ ...e, points });
+    const back = e.kind === 'back';
+    const detour = back ? rail : straight(from, to) ? undefined : lane(from, to);
+    const arrive = back ? after(to) : before(to);
+    edges.push({
+      ...e,
+      points:
+        detour === undefined
+          ? [pt(far(from), centre(from)), pt(along(to), centre(to))]
+          : [
+              pt(far(from), centre(from)),
+              pt(after(from), centre(from)),
+              pt(after(from), detour),
+              pt(arrive, detour),
+              pt(arrive, centre(to)),
+              pt(back ? far(to) : along(to), centre(to)),
+            ],
+    });
   }
   if (edges.some((e) => e.kind === 'back')) {
     if (row) height = rail;

@@ -6,10 +6,51 @@ import { denseFlow, flowA, flowB, flowC, subFlowsC } from '../../../../contract/
 import { layoutGraph, NODE_H, NODE_W, REPEAT_H } from './layout';
 
 import type { FlowGraph, GraphEdge } from '@wizzard-packages/core/graph';
-import type { Positioned, PositionedGraph } from './layout';
+import type { Positioned, PositionedEdge, PositionedGraph } from './layout';
 
 const overlaps = (a: Positioned, b: Positioned): boolean =>
   a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+
+/**
+ * Does a segment pass through the inside of a box? Liang-Barsky against the
+ * open rectangle, so an edge that leaves or lands on a border does not count -
+ * every edge does that at its own two ends.
+ */
+const cuts = (
+  [x0, y0]: readonly [number, number],
+  [x1, y1]: readonly [number, number],
+  b: Positioned
+): boolean => {
+  let lo = 0;
+  let hi = 1;
+  const clip = (p: number, q: number): boolean => {
+    if (p === 0) return q >= 0;
+    const r = q / p;
+    if (p < 0) lo = Math.max(lo, r);
+    else hi = Math.min(hi, r);
+    return lo < hi;
+  };
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  return (
+    clip(-dx, x0 - b.x) &&
+    clip(dx, b.x + b.w - x0) &&
+    clip(-dy, y0 - b.y) &&
+    clip(dy, b.y + b.h - y0) &&
+    lo < hi
+  );
+};
+
+/** Every box an edge's polyline passes through, other than its own two ends. */
+const pierced = (laid: PositionedGraph, e: PositionedEdge): string[] =>
+  laid.nodes
+    .filter(
+      (n) =>
+        n.id !== e.from &&
+        n.id !== e.to &&
+        e.points.some((p, i) => i > 0 && cuts(e.points[i - 1] as [number, number], p, n))
+    )
+    .map((n) => n.id);
 
 /** Random graphs: nodes s0..sN, forward/back/order edges anywhere, a few dangling. */
 const graphs = fc
@@ -169,6 +210,45 @@ describe('layoutGraph', () => {
       );
     }
   );
+
+  it.each(DIRECTIONS)(
+    'property (%s): no edge is drawn through a node it does not touch',
+    (direction) => {
+      fc.assert(
+        fc.property(graphs, (graph) => {
+          const laid = layoutGraph(graph, { direction });
+          return laid.edges.every((e) => pierced(laid, e).length === 0);
+        })
+      );
+    }
+  );
+
+  it.each(DIRECTIONS)('routes an edge that skips a layer around it (%s)', (direction) => {
+    // A flow whose branch is optional: `a -> b -> c` with `a -> c` beside it,
+    // which is the shape the site draws when a step falls out of the route.
+    const graph: FlowGraph = {
+      nodes: [
+        { id: 'a', kind: 'step' },
+        { id: 'b', kind: 'step' },
+        { id: 'c', kind: 'step' },
+      ],
+      edges: [
+        { from: 'a', to: 'b', kind: 'next' },
+        { from: 'b', to: 'c', kind: 'next' },
+        { from: 'a', to: 'c', kind: 'next' },
+      ],
+    };
+    const laid = layoutGraph(graph, { direction });
+    const skip = laid.edges.find((e) => e.from === 'a' && e.to === 'c');
+    expect(skip).toBeDefined();
+    expect(pierced(laid, skip as PositionedEdge)).toEqual([]);
+    // It detours rather than going straight, and stays inside the box.
+    expect(skip?.points.length).toBeGreaterThan(2);
+    for (const [x, y] of skip?.points ?? []) {
+      expect(x).toBeLessThanOrEqual(laid.width);
+      expect(y).toBeLessThanOrEqual(laid.height);
+    }
+  });
 
   it('memoises by graph identity for the default options', () => {
     const graph = buildGraph(flowA);
