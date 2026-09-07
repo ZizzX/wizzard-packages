@@ -447,13 +447,13 @@ body {
   stroke-dashoffset: 0;
 }
 
-.hero-flow .node-when {
+.hero-flow .node text.node-when {
   fill: var(--fg-muted);
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 9px;
 }
 
-.hero-flow .node.active .node-when {
+.hero-flow .node.active text.node-when {
   fill: var(--accent);
 }
 

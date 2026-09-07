@@ -317,11 +317,16 @@ function Stage(): ReactNode {
               // The condition belongs to the step, not to the edge into it: an
               // `order` edge is a fall-through and carries no `when` of its own,
               // and a label hung on one would also run off the panel.
-              const when = node?.when === undefined ? undefined : formatExpr(node.when);
+              // 26 characters at 9px mono is the widest line that stays inside a
+              // 160-unit node, which is why this is not `formatExpr`'s default 32.
+              const when = node?.when === undefined ? undefined : formatExpr(node.when, 26);
               if (kind === 'end') {
                 return (
+                  // Drawn at the top of its box, not centred in it: `layoutGraph`
+                  // routes the incoming edge to the box's top edge, and a circle
+                  // centred in a 40-unit box leaves a visible gap above itself.
                   <g key={placed.id} className={`node end ${state}`}>
-                    <circle cx={placed.x + 11} cy={placed.y + placed.h / 2} r="11" />
+                    <circle cx={placed.x + 11} cy={placed.y + 11} r="11" />
                   </g>
                 );
               }
