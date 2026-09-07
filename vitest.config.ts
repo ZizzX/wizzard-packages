@@ -11,7 +11,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./packages/react/src/setupTests.ts'],
-    exclude: ['**/node_modules/**', '**/dist/**', '**/e2e/**', '**/.git/**'],
+    exclude: ['**/node_modules/**', '**/dist/**', '**/e2e/**', '**/.git/**', '**/.claude/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text-summary', 'lcov'],
