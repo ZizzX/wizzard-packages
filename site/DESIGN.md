@@ -206,6 +206,13 @@ In CSS that is `max-width: 100%; height: auto` on a graph carrying `width` and `
 attributes, and never a bare `width: 100%`. Where the graph is wider than the space it has,
 the space scrolls.
 
+Scaling down is allowed and still has a floor: **below 12px a label stops being a label.** A
+13px node label is legible down to 0.92, a 9px condition is not legible below 1.0, so a layout
+that would draw a graph under about 0.95 has the wrong shape and the fix is the layout. The
+feature rows were two columns, 24rem of text beside a 788-unit graph in 656px, which drew the
+condition at 7.1px; the claim now reads across the top and the graph takes the whole row. **A
+graph gets the width it needs, or it scrolls - it never gets a scale.**
+
 ### Direction
 
 `layoutGraph` takes a `direction`, and the choice belongs to the surface rather than to the

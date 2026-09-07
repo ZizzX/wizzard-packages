@@ -238,18 +238,28 @@ body {
   border-top: var(--border) solid var(--line);
 }
 
+/* The claim reads across the top, the graph runs the full width under it.
+   A row cannot be two columns: the widest reference flow is 788 user units,
+   and beside 24rem of text there are 656 left, which draws a 13px label at
+   10.3px and a 9px condition at 7.1px. The graph is what the row is for, so
+   it gets the width and the text takes the line above. */
 .flow-row {
   display: grid;
-  grid-template-columns: minmax(0, 24rem) minmax(0, 1fr);
-  gap: var(--space-8);
-  align-items: start;
+  gap: var(--space-6);
   padding: var(--space-12) 0;
   border-bottom: var(--border) solid var(--line);
 }
 
+.flow-row-text {
+  display: grid;
+  grid-template-columns: minmax(0, 24rem) minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: baseline;
+}
+
 .flow-row h2 {
   font-size: var(--text-xl);
-  margin: 0 0 var(--space-3);
+  margin: 0;
 }
 
 .flow-row p {
@@ -441,7 +451,12 @@ body {
   overflow-x: auto;
 }
 
+/* The frame is the graph's border, not the row's: it takes the width the graph
+   needs and no more, so a two-node flow does not sit in a box built for a
+   four-node one. Capped at the row, which is where it starts to scroll. */
 .flow-row-graph .frame {
+  width: fit-content;
+  max-width: 100%;
   border: var(--border) solid var(--line);
   border-radius: var(--radius-panel);
   background: var(--surface);
@@ -578,16 +593,17 @@ body {
   border: 0;
 }
 
+/* One breakpoint, because both rules answer the same fact: below it the row is
+   too narrow for the claim and the graph to keep their sizes. The claim stacks,
+   and the graph stops shrinking - a 13px label under the 12px floor is a
+   picture of a graph rather than a graph, so the viewport rules say code and
+   graphs scroll inside their container here. */
 @media (max-width: 900px) {
-  .flow-row {
+  .flow-row-text {
     grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
   }
-}
 
-@media (max-width: 640px) {
-  /* Shrinking to fit a phone takes a 13px label under 8px, which is a picture
-     of a graph rather than a graph. The viewport rules say code and graphs
-     scroll inside their container here; this is that rule, implemented. */
   .frame svg {
     max-width: none;
   }
