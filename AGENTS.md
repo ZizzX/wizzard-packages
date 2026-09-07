@@ -171,7 +171,7 @@ Do not run `bd sync` — it rewrites project files.
 
 ## Coding Tasks
 
-When spawning Claude Code sessions for coding work, tell the session to use gstack skills.
+When spawning external coding sessions, tell the session to use gstack skills.
 Include the appropriate instruction in the session prompt:
 
 - Security audit: "Load gstack. Run /cso"
