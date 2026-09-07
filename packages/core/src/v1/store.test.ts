@@ -215,6 +215,22 @@ describe('validation', () => {
     expect(w.getSnapshot().current).toBe('trip');
   });
 
+  it('clears a refused step once a later next() passes it', async () => {
+    const w = make({ payer: 'private' });
+    await w.next();
+
+    expect(await w.next()).toMatchObject({ ok: false, reason: 'invalid', by: 'trip' });
+    expect(w.getState().errors).toEqual({ trip: { name: 'required' } });
+
+    w.set('name', 'Ann');
+    expect(await w.next()).toMatchObject({ ok: true });
+    // Not just absent from the map: a step left behind still marked `error`
+    // paints a red breadcrumb for the rest of the run.
+    expect(w.getState().errors).toEqual({});
+    expect(w.getSnapshot().hasErrors).toBe(false);
+    expect(w.getSnapshot().breadcrumbs.find((c) => c.id === 'trip')?.status).not.toBe('error');
+  });
+
   it('lets errors be set and cleared directly', () => {
     const w = make();
     w.setErrors('trip', { name: 'nope' });
