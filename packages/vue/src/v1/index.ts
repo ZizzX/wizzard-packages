@@ -66,6 +66,19 @@ export function useWizard<F extends FlowDefinition = FlowDefinition>(): Wizard<F
 }
 
 /**
+ * The wizard above, or null outside `provideWizard`.
+ *
+ * `useWizard` throws, which is right for a component that cannot work without
+ * one. A diagnostic panel can: it says it has nothing to watch and keeps the
+ * rest of itself working, and a tool that crashes the application it is
+ * diagnosing is worse than one that reports the problem. The React binding
+ * exports the same name; the hook names match across the two bindings.
+ */
+export function useOptionalWizard(): Wizard | null {
+  return inject(KEY, null);
+}
+
+/**
  * The snapshot as a ref. Unsubscribes with the component scope, so a wizard
  * outliving a route does not accumulate dead listeners.
  */

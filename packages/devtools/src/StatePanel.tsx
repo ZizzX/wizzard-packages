@@ -94,8 +94,13 @@ function Rows({ changes, onLift }: { changes: readonly Change[]; onLift: () => v
 }
 
 export function StatePanel({ state, previous, crumb, cap }: StatePanelProps): ReactNode {
-  /** The cap lifts once, per selected commit, when a person asks to see the rest. */
-  const [lifted, setLifted] = useState(false);
+  /**
+   * The cap lifts once, for the commit it was lifted on. Carrying it forward
+   * would quietly disable `limits.diffRows` for every later commit, and the
+   * next large one would render every path the walk can reach.
+   */
+  const [liftedRev, setLiftedRev] = useState<number | null>(null);
+  const lifted = state !== null && liftedRev === state.rev;
   const changes = useMemo(
     () =>
       state ? diffState(previous ?? state, state, lifted ? Number.MAX_SAFE_INTEGER : cap) : [],
@@ -115,7 +120,7 @@ export function StatePanel({ state, previous, crumb, cap }: StatePanelProps): Re
       {changes.length === 0 ? (
         <p className="wz-note">no changes in this commit</p>
       ) : (
-        <Rows changes={changes} onLift={() => setLifted(true)} />
+        <Rows changes={changes} onLift={() => setLiftedRev(state.rev)} />
       )}
       <details className="wz-full">
         <summary>Full state</summary>

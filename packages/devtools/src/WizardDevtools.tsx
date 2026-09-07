@@ -5,7 +5,8 @@ import type { ReactNode } from 'react';
 import { buildGraph } from '@wizzard-packages/core/graph';
 import type { FlowGraph, GraphNode } from '@wizzard-packages/core/graph';
 import { knownFlows } from '@wizzard-packages/core/session';
-import type { FlowDefinition, SubFlows, WizardState } from '@wizzard-packages/core/v1';
+import { isGroup } from '@wizzard-packages/core/v1';
+import type { Frame, FlowDefinition, SubFlows, WizardState } from '@wizzard-packages/core/v1';
 import { useOptionalWizard } from '@wizzard-packages/react/v1';
 import { ActivityView, intentText, outcomeText } from './ActivityView';
 import type { ActivityRow } from './ActivityView';
@@ -73,9 +74,15 @@ const crumbText = (state: WizardState | null, rootId: string): string => {
 };
 
 /**
- * The flow that owns the top frame, resolved through the stack rather than by
- * name: two sub-flows can share a step id, and `session.ts` documents why a
- * name alone can pick the wrong definition (§14.7).
+ * The flow that owns the top frame, resolved the way `checkFrames` resolves it:
+ * the bottom frame by name, every frame above it through the group step of the
+ * frame below.
+ *
+ * A flat lookup by `frame.flow` looks equivalent and is not. `knownFlows` keys
+ * a definition by its registry key *and* by its id, so a key that collides with
+ * another definition's id resolves a child against the wrong flow - and the
+ * panel would then draw a plausible, wrong graph, which is worse than drawing
+ * none (§14.7, `session.ts:122-127`).
  */
 function resolveFlow(
   root: FlowDefinition,
@@ -84,8 +91,16 @@ function resolveFlow(
 ): FlowDefinition {
   if (!state || state.stack.length < 2) return root;
   const known = knownFlows(root, subFlows);
-  const top = state.stack[state.stack.length - 1];
-  return (top && known.get(top.flow)) ?? root;
+  let owner = known.get((state.stack[0] as Frame).flow) ?? root;
+
+  for (let depth = 0; depth + 1 < state.stack.length; depth++) {
+    const step = owner.steps[(state.stack[depth] as Frame).step];
+    if (!step || !isGroup(step)) return owner;
+    const child = typeof step.flow === 'string' ? known.get(step.flow) : step.flow;
+    if (!child) return owner;
+    owner = child;
+  }
+  return owner;
 }
 
 /** The edge the wizard is inferred to have taken: only when exactly one joins the two steps. */
@@ -153,6 +168,30 @@ export function WizardDevtools({
     }
   }, []);
 
+  /**
+   * A recorder holds subscriptions on the wizard and the plugin until it is
+   * stopped, so an unmounted panel would keep collecting frames and keep the
+   * wizard alive with them. It is also dropped when the `wizard` prop changes:
+   * a bundle carries one flow and one wizard, and exporting the previous one
+   * from a panel now watching another is the kind of wrong answer a diagnostic
+   * tool must not give.
+   */
+  useEffect(() => {
+    return () => {
+      try {
+        recorder?.stop();
+      } catch {
+        /* a recorder that refuses to stop is not worth throwing over */
+      }
+    };
+  }, [recorder]);
+
+  useEffect(() => {
+    setRecorder(null);
+    setRecording(false);
+    setExporting(false);
+  }, [wizard]);
+
   const onLegendToggle = (open: boolean): void => {
     setLegendOpen(open);
     try {
@@ -208,6 +247,21 @@ export function WizardDevtools({
     const before = at > 0 ? observed.commits[at - 1] : undefined;
     return inferTaken(graph, before?.step ?? null, activeStep);
   }, [graph, observed.commits, observedState, activeStep]);
+
+  /**
+   * Whether the drawn flow's `when` expressions can be evaluated against the
+   * observed state at all.
+   *
+   * Depth alone is the wrong test. Previewing a sub-flow from the inspector
+   * leaves the wizard in the root flow with a stack of one, and evaluating a
+   * child step's condition against root `data` and `ctx` would print a
+   * confident `true` or `false` for a scope that does not exist. The honest
+   * answer is available whenever the drawn flow is the one the wizard is
+   * actually standing in, at the root: anywhere else the loop or child scope
+   * the engine would use is missing (§12.17).
+   */
+  const inGroupScope =
+    (observedState?.stack.length ?? 0) > 1 || (drawnFlow !== null && drawnFlow !== currentFlow);
 
   const selectedNode: GraphNode | null = (graph?.nodes.find((node) => node.id === selected) ??
     null) as GraphNode | null;
@@ -475,7 +529,7 @@ export function WizardDevtools({
             state={observedState}
             observing={pinned ? `pinned #${observedState?.rev ?? '?'}` : 'live'}
             crumb={crumb}
-            inGroup={(observedState?.stack.length ?? 0) > 1}
+            inGroup={inGroupScope}
             onClose={() => setInspecting(false)}
             onOpenSubFlow={(flowId) => {
               setInspectedFlow(flowId);
