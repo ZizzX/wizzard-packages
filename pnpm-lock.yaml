@@ -255,6 +255,9 @@ importers:
       '@wizzard-packages/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@wizzard-packages/devtools':
+        specifier: workspace:*
+        version: link:../../packages/devtools
       '@wizzard-packages/react':
         specifier: workspace:*
         version: link:../../packages/react
@@ -445,6 +448,19 @@ importers:
       vue-tsc:
         specifier: ^2.2.0
         version: 2.2.12(typescript@5.9.3)
+
+  fixtures/devtools-headless-node:
+    dependencies:
+      '@wizzard-packages/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@wizzard-packages/devtools':
+        specifier: workspace:*
+        version: link:../../packages/devtools
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
 
   packages/adapter-yup:
     dependencies:

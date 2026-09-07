@@ -2,7 +2,7 @@
   "name": "@examples/next-app",
   "private": true,
   "version": "0.0.0",
-  "description": "A Next.js App Router page that mounts the wizard from a server component. It exists to prove the binding's 'use client' directive survives the package build.",
+  "description": "A Next.js App Router fixture. `/` mounts the wizard from a server component, to prove the binding's 'use client' directive survives the package build; `/devtools` mounts the devtools panel over a flow that can refuse a move.",
   "scripts": {
     "build": "next build",
     "start": "next start",
@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@wizzard-packages/core": "workspace:*",
+    "@wizzard-packages/devtools": "workspace:*",
     "@wizzard-packages/react": "workspace:*",
     "next": "^16.3.4",
     "react": "^19.2.0",

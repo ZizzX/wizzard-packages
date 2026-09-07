@@ -1,0 +1,18 @@
+{
+  "name": "@fixtures/devtools-headless-node",
+  "private": true,
+  "version": "0.0.0",
+  "description": "A Node consumer of @wizzard-packages/devtools/headless with no React anywhere in its dependencies. Its build compiles the check and runs it, so both the types and the runtime are proved by `pnpm build`.",
+  "type": "module",
+  "scripts": {
+    "build": "tsc && node dist/check.js",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@wizzard-packages/core": "workspace:*",
+    "@wizzard-packages/devtools": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
