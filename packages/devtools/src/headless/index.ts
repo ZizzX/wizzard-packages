@@ -13,7 +13,13 @@ export type { DevtoolsOptions, DevtoolsPlugin, Outcome, OutcomeError, Pending } 
 export { recordSession } from './record';
 export type { BundleMeta, RecordOptions, Recorder, SessionBundle, WizardLike } from './record';
 export { layoutGraph, NODE_H, NODE_W, REPEAT_H } from './layout';
-export type { LayoutOptions, Positioned, PositionedEdge, PositionedGraph } from './layout';
+export type {
+  Direction,
+  LayoutOptions,
+  Positioned,
+  PositionedEdge,
+  PositionedGraph,
+} from './layout';
 export { formatExpr } from './format';
 export { diffState } from './diff';
 export type { Change } from './diff';

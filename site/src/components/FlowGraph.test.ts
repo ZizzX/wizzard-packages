@@ -1,5 +1,5 @@
 /**
- * The hero's two derivations, against the engine rather than against a fixture
+ * The painter's two derivations, against the engine rather than against a fixture
  * of what the engine was once believed to do: `createWizard` on the real R-A
  * flow, and the node and edge states read off its snapshot.
  */
@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { createWizard, END } from '@wizzard-packages/core/v1';
 import { buildGraph } from '@wizzard-packages/core/graph';
 import { flowA, registryA } from '../../../contract/fixtures';
-import { edgeLive, nodeState } from './HeroFlow';
+import { edgeLive, nodeState } from './FlowGraph';
 
 const graph = buildGraph(flowA);
 const endId = graph.nodes.find((node) => node.kind === 'end')?.id ?? END;

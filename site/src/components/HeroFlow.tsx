@@ -1,20 +1,23 @@
 /**
- * The hero: a form on the real engine, and the flow graph of the definition it
- * is running, drawn from that same definition.
+ * The hero instrument: a form on the real engine, and under it the graph of the
+ * definition that form is running.
  *
  * Nothing here decides the route. `active` and `breadcrumbs` come out of the
- * engine, `buildGraph` and `layoutGraph` come out of the definition, and this
- * file only paints what the two agree on - which is the claim the page makes in
- * prose, made checkable.
+ * engine and the picture comes out of the definition, so the claim the page
+ * makes in prose is the same object the visitor is driving.
+ *
+ * The form is one horizontal strip and the graph one horizontal run beneath it,
+ * because a flow read left to right is a flow, while a tall column beside a
+ * short form was two widgets sharing a grid. `FlowGraph` does the painting;
+ * this file owns the engine and the controls.
  *
  * Rendered without a client directive it is the static first frame: no
  * navigation has happened, so the graph shows the route the data implies and
  * the form is inert markup. With `client:load` the same tree hydrates and the
  * engine takes over.
  */
-import { buildGraph, type GraphNode } from '@wizzard-packages/core/graph';
-import { END, type Breadcrumb } from '@wizzard-packages/core/v1';
-import { layoutGraph, formatExpr } from '@wizzard-packages/devtools/headless';
+import { buildGraph } from '@wizzard-packages/core/graph';
+import { END } from '@wizzard-packages/core/v1';
 import {
   WizardProvider,
   useErrors,
@@ -27,11 +30,10 @@ import { useCallback, useMemo, useState, type ReactNode } from 'react';
 
 import { flowA, registryA } from '../../../contract/fixtures';
 
-/** The layout depends on the definition alone, so it is computed once. */
+import { FlowGraph, type GraphView } from './FlowGraph';
+
+/** The structure depends on the definition alone, so it is built once. */
 const graph = buildGraph(flowA);
-const laid = layoutGraph(graph);
-const nodeById = new Map<string, GraphNode>(graph.nodes.map((node) => [node.id, node]));
-const endId = graph.nodes.find((node) => node.kind === 'end')?.id ?? END;
 
 /**
  * One field per step, so a visitor changing the payer sees a different question
@@ -45,72 +47,6 @@ const FIELDS: Record<string, { path: string; label: string; type: string; placeh
 };
 
 const FALLBACK_FIELD = FIELDS.details as (typeof FIELDS)[string];
-
-export type NodeState = 'active' | 'error' | 'visited' | 'skipped' | 'done' | 'rest';
-
-export interface GraphView {
-  /**
-   * The step the flow is standing on. `current` once the engine has started,
-   * and before that the first reachable step - which is where it is about to
-   * stand, and what the frame rendered on the server should show.
-   */
-  standing: string | null;
-  breadcrumbs: readonly Breadcrumb[];
-  /** The current step was refused, so its node is drawn as blocked, not active. */
-  refused: boolean;
-  /**
-   * The flow reached its end.
-   *
-   * Not a snapshot property: reaching `@end` leaves the engine standing on the
-   * last step and says so in the `NavResult` instead, so whoever made the call
-   * is the one who knows.
-   */
-  ended: boolean;
-}
-
-/**
- * What one node is doing right now.
- *
- * A step absent from the breadcrumbs is one whose `when` is false under the
- * data at hand: not upcoming, not skipped over, simply not on the route. That
- * is the distinction the hero exists to show, so it gets its own state.
- */
-export function nodeState(id: string, kind: GraphNode['kind'], view: GraphView): NodeState {
-  if (kind === 'end') return view.ended ? 'done' : 'rest';
-  const crumb = view.breadcrumbs.find((entry) => entry.id === id);
-  if (crumb === undefined) return 'skipped';
-  if (id === view.standing) {
-    if (view.ended) return 'visited';
-    return view.refused ? 'error' : 'active';
-  }
-  switch (crumb.status) {
-    case 'error':
-      return 'error';
-    case 'completed':
-    case 'visited':
-      return 'visited';
-    default:
-      return 'rest';
-  }
-}
-
-/**
- * Whether an edge is the one the flow would take next from `from`.
- *
- * The builder emits a fall-through edge from every step to every later step it
- * could land on, because a `when` in between may be false. Exactly one of them
- * is live under the data at hand: the one reaching the next reachable step.
- */
-export function edgeLive(
-  edge: { from: string; to: string; kind: string },
-  active: readonly string[],
-  end: string
-): boolean {
-  if (edge.kind === 'back') return false;
-  const at = active.indexOf(edge.from);
-  if (at === -1) return false;
-  return edge.to === (active[at + 1] ?? end);
-}
 
 /** `{ email: "required" }`, the shape a reader would see in a console. */
 function printErrors(errors: Readonly<Record<string, string>>): string {
@@ -128,12 +64,12 @@ interface Message {
 export default function HeroFlow(): ReactNode {
   return (
     <WizardProvider flow={flowA} registry={registryA} data={{ payer: 'business' }}>
-      <Stage />
+      <Instrument />
     </WizardProvider>
   );
 }
 
-function Stage(): ReactNode {
+function Instrument(): ReactNode {
   const wizard = useWizard();
   const { canBack, isBusy } = useNavigation();
   const { current, active, breadcrumbs } = useStep();
@@ -217,9 +153,9 @@ function Stage(): ReactNode {
     : `step ${Math.max(position, 1)} of ${active.length} - the graph follows the data`;
 
   return (
-    <div className="hero-flow">
+    <div className="instrument">
       <form
-        className="flow-form"
+        className="instrument-controls"
         onSubmit={(event) => {
           event.preventDefault();
           void onNext();
@@ -245,7 +181,7 @@ function Stage(): ReactNode {
           </div>
         </div>
 
-        <label className="field">
+        <label className="field field-grow">
           <span className="field-label">{ended ? 'Flow complete' : field.label}</span>
           <input
             type={field.type}
@@ -261,130 +197,49 @@ function Stage(): ReactNode {
           />
         </label>
 
-        <div className="actions">
-          <button className="button button-primary" type="submit" disabled={isBusy}>
-            {ended ? 'Restart' : 'Next'}
-          </button>
-          <button
-            className="button button-secondary"
-            type="button"
-            disabled={!canBack || isBusy}
-            onClick={() => {
-              void onBack();
-            }}
-          >
-            Back
-          </button>
+        <div className="field">
+          <span className="field-label" aria-hidden="true">
+            &nbsp;
+          </span>
+          <div className="actions">
+            <button className="button button-primary" type="submit" disabled={isBusy}>
+              {ended ? 'Restart' : 'Next'}
+            </button>
+            <button
+              className="button button-secondary"
+              type="button"
+              disabled={!canBack || isBusy}
+              onClick={() => {
+                void onBack();
+              }}
+            >
+              Back
+            </button>
+          </div>
         </div>
-
-        <p className={`flow-message ${message?.kind ?? 'idle'}`} aria-live="polite">
-          {message?.text ?? idle}
-        </p>
       </form>
 
-      <figure className="graph">
+      <p className={`flow-message ${message?.kind ?? 'idle'}`} aria-live="polite">
+        {message?.text ?? idle}
+      </p>
+
+      <figure className="instrument-graph">
         <figcaption className="graph-head">
           <span>{[...active, 'end'].join(' -> ')}</span>
           <button className="rebuild" type="button" onClick={rebuild}>
             Rebuild
           </button>
         </figcaption>
-
         <div className="frame">
-          <svg
-            // Two units of bleed on every side: `layoutGraph` routes the back
-            // edge along x = width, and a 1.5-unit stroke centred on that line
-            // loses its outer half to the viewBox and reads as orphaned dashes.
-            viewBox={`-2 -2 ${laid.width + 4} ${laid.height + 4}`}
-            role="img"
-            aria-label={`Flow graph of ${flowA.id}. The same information is in the table below.`}
-          >
-            {laid.edges.map((edge) => (
-              <g
-                key={`${edge.from}-${edge.to}-${edge.kind}-${drawing}`}
-                className={`edge ${edge.kind} ${edgeLive(edge, active, endId) ? 'live' : 'dim'}`}
-              >
-                <polyline
-                  points={edge.points.map(([x, y]) => `${x},${y}`).join(' ')}
-                  pathLength={100}
-                />
-              </g>
-            ))}
-
-            {laid.nodes.map((placed) => {
-              const node = nodeById.get(placed.id);
-              const kind = node?.kind ?? 'step';
-              const state = nodeState(placed.id, kind, view);
-              // The condition belongs to the step, not to the edge into it: an
-              // `order` edge is a fall-through and carries no `when` of its own,
-              // and a label hung on one would also run off the panel.
-              // 26 characters at 9px mono is the widest line that stays inside a
-              // 160-unit node, which is why this is not `formatExpr`'s default 32.
-              const when = node?.when === undefined ? undefined : formatExpr(node.when, 26);
-              if (kind === 'end') {
-                return (
-                  // Drawn at the top of its box, not centred in it: `layoutGraph`
-                  // routes the incoming edge to the box's top edge, and a circle
-                  // centred in a 40-unit box leaves a visible gap above itself.
-                  <g key={placed.id} className={`node end ${state}`}>
-                    <circle cx={placed.x + 11} cy={placed.y + 11} r="11" />
-                  </g>
-                );
-              }
-              return (
-                <g key={placed.id} className={`node ${kind} ${state}`}>
-                  {kind === 'group' && (
-                    <rect
-                      className="inner"
-                      x={placed.x + 3}
-                      y={placed.y + 3}
-                      width={placed.w - 6}
-                      height={placed.h - 6}
-                      rx="4"
-                    />
-                  )}
-                  <rect x={placed.x} y={placed.y} width={placed.w} height={placed.h} rx="4" />
-                  <text
-                    x={placed.x + 12}
-                    y={placed.y + placed.h / 2 + (when === undefined ? 4 : -2)}
-                  >
-                    {node?.label ?? placed.id}
-                  </text>
-                  {when !== undefined && (
-                    <text className="node-when" x={placed.x + 12} y={placed.y + placed.h / 2 + 12}>
-                      {when.short}
-                      <title>{when.full}</title>
-                    </text>
-                  )}
-                </g>
-              );
-            })}
-          </svg>
+          <FlowGraph
+            graph={graph}
+            active={active}
+            view={view}
+            direction="row"
+            label={flowA.id}
+            drawKey={drawing}
+          />
         </div>
-
-        {/* The screen reader's path through the graph, and the visitor's if the
-            island never hydrates. */}
-        <table className="mirror">
-          <caption>Steps of {flowA.id}</caption>
-          <thead>
-            <tr>
-              <th scope="col">Step</th>
-              <th scope="col">Kind</th>
-              <th scope="col">State</th>
-              <th scope="col">Condition</th>
-            </tr>
-          </thead>
-          <tbody>
-            {graph.nodes.map((node) => (
-              <tr key={node.id}>
-                <th scope="row">{node.label ?? node.id}</th>
-                <td>{node.kind}</td>
-                <td>{nodeState(node.id, node.kind, view)}</td>
-                <td>{node.when === undefined ? 'always' : formatExpr(node.when).full}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
       </figure>
     </div>
   );

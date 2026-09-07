@@ -189,8 +189,38 @@ re-invented here: nodes are 160x40 user units, a repeat group is 160x48, and the
 them through its viewBox. The site and the panel therefore draw the same graph at the same
 density, which is what makes a screenshot of one match the other.
 
-An incoming edge is routed to the top of its target's box, so a node drawn smaller than its
-box — the end node's circle — is placed at the top of that box rather than centred in it, or
+### The graph is never scaled up
+
+**An SVG of a graph carries its own width and height and is only ever allowed to scale down.**
+This is the most expensive rule in this document, because breaking it costs every other rule
+in it: a graph stretched to fill a column multiplies every line weight and type size inside it
+by the same factor, and nothing written here applies any more. The homepage shipped at 3.24x
+once, a 13px node label drawn at 42px, a 1.5px edge at 4.9px, a 160x40 node at 518x129, and it
+read as a broken page rather than a large one, which is what it was.
+
+In CSS that is `max-width: 100%; height: auto` on a graph carrying `width` and `height`
+attributes, and never a bare `width: 100%`. Where the graph is wider than the space it has,
+the space scrolls.
+
+### Direction
+
+`layoutGraph` takes a `direction`, and the choice belongs to the surface rather than to the
+flow.
+
+| Where          | Direction | Why                                                                        |
+| -------------- | --------- | -------------------------------------------------------------------------- |
+| a page         | `row`     | a page has width and not height, and a route read left to right is a route |
+| a docked panel | `column`  | a panel has height and not width                                           |
+
+The layering is identical either way: the same topological order, the same cycle break, the
+same sibling order. Only which coordinate the layer index drives changes, so the two
+directions cannot disagree about the shape of a flow.
+
+A `back` edge returns along a rail clear of the graph, to the right of a column and below a
+row.
+
+An incoming edge is routed to the border its target faces, so a node drawn smaller than its
+box, the end node's circle, is placed against that border rather than centred in the box, or
 the line stops short of the thing it points at.
 
 Node shapes carry the node's kind, so shape survives greyscale and colour blindness:
@@ -303,34 +333,40 @@ host application that ships the tokens.
 What the site itself is built from. Every one of them is the chassis above: a bounded field, a
 hairline, a mono label where something needs naming, state on the border.
 
-6. **page header** — the one top shared by custom pages and documentation: wordmark,
+6. **instrument** — a bounded panel holding a live wizard: a row of controls, the line the
+   engine last said, and the graph of the definition those controls are driving. One border
+   around all three and none between them, because they are one object; a reader who takes the
+   controls and the graph for two widgets has been told the wrong thing about the product.
+7. **flow row** — a claim on the left and the flow that makes it true on the right, drawn by
+   the engine from a reference definition rather than illustrated. It ships no JavaScript.
+8. **page header** — the one top shared by custom pages and documentation: wordmark,
    navigation, the framework mode, the theme control. Sticky, one hairline beneath it, no
    shadow, and it never grows a second row on scroll.
-7. **code block** — `--surface` ground, a hairline, a mono tag naming the language and, where
+9. **code block** — `--surface` ground, a hairline, a mono tag naming the language and, where
    it differs by binding, the binding. Scrolls horizontally inside itself and never widens the
    page. Carries a compact copy control that reports success by changing its own label, not by
    a toast. Line numbers only where prose refers to a line.
-8. **install line** — one command, mono, with the same copy control. A tag reads `install`.
-   It is one line and never a block of package-manager tabs: the site publishes to npm and
-   says so once.
-9. **framework mode** — the segmented React/Vue pair described above. `--control-h-compact`
-   in the header, `--control-h` wherever it appears in the page body.
-10. **example frame** — the border around a live example: which binding is running, a link to
+10. **install line** — one command, mono, with the same copy control. A tag reads `install`.
+    It is one line and never a block of package-manager tabs: the site publishes to npm and
+    says so once.
+11. **framework mode** — the segmented React/Vue pair described above. `--control-h-compact`
+    in the header, `--control-h` wherever it appears in the page body.
+12. **example frame** — the border around a live example: which binding is running, a link to
     its source, and a Restart that survives an error boundary. When the island fails, the
     frame stays and says what failed; it never collapses to blank space.
-11. **spec table** — supported versions, bundle sizes, API rows. Hairline rules between rows,
+13. **spec table** — supported versions, bundle sizes, API rows. Hairline rules between rows,
     no zebra fill, no vertical rules, tabular figures, and a header row in the `label` style.
     It scrolls inside itself below 640px.
-12. **callout** — note, caution, and refused. One hairline in the semantic colour, a 1px left
+14. **callout** — note, caution, and refused. One hairline in the semantic colour, a 1px left
     rule and no more, and a word naming the kind. A refused callout uses `--st-blocked` and
     reads the same as a refusal in the graph, so the two are recognisably one thing.
-13. **docs rail** — Starlight's sidebar and on-page contents, mapped onto the tokens rather
+15. **docs rail** — Starlight's sidebar and on-page contents, mapped onto the tokens rather
     than restyled page by page. Current page marked by an accent rule at the line's start, not
     by a filled pill.
-14. **search** — Starlight's pagefind dialog in the site's grammar: `--z-dialog`, the keyboard
+16. **search** — Starlight's pagefind dialog in the site's grammar: `--z-dialog`, the keyboard
     hint set in `label`, results as hairline-separated rows, and a real empty state naming
     what was searched.
-15. **evidence strip** — where real numbers live: bundle sizes, test count, supported
+17. **evidence strip** — where real numbers live: bundle sizes, test count, supported
     versions. A row of value-and-name pairs on one hairline, values in mono. Explicitly not a
     three-column feature grid, not cards, and never a number without the thing it measures.
 
@@ -339,12 +375,12 @@ those states come from the table under **Interaction states** rather than from t
 
 ### What is built and what is specified
 
-This list is a contract, and part of it is still ahead of the code. Built today: the graph
-node, the node condition, the table mirror, and the parts of the page header the homepage
-uses. Specified here and built with the surfaces that need them: the scrubber and state-diff
-panel with the inspector, and the code block, install line, framework mode, example frame,
-spec table, callout, docs rail, search and evidence strip with the documentation and examples
-pages.
+This list is a contract, and part of it is still ahead of the code. Built today: the graph node,
+the node condition, the table mirror, the instrument, the flow row, and the parts of the page
+header the homepage uses. Specified here and built with the surfaces that need them: the
+scrubber and state-diff panel with the inspector, and the code block, install line, framework
+mode, example frame, spec table, callout, docs rail, search and evidence strip with the
+documentation and examples pages.
 
 A component in the second group is not a suggestion. It is written down first so that the
 page which needs it inherits a decision rather than making a new one, which is the failure

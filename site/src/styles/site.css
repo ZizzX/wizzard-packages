@@ -230,79 +230,86 @@ body {
   color: var(--fg-muted);
 }
 
+/* --- feature rows -------------------------------------------------------- */
+
 .rows {
   display: flex;
   flex-direction: column;
   border-top: var(--border) solid var(--line);
 }
 
-.rows > article {
+.flow-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  grid-template-columns: minmax(0, 24rem) minmax(0, 1fr);
   gap: var(--space-8);
+  align-items: start;
   padding: var(--space-12) 0;
   border-bottom: var(--border) solid var(--line);
 }
 
-.rows h2 {
+.flow-row h2 {
   font-size: var(--text-xl);
-  margin: 0;
-  /* Balanced against the prose column rather than run to the gutter. */
-  max-width: 20ch;
+  margin: 0 0 var(--space-3);
 }
 
-.rows p {
+.flow-row p {
   margin: 0;
   color: var(--fg-muted);
+  max-width: var(--measure-narrow);
+}
+
+.flow-row-graph {
+  margin: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.flow-row-graph figcaption {
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
   max-width: var(--measure);
 }
 
-.site-footer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4) var(--space-8);
-  padding: var(--space-8) 0 var(--space-16);
-  color: var(--fg-muted);
-  font-size: var(--text-xs);
-}
-
-@media (max-width: 900px) {
-  .rows > article {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
 /* -------------------------------------------------------------------------
-   The hero island: the form on the engine, and the graph of the definition
-   it runs. Not scoped by Astro, because the island is React - so every rule
-   below is namespaced under `.hero-flow`.
+   The hero instrument, and the graph wherever it is drawn. These components
+   are React rather than Astro, so nothing scopes them and every rule below
+   is namespaced by hand.
    ------------------------------------------------------------------------- */
 
-.hero-flow {
-  display: grid;
-  grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
-  gap: var(--space-8);
-  align-items: start;
+.instrument {
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
 }
 
-.flow-form {
+.instrument-controls {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  align-items: flex-end;
   gap: var(--space-4);
+  padding: var(--space-6);
 }
 
-.flow-form .field {
+.instrument-controls .field {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  min-width: 0;
 }
 
-.flow-form .field-label {
+/* The question is the wide one; the payer choice and the buttons are fixed. */
+.instrument-controls .field-grow {
+  flex: 1 1 16rem;
+}
+
+.instrument-controls .field-label {
   color: var(--fg-muted);
   font-size: var(--text-xs);
 }
 
-.flow-form input {
+.instrument-controls input {
   font: inherit;
   font-size: var(--text-sm);
   color: var(--fg);
@@ -314,38 +321,39 @@ body {
   width: 100%;
 }
 
-.flow-form input[aria-invalid='true'] {
+.instrument-controls input[aria-invalid='true'] {
   border-color: var(--st-error);
 }
 
-.flow-form .segmented {
+.instrument-controls .segmented {
   display: flex;
   border: var(--border) solid var(--line);
   border-radius: var(--radius-control);
   overflow: hidden;
 }
 
-.flow-form .segmented button {
+.instrument-controls .segmented button {
   flex: 1;
   font: inherit;
   font-size: var(--text-xs);
   min-height: var(--control-h);
+  padding: 0 var(--control-pad-x);
   background: transparent;
   color: var(--fg-muted);
   border: 0;
   cursor: pointer;
 }
 
-.flow-form .segmented button:hover {
+.instrument-controls .segmented button:hover {
   background: var(--tint-hover);
   color: var(--fg);
 }
 
-.flow-form .segmented button:active {
+.instrument-controls .segmented button:active {
   background: var(--tint-active);
 }
 
-.flow-form .segmented button[aria-pressed='true'] {
+.instrument-controls .segmented button[aria-pressed='true'] {
   /* Inset rather than a border, so the control keeps its height and the
      segments do not shift by two pixels when the choice moves. */
   box-shadow: inset 0 0 0 var(--border-selected) var(--accent);
@@ -354,17 +362,18 @@ body {
   font-weight: var(--weight-strong);
 }
 
-.flow-form .button[disabled] {
+.instrument-controls .button[disabled] {
   opacity: var(--opacity-disabled);
   cursor: not-allowed;
 }
 
 .flow-message {
   margin: 0;
+  padding: 0 var(--space-6) var(--space-4);
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   line-height: var(--leading-code);
-  /* Reserved, so a message arriving does not move the buttons above it. */
+  /* Reserved, so a message arriving does not move the controls above it. */
   min-height: 2.6em;
 }
 
@@ -380,19 +389,18 @@ body {
   color: var(--st-error);
 }
 
-.hero-flow .graph {
+.instrument-graph {
   margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
   min-width: 0;
+  border-top: var(--border) solid var(--line);
 }
 
-.hero-flow .graph-head {
+.instrument-graph .graph-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: var(--space-3);
+  padding: var(--space-3) var(--space-6);
   font-family: var(--font-mono);
   font-size: var(--text-label);
   letter-spacing: var(--track-label);
@@ -400,7 +408,7 @@ body {
   color: var(--fg-muted);
 }
 
-.hero-flow .rebuild {
+.instrument-graph .rebuild {
   font: inherit;
   background: transparent;
   border: var(--border) solid var(--line);
@@ -411,16 +419,26 @@ body {
   cursor: pointer;
 }
 
-.hero-flow .rebuild:hover {
+.instrument-graph .rebuild:hover {
   border-color: var(--line-hover);
   color: var(--fg);
 }
 
-.hero-flow .rebuild:active {
+.instrument-graph .rebuild:active {
   background: var(--tint-active);
 }
 
-.hero-flow .frame {
+/* --- the graph itself, wherever it is drawn ------------------------------- */
+
+/* The panel already draws a border, so the graph inside takes none. A row's
+   graph stands on the page ground and takes its own. Nested boxes are the
+   lazy container and this system does not use them. */
+.instrument-graph .frame {
+  padding: 0 var(--space-6) var(--space-6);
+  overflow-x: auto;
+}
+
+.flow-row-graph .frame {
   border: var(--border) solid var(--line);
   border-radius: var(--radius-panel);
   background: var(--surface);
@@ -428,21 +446,24 @@ body {
   overflow-x: auto;
 }
 
-.hero-flow svg {
+/* The one rule that matters most here: the SVG carries its own width and
+   height in user units, so it draws at true scale and only ever scales DOWN
+   to fit. Stretching it up multiplies every line weight and type size in the
+   system by the same factor, which is how a 13px label became 42px. */
+.frame svg {
   display: block;
-  width: 100%;
+  max-width: 100%;
   height: auto;
-  min-width: 240px;
 }
 
-.hero-flow .node {
+.node {
   transition:
     opacity var(--dur-graph) var(--ease-out),
     transform var(--dur-graph) var(--ease-out);
 }
 
-.hero-flow .node rect,
-.hero-flow .node circle {
+.node rect,
+.node circle {
   fill: var(--surface-raised);
   stroke: var(--line-strong);
   stroke-width: 1.5;
@@ -451,54 +472,63 @@ body {
     stroke var(--dur-graph) var(--ease-out);
 }
 
-.hero-flow .node text {
+.node text {
   fill: var(--fg);
   font-family: var(--font-mono);
   font-size: 13px;
 }
 
-.hero-flow .node.active rect {
+.node text.node-when {
+  fill: var(--fg-muted);
+  font-size: 9px;
+}
+
+.node.active text.node-when {
+  fill: var(--accent);
+}
+
+.node.active rect {
   stroke: var(--st-active);
   stroke-width: var(--border-selected);
   fill: var(--accent-soft);
 }
 
-.hero-flow .node.error rect {
+.node.error rect {
   stroke: var(--st-blocked);
   stroke-width: var(--border-selected);
   fill: var(--st-blocked-soft);
 }
 
-.hero-flow .node.visited rect {
+.node.visited rect {
   stroke: var(--st-visited);
 }
 
-/* Not upcoming and not passed: this step's `when` is false, so it is not on
-   the route at all. The dashed outline is what says so without colour. */
-.hero-flow .node.skipped {
+/* Not upcoming and not passed: this step's condition is false, so it is not
+   on the route at all. The dashed outline is what says so without colour. */
+.node.skipped {
   opacity: var(--opacity-muted);
 }
 
-.hero-flow .node.skipped rect {
+.node.skipped rect {
   stroke-dasharray: 4 4;
 }
 
-.hero-flow .node.group rect.inner {
+.node.group rect.inner {
   fill: none;
   stroke: var(--st-group);
 }
 
-.hero-flow .node.end.done circle {
+.node.end.done circle {
   fill: var(--st-active);
   stroke: var(--st-active);
 }
 
-.hero-flow .edge polyline {
+.edge polyline {
   fill: none;
   stroke: var(--line-strong);
   stroke-width: var(--edge-width);
-  /* `pathLength` normalises every polyline to 100 units, so one dash length
-     draws them all and no measurement in JavaScript is needed. */
+  /* pathLength normalises every polyline to 100 units, so one dash length
+     draws them all and no length is measured at runtime. */
   stroke-dasharray: 100;
   stroke-dashoffset: 100;
   animation: wz-draw var(--dur-edge-draw) var(--ease-out) forwards;
@@ -511,32 +541,24 @@ body {
   }
 }
 
-.hero-flow .edge.live polyline {
+.edge.live polyline {
   stroke: var(--st-active);
 }
 
-.hero-flow .edge.dim {
+.edge.dim {
   opacity: var(--opacity-dim);
 }
 
-.hero-flow .edge.back polyline {
+.edge.back polyline {
   stroke-dasharray: 4 4;
   animation: none;
   stroke-dashoffset: 0;
 }
 
-.hero-flow .node text.node-when {
-  fill: var(--fg-muted);
-  font-family: var(--font-mono);
-  font-size: 9px;
-}
-
-.hero-flow .node.active text.node-when {
-  fill: var(--accent);
-}
-
-/* The screen reader's path through the graph. */
-.hero-flow .mirror {
+/* The screen reader's path through the graph. A block, not the table itself:
+   `overflow: hidden` has no effect on a table box, so a bare hidden table keeps
+   its intrinsic width and widens the page on a narrow screen. */
+.mirror {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -549,7 +571,7 @@ body {
 }
 
 @media (max-width: 900px) {
-  .hero-flow {
+  .flow-row {
     grid-template-columns: minmax(0, 1fr);
   }
 }

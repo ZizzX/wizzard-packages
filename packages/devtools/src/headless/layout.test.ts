@@ -103,57 +103,72 @@ describe('layoutGraph', () => {
     expect(laid.edges.find((e) => e.to === 'gone')).toMatchObject({ kind: 'back', dangling: true });
   });
 
-  it('property: no two rectangles overlap and every edge endpoint is laid out', () => {
-    fc.assert(
-      fc.property(graphs, (graph) => {
-        const laid = layoutGraph(graph, {});
-        const ids = new Set(laid.nodes.map((n) => n.id));
-        for (let i = 0; i < laid.nodes.length; i++) {
-          for (let j = i + 1; j < laid.nodes.length; j++) {
-            const a = laid.nodes[i] as Positioned;
-            const b = laid.nodes[j] as Positioned;
-            if (overlaps(a, b)) return false;
+  // Both directions share every rule but which coordinate the layer drives, so
+  // the properties that are not about the axis run over both.
+  const DIRECTIONS = ['column', 'row'] as const;
+
+  it.each(DIRECTIONS)(
+    'property (%s): no two rectangles overlap and every edge endpoint is laid out',
+    (direction) => {
+      fc.assert(
+        fc.property(graphs, (graph) => {
+          const laid = layoutGraph(graph, { direction });
+          const ids = new Set(laid.nodes.map((n) => n.id));
+          for (let i = 0; i < laid.nodes.length; i++) {
+            for (let j = i + 1; j < laid.nodes.length; j++) {
+              const a = laid.nodes[i] as Positioned;
+              const b = laid.nodes[j] as Positioned;
+              if (overlaps(a, b)) return false;
+            }
           }
-        }
-        return laid.edges.every((e) => ids.has(e.from) && ids.has(e.to));
-      })
-    );
-  });
+          return laid.edges.every((e) => ids.has(e.from) && ids.has(e.to));
+        })
+      );
+    }
+  );
 
-  it('property: on an acyclic graph every forward edge points down', () => {
-    const dags = graphs.map((g) => ({
-      ...g,
-      edges: g.edges.filter((e) => {
-        if (e.kind === 'back' || e.to === '@end' || e.dangling) return true;
-        return Number(e.from.slice(1)) < Number(e.to.slice(1));
-      }),
-    }));
-    fc.assert(
-      fc.property(dags, (graph) => {
-        const laid = layoutGraph(graph, {});
-        const y = new Map(laid.nodes.map((n) => [n.id, n.y]));
-        return laid.edges
-          .filter((e) => e.kind !== 'back')
-          .every((e) => (y.get(e.to) ?? 0) > (y.get(e.from) ?? 0));
-      })
-    );
-  });
+  it.each(DIRECTIONS)(
+    'property (%s): on an acyclic graph every forward edge advances a layer',
+    (direction) => {
+      const dags = graphs.map((g) => ({
+        ...g,
+        edges: g.edges.filter((e) => {
+          if (e.kind === 'back' || e.to === '@end' || e.dangling) return true;
+          return Number(e.from.slice(1)) < Number(e.to.slice(1));
+        }),
+      }));
+      fc.assert(
+        fc.property(dags, (graph) => {
+          const laid = layoutGraph(graph, { direction });
+          const along = new Map(
+            laid.nodes.map((n) => [n.id, direction === 'row' ? n.x : n.y] as const)
+          );
+          return laid.edges
+            .filter((e) => e.kind !== 'back')
+            .every((e) => (along.get(e.to) ?? 0) > (along.get(e.from) ?? 0));
+        })
+      );
+    }
+  );
 
-  it('property: terminates on cycles, is deterministic, and back edges move no flow node', () => {
-    // A dangling back edge adds a ghost, so only the flow's own nodes are compared.
-    const own = (laid: PositionedGraph) => JSON.stringify(laid.nodes.filter((n) => !n.ghost));
-    fc.assert(
-      fc.property(graphs, (graph) => {
-        const a = layoutGraph(graph, {});
-        const b = layoutGraph({ ...graph, edges: [...graph.edges] }, {});
-        const without = layoutGraph(
-          { ...graph, edges: graph.edges.filter((e) => e.kind !== 'back') },
-          {}
-        );
-        return JSON.stringify(a) === JSON.stringify(b) && own(a) === own(without);
-      })
-    );
-  });
+  it.each(DIRECTIONS)(
+    'property (%s): terminates on cycles, is deterministic, and back edges move no flow node',
+    (direction) => {
+      // A dangling back edge adds a ghost, so only the flow's own nodes are compared.
+      const own = (laid: PositionedGraph) => JSON.stringify(laid.nodes.filter((n) => !n.ghost));
+      fc.assert(
+        fc.property(graphs, (graph) => {
+          const a = layoutGraph(graph, { direction });
+          const b = layoutGraph({ ...graph, edges: [...graph.edges] }, { direction });
+          const without = layoutGraph(
+            { ...graph, edges: graph.edges.filter((e) => e.kind !== 'back') },
+            { direction }
+          );
+          return JSON.stringify(a) === JSON.stringify(b) && own(a) === own(without);
+        })
+      );
+    }
+  );
 
   it('memoises by graph identity for the default options', () => {
     const graph = buildGraph(flowA);
@@ -203,5 +218,59 @@ describe('layoutGraph', () => {
     expect(crossings(buildGraph(flowA))).toBe(0);
     expect(crossings(buildGraph(flowB))).toBe(0);
     expect(crossings(buildGraph(flowC, subFlowsC))).toBe(0);
+  });
+});
+
+describe('layoutGraph in row direction', () => {
+  it('runs the layers rightward and keeps the boxes their own size', () => {
+    const laid = layoutGraph(buildGraph(flowA), { direction: 'row' });
+    const at = (id: string) => laid.nodes.find((n) => n.id === id);
+
+    // The same layering, on the other axis: every step advances x and shares y.
+    expect(at('details')?.x).toBe(0);
+    expect(at('company')?.x).toBe(NODE_W + 48);
+    expect(at('payment')?.x).toBe(2 * (NODE_W + 48));
+    expect(new Set(laid.nodes.map((n) => n.y))).toEqual(new Set([0]));
+    expect(laid.nodes.every((n) => n.w === NODE_W)).toBe(true);
+  });
+
+  it('lays out the same flow wide rather than tall', () => {
+    const graph = buildGraph(flowA);
+    const column = layoutGraph(graph);
+    const row = layoutGraph(graph, { direction: 'row' });
+
+    expect(column.height).toBeGreaterThan(column.width);
+    expect(row.width).toBeGreaterThan(row.height);
+    expect(row.nodes).toHaveLength(column.nodes.length);
+    expect(row.edges).toHaveLength(column.edges.length);
+  });
+
+  it('routes a forward edge between the facing borders', () => {
+    const laid = layoutGraph(buildGraph(flowA), { direction: 'row' });
+    const edge = laid.edges.find((e) => e.from === 'details' && e.to === 'company');
+    const from = laid.nodes.find((n) => n.id === 'details');
+    const to = laid.nodes.find((n) => n.id === 'company');
+
+    expect(edge?.points[0]).toEqual([(from?.x ?? 0) + NODE_W, (from?.y ?? 0) + NODE_H / 2]);
+    expect(edge?.points[1]).toEqual([to?.x, (to?.y ?? 0) + NODE_H / 2]);
+  });
+
+  it('returns a back edge along a rail below the graph, not beside it', () => {
+    const laid = layoutGraph(buildGraph(flowA), { direction: 'row' });
+    const back = laid.edges.find((e) => e.kind === 'back');
+    expect(back).toBeDefined();
+
+    const railY = Math.max(...(back?.points.map(([, y]) => y) ?? [0]));
+    // The rail is clear of every box, and the height grew to contain it.
+    expect(railY).toBeGreaterThan(NODE_H);
+    expect(laid.height).toBe(railY);
+    expect(laid.width).toBeGreaterThan(laid.height);
+  });
+
+  it('memoises each direction separately', () => {
+    const graph = buildGraph(flowA);
+    expect(layoutGraph(graph)).toBe(layoutGraph(graph));
+    expect(layoutGraph(graph, { direction: 'row' })).toBe(layoutGraph(graph, { direction: 'row' }));
+    expect(layoutGraph(graph, { direction: 'row' })).not.toBe(layoutGraph(graph));
   });
 });
