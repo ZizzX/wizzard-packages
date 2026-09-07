@@ -6,7 +6,6 @@ import {
   type IValidatorAdapter,
   type ValidationResult,
 } from '@wizzard-packages/react';
-import { WizardDevTools } from '@wizzard-packages/devtools';
 import { MemoryAdapter } from '@wizzard-packages/persistence';
 import { Card, CardContent, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -298,7 +297,6 @@ export default function TestError() {
   return (
     <WizardProvider config={config}>
       <WizardContent />
-      <WizardDevTools />
     </WizardProvider>
   );
 }

@@ -7,7 +7,6 @@ import {
   useWizardError,
 } from '@wizzard-packages/react';
 import { devToolsMiddleware } from '@wizzard-packages/middleware';
-import { WizardDevTools } from '@wizzard-packages/devtools';
 import { MemoryAdapter } from '@wizzard-packages/persistence';
 import { Card, CardContent, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -832,7 +831,6 @@ export default function TestAdvancedValidation() {
   return (
     <WizardProvider config={{ ...config, navigationMode }}>
       <WizardContent />
-      <WizardDevTools />
     </WizardProvider>
   );
 }

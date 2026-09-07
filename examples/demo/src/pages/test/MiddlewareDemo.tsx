@@ -3,7 +3,6 @@ import { useLocation } from 'react-router-dom';
 import type { IWizardConfig, WizardMiddleware } from '@wizzard-packages/react';
 import { useWizard, WizardProvider } from '@wizzard-packages/react';
 import { devToolsMiddleware, loggerMiddleware } from '@wizzard-packages/middleware';
-import { WizardDevTools } from '@wizzard-packages/devtools';
 import { MemoryAdapter } from '@wizzard-packages/persistence';
 import { StepperControls } from '../../components/StepperControls';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../components/ui/Card';
@@ -241,7 +240,6 @@ export default function MiddlewareDemo() {
             </Card>
 
             {/* The Visual DevTools Overlay */}
-            <WizardDevTools />
           </WizardProvider>
         </div>
 

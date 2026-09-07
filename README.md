@@ -58,7 +58,7 @@ export function App() {
   );
 }
 
-function Wizard() {
+export function Wizard() {
   const { current, isLast } = useStep();
   const { next, back, canBack } = useNavigation();
   const [full, setFull] = useField<string>('name.full');

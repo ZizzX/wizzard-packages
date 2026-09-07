@@ -33,9 +33,10 @@ const SNIPPETS = {
   'quickstart-flow': { file: 'examples/quickstart/src/flow.ts', lang: 'ts' },
   'quickstart-react': { file: 'examples/quickstart/src/App.tsx', lang: 'tsx' },
   'quickstart-vue': { file: 'examples/quickstart/src/Wizard.vue', lang: 'vue' },
+  'quickstart-devtools': { file: 'examples/quickstart/src/Devtools.tsx', lang: 'tsx' },
 };
 
-const DOCUMENTS = ['README.md'];
+const DOCUMENTS = ['README.md', 'packages/devtools/README.md'];
 
 const check = process.argv.includes('--check');
 /** Line endings differ between a Windows checkout and CI; the content does not. */
