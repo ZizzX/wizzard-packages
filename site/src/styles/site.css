@@ -1,0 +1,225 @@
+/**
+ * Everything the tokens do not already say, for both the Starlight shell and
+ * the site's own pages. Values here are always `var(--token)`; a literal colour
+ * or duration in this file is a bug.
+ */
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+  background: var(--bg);
+  color: var(--fg);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+:where(h1, h2, h3, h4) {
+  letter-spacing: var(--track-heading);
+  line-height: var(--leading-heading);
+  text-wrap: balance;
+}
+
+:where(code, pre, kbd, samp) {
+  font-family: var(--font-mono);
+}
+
+:where(a):focus-visible,
+:where(button):focus-visible,
+:where(input, select, textarea):focus-visible,
+:where([tabindex]):focus-visible {
+  outline: var(--focus-ring) solid var(--accent);
+  outline-offset: var(--focus-offset);
+}
+
+/* Starlight's header sits on the page ground; one hairline separates it. */
+.header {
+  border-bottom: var(--border) solid var(--line);
+}
+
+/* --- the site's own pages ------------------------------------------------ */
+
+.shell {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  min-height: 60px;
+  border-bottom: var(--border) solid var(--line);
+}
+
+.topbar nav {
+  display: flex;
+  gap: var(--space-6);
+  font-size: var(--text-sm);
+}
+
+.topbar a {
+  color: var(--fg-muted);
+  text-decoration: none;
+}
+
+.topbar a:hover {
+  color: var(--fg);
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.04em;
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.wordmark::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-16) 0 var(--space-12);
+}
+
+.hero h1 {
+  font-size: var(--text-display);
+  line-height: var(--leading-display);
+  letter-spacing: var(--track-display);
+  font-weight: var(--weight-strong);
+  margin: 0;
+  max-width: 17ch;
+}
+
+.hero h1 em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+.hero .lede {
+  margin: 0;
+  max-width: var(--measure-narrow);
+  color: var(--fg-muted);
+}
+
+.hero-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: start;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target-min);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-control);
+  border: var(--border) solid transparent;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-strong);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button-primary {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.button-secondary {
+  background: transparent;
+  color: var(--fg);
+  border-color: var(--line-strong);
+}
+
+.install {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--target-min);
+  padding: 0 var(--space-4);
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.install .tag {
+  font-size: var(--text-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  border-top: var(--border) solid var(--line);
+}
+
+.rows > article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: var(--space-8);
+  padding: var(--space-12) 0;
+  border-bottom: var(--border) solid var(--line);
+}
+
+.rows h2 {
+  font-size: var(--text-xl);
+  margin: 0 0 var(--space-3);
+}
+
+.rows p {
+  margin: 0;
+  color: var(--fg-muted);
+  max-width: var(--measure-narrow);
+}
+
+.site-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-8);
+  padding: var(--space-8) 0 var(--space-16);
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+}
+
+@media (max-width: 900px) {
+  .hero-stage,
+  .rows > article {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

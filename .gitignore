@@ -31,3 +31,6 @@ blob-report
 # next.js
 .next
 next-env.d.ts
+
+# astro
+.astro

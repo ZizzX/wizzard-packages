@@ -1,0 +1,215 @@
+/**
+ * The design system of DESIGN.md, as custom properties. Every colour, size,
+ * duration and easing used anywhere on the site comes from this file.
+ *
+ * Dark is the default: the bare `:root` block holds the dark palette, the
+ * media query switches to light for a visitor whose system asks for it, and
+ * `[data-theme]` - which Starlight stamps on `<html>` - wins over both so the
+ * theme toggle works in either direction.
+ *
+ * `@wizzard-packages/devtools` reads these same names with a fallback, so a
+ * host that ships this file gets the site's panel and a host that does not
+ * still gets a readable one.
+ */
+
+@font-face {
+  font-family: 'IBM Plex Sans Fallback';
+  src: local('Arial');
+  size-adjust: 104%;
+  ascent-override: 96%;
+  descent-override: 26%;
+}
+
+:root {
+  /* Typefaces. The fallback face is metric-adjusted so the swap does not reflow. */
+  --font-sans:
+    'IBM Plex Sans Variable', 'IBM Plex Sans', 'IBM Plex Sans Fallback', ui-sans-serif,
+    system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Type scale, px. Nothing between the steps. */
+  --text-label: 0.6875rem;
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-base: 1.0625rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 1.875rem;
+  --text-3xl: 2.375rem;
+  --text-4xl: 3rem;
+  --text-display: clamp(1.875rem, 5vw, 3.25rem);
+
+  --leading-display: 1.06;
+  --leading-heading: 1.2;
+  --leading-body: 1.6;
+  --leading-code: 1.55;
+
+  --track-display: -0.025em;
+  --track-heading: -0.015em;
+  --track-label: 0.1em;
+
+  --weight-body: 400;
+  --weight-medium: 500;
+  --weight-strong: 600;
+
+  /* Measure. Documentation keeps Starlight's default; these are for own pages. */
+  --measure: 68ch;
+  --measure-narrow: 52ch;
+
+  /* 4px grid. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-24: 6rem;
+
+  --radius-control: 4px;
+  --radius-panel: 6px;
+
+  --border: 1px;
+  --border-selected: 2px;
+  --focus-ring: 2px;
+  --focus-offset: 2px;
+  --target-min: 44px;
+
+  /* Motion: the three of DESIGN.md, and nothing else. */
+  --ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --dur-step: 180ms;
+  --dur-graph: 380ms;
+  --dur-edge-draw: 550ms;
+  --dur-scrub: 120ms;
+
+  /* Graph geometry, in the user units of layoutGraph(). */
+  --node-w: 160;
+  --node-h: 40;
+  --node-repeat-h: 48;
+  --edge-width: 1.5;
+  --graph-max-nodes: 40;
+
+  /* Dark palette (default). */
+  --bg: #12100e;
+  --surface: #191612;
+  --surface-raised: #201c17;
+  --line: #2e2823;
+  --line-strong: #3d362f;
+  --fg: #f3eee7;
+  --fg-muted: #a0958a;
+  --fg-faint: #7a7067;
+  --accent: #e8912d;
+  --accent-soft: rgba(232, 145, 45, 0.12);
+  --on-accent: #12100e;
+
+  --st-active: #e8912d;
+  --st-visited: #b8a184;
+  --st-blocked: #f2716f;
+  --st-blocked-soft: rgba(242, 113, 111, 0.12);
+  --st-skipped: #7a7067;
+  --st-group: #7ea6b8;
+  --st-error: #f2716f;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    --bg: #fbf9f5;
+    --surface: #ffffff;
+    --surface-raised: #f4f0e9;
+    --line: #e4dcd1;
+    --line-strong: #cfc3b4;
+    --fg: #1a1613;
+    --fg-muted: #6b6058;
+    --fg-faint: #8b8078;
+    --accent: #b4640f;
+    --accent-soft: rgba(180, 100, 15, 0.08);
+    --on-accent: #ffffff;
+
+    --st-active: #b4640f;
+    --st-visited: #8a7350;
+    --st-blocked: #b3261e;
+    --st-blocked-soft: rgba(179, 38, 30, 0.08);
+    --st-skipped: #8b8078;
+    --st-group: #2f6b84;
+    --st-error: #b3261e;
+  }
+}
+
+:root[data-theme='light'] {
+  --bg: #fbf9f5;
+  --surface: #ffffff;
+  --surface-raised: #f4f0e9;
+  --line: #e4dcd1;
+  --line-strong: #cfc3b4;
+  --fg: #1a1613;
+  --fg-muted: #6b6058;
+  --fg-faint: #8b8078;
+  --accent: #b4640f;
+  --accent-soft: rgba(180, 100, 15, 0.08);
+  --on-accent: #ffffff;
+
+  --st-active: #b4640f;
+  --st-visited: #8a7350;
+  --st-blocked: #b3261e;
+  --st-blocked-soft: rgba(179, 38, 30, 0.08);
+  --st-skipped: #8b8078;
+  --st-group: #2f6b84;
+  --st-error: #b3261e;
+}
+
+/**
+ * Starlight's own variables, mapped onto the tokens above so the documentation
+ * shell and the custom pages are one design rather than two that resemble each
+ * other. Starlight's greys are a ramp from 1 (lightest text) to 7 (darkest
+ * surface) in dark mode, and it inverts them itself for light.
+ */
+:root {
+  --sl-font: var(--font-sans);
+  --sl-font-mono: var(--font-mono);
+
+  --sl-color-white: var(--fg);
+  --sl-color-gray-1: var(--fg);
+  --sl-color-gray-2: var(--fg-muted);
+  --sl-color-gray-3: var(--fg-muted);
+  --sl-color-gray-4: var(--line-strong);
+  --sl-color-gray-5: var(--line);
+  --sl-color-gray-6: var(--surface);
+  --sl-color-gray-7: var(--surface-raised);
+  --sl-color-black: var(--bg);
+
+  --sl-color-accent: var(--accent);
+  --sl-color-accent-low: var(--accent-soft);
+  --sl-color-accent-high: var(--accent);
+  --sl-color-text-accent: var(--accent);
+  --sl-color-bg: var(--bg);
+  --sl-color-bg-nav: var(--bg);
+  --sl-color-bg-sidebar: var(--bg);
+  --sl-color-bg-inline-code: var(--surface);
+  --sl-color-hairline: var(--line);
+  --sl-color-hairline-light: var(--line);
+  --sl-color-hairline-shade: var(--line-strong);
+
+  --sl-text-body: var(--text-base);
+  --sl-text-code: var(--text-xs);
+  --sl-line-height: var(--leading-body);
+}
+
+/* The page ground itself, so an embedded or previewed page never borrows one. */
+html {
+  background: var(--bg);
+  color-scheme: dark light;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-step: 0ms;
+    --dur-graph: 0ms;
+    --dur-edge-draw: 0ms;
+    --dur-scrub: 0ms;
+  }
+}

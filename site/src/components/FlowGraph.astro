@@ -1,0 +1,198 @@
+---
+/**
+ * The reference flow R-A, drawn at build time from the engine itself:
+ * `buildGraph` reads the definition, `layoutGraph` places it, and this file
+ * only paints. Nothing here knows the shape of a flow, so a change to the
+ * definition changes the picture with no edit to this component.
+ *
+ * This is the static frame - the first step, no JavaScript. The interactive
+ * island replaces it after hydration.
+ */
+import { buildGraph } from '@wizzard-packages/core/graph';
+import { layoutGraph, formatExpr } from '@wizzard-packages/devtools/headless';
+import { flowA } from '../../../contract/fixtures';
+
+const graph = buildGraph(flowA);
+const laid = layoutGraph(graph);
+
+/** The step the static frame shows the flow on. */
+const active = flowA.order?.[0] ?? '';
+
+const nodeById = new Map(graph.nodes.map((node) => [node.id, node]));
+
+const edges = laid.edges.map((edge) => {
+  // formatExpr truncates at 32 characters and keeps the full text for the title,
+  // which is the rule DESIGN.md states for edge labels.
+  const printed = edge.when === undefined ? undefined : formatExpr(edge.when);
+  const mid = edge.points[Math.floor(edge.points.length / 2)] ?? [0, 0];
+  return {
+    points: edge.points.map(([x, y]) => `${x},${y}`).join(' '),
+    label: printed?.short ?? '',
+    full: printed?.full ?? '',
+    x: mid[0],
+    y: mid[1] - 6,
+    key: `${edge.from}-${edge.to}-${edge.kind}`,
+  };
+});
+
+const rows = graph.nodes.map((node) => ({
+  id: node.id,
+  label: node.label ?? node.id,
+  kind: node.kind,
+  state: node.id === active ? 'active' : 'not visited',
+  when: node.when === undefined ? '' : formatExpr(node.when).full,
+}));
+---
+
+<figure class="graph">
+  <figcaption class="eyebrow">
+    Flow <code>{flowA.id}</code>, version {flowA.version}
+  </figcaption>
+
+  <div class="frame">
+    <svg
+      viewBox={`0 0 ${laid.width} ${laid.height}`}
+      role="img"
+      aria-label={`Flow graph of ${flowA.id}. The same information is in the table below.`}
+    >
+      {
+        edges.map((edge) => (
+          <g class="edge">
+            <polyline points={edge.points} />
+            {edge.label !== '' && (
+              <text class="edge-label" x={edge.x} y={edge.y}>
+                {edge.label}
+                <title>{edge.full}</title>
+              </text>
+            )}
+          </g>
+        ))
+      }
+      {
+        laid.nodes.map((placed) => {
+          const node = nodeById.get(placed.id);
+          const kind = node?.kind ?? 'step';
+          const state = placed.id === active ? 'active' : 'rest';
+          if (kind === 'end') {
+            return (
+              <g class={`node end ${state}`}>
+                <circle cx={placed.x + 11} cy={placed.y + placed.h / 2} r="11" />
+              </g>
+            );
+          }
+          return (
+            <g class={`node ${kind} ${state}`}>
+              {kind === 'group' && (
+                <rect x={placed.x + 3} y={placed.y + 3} width={placed.w - 6} height={placed.h - 6} rx="4" class="inner" />
+              )}
+              <rect x={placed.x} y={placed.y} width={placed.w} height={placed.h} rx="4" />
+              <text x={placed.x + 12} y={placed.y + placed.h / 2 + 4}>{node?.label ?? placed.id}</text>
+            </g>
+          );
+        })
+      }
+    </svg>
+  </div>
+
+  <table class="mirror">
+    <caption>Steps of {flowA.id}</caption>
+    <thead>
+      <tr><th scope="col">Step</th><th scope="col">Kind</th><th scope="col">State</th><th scope="col">Condition</th></tr>
+    </thead>
+    <tbody>
+      {
+        rows.map((row) => (
+          <tr>
+            <th scope="row">{row.label}</th>
+            <td>{row.kind}</td>
+            <td>{row.state}</td>
+            <td>{row.when === '' ? 'always' : row.when}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</figure>
+
+<style>
+  .graph {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-width: 0;
+  }
+
+  .graph code {
+    font-size: inherit;
+    color: var(--fg);
+  }
+
+  .frame {
+    border: var(--border) solid var(--line);
+    border-radius: var(--radius-panel);
+    background: var(--surface);
+    padding: var(--space-4);
+    overflow-x: auto;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    min-width: 420px;
+  }
+
+  .node rect {
+    fill: var(--surface-raised);
+    stroke: var(--line-strong);
+    stroke-width: 1.5;
+  }
+
+  .node.active rect {
+    stroke: var(--st-active);
+    stroke-width: var(--border-selected);
+    fill: var(--accent-soft);
+  }
+
+  .node.group rect.inner {
+    fill: none;
+    stroke: var(--st-group);
+  }
+
+  .node.end circle {
+    fill: var(--st-active);
+    stroke: var(--st-active);
+  }
+
+  .node text {
+    fill: var(--fg);
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+
+  .edge polyline {
+    fill: none;
+    stroke: var(--line-strong);
+    stroke-width: 1.5;
+  }
+
+  .edge-label {
+    fill: var(--fg-muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+
+  /* The screen reader's path through the graph. */
+  .mirror {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+</style>

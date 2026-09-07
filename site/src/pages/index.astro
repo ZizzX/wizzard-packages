@@ -1,0 +1,104 @@
+---
+import '@fontsource-variable/ibm-plex-sans';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
+import '../styles/tokens.css';
+import '../styles/site.css';
+import FlowGraph from '../components/FlowGraph.astro';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const title = 'wizzard - headless multi-step flows for React and Vue';
+const description =
+  'Order, conditions and validation live in a flow definition you can read, diff and ship. React and Vue bindings over one headless engine.';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <a class="wordmark" href={`${base}/`}>wizzard</a>
+        <nav>
+          <a href={`${base}/docs/start/`}>Docs</a>
+          <a href="https://github.com/ZizzX/wizzard-packages">GitHub</a>
+        </nav>
+      </header>
+
+      <main>
+        <section class="hero">
+          <h1>Headless multi-step flows for React and Vue &mdash; <em>the flow is JSON</em>.</h1>
+          <p class="lede">
+            Order, conditions and validation live in a definition you can read, diff and ship.
+            The graph beside this form is that definition, running.
+          </p>
+
+          <div class="hero-stage">
+            <div>
+              <p class="eyebrow">Try it</p>
+              <p class="lede">
+                Change the payer type and the route changes: <code>Company</code> exists only
+                while <code>payer</code> is <code>business</code>.
+              </p>
+              <div class="actions">
+                <a class="button button-primary" href={`${base}/docs/start/`}>Get started</a>
+                <a class="button button-secondary" href={`${base}/docs/start/#the-flow`}>Explore this flow</a>
+              </div>
+            </div>
+            <FlowGraph />
+          </div>
+
+          <div class="actions">
+            <span class="install">
+              <span class="tag">install</span>
+              <span>npm i @wizzard-packages/core @wizzard-packages/react</span>
+            </span>
+          </div>
+        </section>
+
+        <div class="rows">
+          <article>
+            <div>
+              <h2>Change your answer. Keep the right data.</h2>
+              <p>
+                A branch the visitor left behind stops applying, and the data it collected stops
+                being submitted. The definition says which, so no component has to remember.
+              </p>
+            </div>
+          </article>
+          <article>
+            <div>
+              <h2>Reload halfway through. Continue safely.</h2>
+              <p>
+                A saved run restores to the step it left, or says plainly why it could not - an
+                older definition version, or storage the browser refused.
+              </p>
+            </div>
+          </article>
+          <article>
+            <div>
+              <h2>Add passengers. Revisit any passenger.</h2>
+              <p>
+                A repeat group runs a sub-flow per item and lets the visitor go back into one
+                without unwinding the rest.
+              </p>
+            </div>
+          </article>
+        </div>
+      </main>
+
+      <footer class="site-footer">
+        <span>MIT licensed</span>
+        <a href="https://github.com/ZizzX/wizzard-packages">Source</a>
+        <a href={`${base}/docs/start/`}>Documentation</a>
+      </footer>
+    </div>
+  </body>
+</html>
