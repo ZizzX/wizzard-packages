@@ -7,10 +7,16 @@ import { devtools, recordSession } from '@wizzard-packages/devtools/headless';
  * `/headless` installed without React.
  *
  * `exports` alone does not split install requirements, so this fixture is the
- * proof: it depends on `core` and `devtools` and on nothing that renders, it
- * imports only the headless entry, and it records the same bundle the panel's
- * Record button produces. If the entry ever reaches back into React, or the
- * React peers stop being optional, this stops compiling or stops running.
+ * first half of the proof: it depends on `core` and `devtools` and on nothing
+ * that renders, it imports only the headless entry, and it records the same
+ * bundle the panel's Record button produces.
+ *
+ * What it does not prove is absence. This is a workspace package, so
+ * `@wizzard-packages/devtools` resolves to `packages/devtools`, whose own
+ * devDependencies put React on disk above it; an accidental `import 'react'`
+ * inside the headless entry would still resolve here. The half that needs a
+ * registry where React cannot resolve at all belongs to R0, which installs the
+ * packed tarballs into clean fixtures (`docs/designs/v1-launch.md`, R0).
  */
 
 const signup = defineFlow({

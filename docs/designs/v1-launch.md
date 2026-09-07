@@ -282,7 +282,7 @@ Alternatives: VitePress (Vue-native; React examples become iframes), Next.js sta
 - `core/v1` ≤ 3.9 kB; every other entry has a ratchet set after its tests pass; `pnpm size`
   is green.
 - The public URL shows the inspector on first paint with the R-A flow and no paste.
-- R0's three consumer fixtures are green against the packed tarballs before R1.
+- R0's five consumer fixtures are green against the packed tarballs before R1.
 - 1.0.0 is on `latest`, the four removed packages carry deprecation notices, and
   `docs/MIGRATION.md` has a row for every 0.x export.
 
@@ -324,7 +324,7 @@ Alternatives: VitePress (Vue-native; React examples become iframes), Next.js sta
 8. L5 devtools, L6 diagnostics, L7 test gaps; D4 package READMEs.
 9. D3 switches to root imports and `@latest`; L8 teardown + root-export flip (preconditions
    (a), (b), (c) satisfied first).
-10. R0: final artefacts packed, four fixtures green, published to `next`, TTHW timed,
+10. R0: final artefacts packed, five fixtures green, published to `next`, TTHW timed,
     StackBlitz buttons pinned to that version.
 11. S6 deploy switch + D5/D6 within one day of R0.
 12. R1 promotes the same version to `latest`; R2 deprecates the four removed packages.
