@@ -282,6 +282,9 @@ body {
   border: var(--border) solid var(--line);
   border-radius: var(--radius-panel);
   background: var(--surface);
+  /* No wider than the graph it holds. A panel stretched past its content moves
+     the dead space inside the border rather than removing it. */
+  max-width: 54rem;
 }
 
 .instrument-controls {
@@ -505,12 +508,17 @@ body {
 
 /* Not upcoming and not passed: this step's condition is false, so it is not
    on the route at all. The dashed outline is what says so without colour. */
-.node.skipped {
+.node.skipped rect {
+  stroke-dasharray: 4 4;
+  stroke: var(--st-skipped);
   opacity: var(--opacity-muted);
 }
 
-.node.skipped rect {
-  stroke-dasharray: 4 4;
+/* The label keeps its contrast. Dash and colour say "not on the route"; fading
+   the words as well pushed them under the floor in the light theme, where the
+   muted foreground is already close to the ground. */
+.node.skipped text {
+  fill: var(--st-skipped);
 }
 
 .node.group rect.inner {
@@ -573,5 +581,14 @@ body {
 @media (max-width: 900px) {
   .flow-row {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  /* Shrinking to fit a phone takes a 13px label under 8px, which is a picture
+     of a graph rather than a graph. The viewport rules say code and graphs
+     scroll inside their container here; this is that rule, implemented. */
+  .frame svg {
+    max-width: none;
   }
 }

@@ -111,7 +111,7 @@ problems list and the state diff.
 | active  | `--st-active`  | `#E8912D` | `#B4640F` | the step the flow is on                         |
 | visited | `--st-visited` | `#B8A184` | `#8A7350` | entered and left; history, not progress bar     |
 | blocked | `--st-blocked` | `#F2716F` | `#B3261E` | a validator refused the move                    |
-| skipped | `--st-skipped` | `#7A7067` | `#8B8078` | `when` evaluated false; drawn dashed            |
+| skipped | `--st-skipped` | `#8F857A` | `#766B61` | `when` evaluated false; drawn dashed            |
 | group   | `--st-group`   | `#7EA6B8` | `#2F6B84` | a repeat group or a sub-flow                    |
 | error   | `--st-error`   | `#F2716F` | `#B3261E` | a thrown error, distinct from a refusal in copy |
 
@@ -125,6 +125,10 @@ The rule exists because the accent is also the colour that means "this is where 
 now". A second filled control competes with the graph for the same glance, and the graph is
 what the page is for. It is also the rule the homepage currently bends: the form's Next and
 the section's Get started are both filled, and one of them should take the border form.
+
+`--st-skipped` is a step's colour, not a rule's: it carries the label of a node that is off
+the route, so it clears 4.5:1 against `--surface-raised` in both themes. It deliberately does
+not share `--fg-faint`'s value any more, which is the token that may never carry text.
 
 `--st-group` is the single cool hue on the page. It marks a different class of object —
 structure rather than position — and it is never used for emphasis, a button, or a link.
