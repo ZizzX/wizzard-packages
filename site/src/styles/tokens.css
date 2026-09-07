@@ -23,8 +23,8 @@
 :root {
   /* Typefaces. The fallback face is metric-adjusted so the swap does not reflow. */
   --font-sans:
-    'IBM Plex Sans Variable', 'IBM Plex Sans', 'IBM Plex Sans Fallback', ui-sans-serif,
-    system-ui, sans-serif;
+    'IBM Plex Sans Variable', 'IBM Plex Sans', 'IBM Plex Sans Fallback', ui-sans-serif, system-ui,
+    sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
   /* Type scale, px. Nothing between the steps. */
@@ -55,6 +55,9 @@
   /* Measure. Documentation keeps Starlight's default; these are for own pages. */
   --measure: 68ch;
   --measure-narrow: 52ch;
+  /* Code, tables and graphs are allowed past the prose measure, inside their
+     own scroll container. */
+  --measure-wide: 92ch;
 
   /* 4px grid. */
   --space-1: 0.25rem;
@@ -76,12 +79,42 @@
   --focus-offset: 2px;
   --target-min: 44px;
 
-  /* Motion: the three of DESIGN.md, and nothing else. */
+  /* Control geometry. Every control the site draws is one of these two heights,
+     so a button, a segment and a field line up without anyone measuring. */
+  --control-h: 44px;
+  --control-h-compact: 32px;
+  --control-pad-x: var(--space-4);
+  --control-pad-x-compact: var(--space-3);
+  --field-pad-x: var(--space-3);
+
+  /* Interaction. Defined once rather than per theme: a tint mixed from the
+     foreground composites correctly over any ground, and a hover that darkens
+     in dark mode and lightens in light mode is two bugs, not one system. */
+  --tint-hover: color-mix(in oklab, var(--fg) 7%, transparent);
+  --tint-active: color-mix(in oklab, var(--fg) 12%, transparent);
+  --line-hover: color-mix(in oklab, var(--line-strong) 65%, var(--fg));
+  --opacity-disabled: 0.4;
+  /* Present but off the route. Two values because one carries a word and one
+     does not: an edge is pure graphic and can go quiet, a node still has to be
+     readable enough to tell you which step is being skipped. */
+  --opacity-dim: 0.22;
+  --opacity-muted: 0.34;
+
+  /* Stacking. Four levels is all the site has; anything needing a fifth is
+     solved wrong. */
+  --z-raised: 1;
+  --z-sticky: 10;
+  --z-overlay: 100;
+  --z-dialog: 1000;
+
+  /* Motion: the five of DESIGN.md, and nothing else. The route walk on the
+     homepage is scroll-driven and so has no duration - the scroll is its clock. */
   --ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
   --dur-step: 180ms;
   --dur-graph: 380ms;
   --dur-edge-draw: 550ms;
   --dur-scrub: 120ms;
+  --dur-page: 220ms;
 
   /* Graph geometry, in the user units of layoutGraph(). */
   --node-w: 160;
@@ -211,5 +244,6 @@ html {
     --dur-graph: 0ms;
     --dur-edge-draw: 0ms;
     --dur-scrub: 0ms;
+    --dur-page: 0ms;
   }
 }

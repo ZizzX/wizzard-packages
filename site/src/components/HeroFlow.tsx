@@ -225,8 +225,6 @@ function Stage(): ReactNode {
           void onNext();
         }}
       >
-        <p className="eyebrow">Try it</p>
-
         <div className="field">
           <span className="field-label" id="payer-label">
             Payer type
@@ -294,7 +292,10 @@ function Stage(): ReactNode {
 
         <div className="frame">
           <svg
-            viewBox={`0 0 ${laid.width} ${laid.height}`}
+            // Two units of bleed on every side: `layoutGraph` routes the back
+            // edge along x = width, and a 1.5-unit stroke centred on that line
+            // loses its outer half to the viewBox and reads as orphaned dashes.
+            viewBox={`-2 -2 ${laid.width + 4} ${laid.height + 4}`}
             role="img"
             aria-label={`Flow graph of ${flowA.id}. The same information is in the table below.`}
           >

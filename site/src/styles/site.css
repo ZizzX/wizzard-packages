@@ -4,6 +4,15 @@
  * or duration in this file is a bug.
  */
 
+/* Border-box everywhere. Without it a field set to `width: 100%` carries its
+   border outside that width and pushes the page two pixels sideways, which is
+   the one thing the viewport rules say must never happen. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
   font-family: var(--font-sans);
   font-size: var(--text-base);
@@ -30,6 +39,41 @@ body {
 :where([tabindex]):focus-visible {
   outline: var(--focus-ring) solid var(--accent);
   outline-offset: var(--focus-offset);
+}
+
+/* --- browser surfaces ----------------------------------------------------
+   The parts of a page nobody draws still belong to the design. Left alone
+   they ship the browser's blue selection and the platform's scrollbar, which
+   is the difference between a page that was built and one that was themed.
+   ------------------------------------------------------------------------- */
+
+::selection {
+  /* A mix rather than the flat accent: legible under text in both themes, and
+     unmistakably this site's colour rather than the browser's. */
+  background: color-mix(in oklab, var(--accent) 28%, transparent);
+  color: var(--fg);
+}
+
+:root {
+  scrollbar-color: var(--line-strong) transparent;
+  scrollbar-width: thin;
+}
+
+:where(input, textarea) {
+  caret-color: var(--accent);
+}
+
+/* Underlines sit clear of descenders and match the hairline weight the rest
+   of the page is drawn with. */
+:where(a) {
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: from-font;
+}
+
+/* Digits that are read in columns line up in columns: the graph's counts, the
+   spec tables, the bundle sizes, and anything set in mono. */
+:where(table, code, pre, kbd, samp, .tabular) {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Starlight's header sits on the page ground; one hairline separates it. */
@@ -125,7 +169,7 @@ body {
 .button {
   display: inline-flex;
   align-items: center;
-  min-height: var(--target-min);
+  min-height: var(--control-h);
   padding: 0 var(--space-4);
   border-radius: var(--radius-control);
   border: var(--border) solid transparent;
@@ -150,7 +194,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: var(--space-3);
-  min-height: var(--target-min);
+  min-height: var(--control-h);
   padding: 0 var(--space-4);
   border: var(--border) solid var(--line);
   border-radius: var(--radius-control);
@@ -192,13 +236,15 @@ body {
 
 .rows h2 {
   font-size: var(--text-xl);
-  margin: 0 0 var(--space-3);
+  margin: 0;
+  /* Balanced against the prose column rather than run to the gutter. */
+  max-width: 20ch;
 }
 
 .rows p {
   margin: 0;
   color: var(--fg-muted);
-  max-width: var(--measure-narrow);
+  max-width: var(--measure);
 }
 
 .site-footer {
@@ -253,8 +299,8 @@ body {
   background: var(--bg);
   border: var(--border) solid var(--line);
   border-radius: var(--radius-control);
-  padding: 0 var(--space-3);
-  min-height: var(--target-min);
+  padding: 0 var(--field-pad-x);
+  min-height: var(--control-h);
   width: 100%;
 }
 
@@ -273,21 +319,33 @@ body {
   flex: 1;
   font: inherit;
   font-size: var(--text-xs);
-  min-height: var(--target-min);
+  min-height: var(--control-h);
   background: transparent;
   color: var(--fg-muted);
   border: 0;
   cursor: pointer;
 }
 
+.flow-form .segmented button:hover {
+  background: var(--tint-hover);
+  color: var(--fg);
+}
+
+.flow-form .segmented button:active {
+  background: var(--tint-active);
+}
+
 .flow-form .segmented button[aria-pressed='true'] {
-  background: var(--accent);
-  color: var(--on-accent);
+  /* Inset rather than a border, so the control keeps its height and the
+     segments do not shift by two pixels when the choice moves. */
+  box-shadow: inset 0 0 0 var(--border-selected) var(--accent);
+  background: var(--accent-soft);
+  color: var(--fg);
   font-weight: var(--weight-strong);
 }
 
 .flow-form .button[disabled] {
-  opacity: 0.4;
+  opacity: var(--opacity-disabled);
   cursor: not-allowed;
 }
 
@@ -338,8 +396,18 @@ body {
   border: var(--border) solid var(--line);
   border-radius: var(--radius-control);
   color: var(--fg-muted);
-  padding: var(--space-2) var(--space-3);
+  min-height: var(--control-h-compact);
+  padding: 0 var(--control-pad-x-compact);
   cursor: pointer;
+}
+
+.hero-flow .rebuild:hover {
+  border-color: var(--line-hover);
+  color: var(--fg);
+}
+
+.hero-flow .rebuild:active {
+  background: var(--tint-active);
 }
 
 .hero-flow .frame {
@@ -398,7 +466,7 @@ body {
 /* Not upcoming and not passed: this step's `when` is false, so it is not on
    the route at all. The dashed outline is what says so without colour. */
 .hero-flow .node.skipped {
-  opacity: 0.34;
+  opacity: var(--opacity-muted);
 }
 
 .hero-flow .node.skipped rect {
@@ -438,7 +506,7 @@ body {
 }
 
 .hero-flow .edge.dim {
-  opacity: 0.22;
+  opacity: var(--opacity-dim);
 }
 
 .hero-flow .edge.back polyline {

@@ -34,3 +34,7 @@ next-env.d.ts
 
 # astro
 .astro
+
+# impeccable working artifacts (screenshots, comps); the design docs live in site/
+.impeccable/review/
+.impeccable/mocks/
