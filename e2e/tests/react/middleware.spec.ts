@@ -5,9 +5,12 @@ import { expect, test } from '../../fixtures/base';
  *
  * Tests middleware functionality:
  * - Logger middleware
- * - DevTools middleware
  * - Custom middleware execution
  * - Action interception
+ *
+ * The devtools panel is not covered here any more: the 0.x panel this demo
+ * mounted is gone, and its replacement watches a v1 wizard, which this demo is
+ * not. The panel's own journey is the Next.js example's spec.
  */
 
 test.describe('Middleware Integration', () => {
@@ -37,64 +40,6 @@ test.describe('Middleware Integration', () => {
       console.log('Detected logs:', consoleLogs);
     }
     expect(setDataLogs.length).toBeGreaterThan(0);
-  });
-
-  test('should display DevTools when enabled', async ({ page }) => {
-    await page.goto('#/test/middleware-demo?devtools=true');
-    await page.waitForSelector('[data-testid="wizard-container"]');
-
-    // Fallback: If auto-open failed, click the toggle
-    const toggle = page.locator('[data-testid="wizard-devtools-toggle"]');
-    if (await toggle.isVisible()) {
-      await toggle.click();
-    }
-
-    // DevTools panel should be visible
-    await expect(page.locator('[data-testid="wizard-devtools"]')).toBeVisible();
-  });
-
-  test('should show action history in DevTools', async ({ page }) => {
-    await page.goto('#/test/middleware-demo?devtools=true');
-    await page.waitForSelector('[data-testid="wizard-devtools"]');
-
-    // Perform some actions
-    await page.locator('[data-testid="name-input"]').fill('John');
-
-    // Wait for button to be enabled and click
-    await page.waitForSelector('[data-testid="next-button"]:not([disabled])', { timeout: 5000 });
-    await page.click('[data-testid="next-button"]');
-
-    // Click on actions tab
-    await page.click('[data-testid="devtools-tab-actions"]');
-
-    // Check DevTools shows actions
-    const actionList = page.locator('[data-testid="devtools-action-list"]');
-    await expect(actionList).toBeVisible();
-
-    const actionItems = await actionList.locator('[data-testid="action-item"]').count();
-    expect(actionItems).toBeGreaterThan(0);
-  });
-
-  test('should allow time-travel in DevTools', async ({ page }) => {
-    await page.goto('#/test/middleware-demo?devtools=true');
-    await page.waitForSelector('[data-testid="wizard-devtools"]');
-
-    // Perform actions
-    await page.locator('[data-testid="name-input"]').fill('Alice');
-
-    // Wait for button to be enabled and click
-    await page.waitForSelector('[data-testid="next-button"]:not([disabled])', { timeout: 5000 });
-    await page.click('[data-testid="next-button"]');
-    await page.locator('[data-testid="email-input"]').fill('alice@test.com');
-
-    // Click on actions tab
-    await page.click('[data-testid="devtools-tab-actions"]');
-
-    // Click on previous action in DevTools
-    await page.locator('[data-testid="jump-button"]').last().click();
-
-    // State should revert
-    // (verify via DevTools state display or UI)
   });
 
   test('should execute custom middleware in correct order', async ({ page }) => {
