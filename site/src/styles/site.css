@@ -1352,3 +1352,61 @@ svg.interactive .node {
   flex-direction: column;
   gap: var(--space-4);
 }
+
+/* The list a repeat group iterates. A row is the name and the way out of it. */
+.party {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.party li {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.party li .field {
+  flex: 1 1 12rem;
+}
+
+.party li button {
+  min-height: var(--target-min);
+}
+
+/* What every passenger answered, side by side. It scrolls rather than wraps:
+   a table read as a summary stops being one the moment a row folds. */
+.party-review {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  display: block;
+  overflow-x: auto;
+}
+
+.party-review th,
+.party-review td {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--border) solid var(--line);
+  white-space: nowrap;
+}
+
+.party-review thead th {
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-body);
+}
+
+/* Where in the repeat the visitor is: which passenger, and which of that
+   passenger's steps. Both are read off the engine. */
+.app-where {
+  margin: 0;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}

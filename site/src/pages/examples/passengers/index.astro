@@ -1,0 +1,40 @@
+---
+import flowSource from '@examples/reference/src/passengers/flow.ts?raw';
+import partySource from '@examples/reference/src/passengers/party.ts?raw';
+import appSource from '@examples/reference/src/passengers/App.tsx?raw';
+
+import ExampleShell from '../../../components/ExampleShell.astro';
+import PassengersReact from '../../../islands/PassengersReact';
+
+const sources = [
+  {
+    name: 'flow.ts',
+    lang: 'ts' as const,
+    code: flowSource,
+    note: 'A sub-flow, and a group that repeats it once per item. `keyBy` is what makes a position durable: the index moves when the list changes, the key does not.',
+  },
+  {
+    name: 'party.ts',
+    lang: 'ts' as const,
+    code: partySource,
+    note: 'The host half of a repeat: where an item’s answers live, and how a rendering reads the key off the frame. It also carries the one workaround this application needed.',
+  },
+  {
+    name: 'App.tsx',
+    lang: 'tsx' as const,
+    code: appSource,
+    note: 'The rendering draws the list, one passenger’s question, or the review. It never counts passengers to work out where it is.',
+  },
+];
+---
+
+<ExampleShell
+  slug="passengers"
+  ref="R-C"
+  heading="Add passengers. Revisit any passenger."
+  lede="One block of steps per passenger, written once and run as many times as there are people. Add and remove passengers, then go back and edit the second after finishing the third."
+  framework="react"
+  sources={sources}
+>
+  <PassengersReact client:load />
+</ExampleShell>
