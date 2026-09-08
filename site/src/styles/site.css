@@ -1,0 +1,675 @@
+/**
+ * Everything the tokens do not already say, for both the Starlight shell and
+ * the site's own pages. Values here are always `var(--token)`; a literal colour
+ * or duration in this file is a bug.
+ */
+
+/* Border-box everywhere. Without it a field set to `width: 100%` carries its
+   border outside that width and pushes the page two pixels sideways, which is
+   the one thing the viewport rules say must never happen. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* The ground is a drawing sheet: a hairline grid on the same 32px step the
+   layout counts in, so the page reads as something measured rather than as a
+   dark rectangle. It is one gradient pair and no image request. */
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(var(--grid-line) var(--border), transparent var(--border)),
+    linear-gradient(90deg, var(--grid-line) var(--border), transparent var(--border));
+  background-size: 32px 32px;
+  background-position: calc(var(--border) * -1) calc(var(--border) * -1);
+  color: var(--fg);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The monospace is the interface and the machine; the sans is prose and only
+   prose. A form control inherits neither by default - a bare `<button>` was
+   rendering in Arial under both typefaces - so the reset says so explicitly. */
+:where(button, input, select, textarea) {
+  font: inherit;
+  font-family: var(--font-mono);
+}
+
+:where(h1, h2, h3, h4) {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-strong);
+  letter-spacing: var(--track-heading);
+  line-height: var(--leading-heading);
+  text-wrap: balance;
+}
+
+:where(code, pre, kbd, samp) {
+  font-family: var(--font-mono);
+}
+
+:where(a):focus-visible,
+:where(button):focus-visible,
+:where(input, select, textarea):focus-visible,
+:where([tabindex]):focus-visible {
+  outline: var(--focus-ring) solid var(--accent);
+  outline-offset: var(--focus-offset);
+}
+
+/* --- browser surfaces ----------------------------------------------------
+   The parts of a page nobody draws still belong to the design. Left alone
+   they ship the browser's blue selection and the platform's scrollbar, which
+   is the difference between a page that was built and one that was themed.
+   ------------------------------------------------------------------------- */
+
+::selection {
+  /* A mix rather than the flat accent: legible under text in both themes, and
+     unmistakably this site's colour rather than the browser's. */
+  background: color-mix(in oklab, var(--accent) 28%, transparent);
+  color: var(--fg);
+}
+
+:root {
+  scrollbar-color: var(--line-strong) transparent;
+  scrollbar-width: thin;
+}
+
+:where(input, textarea) {
+  caret-color: var(--accent);
+}
+
+/* Links. DESIGN.md gives `--accent` to the active step, the primary action and
+   links, and nothing implemented the third: every anchor outside the top bar
+   was shipping the browser's own blue. `:where` keeps this at zero specificity
+   so Starlight's own link colours and the button classes still win.
+
+   Underlines sit clear of descenders and match the hairline weight the rest of
+   the page is drawn with. */
+:where(a) {
+  color: var(--accent);
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: from-font;
+}
+
+:where(a):hover {
+  text-decoration-thickness: 2px;
+}
+
+/* Digits that are read in columns line up in columns: the graph's counts, the
+   spec tables, the bundle sizes, and anything set in mono. */
+:where(table, code, pre, kbd, samp, .tabular) {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Starlight's header sits on the page ground; one hairline separates it. */
+.header {
+  border-bottom: var(--border) solid var(--line);
+}
+
+/* --- the site's own pages ------------------------------------------------ */
+
+.shell {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  min-height: 60px;
+  border-bottom: var(--border) solid var(--line);
+}
+
+.topbar nav {
+  display: flex;
+  gap: var(--space-6);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.topbar a {
+  color: var(--fg-muted);
+  text-decoration: none;
+}
+
+.topbar a:hover {
+  color: var(--fg);
+}
+
+/* The footer had a class and no rule, so three inline children ran together:
+   "MIT licensedSourceDocumentation". It is the topbar the other way up - the
+   same row, the same gap, the same muted links - with the licence held left
+   and the links pushed right. */
+.site-footer {
+  display: flex;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+  align-items: center;
+  gap: var(--space-6);
+  min-height: 60px;
+  margin-top: var(--space-12);
+  border-top: var(--border) solid var(--line);
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+}
+
+.site-footer a {
+  color: var(--fg-muted);
+  text-decoration: none;
+}
+
+.site-footer a:first-of-type {
+  margin-left: auto;
+}
+
+.site-footer a:hover {
+  color: var(--fg);
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: 0.04em;
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.wordmark::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-16) 0 var(--space-12);
+}
+
+.hero h1 {
+  font-size: var(--text-display);
+  line-height: var(--leading-display);
+  letter-spacing: var(--track-display);
+  font-weight: var(--weight-strong);
+  margin: 0;
+  max-width: 17ch;
+}
+
+.hero h1 em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+.hero .lede {
+  margin: 0;
+  max-width: var(--measure-narrow);
+  color: var(--fg-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-h);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-control);
+  border: var(--border) solid transparent;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-strong);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.button-primary {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* One solid accent fill per screen, and the first screen spends it on
+   Get started. Next is still the instrument's primary control, so it keeps the
+   accent as an outline on a tint - which outranks Back's neutral border
+   without spending the fill a second time. The label stays `--fg`: the accent
+   itself is 3.98:1 on that tint in the light theme, under the floor for a 15px
+   bold label, so the accent is carried by the border and the tint. */
+.button-accent {
+  background: var(--accent-soft);
+  color: var(--fg);
+  border-color: var(--accent);
+}
+
+.button-secondary {
+  background: transparent;
+  color: var(--fg);
+  border-color: var(--line-strong);
+}
+
+.install {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--control-h);
+  padding: 0 var(--space-4);
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.install .tag {
+  font-size: var(--text-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+/* --- feature rows -------------------------------------------------------- */
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  border-top: var(--border) solid var(--line);
+}
+
+/* The claim reads across the top, the graph runs the full width under it.
+   A row cannot be two columns: the widest reference flow is 788 user units,
+   and beside 24rem of text there are 656 left, which draws a 13px label at
+   10.3px and a 9px condition at 7.1px. The graph is what the row is for, so
+   it gets the width and the text takes the line above. */
+.flow-row {
+  display: grid;
+  gap: var(--space-6);
+  padding: var(--space-12) 0;
+  border-bottom: var(--border) solid var(--line);
+}
+
+/* Capped at the widest graph the page draws - 788 user units plus the frame's
+   padding and border, 51.375rem - so the claim and the picture under it share
+   a right edge as well as a left one, and a row reads as one object. */
+.flow-row-text {
+  display: grid;
+  grid-template-columns: minmax(0, 18rem) minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: baseline;
+  max-width: 51.375rem;
+}
+
+.flow-row h2 {
+  font-size: var(--text-xl);
+  margin: 0;
+}
+
+.flow-row p {
+  margin: 0;
+  color: var(--fg-muted);
+  max-width: var(--measure-narrow);
+}
+
+.flow-row-graph {
+  margin: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.flow-row-graph figcaption {
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+  max-width: var(--measure);
+}
+
+/* -------------------------------------------------------------------------
+   The hero instrument, and the graph wherever it is drawn. These components
+   are React rather than Astro, so nothing scopes them and every rule below
+   is namespaced by hand.
+   ------------------------------------------------------------------------- */
+
+.instrument {
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  /* No wider than the graph it holds. A panel stretched past its content moves
+     the dead space inside the border rather than removing it. */
+  max-width: 54rem;
+}
+
+.instrument-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-4);
+  padding: var(--space-6);
+}
+
+.instrument-controls .field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* The question is the wide one; the payer choice and the buttons are fixed. */
+.instrument-controls .field-grow {
+  flex: 1 1 16rem;
+}
+
+.instrument-controls .field-label {
+  font-family: var(--font-mono);
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+}
+
+.instrument-controls input {
+  font-size: var(--text-sm);
+  color: var(--fg);
+  background: var(--bg);
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-control);
+  padding: 0 var(--field-pad-x);
+  min-height: var(--control-h);
+  width: 100%;
+}
+
+.instrument-controls input[aria-invalid='true'] {
+  border-color: var(--st-error);
+}
+
+.instrument-controls .segmented {
+  display: flex;
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+}
+
+.instrument-controls .segmented button {
+  flex: 1;
+  font: inherit;
+  font-size: var(--text-xs);
+  min-height: var(--control-h);
+  padding: 0 var(--control-pad-x);
+  background: transparent;
+  color: var(--fg-muted);
+  border: 0;
+  cursor: pointer;
+}
+
+.instrument-controls .segmented button:hover {
+  background: var(--tint-hover);
+  color: var(--fg);
+}
+
+.instrument-controls .segmented button:active {
+  background: var(--tint-active);
+}
+
+.instrument-controls .segmented button[aria-pressed='true'] {
+  /* Inset rather than a border, so the control keeps its height and the
+     segments do not shift by two pixels when the choice moves. */
+  box-shadow: inset 0 0 0 var(--border-selected) var(--accent);
+  background: var(--accent-soft);
+  color: var(--fg);
+  font-weight: var(--weight-strong);
+}
+
+.instrument-controls .button[disabled] {
+  opacity: var(--opacity-disabled);
+  cursor: not-allowed;
+}
+
+.flow-message {
+  margin: 0;
+  padding: 0 var(--space-6) var(--space-4);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: var(--leading-code);
+  /* Reserved, so a message arriving does not move the controls above it. */
+  min-height: 2.6em;
+}
+
+.flow-message.idle {
+  color: var(--fg-muted);
+}
+
+.flow-message.ok {
+  color: var(--accent);
+}
+
+.flow-message.err {
+  color: var(--st-error);
+}
+
+.instrument-graph {
+  margin: 0;
+  min-width: 0;
+  border-top: var(--border) solid var(--line);
+}
+
+.instrument-graph .graph-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-6);
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.instrument-graph .rebuild {
+  font: inherit;
+  background: transparent;
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-control);
+  color: var(--fg-muted);
+  min-height: var(--control-h-compact);
+  padding: 0 var(--control-pad-x-compact);
+  cursor: pointer;
+}
+
+.instrument-graph .rebuild:hover {
+  border-color: var(--line-hover);
+  color: var(--fg);
+}
+
+.instrument-graph .rebuild:active {
+  background: var(--tint-active);
+}
+
+/* --- the graph itself, wherever it is drawn ------------------------------- */
+
+/* The panel already draws a border, so the graph inside takes none. A row's
+   graph stands on the page ground and takes its own. Nested boxes are the
+   lazy container and this system does not use them. */
+.instrument-graph .frame {
+  padding: 0 var(--space-6) var(--space-6);
+  overflow-x: auto;
+}
+
+/* The frame is the graph's border, not the row's: it takes the width the graph
+   needs and no more, so a two-node flow does not sit in a box built for a
+   four-node one. Capped at the row, which is where it starts to scroll. */
+.flow-row-graph .frame {
+  width: fit-content;
+  max-width: 100%;
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  padding: var(--space-4);
+  overflow-x: auto;
+}
+
+/* The one rule that matters most here: the SVG carries its own width and
+   height in user units, so it draws at true scale and only ever scales DOWN
+   to fit. Stretching it up multiplies every line weight and type size in the
+   system by the same factor, which is how a 13px label became 42px. */
+.frame svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.node {
+  transition:
+    opacity var(--dur-graph) var(--ease-out),
+    transform var(--dur-graph) var(--ease-out);
+}
+
+.node rect,
+.node circle {
+  fill: var(--surface-raised);
+  stroke: var(--line-strong);
+  stroke-width: 1.5;
+  transition:
+    fill var(--dur-graph) var(--ease-out),
+    stroke var(--dur-graph) var(--ease-out);
+}
+
+.node text {
+  fill: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.node text.node-when {
+  fill: var(--fg-muted);
+  font-size: 9px;
+}
+
+.node.active text.node-when {
+  fill: var(--accent);
+}
+
+.node.active rect {
+  stroke: var(--st-active);
+  stroke-width: var(--border-selected);
+  fill: var(--accent-soft);
+}
+
+.node.error rect {
+  stroke: var(--st-blocked);
+  stroke-width: var(--border-selected);
+  fill: var(--st-blocked-soft);
+}
+
+.node.visited rect {
+  stroke: var(--st-visited);
+}
+
+/* Not upcoming and not passed: this step's condition is false, so it is not
+   on the route at all. The dashed outline is what says so without colour. */
+.node.skipped rect {
+  stroke-dasharray: 4 4;
+  stroke: var(--st-skipped);
+  opacity: var(--opacity-muted);
+}
+
+/* The label keeps its contrast. Dash and colour say "not on the route"; fading
+   the words as well pushed them under the floor in the light theme, where the
+   muted foreground is already close to the ground. */
+.node.skipped text {
+  fill: var(--st-skipped);
+}
+
+.node.group rect.inner {
+  fill: none;
+  stroke: var(--st-group);
+}
+
+.node.end.done circle {
+  fill: var(--st-active);
+  stroke: var(--st-active);
+}
+
+.edge polyline {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: var(--edge-width);
+  /* pathLength normalises every polyline to 100 units, so one dash length
+     draws them all and no length is measured at runtime. */
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: wz-draw var(--dur-edge-draw) var(--ease-out) forwards;
+  transition: stroke var(--dur-graph) var(--ease-out);
+}
+
+@keyframes wz-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.edge.live polyline {
+  stroke: var(--st-active);
+}
+
+.edge.dim {
+  opacity: var(--opacity-dim);
+}
+
+.edge.back polyline {
+  stroke-dasharray: 4 4;
+  animation: none;
+  stroke-dashoffset: 0;
+}
+
+/* The screen reader's path through the graph. A block, not the table itself:
+   `overflow: hidden` has no effect on a table box, so a bare hidden table keeps
+   its intrinsic width and widens the page on a narrow screen. */
+.mirror {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* One breakpoint, because both rules answer the same fact: below it the row is
+   too narrow for the claim and the graph to keep their sizes. The claim stacks,
+   and the graph stops shrinking - a 13px label under the 12px floor is a
+   picture of a graph rather than a graph, so the viewport rules say code and
+   graphs scroll inside their container here. */
+@media (max-width: 900px) {
+  .flow-row-text {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+
+  .frame svg {
+    max-width: none;
+  }
+}

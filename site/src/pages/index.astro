@@ -1,0 +1,109 @@
+---
+import '@fontsource-variable/inter-tight';
+import '@fontsource-variable/jetbrains-mono';
+import '../styles/tokens.css';
+import '../styles/site.css';
+import HeroFlow from '../components/HeroFlow';
+import { FlowRow } from '../components/FlowRow';
+import { flowA, flowB, flowC, subFlowsC, dataC, registryB } from '../../../contract/fixtures';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const title = 'wizzard - headless multi-step flows for React and Vue';
+const description =
+  'Order, conditions and validation live in a flow definition you can read, diff and ship. React and Vue bindings over one headless engine.';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <a class="wordmark" href={`${base}/`}>wizzard</a>
+        <nav>
+          <a href={`${base}/docs/start/`}>Docs</a>
+          <a href="https://github.com/ZizzX/wizzard-packages">GitHub</a>
+        </nav>
+      </header>
+
+      <main>
+        <section class="hero">
+          <h1>Headless multi-step flows for React and Vue &mdash; <em>the flow is JSON</em>.</h1>
+          <p class="lede">
+            Order, conditions and validation live in a definition you can read, diff and ship.
+            The graph beside this form is that definition, running.
+          </p>
+
+          <p class="lede">
+            Change the payer type and the route changes: <code>Company</code> exists only
+            while <code>payer</code> is <code>business</code>.
+          </p>
+
+          <HeroFlow client:load />
+
+          <div class="actions">
+            <a class="button button-primary" href={`${base}/docs/start/`}>Get started</a>
+            <a class="button button-secondary" href={`${base}/docs/start/#the-flow`}>Explore this flow</a>
+            <span class="install">
+              <span class="tag">install</span>
+              <span>npm i @wizzard-packages/core @wizzard-packages/react</span>
+            </span>
+          </div>
+        </section>
+
+        <div class="rows">
+          <FlowRow
+            heading="Change your answer. Keep the right data."
+            flow={flowA}
+            data={{ payer: 'personal' }}
+            note="signup with payer = personal. Company is dashed: its `when` is false, so it is not on the route and the data it would collect is not submitted."
+          >
+            <p>
+              A branch the visitor left behind stops applying, and the data it collected stops
+              being submitted. The definition says which, so no component has to remember.
+            </p>
+          </FlowRow>
+
+          <FlowRow
+            heading="Reload halfway through. Continue safely."
+            flow={flowB}
+            data={{ plan: 'basic' }}
+            registry={registryB}
+            note="upgrade with plan = basic. Add-ons is off the route, so a session restored here lands on Confirm rather than a step that no longer exists."
+          >
+            <p>
+              A saved run restores to the step it left, or says plainly why it could not - an
+              older definition version, or storage the browser refused.
+            </p>
+          </FlowRow>
+
+          <FlowRow
+            heading="Add passengers. Revisit any passenger."
+            flow={flowC}
+            data={dataC('p1', 'p2')}
+            subFlows={subFlowsC}
+            note="trip with two passengers. The group draws its own border: it runs the passenger sub-flow once per item, and Review waits behind it."
+          >
+            <p>
+              A repeat group runs a sub-flow per item and lets the visitor go back into one
+              without unwinding the rest.
+            </p>
+          </FlowRow>
+        </div>
+      </main>
+
+      <footer class="site-footer">
+        <span>MIT licensed</span>
+        <a href="https://github.com/ZizzX/wizzard-packages">Source</a>
+        <a href={`${base}/docs/start/`}>Documentation</a>
+      </footer>
+    </div>
+  </body>
+</html>

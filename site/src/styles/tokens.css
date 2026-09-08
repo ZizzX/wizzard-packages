@@ -1,0 +1,266 @@
+/**
+ * The design system of DESIGN.md, as custom properties. Every colour, size,
+ * duration and easing used anywhere on the site comes from this file.
+ *
+ * Dark is the default: the bare `:root` block holds the dark palette, the
+ * media query switches to light for a visitor whose system asks for it, and
+ * `[data-theme]` - which Starlight stamps on `<html>` - wins over both so the
+ * theme toggle works in either direction.
+ *
+ * `@wizzard-packages/devtools` reads these same names with a fallback, so a
+ * host that ships this file gets the site's panel and a host that does not
+ * still gets a readable one.
+ */
+
+@font-face {
+  font-family: 'Inter Tight Fallback';
+  src: local('Arial');
+  size-adjust: 97%;
+  ascent-override: 98%;
+  descent-override: 24%;
+}
+
+:root {
+  /* Two typefaces, and the split between them is the design. The monospace is
+     the voice of the product: headings, labels, controls, code, the wordmark.
+     The sans carries prose only, because a documentation page is paragraphs and
+     a monospace paragraph is read slower than it is admired. The fallback face
+     is metric-adjusted so the swap does not reflow. */
+  --font-sans: 'Inter Tight Variable', 'Inter Tight', 'Inter Tight Fallback', ui-sans-serif,
+    system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo,
+    Consolas, monospace;
+
+  /* Type scale, px. Nothing between the steps. */
+  --text-label: 0.6875rem;
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-base: 1.0625rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 1.875rem;
+  --text-3xl: 2.375rem;
+  --text-4xl: 3rem;
+  --text-display: clamp(1.875rem, 5vw, 3.25rem);
+
+  --leading-display: 1.06;
+  --leading-heading: 1.2;
+  --leading-body: 1.6;
+  --leading-code: 1.55;
+
+  --track-display: -0.025em;
+  --track-heading: -0.015em;
+  --track-label: 0.1em;
+
+  --weight-body: 400;
+  --weight-medium: 500;
+  --weight-strong: 600;
+
+  /* Measure. Documentation keeps Starlight's default; these are for own pages. */
+  --measure: 68ch;
+  --measure-narrow: 52ch;
+  /* Code, tables and graphs are allowed past the prose measure, inside their
+     own scroll container. */
+  --measure-wide: 92ch;
+
+  /* 4px grid. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-24: 6rem;
+
+  --radius-control: 4px;
+  --radius-panel: 6px;
+
+  --border: 1px;
+  --border-selected: 2px;
+  --focus-ring: 2px;
+  --focus-offset: 2px;
+  --target-min: 44px;
+
+  /* Control geometry. Every control the site draws is one of these two heights,
+     so a button, a segment and a field line up without anyone measuring. */
+  --control-h: 44px;
+  --control-h-compact: 32px;
+  --control-pad-x: var(--space-4);
+  --control-pad-x-compact: var(--space-3);
+  --field-pad-x: var(--space-3);
+
+  /* Interaction. Defined once rather than per theme: a tint mixed from the
+     foreground composites correctly over any ground, and a hover that darkens
+     in dark mode and lightens in light mode is two bugs, not one system. */
+  --tint-hover: color-mix(in oklab, var(--fg) 7%, transparent);
+  --tint-active: color-mix(in oklab, var(--fg) 12%, transparent);
+  --line-hover: color-mix(in oklab, var(--line-strong) 65%, var(--fg));
+  --opacity-disabled: 0.4;
+  /* Present but off the route. Two values because one carries a word and one
+     does not: an edge is pure graphic and can go quiet, a node still has to be
+     readable enough to tell you which step is being skipped. */
+  --opacity-dim: 0.22;
+  --opacity-muted: 0.34;
+
+  /* Stacking. Four levels is all the site has; anything needing a fifth is
+     solved wrong. */
+  --z-raised: 1;
+  --z-sticky: 10;
+  --z-overlay: 100;
+  --z-dialog: 1000;
+
+  /* Motion: the five of DESIGN.md, and nothing else. The route walk on the
+     homepage is scroll-driven and so has no duration - the scroll is its clock. */
+  --ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --dur-step: 180ms;
+  --dur-graph: 380ms;
+  --dur-edge-draw: 550ms;
+  --dur-scrub: 120ms;
+  --dur-page: 220ms;
+
+  /* Graph geometry, in the user units of layoutGraph(). */
+  --node-w: 160;
+  --node-h: 40;
+  --node-repeat-h: 48;
+  --edge-width: 1.5;
+  --graph-max-nodes: 40;
+
+  /* Blueprint: an ink ground, hairlines that read as a drawing rather than a
+     chrome, and one cold accent. Measured on this ground, the accent carries
+     text at 10.74:1 and its fill under `--on-accent` at 10.53:1; the amber it
+     replaced sat at 4.40:1 on the light fill and shipped that way.
+
+     The comment below is a marker: tokens.test.ts finds each palette by it. */
+  /* Dark palette (default). */
+  --bg: #0b0e14;
+  --surface: #10141c;
+  --surface-raised: #141926;
+  --line: #1e2530;
+  --line-strong: #2c3648;
+  /* The ground grid. It is `--line` here and softer in light, because a dark
+     line on a light ground reads stronger than a light line on a dark one at
+     the same ratio: measured 1.25 dark against 1.19 light, and the light one
+     was the one that felt loud. */
+  --grid-line: #1e2530;
+  --fg: #e6edf3;
+  --fg-muted: #93a1b4;
+  --fg-faint: #6e7c90;
+  --accent: #35d6d0;
+  --accent-soft: rgba(53, 214, 208, 0.12);
+  --on-accent: #06121a;
+
+  --st-active: #35d6d0;
+  --st-visited: #6e8fa8;
+  --st-blocked: #f2716f;
+  --st-blocked-soft: rgba(242, 113, 111, 0.12);
+  --st-skipped: #7e8aa0;
+  --st-group: #8fb4c8;
+  --st-error: #f2716f;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    --bg: #f4f6f9;
+    --surface: #ffffff;
+    --surface-raised: #edf1f6;
+    --line: #dce3ec;
+    --line-strong: #b9c4d2;
+    --grid-line: #e7ecf3;
+    --fg: #0b0e14;
+    --fg-muted: #4a5666;
+    --fg-faint: #7a8798;
+    --accent: #0e6e6a;
+    --accent-soft: rgba(14, 110, 106, 0.08);
+    --on-accent: #ffffff;
+
+    --st-active: #0e6e6a;
+    --st-visited: #5a6b7d;
+    --st-blocked: #b3261e;
+    --st-blocked-soft: rgba(179, 38, 30, 0.08);
+    --st-skipped: #5f6b7a;
+    --st-group: #2f6b84;
+    --st-error: #b3261e;
+  }
+}
+
+:root[data-theme='light'] {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --surface-raised: #edf1f6;
+  --line: #dce3ec;
+  --line-strong: #b9c4d2;
+  --grid-line: #e7ecf3;
+  --fg: #0b0e14;
+  --fg-muted: #4a5666;
+  --fg-faint: #7a8798;
+  --accent: #0e6e6a;
+  --accent-soft: rgba(14, 110, 106, 0.08);
+  --on-accent: #ffffff;
+
+  --st-active: #0e6e6a;
+  --st-visited: #5a6b7d;
+  --st-blocked: #b3261e;
+  --st-blocked-soft: rgba(179, 38, 30, 0.08);
+  --st-skipped: #5f6b7a;
+  --st-group: #2f6b84;
+  --st-error: #b3261e;
+}
+
+/**
+ * Starlight's own variables, mapped onto the tokens above so the documentation
+ * shell and the custom pages are one design rather than two that resemble each
+ * other. Starlight's greys are a ramp from 1 (lightest text) to 7 (darkest
+ * surface) in dark mode, and it inverts them itself for light.
+ */
+:root {
+  --sl-font: var(--font-sans);
+  --sl-font-mono: var(--font-mono);
+
+  --sl-color-white: var(--fg);
+  --sl-color-gray-1: var(--fg);
+  --sl-color-gray-2: var(--fg-muted);
+  --sl-color-gray-3: var(--fg-muted);
+  --sl-color-gray-4: var(--line-strong);
+  --sl-color-gray-5: var(--line);
+  --sl-color-gray-6: var(--surface);
+  --sl-color-gray-7: var(--surface-raised);
+  --sl-color-black: var(--bg);
+
+  --sl-color-accent: var(--accent);
+  --sl-color-accent-low: var(--accent-soft);
+  --sl-color-accent-high: var(--accent);
+  --sl-color-text-accent: var(--accent);
+  --sl-color-bg: var(--bg);
+  --sl-color-bg-nav: var(--bg);
+  --sl-color-bg-sidebar: var(--bg);
+  --sl-color-bg-inline-code: var(--surface);
+  --sl-color-hairline: var(--line);
+  --sl-color-hairline-light: var(--line);
+  --sl-color-hairline-shade: var(--line-strong);
+
+  --sl-text-body: var(--text-base);
+  --sl-text-code: var(--text-xs);
+  --sl-line-height: var(--leading-body);
+}
+
+/* The page ground itself, so an embedded or previewed page never borrows one. */
+html {
+  background: var(--bg);
+  color-scheme: dark light;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-step: 0ms;
+    --dur-graph: 0ms;
+    --dur-edge-draw: 0ms;
+    --dur-scrub: 0ms;
+    --dur-page: 0ms;
+  }
+}

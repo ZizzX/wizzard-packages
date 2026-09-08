@@ -30,6 +30,10 @@ export default [
       // Standalone example with its own flat config (react-refresh plugin).
       'examples/shadcn-ui-connector/**',
       '**/*.bak',
+      // The site: Astro templates need the astro parser, which the flat config
+      // does not load; its TypeScript islands are linted by the rules below.
+      '**/*.astro',
+      'site/.astro/**',
     ],
   },
 

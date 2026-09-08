@@ -26,7 +26,10 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          # 22, not 20: this job builds the whole workspace, and the
+          # docs site's toolchain refuses to run below 22.12. The
+          # packages' own Node 20 promise is proved by the CI matrix.
+          node-version: '22'
           cache: 'pnpm'
 
       - name: Install Dependencies

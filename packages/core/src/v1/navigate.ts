@@ -285,11 +285,22 @@ export async function runNav(
     if (forward && from !== null && opts.validate !== false && ctx.validate) {
       const errors = await ctx.validate(from, host.read());
       if (stale()) return superseded;
+      const now = host.read();
       if (errors && Object.keys(errors).length > 0) {
         // The one early commit: these errors are the result the caller asked for.
-        const now = host.read();
         host.write(commit(now, { status: 'idle', errors: { ...now.errors, [from]: errors } }));
         return { ok: false, reason: 'invalid', by: from, errors };
+      }
+      // The step passed, so whatever it was refused for before no longer holds.
+      // Leaving the entry behind would keep the step `error` in `breadcrumbs`
+      // for the rest of the run, which is what `validate()` already avoids -
+      // this is the same clearing, on the path that navigates.
+      if (now.errors[from] !== undefined) {
+        host.write(
+          commit(now, {
+            errors: Object.fromEntries(Object.entries(now.errors).filter(([id]) => id !== from)),
+          })
+        );
       }
     }
 

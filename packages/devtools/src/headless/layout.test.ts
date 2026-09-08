@@ -6,10 +6,51 @@ import { denseFlow, flowA, flowB, flowC, subFlowsC } from '../../../../contract/
 import { layoutGraph, NODE_H, NODE_W, REPEAT_H } from './layout';
 
 import type { FlowGraph, GraphEdge } from '@wizzard-packages/core/graph';
-import type { Positioned, PositionedGraph } from './layout';
+import type { Positioned, PositionedEdge, PositionedGraph } from './layout';
 
 const overlaps = (a: Positioned, b: Positioned): boolean =>
   a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+
+/**
+ * Does a segment pass through the inside of a box? Liang-Barsky against the
+ * open rectangle, so an edge that leaves or lands on a border does not count -
+ * every edge does that at its own two ends.
+ */
+const cuts = (
+  [x0, y0]: readonly [number, number],
+  [x1, y1]: readonly [number, number],
+  b: Positioned
+): boolean => {
+  let lo = 0;
+  let hi = 1;
+  const clip = (p: number, q: number): boolean => {
+    if (p === 0) return q >= 0;
+    const r = q / p;
+    if (p < 0) lo = Math.max(lo, r);
+    else hi = Math.min(hi, r);
+    return lo < hi;
+  };
+  const dx = x1 - x0;
+  const dy = y1 - y0;
+  return (
+    clip(-dx, x0 - b.x) &&
+    clip(dx, b.x + b.w - x0) &&
+    clip(-dy, y0 - b.y) &&
+    clip(dy, b.y + b.h - y0) &&
+    lo < hi
+  );
+};
+
+/** Every box an edge's polyline passes through, other than its own two ends. */
+const pierced = (laid: PositionedGraph, e: PositionedEdge): string[] =>
+  laid.nodes
+    .filter(
+      (n) =>
+        n.id !== e.from &&
+        n.id !== e.to &&
+        e.points.some((p, i) => i > 0 && cuts(e.points[i - 1] as [number, number], p, n))
+    )
+    .map((n) => n.id);
 
 /** Random graphs: nodes s0..sN, forward/back/order edges anywhere, a few dangling. */
 const graphs = fc
@@ -103,56 +144,110 @@ describe('layoutGraph', () => {
     expect(laid.edges.find((e) => e.to === 'gone')).toMatchObject({ kind: 'back', dangling: true });
   });
 
-  it('property: no two rectangles overlap and every edge endpoint is laid out', () => {
-    fc.assert(
-      fc.property(graphs, (graph) => {
-        const laid = layoutGraph(graph, {});
-        const ids = new Set(laid.nodes.map((n) => n.id));
-        for (let i = 0; i < laid.nodes.length; i++) {
-          for (let j = i + 1; j < laid.nodes.length; j++) {
-            const a = laid.nodes[i] as Positioned;
-            const b = laid.nodes[j] as Positioned;
-            if (overlaps(a, b)) return false;
+  // Both directions share every rule but which coordinate the layer drives, so
+  // the properties that are not about the axis run over both.
+  const DIRECTIONS = ['column', 'row'] as const;
+
+  it.each(DIRECTIONS)(
+    'property (%s): no two rectangles overlap and every edge endpoint is laid out',
+    (direction) => {
+      fc.assert(
+        fc.property(graphs, (graph) => {
+          const laid = layoutGraph(graph, { direction });
+          const ids = new Set(laid.nodes.map((n) => n.id));
+          for (let i = 0; i < laid.nodes.length; i++) {
+            for (let j = i + 1; j < laid.nodes.length; j++) {
+              const a = laid.nodes[i] as Positioned;
+              const b = laid.nodes[j] as Positioned;
+              if (overlaps(a, b)) return false;
+            }
           }
-        }
-        return laid.edges.every((e) => ids.has(e.from) && ids.has(e.to));
-      })
-    );
-  });
+          return laid.edges.every((e) => ids.has(e.from) && ids.has(e.to));
+        })
+      );
+    }
+  );
 
-  it('property: on an acyclic graph every forward edge points down', () => {
-    const dags = graphs.map((g) => ({
-      ...g,
-      edges: g.edges.filter((e) => {
-        if (e.kind === 'back' || e.to === '@end' || e.dangling) return true;
-        return Number(e.from.slice(1)) < Number(e.to.slice(1));
-      }),
-    }));
-    fc.assert(
-      fc.property(dags, (graph) => {
-        const laid = layoutGraph(graph, {});
-        const y = new Map(laid.nodes.map((n) => [n.id, n.y]));
-        return laid.edges
-          .filter((e) => e.kind !== 'back')
-          .every((e) => (y.get(e.to) ?? 0) > (y.get(e.from) ?? 0));
-      })
-    );
-  });
+  it.each(DIRECTIONS)(
+    'property (%s): on an acyclic graph every forward edge advances a layer',
+    (direction) => {
+      const dags = graphs.map((g) => ({
+        ...g,
+        edges: g.edges.filter((e) => {
+          if (e.kind === 'back' || e.to === '@end' || e.dangling) return true;
+          return Number(e.from.slice(1)) < Number(e.to.slice(1));
+        }),
+      }));
+      fc.assert(
+        fc.property(dags, (graph) => {
+          const laid = layoutGraph(graph, { direction });
+          const along = new Map(
+            laid.nodes.map((n) => [n.id, direction === 'row' ? n.x : n.y] as const)
+          );
+          return laid.edges
+            .filter((e) => e.kind !== 'back')
+            .every((e) => (along.get(e.to) ?? 0) > (along.get(e.from) ?? 0));
+        })
+      );
+    }
+  );
 
-  it('property: terminates on cycles, is deterministic, and back edges move no flow node', () => {
-    // A dangling back edge adds a ghost, so only the flow's own nodes are compared.
-    const own = (laid: PositionedGraph) => JSON.stringify(laid.nodes.filter((n) => !n.ghost));
-    fc.assert(
-      fc.property(graphs, (graph) => {
-        const a = layoutGraph(graph, {});
-        const b = layoutGraph({ ...graph, edges: [...graph.edges] }, {});
-        const without = layoutGraph(
-          { ...graph, edges: graph.edges.filter((e) => e.kind !== 'back') },
-          {}
-        );
-        return JSON.stringify(a) === JSON.stringify(b) && own(a) === own(without);
-      })
-    );
+  it.each(DIRECTIONS)(
+    'property (%s): terminates on cycles, is deterministic, and back edges move no flow node',
+    (direction) => {
+      // A dangling back edge adds a ghost, so only the flow's own nodes are compared.
+      const own = (laid: PositionedGraph) => JSON.stringify(laid.nodes.filter((n) => !n.ghost));
+      fc.assert(
+        fc.property(graphs, (graph) => {
+          const a = layoutGraph(graph, { direction });
+          const b = layoutGraph({ ...graph, edges: [...graph.edges] }, { direction });
+          const without = layoutGraph(
+            { ...graph, edges: graph.edges.filter((e) => e.kind !== 'back') },
+            { direction }
+          );
+          return JSON.stringify(a) === JSON.stringify(b) && own(a) === own(without);
+        })
+      );
+    }
+  );
+
+  it.each(DIRECTIONS)(
+    'property (%s): no edge is drawn through a node it does not touch',
+    (direction) => {
+      fc.assert(
+        fc.property(graphs, (graph) => {
+          const laid = layoutGraph(graph, { direction });
+          return laid.edges.every((e) => pierced(laid, e).length === 0);
+        })
+      );
+    }
+  );
+
+  it.each(DIRECTIONS)('routes an edge that skips a layer around it (%s)', (direction) => {
+    // A flow whose branch is optional: `a -> b -> c` with `a -> c` beside it,
+    // which is the shape the site draws when a step falls out of the route.
+    const graph: FlowGraph = {
+      nodes: [
+        { id: 'a', kind: 'step' },
+        { id: 'b', kind: 'step' },
+        { id: 'c', kind: 'step' },
+      ],
+      edges: [
+        { from: 'a', to: 'b', kind: 'next' },
+        { from: 'b', to: 'c', kind: 'next' },
+        { from: 'a', to: 'c', kind: 'next' },
+      ],
+    };
+    const laid = layoutGraph(graph, { direction });
+    const skip = laid.edges.find((e) => e.from === 'a' && e.to === 'c');
+    expect(skip).toBeDefined();
+    expect(pierced(laid, skip as PositionedEdge)).toEqual([]);
+    // It detours rather than going straight, and stays inside the box.
+    expect(skip?.points.length).toBeGreaterThan(2);
+    for (const [x, y] of skip?.points ?? []) {
+      expect(x).toBeLessThanOrEqual(laid.width);
+      expect(y).toBeLessThanOrEqual(laid.height);
+    }
   });
 
   it('memoises by graph identity for the default options', () => {
@@ -203,5 +298,59 @@ describe('layoutGraph', () => {
     expect(crossings(buildGraph(flowA))).toBe(0);
     expect(crossings(buildGraph(flowB))).toBe(0);
     expect(crossings(buildGraph(flowC, subFlowsC))).toBe(0);
+  });
+});
+
+describe('layoutGraph in row direction', () => {
+  it('runs the layers rightward and keeps the boxes their own size', () => {
+    const laid = layoutGraph(buildGraph(flowA), { direction: 'row' });
+    const at = (id: string) => laid.nodes.find((n) => n.id === id);
+
+    // The same layering, on the other axis: every step advances x and shares y.
+    expect(at('details')?.x).toBe(0);
+    expect(at('company')?.x).toBe(NODE_W + 48);
+    expect(at('payment')?.x).toBe(2 * (NODE_W + 48));
+    expect(new Set(laid.nodes.map((n) => n.y))).toEqual(new Set([0]));
+    expect(laid.nodes.every((n) => n.w === NODE_W)).toBe(true);
+  });
+
+  it('lays out the same flow wide rather than tall', () => {
+    const graph = buildGraph(flowA);
+    const column = layoutGraph(graph);
+    const row = layoutGraph(graph, { direction: 'row' });
+
+    expect(column.height).toBeGreaterThan(column.width);
+    expect(row.width).toBeGreaterThan(row.height);
+    expect(row.nodes).toHaveLength(column.nodes.length);
+    expect(row.edges).toHaveLength(column.edges.length);
+  });
+
+  it('routes a forward edge between the facing borders', () => {
+    const laid = layoutGraph(buildGraph(flowA), { direction: 'row' });
+    const edge = laid.edges.find((e) => e.from === 'details' && e.to === 'company');
+    const from = laid.nodes.find((n) => n.id === 'details');
+    const to = laid.nodes.find((n) => n.id === 'company');
+
+    expect(edge?.points[0]).toEqual([(from?.x ?? 0) + NODE_W, (from?.y ?? 0) + NODE_H / 2]);
+    expect(edge?.points[1]).toEqual([to?.x, (to?.y ?? 0) + NODE_H / 2]);
+  });
+
+  it('returns a back edge along a rail below the graph, not beside it', () => {
+    const laid = layoutGraph(buildGraph(flowA), { direction: 'row' });
+    const back = laid.edges.find((e) => e.kind === 'back');
+    expect(back).toBeDefined();
+
+    const railY = Math.max(...(back?.points.map(([, y]) => y) ?? [0]));
+    // The rail is clear of every box, and the height grew to contain it.
+    expect(railY).toBeGreaterThan(NODE_H);
+    expect(laid.height).toBe(railY);
+    expect(laid.width).toBeGreaterThan(laid.height);
+  });
+
+  it('memoises each direction separately', () => {
+    const graph = buildGraph(flowA);
+    expect(layoutGraph(graph)).toBe(layoutGraph(graph));
+    expect(layoutGraph(graph, { direction: 'row' })).toBe(layoutGraph(graph, { direction: 'row' }));
+    expect(layoutGraph(graph, { direction: 'row' })).not.toBe(layoutGraph(graph));
   });
 });
