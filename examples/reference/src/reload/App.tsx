@@ -10,7 +10,7 @@ import {
 import { persist, type RestoreOutcome } from '@wizzard-packages/plugins/persist';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
-import { APP_VERSION, STORAGE_KEY, reload } from './flow';
+import { APP_VERSION, LAST_STEP, STORAGE_KEY, reload } from './flow';
 import { describeRestore, simulateUpgrade } from './outcome';
 import { TAKEN, registry } from './registry';
 
@@ -76,10 +76,16 @@ function Reload(props: { restored: { current: RestoreOutcome | null } }): ReactN
   const [name, setName] = useField<string>('workspace.name');
   const status = useWizardSelector((s) => s.status);
 
+  // Whether the run is finished is read off the engine, not remembered here:
+  // `toSnapshot` does not carry `status`, so a wizard that reached the end and
+  // was reloaded comes back `idle`, and a flag in this component would come
+  // back `false` and send the visitor round the last step again. `completed`
+  // is in the snapshot, and the last step is in it only once the flow ended.
+  const ended = useWizardSelector((s) => s.completed.includes(LAST_STEP));
+
   const [mounted, setMounted] = useState(false);
   const [outcome, setOutcome] = useState<RestoreOutcome | null>(null);
   const [announcement, setAnnouncement] = useState('');
-  const [ended, setEnded] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
@@ -107,7 +113,6 @@ function Reload(props: { restored: { current: RestoreOutcome | null } }): ReactN
 
   async function onNext(): Promise<void> {
     if (ended) {
-      setEnded(false);
       setAnnouncement('');
       wizard.reset();
       await wizard.start();
@@ -115,10 +120,7 @@ function Reload(props: { restored: { current: RestoreOutcome | null } }): ReactN
     }
     const result = await wizard.next();
     if (result.ok) {
-      if (result.to === '@end') {
-        setEnded(true);
-        setAnnouncement('Finished.');
-      }
+      if (result.to === '@end') setAnnouncement('Finished.');
       return;
     }
     if (result.reason === 'superseded' || result.reason === 'aborted') return;
@@ -144,7 +146,7 @@ function Reload(props: { restored: { current: RestoreOutcome | null } }): ReactN
         {describeRestore(mounted ? outcome : null)}
       </p>
 
-      {ended ? (
+      {mounted && ended ? (
         <>
           <h2 ref={heading} tabIndex={-1}>
             Done

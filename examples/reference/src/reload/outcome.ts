@@ -41,9 +41,17 @@ export function describeRestore(outcome: RestoreOutcome | null): string {
  * the day an application ships a change to what it collects.
  */
 export function simulateUpgrade(): void {
-  const raw = globalThis.localStorage?.getItem(STORAGE_KEY);
-  if (raw === null || raw === undefined) return;
-  const stored = JSON.parse(raw) as Record<string, unknown>;
-  globalThis.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...stored, appVersion: 0 }));
+  // Every one of these can throw in a browser that refuses storage - the
+  // property access included, which is why this is a try and not a check. The
+  // page already says saving is unavailable there; the button does nothing
+  // rather than taking the example down with it.
+  try {
+    const raw = globalThis.localStorage.getItem(STORAGE_KEY);
+    if (raw === null) return;
+    const stored = JSON.parse(raw) as Record<string, unknown>;
+    globalThis.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...stored, appVersion: 0 }));
+  } catch {
+    return;
+  }
   globalThis.location.reload();
 }

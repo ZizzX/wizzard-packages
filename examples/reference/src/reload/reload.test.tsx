@@ -140,6 +140,34 @@ describe('R-B reload, React', () => {
   });
 });
 
+describe('R-B reload, finished', () => {
+  it('comes back finished after a reload, rather than round the last step again', async () => {
+    const first = render(<ReloadApp />);
+    await act(async () => {});
+    await type(field('Email'), 'ada@example.com');
+    await click('Next');
+    await type(field('Workspace name'), 'ada-ltd');
+    await click('Next');
+    await settle(LOOKUP_MS + 50);
+    expect(heading()).toBe('Confirm');
+
+    await click('Finish');
+    expect(heading()).toBe('Done');
+    await settle(30);
+    first.unmount();
+
+    // `toSnapshot` does not carry `status`, so a rendering that remembered
+    // "finished" itself would put the visitor back on Confirm. It is read from
+    // `completed`, which is in the snapshot.
+    render(<ReloadApp />);
+    await act(async () => {});
+    expect(heading()).toBe('Done');
+
+    await click('Start again');
+    expect(heading()).toBe('Your account');
+  });
+});
+
 describe('R-B reload, Vue', () => {
   it('restores a session the React rendering saved', async () => {
     const first = render(<ReloadApp />);

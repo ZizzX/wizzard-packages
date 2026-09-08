@@ -10,7 +10,7 @@ import {
 } from '@wizzard-packages/vue/v1';
 import { computed, onMounted, ref, useTemplateRef, watch } from 'vue';
 
-import { STORAGE_KEY } from './flow';
+import { LAST_STEP, STORAGE_KEY } from './flow';
 import { describeRestore, simulateUpgrade } from './outcome';
 import { TAKEN } from './registry';
 
@@ -39,10 +39,16 @@ const email = useField<string>('account.email');
 const name = useField<string>('workspace.name');
 const status = useWizardSelector((s) => s.status);
 
+// Whether the run is finished is read off the engine, not remembered here:
+// `toSnapshot` does not carry `status`, so a wizard that reached the end and was
+// reloaded comes back `idle`, and a flag in this component would come back
+// false and send the visitor round the last step again. `completed` is in the
+// snapshot, and the last step is in it only once the flow ended.
+const ended = useWizardSelector((s) => s.completed.includes(LAST_STEP));
+
 const mounted = ref(false);
 const outcome = ref<RestoreOutcome | null>(null);
 const announcement = ref('');
-const ended = ref(false);
 const heading = useTemplateRef<HTMLHeadingElement>('heading');
 
 onMounted(() => {
@@ -75,7 +81,6 @@ watch(current, (to) => {
 
 async function onNext(): Promise<void> {
   if (ended.value) {
-    ended.value = false;
     announcement.value = '';
     wizard.reset();
     await wizard.start();
@@ -83,10 +88,7 @@ async function onNext(): Promise<void> {
   }
   const result = await wizard.next();
   if (result.ok) {
-    if (result.to === '@end') {
-      ended.value = true;
-      announcement.value = 'Finished.';
-    }
+    if (result.to === '@end') announcement.value = 'Finished.';
     return;
   }
   if (result.reason === 'superseded' || result.reason === 'aborted') return;
@@ -110,7 +112,7 @@ async function onBack(): Promise<void> {
   <div class="app">
     <p class="app-restore" role="status" aria-live="polite">{{ restoreLine }}</p>
 
-    <template v-if="ended">
+    <template v-if="mounted && ended">
       <h2 ref="heading" tabindex="-1">Done</h2>
       <p>
         The session is still saved: reload and you come back to this. Start again replaces it with

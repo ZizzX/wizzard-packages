@@ -31,6 +31,15 @@ export const reload = defineFlow({
   policy: 'free',
 });
 
+/**
+ * The last step. A finished run is one that has this in `completed`, which is
+ * the only durable way to know: `toSnapshot` does not carry `status`, so a
+ * wizard that reached the end and was reloaded comes back `idle`. Keeping the
+ * fact in the rendering instead would lose it on exactly the reload this
+ * application exists to survive.
+ */
+export const LAST_STEP = 'confirm';
+
 /** Where the session is kept. One key per flow. */
 export const STORAGE_KEY = 'wizzard:example:reload';
 
