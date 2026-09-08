@@ -19,11 +19,38 @@ export const listOf = (data: Readonly<Record<string, unknown>>): readonly Passen
 export const keyOf = (stack: readonly Frame[]): string | null =>
   stack.find((frame) => frame.key !== undefined)?.key ?? null;
 
-/** A fresh id. Short, because it ends up in a data path a person may read. */
-export const nextId = (list: readonly Passenger[]): string => {
+/**
+ * A fresh id, unused by anyone in the list and by anyone who has answered.
+ *
+ * The second half is what makes it correct. A key is a data path, and removing
+ * the last passenger frees `p3` in the list while `answers.p3` is still sitting
+ * there - so an id chosen from the list alone would hand the next passenger
+ * somebody else's seat. The host clears the answers on removal too, and this
+ * looks at both, because either alone is one refactor away from the same bug.
+ */
+export const nextId = (
+  list: readonly Passenger[],
+  answers: Readonly<Record<string, unknown>> = {}
+): string => {
   let n = list.length + 1;
-  while (list.some((p) => p.id === `p${n}`)) n += 1;
+  while (list.some((p) => p.id === `p${n}`) || `p${n}` in answers) n += 1;
   return `p${n}`;
+};
+
+/** Everyone's answers, keyed by passenger. */
+export const answersOf = (
+  data: Readonly<Record<string, unknown>>
+): Readonly<Record<string, { seat?: string; meal?: string }>> =>
+  (data['answers'] as Record<string, { seat?: string; meal?: string }> | undefined) ?? {};
+
+/** The same, without one passenger. Removing a person removes their answers. */
+export const withoutAnswers = (
+  data: Readonly<Record<string, unknown>>,
+  id: string
+): Record<string, { seat?: string; meal?: string }> => {
+  const rest = { ...answersOf(data) };
+  delete rest[id];
+  return rest;
 };
 
 /**

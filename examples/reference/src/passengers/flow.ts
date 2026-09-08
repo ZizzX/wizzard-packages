@@ -60,3 +60,8 @@ export const subFlows: SubFlows = { passenger };
  */
 export const answerPath = (key: string, field: 'seat' | 'meal'): string =>
   `answers.${key}.${field}`;
+
+/** One passenger to begin with, so the first thing on screen is a list of one. */
+export const initialData = (): Record<string, unknown> => ({
+  passengers: [{ id: 'p1', name: 'Ada' }],
+});

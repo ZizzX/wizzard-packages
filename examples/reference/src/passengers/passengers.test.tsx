@@ -142,6 +142,53 @@ describe('R-C passengers, React', () => {
   });
 });
 
+describe('R-C passengers, the two ways a list goes wrong', () => {
+  it('does not hand a new passenger the answers of a removed one', async () => {
+    render(<PassengersApp />);
+    await act(async () => {});
+    await party(['Ada', 'Grace', 'Alan']);
+    await click('Next');
+    await answer('Window', 'Standard');
+    await answer('Aisle', 'Vegetarian');
+    await answer('Window', 'None');
+    await click('Change who is travelling');
+
+    // Drop the last passenger, who is the one whose key is about to be free.
+    await act(async () => {
+      screen
+        .getAllByRole('button', { name: 'Remove' })[2]
+        ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await click('Add a passenger');
+    await act(async () => {});
+
+    for (let i = 0; i < 6 && !where().includes('Passenger 3 of 3'); i++) await click('Next');
+    expect(where()).toContain('Passenger 3 of 3');
+    // A key is a data path. Removing somebody removes their answers, so the
+    // person given that key next starts empty rather than in their seat.
+    expect(screen.getByRole('button', { name: 'Window' }).getAttribute('aria-pressed')).toBe(
+      'false'
+    );
+  });
+
+  it('books the trip and stops navigating once it is booked', async () => {
+    render(<PassengersApp />);
+    await act(async () => {});
+    await click('Next');
+    await answer('Window', 'Standard');
+    expect(heading()).toBe('Review');
+
+    await click('Book the trip');
+    expect(
+      screen.getByText('Booked. Nothing below moves until this one starts again.')
+    ).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Book the trip' })).toBeNull();
+
+    await click('Start again');
+    expect(heading()).toBe('Who is travelling');
+  });
+});
+
 describe('R-C passengers, Vue', () => {
   it('runs the same block once per passenger', async () => {
     const app = mount(AppVue, { attachTo: document.createElement('div') });

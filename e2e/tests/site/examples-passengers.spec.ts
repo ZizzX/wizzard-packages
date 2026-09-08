@@ -109,6 +109,48 @@ test.describe('R-C passengers', () => {
     await expect(stack(page)).toHaveText('trip.people[p2] / passenger.seat');
   });
 
+  test('books the trip, and stops offering to navigate once it is booked', async ({ page }) => {
+    await page.goto(REACT);
+    await expect(page.getByRole('button', { name: 'Next' })).toBeEnabled();
+    await page.getByRole('button', { name: 'Next' }).click();
+    await answer(page, 'Window', 'Standard');
+    await expect(page.getByRole('heading', { name: 'Review' })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Book the trip' }).click();
+    // Scoped to the running application: the page also prints its source, so
+    // an unscoped text match finds the sentence in the code block as well.
+    await expect(
+      page.locator('.app').getByText('Booked. Nothing below moves until this one starts again.')
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Book the trip' })).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Start again' }).click();
+    await expect(page.getByRole('heading', { name: 'Who is travelling' })).toBeVisible();
+  });
+
+  test('does not hand a new passenger the answers of a removed one', async ({ page }) => {
+    await page.goto(REACT);
+    await expect(page.getByRole('button', { name: 'Next' })).toBeEnabled();
+    await party(page);
+    await answer(page, 'Window', 'Standard');
+    await answer(page, 'Aisle', 'Vegetarian');
+    await answer(page, 'Window', 'None');
+
+    await page.getByRole('button', { name: 'Change who is travelling' }).click();
+    await page.getByRole('button', { name: 'Remove' }).nth(2).click();
+    await page.getByRole('button', { name: 'Add a passenger' }).click();
+
+    // The list, then two steps each for the two passengers in front.
+    for (let i = 0; i < 5; i++) await page.getByRole('button', { name: 'Next' }).click();
+    await expect(where(page)).toContainText('Passenger 3 of 3');
+    // A key is a data path: removing somebody removes their answers, so the
+    // person given that key next starts empty rather than in their seat.
+    await expect(page.getByRole('button', { name: 'Window', exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'false'
+    );
+  });
+
   test('the Vue page runs the same block', async ({ page }) => {
     await page.goto(VUE);
     await expect(page.getByRole('button', { name: 'Next' })).toBeEnabled();

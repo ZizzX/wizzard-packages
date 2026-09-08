@@ -8,8 +8,16 @@ import {
 } from '@wizzard-packages/react/v1';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
-import { answerPath, subFlows, trip } from './flow';
-import { goToPassenger, keyOf, listOf, nextId, type Passenger } from './party';
+import { answerPath, initialData, subFlows, trip } from './flow';
+import {
+  answersOf,
+  goToPassenger,
+  keyOf,
+  listOf,
+  nextId,
+  withoutAnswers,
+  type Passenger,
+} from './party';
 
 /**
  * R-C on the React binding: one block of steps per passenger.
@@ -28,12 +36,7 @@ const MEALS = ['Standard', 'Vegetarian', 'None'] as const;
 
 export default function PassengersApp(): ReactNode {
   return (
-    <WizardProvider
-      flow={trip}
-      groups={groups}
-      subFlows={subFlows}
-      data={{ passengers: [{ id: 'p1', name: 'Ada' }] }}
-    >
+    <WizardProvider flow={trip} groups={groups} subFlows={subFlows} data={initialData()}>
       <Trip />
     </WizardProvider>
   );
@@ -65,10 +68,16 @@ function Trip(): ReactNode {
     heading.current?.focus();
   }, [current]);
 
-  const answers = (id: string): { seat?: string; meal?: string } => {
-    const all = data['answers'] as Record<string, { seat?: string; meal?: string }> | undefined;
-    return all?.[id] ?? {};
-  };
+  // Reaching the end does not move the wizard: it stays on the last step and
+  // says `to: '@end'`. What changed is `status`.
+  // `status` and not `completed`: a forward `go` marks the step it left as
+  // completed, and Edit jumps away from Review, so `completed` would call the
+  // trip booked the moment somebody went back to change a seat. Nothing here is
+  // persisted, so `status` - which `toSnapshot` does not carry - is exactly
+  // right for this application and wrong for the one that reloads.
+  const finished = useWizardSelector((s) => s.status === 'done');
+
+  const answers = (id: string): { seat?: string; meal?: string } => answersOf(data)[id] ?? {};
 
   const choose = (field: 'seat' | 'meal', value: string): void => {
     if (key === null) return;
@@ -76,16 +85,21 @@ function Trip(): ReactNode {
   };
 
   const addPassenger = (): void => {
-    const added = { id: nextId(list), name: '' };
-    wizard.set('passengers', [...list, added]);
+    wizard.set('passengers', [...list, { id: nextId(list, answersOf(data)), name: '' }]);
     setAnnouncement(`Passenger ${list.length + 1} added.`);
   };
 
   const removePassenger = (id: string): void => {
-    wizard.set(
-      'passengers',
-      list.filter((p) => p.id !== id)
-    );
+    // Their answers go with them, in one commit: a key is a data path, and
+    // leaving `answers.p3` behind is how the next passenger to be given that
+    // key would inherit somebody else's seat.
+    wizard.batch(() => {
+      wizard.set(
+        'passengers',
+        list.filter((p) => p.id !== id)
+      );
+      wizard.set('answers', withoutAnswers(data, id));
+    });
     setAnnouncement(`Passenger removed. ${list.length - 1} left.`);
   };
 
@@ -98,8 +112,17 @@ function Trip(): ReactNode {
 
   async function onNext(): Promise<void> {
     const result = await wizard.next();
-    if (result.ok) return;
+    if (result.ok) {
+      if (result.to === '@end') setAnnouncement('Booked.');
+      return;
+    }
     setAnnouncement(`That move was refused: ${result.reason}.`);
+  }
+
+  async function startAgain(): Promise<void> {
+    setAnnouncement('');
+    wizard.reset(initialData());
+    await wizard.start();
   }
 
   async function edit(id: string): Promise<void> {
@@ -217,41 +240,59 @@ function Trip(): ReactNode {
             </tbody>
           </table>
 
-          <div className="actions">
-            <button
-              className="button button-secondary"
-              type="button"
-              onClick={() => {
-                void wizard.go('party');
-              }}
-            >
-              Change who is travelling
-            </button>
-          </div>
+          {finished && <p>Booked. Nothing below moves until this one starts again.</p>}
+
+          {!finished && (
+            <div className="actions">
+              <button
+                className="button button-secondary"
+                type="button"
+                onClick={() => {
+                  void wizard.go('party');
+                }}
+              >
+                Change who is travelling
+              </button>
+            </div>
+          )}
         </>
       )}
 
       <div className="actions">
-        <button
-          className="button button-accent"
-          type="button"
-          disabled={current === null || isBusy}
-          onClick={() => {
-            void onNext();
-          }}
-        >
-          Next
-        </button>
-        <button
-          className="button button-secondary"
-          type="button"
-          disabled={current === null || !canBack || isBusy}
-          onClick={() => {
-            void back();
-          }}
-        >
-          Back
-        </button>
+        {finished ? (
+          <button
+            className="button button-accent"
+            type="button"
+            onClick={() => {
+              void startAgain();
+            }}
+          >
+            Start again
+          </button>
+        ) : (
+          <>
+            <button
+              className="button button-accent"
+              type="button"
+              disabled={current === null || isBusy}
+              onClick={() => {
+                void onNext();
+              }}
+            >
+              {standing === 'review' ? 'Book the trip' : 'Next'}
+            </button>
+            <button
+              className="button button-secondary"
+              type="button"
+              disabled={current === null || !canBack || isBusy}
+              onClick={() => {
+                void back();
+              }}
+            >
+              Back
+            </button>
+          </>
+        )}
       </div>
 
       <dl className="app-state">

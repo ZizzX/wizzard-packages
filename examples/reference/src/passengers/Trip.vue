@@ -2,8 +2,16 @@
 import { useNavigation, useStep, useWizard, useWizardSelector } from '@wizzard-packages/vue/v1';
 import { computed, ref, useTemplateRef, watch } from 'vue';
 
-import { answerPath } from './flow';
-import { goToPassenger, keyOf, listOf, nextId, type Passenger } from './party';
+import { answerPath, initialData } from './flow';
+import {
+  answersOf,
+  goToPassenger,
+  keyOf,
+  listOf,
+  nextId,
+  withoutAnswers,
+  type Passenger,
+} from './party';
 
 /**
  * R-C on the Vue binding. The same application as `App.tsx`: the rendering
@@ -30,16 +38,23 @@ const at = computed(() =>
   itemKey.value === null ? -1 : list.value.findIndex((p) => p.id === itemKey.value)
 );
 const standing = computed(() => current.value ?? active.value[0] ?? 'party');
+// Reaching the end does not move the wizard: it stays on the last step and says
+// `to: '@end'`. What changed is `status`.
+//
+// `status` and not `completed`: a forward `go` marks the step it left as
+// completed, and Edit jumps away from Review, so `completed` would call the trip
+// booked the moment somebody went back to change a seat. Nothing here is
+// persisted, so `status` - which `toSnapshot` does not carry - is exactly right
+// for this application and wrong for the one that reloads.
+const finished = useWizardSelector((s) => s.status === 'done');
 
 watch(current, (to) => {
   if (to === null) return;
   heading.value?.focus();
 });
 
-const answersOf = (id: string): { seat?: string; meal?: string } => {
-  const all = data.value['answers'] as Record<string, { seat?: string; meal?: string }> | undefined;
-  return all?.[id] ?? {};
-};
+const answersFor = (id: string): { seat?: string; meal?: string } =>
+  answersOf(data.value)[id] ?? {};
 
 const nameOf = (id: string): string => list.value.find((p) => p.id === id)?.name ?? '';
 
@@ -49,18 +64,27 @@ const choose = (field: 'seat' | 'meal', value: string): void => {
 };
 
 const chosen = (field: 'seat' | 'meal'): string | undefined =>
-  itemKey.value === null ? undefined : answersOf(itemKey.value)[field];
+  itemKey.value === null ? undefined : answersFor(itemKey.value)[field];
 
 const addPassenger = (): void => {
-  wizard.set('passengers', [...list.value, { id: nextId(list.value), name: '' }]);
+  wizard.set('passengers', [
+    ...list.value,
+    { id: nextId(list.value, answersOf(data.value)), name: '' },
+  ]);
   announcement.value = `Passenger ${list.value.length} added.`;
 };
 
 const removePassenger = (id: string): void => {
-  wizard.set(
-    'passengers',
-    list.value.filter((p: Passenger) => p.id !== id)
-  );
+  // Their answers go with them, in one commit: a key is a data path, and
+  // leaving `answers.p3` behind is how the next passenger to be given that key
+  // would inherit somebody else's seat.
+  wizard.batch(() => {
+    wizard.set(
+      'passengers',
+      list.value.filter((p: Passenger) => p.id !== id)
+    );
+    wizard.set('answers', withoutAnswers(data.value, id));
+  });
   announcement.value = `Passenger removed. ${list.value.length} left.`;
 };
 
@@ -73,7 +97,17 @@ const rename = (id: string, name: string): void => {
 
 async function onNext(): Promise<void> {
   const result = await wizard.next();
-  if (!result.ok) announcement.value = `That move was refused: ${result.reason}.`;
+  if (result.ok) {
+    if (result.to === '@end') announcement.value = 'Booked.';
+    return;
+  }
+  announcement.value = `That move was refused: ${result.reason}.`;
+}
+
+async function startAgain(): Promise<void> {
+  announcement.value = '';
+  wizard.reset(initialData());
+  await wizard.start();
 }
 
 async function edit(id: string): Promise<void> {
@@ -161,8 +195,8 @@ const printFrame = (frame: { flow: string; step: string; key?: string }): string
             <th scope="row">
               {{ person.name === '' ? `Passenger ${position + 1}` : person.name }}
             </th>
-            <td>{{ answersOf(person.id).seat ?? 'not chosen' }}</td>
-            <td>{{ answersOf(person.id).meal ?? 'not chosen' }}</td>
+            <td>{{ answersFor(person.id).seat ?? 'not chosen' }}</td>
+            <td>{{ answersFor(person.id).meal ?? 'not chosen' }}</td>
             <td>
               <button class="button button-secondary" type="button" @click="edit(person.id)">
                 Edit {{ person.name === '' ? `passenger ${position + 1}` : person.name }}
@@ -172,7 +206,9 @@ const printFrame = (frame: { flow: string; step: string; key?: string }): string
         </tbody>
       </table>
 
-      <div class="actions">
+      <p v-if="finished">Booked. Nothing below moves until this one starts again.</p>
+
+      <div v-else class="actions">
         <button class="button button-secondary" type="button" @click="wizard.go('party')">
           Change who is travelling
         </button>
@@ -180,22 +216,27 @@ const printFrame = (frame: { flow: string; step: string; key?: string }): string
     </template>
 
     <div class="actions">
-      <button
-        class="button button-accent"
-        type="button"
-        :disabled="current === null || isBusy"
-        @click="onNext()"
-      >
-        Next
+      <button v-if="finished" class="button button-accent" type="button" @click="startAgain()">
+        Start again
       </button>
-      <button
-        class="button button-secondary"
-        type="button"
-        :disabled="current === null || !canBack || isBusy"
-        @click="back()"
-      >
-        Back
-      </button>
+      <template v-else>
+        <button
+          class="button button-accent"
+          type="button"
+          :disabled="current === null || isBusy"
+          @click="onNext()"
+        >
+          {{ standing === 'review' ? 'Book the trip' : 'Next' }}
+        </button>
+        <button
+          class="button button-secondary"
+          type="button"
+          :disabled="current === null || !canBack || isBusy"
+          @click="back()"
+        >
+          Back
+        </button>
+      </template>
     </div>
 
     <dl class="app-state">
