@@ -6,11 +6,20 @@
  * pasted the wrong buffer still sees the picture they had a moment ago.
  *
  * The order of the checks is the order of the things that can be wrong, from
- * cheapest to most specific — size, JSON, shape, size again in steps, then the
- * flow rules. The shape check is not politeness: `validateFlow` is typed for a
- * `FlowDefinition` and reads its fields without guarding them, so five ordinary
- * malformed pastes throw out of it. They are enumerated in `read-flow.test.ts`.
+ * cheapest to most specific — size, JSON, shape, the work the drawing implies,
+ * the flow rules, and finally the drawing itself. The shape check is not
+ * politeness: `validateFlow` is typed for a `FlowDefinition` and reads its
+ * fields without guarding them, so five ordinary malformed pastes throw out of
+ * it. They are enumerated in `read-flow.test.ts`.
+ *
+ * **This function builds the graph, and that is the point.** Guarding one field
+ * at a time is a game nobody wins: `label` was guarded, and then `when` reached
+ * `formatExpr` and `repeat: null` reached `buildGraph`, each taking the island
+ * down the same way. So the read ends by building what the page will draw,
+ * inside the same `try`. A flow that cannot be built is not a flow this page
+ * accepts, whatever field turns out to be the reason.
  */
+import { buildGraph, type FlowGraph } from '@wizzard-packages/core/graph';
 import { validateFlow, type FlowProblem } from '@wizzard-packages/core/validate-flow';
 
 import type { FlowDefinition } from '@wizzard-packages/core/v1';
@@ -18,35 +27,47 @@ import type { FlowDefinition } from '@wizzard-packages/core/v1';
 /**
  * Characters, not bytes: the box holds a string and this gate exists to stop a
  * generated file from being parsed at all. It is the cheap gate, not the real
- * one — `MAX_STEPS` is what bounds the work.
+ * one — the ceilings below are what bound the work and the drawing.
  */
 export const MAX_CHARS = 1_000_000;
 
 /**
- * The ceiling the design system already states: `--graph-max-nodes` in
- * `tokens.css`, declared there and until now enforced nowhere.
+ * Nodes the page will draw, which is the ceiling the design system already
+ * states: `--graph-max-nodes` in `tokens.css`, declared there and until now
+ * enforced nowhere.
  *
- * A character count does not bound the work. The builder emits a fall-through
- * edge from every conditional step to every later one, so edges grow as n²:
- * measured here, 200 steps is 20 100 edges and 800 steps is 320 400, which is a
- * DOM no browser draws. Forty steps is 780 edges at worst, and a graph past
- * forty nodes has stopped being readable long before it stops rendering.
- *
- * Counted across inline sub-flows too: `buildGraph` walks into a group whose
- * `flow` is a definition, so a root with three steps can carry a thousand.
+ * Checked against the built graph rather than guessed from the paste. The
+ * difference is not academic: `layoutGraph` draws the root's nodes and does not
+ * descend into a group's nested graph, so a root of five steps carrying a
+ * forty-step sub-flow draws six nodes. Counting the paste rejected that flow and
+ * told the reader it had forty-five steps to draw, which was false.
  */
-export const MAX_STEPS = 40;
+export const MAX_NODES = 40;
 
 /**
- * Transitions a flow may declare, which is the other half of the same bound and
- * the one the step count does not reach.
+ * Edges the page will draw. Also counted on the built graph.
  *
- * `on.next` takes a list, and the list is not bounded by anything the step count
- * sees: two steps whose `a.on.next` repeats a valid target a hundred thousand
- * times is 400 kB of legal JSON, passes both gates above, and builds 100 001
- * edges — measured. So the declared transitions are counted as well, and the two
- * ceilings together put a real bound on the drawing: at worst 780 fall-through
- * edges plus this.
+ * At forty nodes the fall-through walk alone can emit 780, and declared
+ * transitions add to it, so this is the number that decides whether the drawing
+ * is a drawing.
+ */
+export const MAX_EDGES = 1_000;
+
+/**
+ * Steps anywhere in the paste, including inline sub-flows. This one bounds the
+ * *work*, not the drawing: `buildGraph` walks into a group whose `flow` is a
+ * definition, so a small root can make it build something large that is then
+ * never drawn. Generous, because being large is not the same as being wrong.
+ */
+export const MAX_TOTAL_STEPS = 400;
+
+/**
+ * Transitions a flow may declare, checked before anything is built.
+ *
+ * `on.next` takes a list, and its length is not bounded by any step count: two
+ * steps whose `a.on.next` repeats a valid target a hundred thousand times is
+ * 400 kB of legal JSON and 100 001 edges — measured. This is the gate that
+ * stops the builder ever seeing it.
  */
 export const MAX_TARGETS = 200;
 
@@ -55,6 +76,11 @@ const DOCS = 'https://github.com/ZizzX/wizzard-packages/blob/main/docs/errors.md
 export interface ReadResult {
   /** Non-null only when `problems` is empty: a flow is drawn or it is not. */
   flow: FlowDefinition | null;
+  /**
+   * The graph of that flow, built here so that building it cannot fail later.
+   * The caller draws this rather than building its own.
+   */
+  graph: FlowGraph | null;
   problems: readonly FlowProblem[];
   /** No text at all, which is the empty state rather than a failure. */
   empty: boolean;
@@ -63,6 +89,7 @@ export interface ReadResult {
 /** One failure, in the shape every message in this repository has. */
 const problem = (path: string, what: string, why: string, fix: string): ReadResult => ({
   flow: null,
+  graph: null,
   problems: [{ path, message: `[wizzard] ${what}. ${why}. ${fix}. ${DOCS}` }],
   empty: false,
 });
@@ -204,7 +231,7 @@ function weigh(flow: Record<string, unknown>): { steps: number; targets: number 
  * grows a registry.
  */
 export function readFlow(text: string): ReadResult {
-  if (text.trim() === '') return { flow: null, problems: [], empty: true };
+  if (text.trim() === '') return { flow: null, graph: null, problems: [], empty: true };
 
   if (text.length > MAX_CHARS) {
     return problem(
@@ -236,19 +263,21 @@ export function readFlow(text: string): ReadResult {
     );
   }
 
+  // The work gates, before anything is built. They bound what `buildGraph` is
+  // asked to do; the drawing gates below bound what the page is asked to draw.
   const size = weigh(parsed);
-  if (size.steps > MAX_STEPS) {
+  if (size.steps > MAX_TOTAL_STEPS) {
     return problem(
       'steps',
-      `this flow has ${count(size.steps)} steps and the inspector draws up to ${count(MAX_STEPS)}`,
-      'Every conditional step adds a fall-through edge to every later one, so the drawing grows as the square of the count',
+      `this flow has ${count(size.steps)} steps, counting its sub-flows, and the inspector reads up to ${count(MAX_TOTAL_STEPS)}`,
+      'The builder walks into every sub-flow written out in the paste, whether or not the drawing shows it',
       'Draw a smaller flow here, or use the devtools panel, which docks beside a running wizard'
     );
   }
   if (size.targets > MAX_TARGETS) {
     return problem(
       'steps',
-      `this flow declares ${count(size.targets)} transitions and the inspector draws up to ${count(MAX_TARGETS)}`,
+      `this flow declares ${count(size.targets)} transitions and the inspector reads up to ${count(MAX_TARGETS)}`,
       'An on.next list is a branch per entry and a drawn edge per branch, and a short flow can declare thousands of them',
       'Draw a smaller flow here, or use the devtools panel, which docks beside a running wizard'
     );
@@ -272,6 +301,45 @@ export function readFlow(text: string): ReadResult {
     );
   }
 
-  if (problems.length > 0) return { flow: null, problems, empty: false };
-  return { flow: parsed as FlowDefinition, problems: [], empty: false };
+  if (problems.length > 0) return { flow: null, graph: null, problems, empty: false };
+
+  // Build it here, inside the same `try` discipline. Guarding one field at a
+  // time is a game nobody wins — `label`, then `when`, then `repeat` — so the
+  // read ends by doing what the page would do, and a flow that cannot be built
+  // is simply not one this page accepts.
+  const flow = parsed as FlowDefinition;
+  let graph: FlowGraph;
+  try {
+    graph = buildGraph(flow);
+  } catch (error) {
+    return problem(
+      'flow',
+      `this flow could not be drawn: ${(error as Error).message}`,
+      'The builder reads a field whose shape it did not expect, and it is not written to survive one',
+      'Compare it against the example flow, which the Load example button puts in the box'
+    );
+  }
+
+  // The drawing gates, on what was actually built rather than on what the paste
+  // seemed to promise. `layoutGraph` draws the root's nodes and does not descend
+  // into a group's nested graph, so counting the paste rejected flows that would
+  // have drawn six nodes and told the reader they had forty-five.
+  if (graph.nodes.length > MAX_NODES) {
+    return problem(
+      'steps',
+      `this flow draws ${count(graph.nodes.length)} nodes and the inspector draws up to ${count(MAX_NODES)}`,
+      'A graph past forty nodes has stopped being readable well before it stops rendering',
+      'Draw a smaller flow here, or use the devtools panel, which docks beside a running wizard'
+    );
+  }
+  if (graph.edges.length > MAX_EDGES) {
+    return problem(
+      'steps',
+      `this flow draws ${count(graph.edges.length)} edges and the inspector draws up to ${count(MAX_EDGES)}`,
+      'Every conditional step adds a fall-through edge to every later one, so the edges grow as the square of the nodes',
+      'Draw a smaller flow here, or use the devtools panel, which docks beside a running wizard'
+    );
+  }
+
+  return { flow, graph, problems: [], empty: false };
 }

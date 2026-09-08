@@ -1046,3 +1046,30 @@ svg.interactive .node {
     display: none;
   }
 }
+
+/* The net under the drawing. Sized like a panel so a failure does not collapse
+   the layout around it. */
+.stage-failed {
+  border: var(--border) solid var(--st-error);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  padding: var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.stage-failed p {
+  margin: 0 0 var(--space-3);
+}
+
+.stage-failed p:last-child {
+  margin-bottom: 0;
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+}
+
+.stage-failed-why {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--st-error);
+  overflow-wrap: anywhere;
+}

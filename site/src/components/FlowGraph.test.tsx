@@ -8,7 +8,7 @@ import { buildGraph } from '@wizzard-packages/core/graph';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { flowA } from '../../../contract/fixtures';
 
@@ -99,7 +99,6 @@ describe('the graph as an instrument', () => {
     await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}');
 
     expect(svg.getAttribute('aria-activedescendant')).toBe('node-payment');
-    expect(container.querySelector('[id="node-@end"]')).toBeNull();
   });
 
   it('clears the selection on Escape', async () => {
@@ -133,5 +132,31 @@ describe('the graph as an instrument', () => {
     // The end is drawn, and it is not a step: there is no slice to show for it.
     expect(container.querySelector('.node.end')).not.toBeNull();
     expect(container.querySelector('.node.end')?.getAttribute('id')).toBeNull();
+  });
+});
+
+describe('a flow that repeats a target', () => {
+  it('draws every edge, and React keeps them all', () => {
+    // A repeated target in `on.next` is legal input the paste box accepts up to
+    // its ceiling. `from`, `to` and `kind` are equal across all of them, so a
+    // key built from those alone collides and React drops siblings, warning
+    // once per clash — 199 warnings for 201 edges, measured.
+    const errors: unknown[] = [];
+    const spy = vi.spyOn(console, 'error').mockImplementation((...args) => {
+      errors.push(args);
+    });
+
+    const repeated = buildGraph({
+      id: 'fan',
+      steps: { a: { on: { next: Array.from({ length: 40 }, () => 'b') } }, b: {} },
+    } as never);
+
+    const { container } = render(
+      <FlowGraph graph={repeated} active={[]} view={restingView([], [])} label="fan" />
+    );
+
+    expect(container.querySelectorAll('.edge').length).toBe(repeated.edges.length);
+    expect(errors).toEqual([]);
+    spy.mockRestore();
   });
 });

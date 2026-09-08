@@ -234,36 +234,39 @@ a stranger's text pasted into a box. The page lists them under the box and keeps
 already had, so a bad paste costs a reader the picture they were about to see and not the one
 they were looking at.
 
-**Why the shape is checked before `validateFlow`.** `validateFlow` is typed for a
-`FlowDefinition` and reads `step.on`, `flow.order` and a group's `flow.steps` without guarding
-them. That is the right trade for a flow arriving from a typed codebase, and the wrong one for
-a paste box: a step that is `null`, a number or a string, an `order` that is not a list, and a
-group whose `flow` is neither an object nor a string each throw a `TypeError` out of it. The
-inspector checks those five before calling it, and wraps the call so a shape nobody has named
-yet is still a sentence rather than a stack trace.
+**Why the read builds the graph.** Guarding one field at a time is a game nobody wins.
+`validateFlow` is typed for a `FlowDefinition` and reads `step.on`, `flow.order` and a group's
+`flow.steps` without guarding them, so a step that is `null`, a number or a string, an `order`
+that is not a list, and a group whose `flow` is neither an object nor a string each throw out
+of it. Those five were guarded — and then `when: {"$and": 1}` threw out of the expression
+printer, and `repeat: null` threw out of `buildGraph` at `step.repeat.over`, each taking the
+page down the same way.
+
+So the read now ends by building the graph the page will draw, inside the same `try`. A flow
+that cannot be built is not a flow this page accepts, whatever field turns out to be the
+reason, and the caller draws the graph it is handed rather than building a second one that
+could fail where the first did not. The expression printer is wrapped for the same reason and
+falls back to the raw JSON, and the drawing sits behind an error boundary for what none of
+this has met yet.
 
 Making the validator total for untrusted input is the deeper fix, and it belongs to the
 diagnostic pass over the engine rather than to a site route.
 
-**Why the transitions are counted too.** The step count is half the bound and not the
-interesting half. `on.next` takes a list, and nothing about the step count sees how long it
-is: two steps whose `a.on.next` repeats a valid target a hundred thousand times is 400 kB of
-legal JSON, passes the character gate and the step gate, and builds 100 001 edges. So the
-declared transitions are counted as well, at two hundred. Both counts are taken across inline
-sub-flows, because `buildGraph` walks into a group whose `flow` is a definition rather than a
-name — a root with three steps can otherwise carry a thousand.
+**The four ceilings, and what each one bounds.**
 
-**Why a label has to be text.** `validateFlow` has no opinion on it, and rightly so: a label
-is the host's business everywhere except here, where the host is a stranger with a paste box.
-The builder copies it onto the node and the painter renders it as a React child, so an object
-throws "Objects are not valid as a React child" and takes the island down — past the wrapped
-validator call, which guards the check and not the render.
+| ceiling                   | value      | bounds                                        |
+| ------------------------- | ---------- | --------------------------------------------- |
+| characters                | 1 000 000  | whether the text is parsed at all             |
+| steps, counting sub-flows | 400        | the work `buildGraph` is asked to do          |
+| declared transitions      | 200        | the same, and the one a step count cannot see |
+| drawn nodes / drawn edges | 40 / 1 000 | what reaches the DOM                          |
 
-**Why forty steps.** Not a guess and not the text length. `buildGraph` emits a fall-through
-edge from every conditional step to every later one it could reach, so edges grow as the
-square of the step count: 200 steps is 20 100 edges and 800 steps is 320 400, which is a DOM
-no browser draws. A megabyte of JSON holds thousands of steps, so a character cap does not
-bound the work — the step count does. Forty is `--graph-max-nodes` from the site's design
-tokens, and a graph past forty nodes has stopped being readable well before it stops
-rendering. A flow larger than that is what the devtools panel is for: it docks beside a
-running wizard instead of drawing the whole definition at once.
+The first three are checked on the paste, the last on the built graph. That split is not
+tidiness. `on.next` takes a list, and its length is invisible to any step count: two steps
+whose `a.on.next` repeats a valid target a hundred thousand times is 400 kB of legal JSON and
+100 001 edges. And in the other direction, `layoutGraph` draws the root's nodes and does not
+descend into a group's nested graph, so counting the paste rejected a flow that would have
+drawn six nodes while telling the reader it had forty-five — fail-safe, and false. Forty is
+`--graph-max-nodes` from the site's design tokens; a graph past it has stopped being readable
+well before it stops rendering. A flow larger than that is what the devtools panel is for: it
+docks beside a running wizard instead of drawing the whole definition at once.

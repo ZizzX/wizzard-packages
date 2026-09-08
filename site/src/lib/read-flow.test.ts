@@ -11,7 +11,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { MAX_CHARS, MAX_STEPS, MAX_TARGETS, readFlow } from './read-flow';
+import { MAX_CHARS, MAX_NODES, MAX_TARGETS, MAX_TOTAL_STEPS, readFlow } from './read-flow';
 
 const good = JSON.stringify({
   id: 'signup',
@@ -34,7 +34,7 @@ describe('readFlow', () => {
 
   it('calls an empty box empty rather than wrong', () => {
     const result = readFlow('   \n  ');
-    expect(result).toEqual({ flow: null, problems: [], empty: true });
+    expect(result).toEqual({ flow: null, graph: null, problems: [], empty: true });
   });
 
   it('says where the JSON broke, in lines a reader can count', () => {
@@ -63,16 +63,22 @@ describe('the gates on size', () => {
     expect(result.problems[0]?.message).toContain('reads up to');
   });
 
-  it('draws a flow at the ceiling', () => {
-    expect(readFlow(flowOf(MAX_STEPS)).flow).not.toBeNull();
+  it('draws a flow at the node ceiling', () => {
+    // One step short, because the builder adds the end node.
+    expect(readFlow(flowOf(MAX_NODES - 1)).flow).not.toBeNull();
   });
 
   it('refuses one past it, because the edges grow as the square of the count', () => {
     // A character cap does not bound this: 2 000 steps is 112 kB, well under a
     // megabyte, and 2 000 000 edges.
-    const result = readFlow(flowOf(MAX_STEPS + 1));
+    const result = readFlow(flowOf(MAX_NODES + 1));
     expect(result.flow).toBeNull();
     expect(result.problems[0]?.message).toContain('draws up to');
+  });
+
+  it('hands the graph back rather than making the caller build a second one', () => {
+    const result = readFlow(good);
+    expect(result.graph?.nodes.map((n) => n.id)).toEqual(['details', '@end']);
   });
 });
 
@@ -97,26 +103,44 @@ describe('the gates the step count does not reach', () => {
     expect(readFlow(at).flow).not.toBeNull();
   });
 
-  it('counts the steps inside an inline sub-flow', () => {
-    // The root has two steps. `buildGraph` walks into the group, so the ceiling
-    // has to as well, or a small root carries an unbounded child.
+  it('draws a flow whose sub-flow is larger than the drawing ceiling', () => {
+    // `layoutGraph` draws the root's nodes and does not descend into a group's
+    // nested graph, so this draws three. Counting the paste rejected it and
+    // told the reader it had forty-two nodes to draw, which was false.
     const nested = JSON.stringify({
       id: 'root',
       steps: {
         group: {
           flow: {
             id: 'child',
-            steps: Object.fromEntries(
-              Array.from({ length: MAX_STEPS + 1 }, (_, i) => [`s${i}`, {}])
-            ),
+            steps: Object.fromEntries(Array.from({ length: MAX_NODES }, (_, i) => [`s${i}`, {}])),
           },
         },
         after: {},
       },
     });
     const result = readFlow(nested);
+    expect(result.flow).not.toBeNull();
+    expect(result.graph?.nodes.length).toBeLessThanOrEqual(MAX_NODES);
+  });
+
+  it('still bounds the work a sub-flow makes the builder do', () => {
+    const huge = JSON.stringify({
+      id: 'root',
+      steps: {
+        group: {
+          flow: {
+            id: 'child',
+            steps: Object.fromEntries(
+              Array.from({ length: MAX_TOTAL_STEPS + 1 }, (_, i) => [`s${i}`, {}])
+            ),
+          },
+        },
+      },
+    });
+    const result = readFlow(huge);
     expect(result.flow).toBeNull();
-    expect(result.problems[0]?.message).toContain('draws up to');
+    expect(result.problems[0]?.message).toContain('counting its sub-flows');
   });
 
   it('does not follow a sub-flow named by string, which is not in the paste', () => {
@@ -175,12 +199,25 @@ describe('shapes that throw out of validateFlow', () => {
   });
 });
 
+describe('shapes that throw out of the builder', () => {
+  it('answers rather than throwing when repeat is null', () => {
+    // `validateFlow` only asks whether `repeat` is present; `buildGraph` reads
+    // `step.repeat.over`. Guarding fields one at a time missed this, which is
+    // why the read now builds the graph itself.
+    const text = '{"id":"x","version":1,"steps":{"g":{"flow":"other","repeat":null,"when":true}}}';
+    expect(() => readFlow(text)).not.toThrow();
+    const result = readFlow(text);
+    expect(result.flow).toBeNull();
+    expect(result.problems[0]?.message).toContain('could not be drawn');
+  });
+});
+
 describe('the failure contract', () => {
   const failing = [
     '"'.padEnd(MAX_CHARS + 1, 'x'),
     '{ nope',
     '[1,2,3]',
-    flowOf(MAX_STEPS + 1),
+    flowOf(MAX_NODES + 1),
     '{"id":"x","steps":{"one":null}}',
     '{"id":"x","order":5,"steps":{"one":{}}}',
     '{"id":"x","steps":{"one":{"flow":{"id":"y"}}}}',

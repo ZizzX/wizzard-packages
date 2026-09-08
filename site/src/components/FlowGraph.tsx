@@ -10,7 +10,9 @@
  * With no client directive it renders as static HTML and ships no JavaScript,
  * which is how the feature rows use it.
  */
-import { formatExpr, layoutGraph, type Direction } from '@wizzard-packages/devtools/headless';
+import { layoutGraph, type Direction } from '@wizzard-packages/devtools/headless';
+
+import { printExpr } from '../lib/print-expr';
 
 import type { FlowGraph as Graph, GraphNode } from '@wizzard-packages/core/graph';
 import type { Breadcrumb } from '@wizzard-packages/core/v1';
@@ -193,9 +195,12 @@ export function FlowGraph({
             : `Flow graph of ${label}. The same information is in the table below.`
         }
       >
-        {laid.edges.map((edge) => (
+        {laid.edges.map((edge, index) => (
           <g
-            key={`${edge.from}-${edge.to}-${edge.kind}-${drawKey}`}
+            // The index is in the key because a repeated target in `on.next` is
+            // legal input: `from`, `to` and `kind` alone collide, and React
+            // answers a duplicate key by dropping siblings and warning per clash.
+            key={`${edge.from}-${edge.to}-${edge.kind}-${index}-${drawKey}`}
             className={`edge ${edge.kind} ${edgeLive(edge, active, endId) ? 'live' : 'dim'}`}
           >
             <polyline
@@ -212,8 +217,8 @@ export function FlowGraph({
           // The condition belongs to the step, not to the edge into it: an
           // `order` edge is a fall-through and carries no `when` of its own.
           // 26 characters at 9px mono is the widest line that stays inside a
-          // 160-unit node, which is why this is not `formatExpr`'s default 32.
-          const when = node?.when === undefined ? undefined : formatExpr(node.when, 26);
+          // 160-unit node, which is why this is not the printer's default 32.
+          const when = node?.when === undefined ? undefined : printExpr(node.when, 26);
           // Only where there is something to read about: a click on the end
           // marker selects nothing, because a flow's end has no step to show.
           const pick =
@@ -284,7 +289,7 @@ export function FlowGraph({
                 <th scope="row">{node.label ?? node.id}</th>
                 <td>{node.kind}</td>
                 <td>{nodeState(node.id, node.kind, view)}</td>
-                <td>{node.when === undefined ? 'always' : formatExpr(node.when).full}</td>
+                <td>{node.when === undefined ? 'always' : printExpr(node.when).full}</td>
               </tr>
             ))}
           </tbody>

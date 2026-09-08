@@ -15,10 +15,10 @@
  * (`readFlow`), turning a recording into frames (`replayFrames`), the route a
  * data change implies (`rerouteTo`). What is left here is which of them to show.
  */
-import { buildGraph, type GraphNode } from '@wizzard-packages/core/graph';
+import { buildGraph, type FlowGraph as Graph, type GraphNode } from '@wizzard-packages/core/graph';
 import { checkSession } from '@wizzard-packages/core/session';
 import { END, type FlowDefinition } from '@wizzard-packages/core/v1';
-import { diffState, formatExpr } from '@wizzard-packages/devtools/headless';
+import { diffState } from '@wizzard-packages/devtools/headless';
 import {
   WizardProvider,
   useErrors,
@@ -31,13 +31,21 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 
 import { flowA, registryA } from '../../../contract/fixtures';
 import { recordingA } from '../../../contract/recording';
+import { printExpr } from '../lib/print-expr';
 import { readFlow, type ReadResult } from '../lib/read-flow';
 import { replayFrames } from '../lib/replay';
 import { FALLBACK_FIELD, FIELDS, rerouteTo } from '../lib/signup-form';
 
 import { FlowGraph, type GraphView } from './FlowGraph';
+import { StageBoundary } from './StageBoundary';
 
 type Mode = 'live' | 'replay' | 'preview';
+
+/** A flow and the graph `readFlow` built from it, kept together so they agree. */
+interface Drawn {
+  flow: FlowDefinition;
+  graph: Graph;
+}
 
 /** The structure depends on the definition alone, so both modes share one. */
 const exampleGraph = buildGraph(flowA);
@@ -90,7 +98,7 @@ function NodeCard({ node, children }: { node: GraphNode | null; children?: React
           {node.when === undefined ? (
             <span className="muted">always on the route</span>
           ) : (
-            <code>{formatExpr(node.when, 200).full}</code>
+            <code>{printExpr(node.when, 200).full}</code>
           )}
         </dd>
         {node.offOrder === true && (
@@ -367,9 +375,9 @@ function PreviewMode({
   selected,
   onSelect,
   result,
-  flow,
-}: ModeProps & { result: ReadResult; flow: FlowDefinition | null }): ReactNode {
-  if (flow === null) {
+  drawn,
+}: ModeProps & { result: ReadResult; drawn: Drawn | null }): ReactNode {
+  if (drawn === null) {
     return (
       <p className="panel-empty">
         Nothing to draw yet. Paste a flow below, or <span className="muted">load the example</span>{' '}
@@ -378,7 +386,7 @@ function PreviewMode({
     );
   }
 
-  const graph = buildGraph(flow);
+  const { flow, graph } = drawn;
   // Upcoming, not absent: a node missing from the breadcrumbs is one whose
   // `when` is false, and without data nothing is false. `active` stays empty so
   // no edge is drawn as the one a run would take, because no run is happening.
@@ -424,7 +432,7 @@ function Stage({
   onSelect,
   panel,
 }: {
-  graph: ReturnType<typeof buildGraph>;
+  graph: Graph;
   active: readonly string[];
   view: GraphView;
   label: string;
@@ -482,10 +490,15 @@ export default function Inspector(): ReactNode {
   const [mode, setMode] = useState<Mode>('live');
   const [selected, setSelected] = useState<string | null>(null);
   const [text, setText] = useState('');
-  const [result, setResult] = useState<ReadResult>({ flow: null, problems: [], empty: true });
+  const [result, setResult] = useState<ReadResult>({
+    flow: null,
+    graph: null,
+    problems: [],
+    empty: true,
+  });
   // Kept across a failed paste on purpose: a reader who breaks the JSON keeps
   // the picture they had, and the problems are listed under the box.
-  const [lastValid, setLastValid] = useState<FlowDefinition | null>(null);
+  const [lastValid, setLastValid] = useState<Drawn | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -496,14 +509,14 @@ export default function Inspector(): ReactNode {
   // rather than a sentence written here that could stop being true.
   const replayProblem = useMemo(() => {
     if (mode !== 'preview' || lastValid === null) return null;
-    return checkSession(recordingA, lastValid)[0]?.message ?? null;
+    return checkSession(recordingA, lastValid.flow)[0]?.message ?? null;
   }, [mode, lastValid]);
 
   const submit = useCallback(() => {
     const read = readFlow(text);
     setResult(read);
-    if (read.flow !== null) {
-      setLastValid(read.flow);
+    if (read.flow !== null && read.graph !== null) {
+      setLastValid({ flow: read.flow, graph: read.graph });
       setSelected(null);
       setMode('preview');
     }
@@ -557,19 +570,24 @@ export default function Inspector(): ReactNode {
       </div>
 
       <div className="inspector-stage">
-        {mode === 'live' && <LiveMode selected={selected} onSelect={setSelected} ready={ready} />}
-        {mode === 'replay' && (
-          <ReplayMode selected={selected} onSelect={setSelected} ready={ready} />
-        )}
-        {mode === 'preview' && (
-          <PreviewMode
-            selected={selected}
-            onSelect={setSelected}
-            ready={ready}
-            result={result}
-            flow={lastValid}
-          />
-        )}
+        {/* The reset key is the flow on screen: a boundary that has caught once
+            stays caught until something changes, and the next paste is the
+            something. */}
+        <StageBoundary resetKey={`${mode}:${lastValid?.flow.id ?? ''}`}>
+          {mode === 'live' && <LiveMode selected={selected} onSelect={setSelected} ready={ready} />}
+          {mode === 'replay' && (
+            <ReplayMode selected={selected} onSelect={setSelected} ready={ready} />
+          )}
+          {mode === 'preview' && (
+            <PreviewMode
+              selected={selected}
+              onSelect={setSelected}
+              ready={ready}
+              result={result}
+              drawn={lastValid}
+            />
+          )}
+        </StageBoundary>
       </div>
 
       <details className="paste-drawer">
