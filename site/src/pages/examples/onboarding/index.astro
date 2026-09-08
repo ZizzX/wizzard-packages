@@ -1,0 +1,40 @@
+---
+import flowSource from '@examples/reference/src/onboarding/flow.ts?raw';
+import registrySource from '@examples/reference/src/onboarding/registry.ts?raw';
+import appSource from '@examples/reference/src/onboarding/App.tsx?raw';
+
+import ExampleShell from '../../../components/ExampleShell.astro';
+import OnboardingReact from '../../../islands/OnboardingReact';
+
+const sources = [
+  {
+    name: 'flow.ts',
+    lang: 'ts' as const,
+    code: flowSource,
+    note: 'The route. Everything that decides where the visitor goes next is in this object, and nothing that decides it is anywhere else.',
+  },
+  {
+    name: 'registry.ts',
+    lang: 'ts' as const,
+    code: registrySource,
+    note: 'What a flow cannot serialize: the validators, named by the `$ref` above and looked up at runtime.',
+  },
+  {
+    name: 'App.tsx',
+    lang: 'tsx' as const,
+    code: appSource,
+    note: 'The rendering. It knows the fields and the labels; it asks the engine which step is current and draws that one.',
+  },
+];
+---
+
+<ExampleShell
+  slug="onboarding"
+  ref="R-A"
+  heading="Change your answer. Keep the right data."
+  lede="Onboarding with a conditional branch and backtracking. Pick a payer type and the route changes; walk back across the branch and the answers are still there; finish, and the flow submits what it collected and nothing else."
+  framework="react"
+  sources={sources}
+>
+  <OnboardingReact client:load />
+</ExampleShell>

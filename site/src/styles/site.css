@@ -121,14 +121,20 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-6);
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-6);
   min-height: 60px;
+  padding: var(--space-3) 0;
   border-bottom: var(--border) solid var(--line);
 }
 
+/* Four entries do not fit beside the wordmark on a 390px screen, and a bar
+   that overflows takes the whole page with it. It wraps instead: the gap is
+   the row gap too, so a wrapped second line is spaced, not stacked. */
 .topbar nav {
   display: flex;
-  gap: var(--space-6);
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-6);
   font-family: var(--font-mono);
   font-size: var(--text-sm);
 }
@@ -1072,4 +1078,240 @@ svg.interactive .node {
   font-size: var(--text-xs);
   color: var(--st-error);
   overflow-wrap: anywhere;
+}
+
+/* ---------------------------------------------------------------------------
+   Examples: the index, the page around one application, and the application.
+
+   The controls reuse `.field`, `.segmented`, `.actions` and `.button` from the
+   instrument above rather than growing a second set: an example that looked
+   like a different product would undo what the pages are for. */
+
+.example-index {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: var(--border) solid var(--line);
+}
+
+.example-index li {
+  padding: var(--space-8) 0;
+  border-bottom: var(--border) solid var(--line);
+  max-width: var(--measure);
+}
+
+.example-index h2 {
+  font-size: var(--text-xl);
+  margin: var(--space-2) 0 var(--space-3);
+}
+
+.example-index p {
+  margin: 0;
+  color: var(--fg-muted);
+}
+
+.example-ref {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--track-label);
+  color: var(--fg-muted);
+  margin: 0;
+}
+
+.example-proves {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3) !important;
+}
+
+.example-proves code {
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-control);
+  padding: 0 var(--space-2);
+  font-size: var(--text-xs);
+}
+
+.example-index .is-pending h2,
+.example-pending {
+  color: var(--fg-muted);
+}
+
+/* The framework toggle is two links. It is a route change, so the page that
+   answers is rendered by the server for that framework and no stored
+   preference can disagree with what arrived. */
+.framework {
+  display: inline-flex;
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+}
+
+.framework a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-h);
+  min-width: var(--target-min);
+  justify-content: center;
+  padding: 0 var(--space-4);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  color: var(--fg-muted);
+}
+
+.framework a + a {
+  border-left: var(--border) solid var(--line);
+}
+
+.framework a[aria-current='page'] {
+  background: var(--accent-soft);
+  color: var(--fg);
+}
+
+.framework-note {
+  margin: var(--space-3) 0 var(--space-8);
+  max-width: var(--measure);
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+}
+
+.example-stage {
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  padding: var(--space-6);
+  max-width: var(--measure);
+}
+
+.example-source {
+  border-top: var(--border) solid var(--line);
+  padding-top: var(--space-8);
+  max-width: var(--measure-wide);
+}
+
+.example-source h3 {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  margin: var(--space-8) 0 var(--space-2);
+}
+
+.example-source article p {
+  margin: 0 0 var(--space-3);
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  max-width: var(--measure);
+}
+
+/* One colour, and a scrollbar rather than a wrap: a definition read as a
+   picture of itself must not be re-flowed to fit the column. */
+.code-block {
+  margin: 0;
+  padding: var(--space-4);
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--fg);
+}
+
+.code-block::before {
+  content: attr(data-lang);
+  display: block;
+  margin-bottom: var(--space-3);
+  color: var(--fg-muted);
+  font-size: var(--text-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+/* The application itself. */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.app h2 {
+  font-size: var(--text-lg);
+  margin: 0;
+}
+
+.app h2:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+
+.app fieldset.field {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.app .actions button {
+  min-height: var(--target-min);
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--target-min);
+  font-size: var(--text-sm);
+}
+
+.field-hint {
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+}
+
+.field-error {
+  color: var(--st-error);
+  font-size: var(--text-xs);
+  margin: 0;
+}
+
+.app-data {
+  margin: 0;
+  padding: var(--space-4);
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--bg);
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+/* What the engine says about itself, printed rather than described: the route
+   it computed, the steps it counts as finished, and the slices that have been
+   edited since. */
+.app-state {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  padding-top: var(--space-4);
+  border-top: var(--border) solid var(--line);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.app-state dt {
+  color: var(--fg-muted);
+}
+
+.app-state dd {
+  margin: 0;
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.app-live {
+  margin: 0;
+  min-height: 1.25em;
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
 }

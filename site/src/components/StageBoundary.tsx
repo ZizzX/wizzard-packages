@@ -19,6 +19,11 @@ interface Props {
   children: ReactNode;
   /** Changing this clears the failure, so the next paste draws again. */
   resetKey?: unknown;
+  /**
+   * Offered when the caller can put the island back on its feet - an example
+   * that can be mounted again, as opposed to a paste the reader has to fix.
+   */
+  onRestart?: () => void;
 }
 
 interface State {
@@ -48,14 +53,34 @@ export class StageBoundary extends Component<Props, State> {
     const { message } = this.state;
     if (message === null) return this.props.children;
 
+    const { onRestart } = this.props;
     return (
       <div className="stage-failed" role="alert">
-        <p>This flow could not be drawn.</p>
+        <p>{onRestart === undefined ? 'This flow could not be drawn.' : 'This example stopped.'}</p>
         <p className="stage-failed-why">{message}</p>
-        <p>
-          The flow itself is unharmed — paste a different one, or reload to go back to the example.
-          If it is a flow you can share, an issue with it attached is worth opening.
-        </p>
+        {onRestart === undefined ? (
+          <p>
+            The flow itself is unharmed — paste a different one, or reload to go back to the
+            example. If it is a flow you can share, an issue with it attached is worth opening.
+          </p>
+        ) : (
+          <p>
+            The page around it is fine, and so is the flow definition below. Start the example
+            again, or open an issue with what you had typed.
+          </p>
+        )}
+        {onRestart !== undefined && (
+          <button
+            className="button button-secondary"
+            type="button"
+            onClick={() => {
+              this.setState({ message: null });
+              onRestart();
+            }}
+          >
+            Restart example
+          </button>
+        )}
       </div>
     );
   }

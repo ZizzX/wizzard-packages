@@ -1,0 +1,98 @@
+---
+import Page from '../layouts/Page.astro';
+
+/**
+ * The page around a reference application: the claim, the framework toggle, the
+ * running application, and the source it is running.
+ *
+ * The source blocks are `?raw` imports of the very files the island mounts, so
+ * a code block cannot drift from the code beside it - there is one file, read
+ * twice. That is why nothing here checks them against each other.
+ *
+ * They are plain `<pre>`, not Shiki: Starlight owns the highlighter for the
+ * whole build and its bundle carries only the themes it needs, so a `<Code>`
+ * outside it fails at build time. A page whose subject is that the flow is
+ * readable data can afford to print it in one colour.
+ *
+ * The toggle is a link. A route change is what keeps a remembered preference
+ * away from the rendering: each page mounts one runtime, decided by its URL and
+ * by nothing a browser stored.
+ */
+interface Source {
+  name: string;
+  lang: 'ts' | 'tsx' | 'vue';
+  code: string;
+  note: string;
+}
+
+interface Props {
+  slug: string;
+  ref: string;
+  heading: string;
+  lede: string;
+  framework: 'react' | 'vue';
+  sources: Source[];
+}
+
+const { slug, ref, heading, lede, framework, sources } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const here = `${base}/examples/${slug}`;
+---
+
+<Page
+  title={`${heading} - wizzard`}
+  description={lede}
+  current="examples"
+>
+  <section class="hero hero-tight">
+    <p class="example-ref">{ref}</p>
+    <h1>{heading}</h1>
+    <p class="lede">{lede}</p>
+
+    <nav class="framework" aria-label="Rendering">
+      <a href={`${here}/`} aria-current={framework === 'react' ? 'page' : undefined}>React</a>
+      <a href={`${here}/vue/`} aria-current={framework === 'vue' ? 'page' : undefined}>Vue</a>
+    </nav>
+    <p class="framework-note">
+      This page ships the {framework === 'react' ? 'React' : 'Vue'} binding and only that one.
+      React is what the server renders when no framework is named, so the choice is a link rather
+      than a switch: nothing a browser remembered can disagree with what arrived.
+    </p>
+
+    <div class="example-stage">
+      <slot />
+    </div>
+  </section>
+
+  <section class="example-source">
+    <h2>The source it is running</h2>
+    <p class="lede">
+      These blocks are the files the application above imports, read at build time. There is no
+      copy of them to fall out of date.
+    </p>
+
+    {
+      sources.map((source) => (
+        <article>
+          <h3>{source.name}</h3>
+          <p>{source.note}</p>
+          <pre class="code-block" data-lang={source.lang}><code>{source.code}</code></pre>
+        </article>
+      ))
+    }
+  </section>
+</Page>
+
+<script>
+  // Remember the framework this page rendered, so the index links here next
+  // time. Written on arrival rather than on a click: the visitor may have
+  // reached the page from anywhere.
+  try {
+    localStorage.setItem(
+      'wizzard:framework',
+      document.location.pathname.replace(/\/$/, '').endsWith('/vue') ? 'vue' : 'react'
+    );
+  } catch {
+    // A browser that refuses storage simply does not remember.
+  }
+</script>

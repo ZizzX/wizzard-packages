@@ -1,8 +1,5 @@
 ---
-import '@fontsource-variable/inter-tight';
-import '@fontsource-variable/jetbrains-mono';
-import '../styles/tokens.css';
-import '../styles/site.css';
+import Page from '../layouts/Page.astro';
 import Inspector from '../components/Inspector';
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
@@ -11,28 +8,7 @@ const description =
   'A flow is data. Run one, replay a recording of one frame by frame, or paste your own and see its structure drawn.';
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{title}</title>
-    <meta name="description" content={description} />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
-    <meta property="og:type" content="website" />
-  </head>
-  <body>
-    <div class="shell">
-      <header class="topbar">
-        <a class="wordmark" href={`${base}/`}>wizzard</a>
-        <nav>
-          <a href={`${base}/inspector/`} aria-current="page">Inspector</a>
-          <a href={`${base}/docs/start/`}>Docs</a>
-          <a href="https://github.com/ZizzX/wizzard-packages">GitHub</a>
-        </nav>
-      </header>
-
-      <main>
+<Page title={title} description={description} current="inspector">
         <section class="hero hero-tight">
           <h1>A flow is data. <em>Watch one replay itself.</em></h1>
           <p class="lede">
@@ -44,20 +20,11 @@ const description =
 
           <div class="actions">
             <a class="button button-primary" href={`${base}/docs/start/`}>Run this yourself</a>
-            <a class="button button-secondary" href={`${base}/#examples`}>See the examples</a>
+            <a class="button button-secondary" href={`${base}/examples/`}>See the examples</a>
             <span class="install">
               <span class="tag">install</span>
               <span>npm i @wizzard-packages/core @wizzard-packages/react</span>
             </span>
           </div>
         </section>
-      </main>
-
-      <footer class="site-footer">
-        <span>MIT licensed</span>
-        <a href="https://github.com/ZizzX/wizzard-packages">Source</a>
-        <a href={`${base}/docs/start/`}>Documentation</a>
-      </footer>
-    </div>
-  </body>
-</html>
+      </Page>

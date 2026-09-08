@@ -1,0 +1,40 @@
+---
+import flowSource from '@examples/reference/src/onboarding/flow.ts?raw';
+import registrySource from '@examples/reference/src/onboarding/registry.ts?raw';
+import appSource from '@examples/reference/src/onboarding/Onboarding.vue?raw';
+
+import ExampleShell from '../../../components/ExampleShell.astro';
+import OnboardingVue from '../../../islands/OnboardingVue.vue';
+
+const sources = [
+  {
+    name: 'flow.ts',
+    lang: 'ts' as const,
+    code: flowSource,
+    note: 'The same file the React page shows. One definition, two renderings - that is the claim this pair of pages exists to make.',
+  },
+  {
+    name: 'registry.ts',
+    lang: 'ts' as const,
+    code: registrySource,
+    note: 'Also the same file. The validators are functions of the data, so neither binding has a version of its own.',
+  },
+  {
+    name: 'Onboarding.vue',
+    lang: 'vue' as const,
+    code: appSource,
+    note: 'The rendering. Step for step and message for message the React file, with `v-if` where the other has `&&`.',
+  },
+];
+---
+
+<ExampleShell
+  slug="onboarding"
+  ref="R-A"
+  heading="Change your answer. Keep the right data."
+  lede="Onboarding with a conditional branch and backtracking. Pick a payer type and the route changes; walk back across the branch and the answers are still there; finish, and the flow submits what it collected and nothing else."
+  framework="vue"
+  sources={sources}
+>
+  <OnboardingVue client:load />
+</ExampleShell>

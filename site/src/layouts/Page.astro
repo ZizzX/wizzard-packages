@@ -1,0 +1,68 @@
+---
+import '@fontsource-variable/inter-tight';
+import '@fontsource-variable/jetbrains-mono';
+import '../styles/tokens.css';
+import '../styles/site.css';
+
+/**
+ * The chrome every hand-written page wears: the document head, the top bar and
+ * the footer. Starlight owns its own; this is for the pages outside it.
+ *
+ * It exists because the examples added six routes to a site that had two, and
+ * a navigation entry that appears on four pages out of six is how a link ends
+ * up dead on the two nobody edited.
+ */
+interface Props {
+  title: string;
+  description: string;
+  /** Which top-bar entry is the page being read. */
+  current?: 'examples' | 'inspector' | 'docs';
+}
+
+const { title, description, current } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <a class="wordmark" href={`${base}/`}>wizzard</a>
+        <nav>
+          <a href={`${base}/examples/`} aria-current={current === 'examples' ? 'page' : undefined}>
+            Examples
+          </a>
+          <a
+            href={`${base}/inspector/`}
+            aria-current={current === 'inspector' ? 'page' : undefined}
+          >
+            Inspector
+          </a>
+          <a href={`${base}/docs/start/`} aria-current={current === 'docs' ? 'page' : undefined}>
+            Docs
+          </a>
+          <a href="https://github.com/ZizzX/wizzard-packages">GitHub</a>
+        </nav>
+      </header>
+
+      <main>
+        <slot />
+      </main>
+
+      <footer class="site-footer">
+        <span>MIT licensed</span>
+        <a href="https://github.com/ZizzX/wizzard-packages">Source</a>
+        <a href={`${base}/docs/start/`}>Documentation</a>
+      </footer>
+    </div>
+  </body>
+</html>
