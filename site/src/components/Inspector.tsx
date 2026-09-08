@@ -54,9 +54,21 @@ const exampleFrames = replayFrames(recordingA, flowA, registryA);
 const nodeOf = (graph: { nodes: readonly GraphNode[] }, id: string | null): GraphNode | null =>
   id === null ? null : (graph.nodes.find((node) => node.id === id) ?? null);
 
-/** `4242 4242…` — a value a reader can recognise without it breaking the row. */
+/**
+ * `4242 4242…` — a value a reader can recognise without it breaking the row.
+ *
+ * The `try` is the third one on this page for the same reason: `JSON.stringify`
+ * recurses to the depth of its argument. No paste reaches here today — the diff
+ * is drawn from a recorded session and the refusals from the engine's own run —
+ * and the day Preview gains a diff, or Replay scrubs a pasted flow, one will.
+ */
 function short(value: unknown): string {
-  const text = JSON.stringify(value) ?? 'undefined';
+  let text: string;
+  try {
+    text = JSON.stringify(value) ?? 'undefined';
+  } catch {
+    text = '[unprintable]';
+  }
   return text.length <= 48 ? text : `${text.slice(0, 47)}…`;
 }
 
