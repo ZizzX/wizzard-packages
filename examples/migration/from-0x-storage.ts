@@ -28,10 +28,17 @@ export interface LegacyWizard {
   data: Record<string, unknown>;
   /** Where the user was, when the meta key recorded it. */
   currentStepId?: string;
-  /** Steps 0.x had marked visited, for a flow whose policy reads them. */
-  visited: string[];
-  completed: string[];
 }
+
+/*
+ * The meta key also held `visited`, `completed` and `history`, and none of them
+ * are returned: `createWizard` takes `data`, `ctx` and a whole `WizardState`,
+ * and there is nothing in between to hand a list of visited steps to. Building
+ * a `WizardState` by hand to carry them would be a bigger and more fragile
+ * thing than this file should be. `go(..., { force: true })` below is the
+ * cheaper answer to the one problem they would have solved - a `'visited'` or
+ * `'sequential'` policy refusing to put the person back where they were.
+ */
 
 const META = '__wizzard_meta__';
 
@@ -100,13 +107,8 @@ export function readLegacyWizard(
 
   if (data === null && meta === null) return null;
 
-  const strings = (value: unknown): string[] =>
-    Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
-
   return {
     data: data ?? {},
     ...(typeof meta?.currentStepId === 'string' ? { currentStepId: meta.currentStepId } : {}),
-    visited: strings(meta?.visited),
-    completed: strings(meta?.completed),
   };
 }

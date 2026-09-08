@@ -52,7 +52,6 @@ describe('reading a 0.x wizard out of storage', () => {
       review: { agreed: true },
     });
     expect(legacy?.currentStepId).toBe('review');
-    expect(legacy?.visited).toEqual(['name', 'review']);
   });
 
   it('carries the values into a v1 wizard, addressed by the same paths', async () => {
