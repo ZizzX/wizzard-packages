@@ -780,6 +780,9 @@ importers:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+      vite:
+        specifier: ^8.2.2
+        version: 8.2.2(@types/node@25.0.3)(esbuild@0.28.2)(jiti@2.6.1)(yaml@2.9.0)
       vue:
         specifier: ^3.5.24
         version: 3.5.27(typescript@5.9.3)
@@ -8418,8 +8421,8 @@ snapshots:
       hast-util-to-html: 9.0.5
       hast-util-to-text: 4.0.2
       hastscript: 9.0.1
-      postcss: 8.5.23
-      postcss-nested: 6.2.0(postcss@8.5.23)
+      postcss: 8.5.28
+      postcss-nested: 6.2.0(postcss@8.5.28)
       unist-util-visit: 5.1.0
       unist-util-visit-parents: 6.0.2
 
@@ -12424,9 +12427,9 @@ snapshots:
       postcss: 8.5.28
       yaml: 2.9.0
 
-  postcss-nested@6.2.0(postcss@8.5.23):
+  postcss-nested@6.2.0(postcss@8.5.28):
     dependencies:
-      postcss: 8.5.23
+      postcss: 8.5.28
       postcss-selector-parser: 6.1.4
 
   postcss-selector-parser@6.1.4:
