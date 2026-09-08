@@ -1,0 +1,99 @@
+---
+import Page from '../../layouts/Page.astro';
+
+/**
+ * The index of the reference applications.
+ *
+ * Each row links to the React rendering. The framework a visitor last chose is
+ * remembered, but it is remembered by rewriting these links rather than by
+ * swapping anything on the page it opens: a preference read from storage can
+ * never decide what the server rendered, so it can never cause a mismatch.
+ */
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+const APPS = [
+  {
+    slug: 'onboarding',
+    ref: 'R-A',
+    heading: 'Change your answer. Keep the right data.',
+    blurb:
+      'Onboarding with a conditional branch and backtracking. The payer type decides the route, the visitor walks back across the branch, and the flow says what is submitted and what is forgotten.',
+    proves: ['when', 'on.next', 'back() across branches', 'clearOnLeave'],
+    ready: true,
+  },
+  {
+    slug: 'reload',
+    ref: 'R-B',
+    heading: 'Reload halfway through. Continue safely.',
+    blurb:
+      'A form that survives F5, validates a field against an asynchronous resolver, and is not corrupted by a reload during that validation.',
+    proves: ['persist', 'snapshot contract', 'busy', 'hydrateMismatch'],
+    ready: false,
+  },
+  {
+    slug: 'passengers',
+    ref: 'R-C',
+    heading: 'Add passengers. Revisit any passenger.',
+    blurb:
+      'One block of steps per passenger: add and remove them, then go back and edit the second after finishing the third.',
+    proves: ['GroupStep', 'repeat', 'frame stack', 'group entry and exit'],
+    ready: false,
+  },
+];
+
+const title = 'Examples - wizzard';
+const description =
+  'Three reference applications, each running on both bindings, from the same flow definition the page shows.';
+---
+
+<Page title={title} description={description} current="examples">
+  <section class="hero hero-tight">
+    <h1>Three applications, <em>not three screenshots</em>.</h1>
+    <p class="lede">
+      Each of these runs in this page, on the binding you pick, from the flow definition printed
+      below it. They are the same applications the end-to-end suite drives, so nothing is shown
+      here that the engine cannot do.
+    </p>
+  </section>
+
+  <ul class="example-index">
+    {
+      APPS.map((app) => (
+        <li class={app.ready ? undefined : 'is-pending'}>
+          <p class="example-ref">{app.ref}</p>
+          <h2>
+            {app.ready ? (
+              <a data-example={app.slug} href={`${base}/examples/${app.slug}/`}>
+                {app.heading}
+              </a>
+            ) : (
+              app.heading
+            )}
+          </h2>
+          <p>{app.blurb}</p>
+          <p class="example-proves">
+            {app.proves.map((what) => (
+              <code>{what}</code>
+            ))}
+          </p>
+          {!app.ready && <p class="example-pending">Not written yet.</p>}
+        </li>
+      ))
+    }
+  </ul>
+</Page>
+
+<script>
+  // The remembered framework, applied to the links out of this page and nowhere
+  // else. Storage is unavailable in some browsers and empty in most of them, so
+  // the default is what the markup already says.
+  try {
+    if (localStorage.getItem('wizzard:framework') === 'vue') {
+      for (const link of document.querySelectorAll<HTMLAnchorElement>('a[data-example]')) {
+        link.href = `${link.href}vue/`;
+      }
+    }
+  } catch {
+    // A browser that refuses storage gets the default, which is not an error.
+  }
+</script>
