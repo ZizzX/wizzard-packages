@@ -6,7 +6,7 @@
 
 The React binding for [`@wizzard-packages/core`](https://www.npmjs.com/package/@wizzard-packages/core).
 It bridges the engine into React and does nothing else: navigation, guards and validation are
-the engine's, so this package is a provider and six hooks. That is why it is 1.04 kB gzipped
+the engine's, so this package is a provider and eight hooks. That is why it is 1.04 kB gzipped
 against 8.48 kB for its 0.x equivalent — nothing was optimised, the logic moved.
 
 ## Install
@@ -76,7 +76,7 @@ generated from them, so what you paste is what is tested.
 | Hook                    | Returns                                                                             |
 | ----------------------- | ----------------------------------------------------------------------------------- |
 | `useStep()`             | `current`, `isFirst`, `isLast`, `progress` and the rest of the step's derived state |
-| `useNavigation()`       | `next`, `back`, `go`, `canBack`, `canNext`, `isNavigating`                          |
+| `useNavigation()`       | `next`, `back`, `go`, `cancel`, `canBack`, `isBusy`, `isLast`                       |
 | `useField<T>(path)`     | `[value, setValue]`, addressing the same paths the flow does                        |
 | `useErrors(stepId?)`    | the error map for a step, or for the current one                                    |
 | `useWizardSelector(fn)` | one derived value, re-rendering only when it changes                                |

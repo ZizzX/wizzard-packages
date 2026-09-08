@@ -6,7 +6,7 @@
 
 The Vue binding for [`@wizzard-packages/core`](https://www.npmjs.com/package/@wizzard-packages/core).
 It bridges the engine into Vue and does nothing else: navigation, guards and validation are the
-engine's, so this package is one `provide` and six composables. That is why it is 732 B gzipped
+engine's, so this package is one `provide` and eight composables. That is why it is 732 B gzipped
 against 5.07 kB for its 0.x equivalent — nothing was optimised, the logic moved.
 
 ## Install
@@ -76,7 +76,7 @@ generated from them, so what you paste is what is tested.
 | Composable              | Returns                                                                                      |
 | ----------------------- | -------------------------------------------------------------------------------------------- |
 | `useStep()`             | `current`, `isFirst`, `isLast`, `progress`, `breadcrumbs` and the rest, each a `ComputedRef` |
-| `useNavigation()`       | `next`, `back`, `go`, `canBack`, `canNext`, `isNavigating`                                   |
+| `useNavigation()`       | `next`, `back`, `go`, `cancel`, `canBack`, `isBusy`, `isLast`                                |
 | `useField<T>(path)`     | a `WritableComputedRef`, usable directly with `v-model`                                      |
 | `useErrors(stepId?)`    | the error map for a step, or for the current one                                             |
 | `useWizardSelector(fn)` | one derived value as a `ComputedRef`                                                         |
