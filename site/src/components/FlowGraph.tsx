@@ -125,10 +125,18 @@ export function FlowGraph({
 
   /**
    * What the arrow keys walk: laid-out order, skipping the placeholders the
-   * layout adds for an edge whose target the flow never declares. There is
-   * nothing to say about a node the builder produced no data for.
+   * layout adds for an edge whose target the flow never declares, and skipping
+   * the end marker.
+   *
+   * The end is drawn and is not a step. Walking onto it would point
+   * `aria-activedescendant` at `node-@end`, which the end branch never renders
+   * an id for, so the reference would dangle and the panel would offer a step
+   * that does not exist to inspect.
    */
-  const walkable = laid.nodes.filter((placed) => nodeById.has(placed.id));
+  const walkable = laid.nodes.filter((placed) => {
+    const kind = nodeById.get(placed.id)?.kind;
+    return kind !== undefined && kind !== 'end';
+  });
 
   const move = (delta: number): void => {
     if (walkable.length === 0) return;

@@ -87,6 +87,21 @@ describe('the graph as an instrument', () => {
     expect(svg.getAttribute('aria-activedescendant')).toBe('node-details');
   });
 
+  it('never walks onto the end marker', async () => {
+    const user = userEvent.setup();
+    const { container } = render(<Walkable />);
+    const svg = container.querySelector('svg') as SVGSVGElement;
+
+    // The end is drawn and is not a step. Walking onto it would name a node the
+    // end branch renders no id for, so `aria-activedescendant` would point at
+    // nothing and the panel would offer a step that does not exist.
+    await user.tab();
+    await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}');
+
+    expect(svg.getAttribute('aria-activedescendant')).toBe('node-payment');
+    expect(container.querySelector('[id="node-@end"]')).toBeNull();
+  });
+
   it('clears the selection on Escape', async () => {
     const user = userEvent.setup();
     const { container } = render(<Walkable />);

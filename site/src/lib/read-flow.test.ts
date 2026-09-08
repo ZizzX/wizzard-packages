@@ -11,7 +11,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { MAX_CHARS, MAX_STEPS, readFlow } from './read-flow';
+import { MAX_CHARS, MAX_STEPS, MAX_TARGETS, readFlow } from './read-flow';
 
 const good = JSON.stringify({
   id: 'signup',
@@ -73,6 +73,71 @@ describe('the gates on size', () => {
     const result = readFlow(flowOf(MAX_STEPS + 1));
     expect(result.flow).toBeNull();
     expect(result.problems[0]?.message).toContain('draws up to');
+  });
+});
+
+describe('the gates the step count does not reach', () => {
+  it('refuses a fan-out that a two-step flow can declare', () => {
+    // 400 kB of legal JSON, two steps, and 100 001 edges out of `buildGraph`.
+    // Both earlier gates pass it: this is the one that does not.
+    const fan = JSON.stringify({
+      id: 'fan',
+      steps: { a: { on: { next: Array.from({ length: 100_000 }, () => 'b') } }, b: {} },
+    });
+    const result = readFlow(fan);
+    expect(result.flow).toBeNull();
+    expect(result.problems[0]?.message).toContain('transitions');
+  });
+
+  it('draws a flow at the transition ceiling', () => {
+    const at = JSON.stringify({
+      id: 'fan',
+      steps: { a: { on: { next: Array.from({ length: MAX_TARGETS }, () => 'b') } }, b: {} },
+    });
+    expect(readFlow(at).flow).not.toBeNull();
+  });
+
+  it('counts the steps inside an inline sub-flow', () => {
+    // The root has two steps. `buildGraph` walks into the group, so the ceiling
+    // has to as well, or a small root carries an unbounded child.
+    const nested = JSON.stringify({
+      id: 'root',
+      steps: {
+        group: {
+          flow: {
+            id: 'child',
+            steps: Object.fromEntries(
+              Array.from({ length: MAX_STEPS + 1 }, (_, i) => [`s${i}`, {}])
+            ),
+          },
+        },
+        after: {},
+      },
+    });
+    const result = readFlow(nested);
+    expect(result.flow).toBeNull();
+    expect(result.problems[0]?.message).toContain('draws up to');
+  });
+
+  it('does not follow a sub-flow named by string, which is not in the paste', () => {
+    const byName = JSON.stringify({ id: 'root', steps: { group: { flow: 'elsewhere' } } });
+    expect(readFlow(byName).flow).not.toBeNull();
+  });
+});
+
+describe('fields the painter renders', () => {
+  it('refuses a label that is not text', () => {
+    // `validateFlow` has no opinion on a label — it is the host's business
+    // everywhere except here. The painter renders it as a React child, so an
+    // object takes the island down with "Objects are not valid as a React child".
+    const result = readFlow('{"id":"x","steps":{"one":{"label":{"bad":1}}}}');
+    expect(result.flow).toBeNull();
+    expect(result.problems[0]?.path).toBe('steps.one.label');
+    expect(result.problems[0]?.message).toContain('not a string');
+  });
+
+  it('leaves a missing label alone, because the id is drawn instead', () => {
+    expect(readFlow('{"id":"x","steps":{"one":{}}}').flow).not.toBeNull();
   });
 });
 

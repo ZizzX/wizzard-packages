@@ -31,8 +31,24 @@ export const MAX_CHARS = 1_000_000;
  * measured here, 200 steps is 20 100 edges and 800 steps is 320 400, which is a
  * DOM no browser draws. Forty steps is 780 edges at worst, and a graph past
  * forty nodes has stopped being readable long before it stops rendering.
+ *
+ * Counted across inline sub-flows too: `buildGraph` walks into a group whose
+ * `flow` is a definition, so a root with three steps can carry a thousand.
  */
 export const MAX_STEPS = 40;
+
+/**
+ * Transitions a flow may declare, which is the other half of the same bound and
+ * the one the step count does not reach.
+ *
+ * `on.next` takes a list, and the list is not bounded by anything the step count
+ * sees: two steps whose `a.on.next` repeats a valid target a hundred thousand
+ * times is 400 kB of legal JSON, passes both gates above, and builds 100 001
+ * edges — measured. So the declared transitions are counted as well, and the two
+ * ceilings together put a real bound on the drawing: at worst 780 fall-through
+ * edges plus this.
+ */
+export const MAX_TARGETS = 200;
 
 const DOCS = 'https://github.com/ZizzX/wizzard-packages/blob/main/docs/errors.md#inspector-paste';
 
@@ -110,6 +126,20 @@ function shapeProblem(flow: { id: string; steps: Record<string, unknown> }): Rea
         `Give it an object, empty if the step has nothing to say: "${id}": {}`
       );
     }
+    // The builder copies `label` onto the node and the painter renders it as a
+    // React child, which throws "Objects are not valid as a React child" and
+    // takes the island down. `validateFlow` has no opinion on it: a label is
+    // the host's business everywhere except here, where the host is a stranger.
+    const { label } = step as { label?: unknown };
+    if (label !== undefined && typeof label !== 'string') {
+      return problem(
+        `steps.${id}.label`,
+        `step "${id}" has a label that is ${JSON.stringify(label) ?? 'undefined'}, not a string`,
+        'A label is drawn inside the node and read out in the table beside it, so it has to be text',
+        'Use a string, or leave the label out and the step is drawn under its id'
+      );
+    }
+
     const group = step as { flow?: unknown };
     if (group.flow !== undefined && typeof group.flow !== 'string' && !isPlainObject(group.flow)) {
       return problem(
@@ -122,6 +152,46 @@ function shapeProblem(flow: { id: string; steps: Record<string, unknown> }): Rea
   }
 
   return null;
+}
+
+/**
+ * What the builder will have to draw, counted before it draws it.
+ *
+ * Both numbers are taken across inline sub-flows, because `buildGraph` walks
+ * into a group whose `flow` is a definition rather than a name. A string
+ * reference is not followed: that flow is not in the paste, and the inspector
+ * has no registry to resolve it against.
+ *
+ * Depth is guarded at the same 32 the engine uses, and a definition is weighed
+ * once, so a flow that refers to itself is counted rather than followed.
+ */
+function weigh(flow: Record<string, unknown>): { steps: number; targets: number } {
+  let steps = 0;
+  let targets = 0;
+  const seen = new Set<unknown>();
+
+  const walk = (f: Record<string, unknown>, depth: number): void => {
+    if (depth > 32 || seen.has(f)) return;
+    seen.add(f);
+    const table = f.steps;
+    if (!isPlainObject(table)) return;
+
+    for (const step of Object.values(table)) {
+      if (!isPlainObject(step)) continue;
+      steps += 1;
+
+      const on = step.on;
+      if (isPlainObject(on)) {
+        targets += Array.isArray(on.next) ? on.next.length : on.next === undefined ? 0 : 1;
+        if (on.back !== undefined) targets += 1;
+      }
+
+      if (isPlainObject(step.flow)) walk(step.flow, depth + 1);
+    }
+  };
+
+  walk(flow, 0);
+  return { steps, targets };
 }
 
 /**
@@ -166,12 +236,20 @@ export function readFlow(text: string): ReadResult {
     );
   }
 
-  const steps = Object.keys(parsed.steps).length;
-  if (steps > MAX_STEPS) {
+  const size = weigh(parsed);
+  if (size.steps > MAX_STEPS) {
     return problem(
       'steps',
-      `this flow has ${count(steps)} steps and the inspector draws up to ${count(MAX_STEPS)}`,
+      `this flow has ${count(size.steps)} steps and the inspector draws up to ${count(MAX_STEPS)}`,
       'Every conditional step adds a fall-through edge to every later one, so the drawing grows as the square of the count',
+      'Draw a smaller flow here, or use the devtools panel, which docks beside a running wizard'
+    );
+  }
+  if (size.targets > MAX_TARGETS) {
+    return problem(
+      'steps',
+      `this flow declares ${count(size.targets)} transitions and the inspector draws up to ${count(MAX_TARGETS)}`,
+      'An on.next list is a branch per entry and a drawn edge per branch, and a short flow can declare thousands of them',
       'Draw a smaller flow here, or use the devtools panel, which docks beside a running wizard'
     );
   }

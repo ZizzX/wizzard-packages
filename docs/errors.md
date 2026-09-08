@@ -245,6 +245,20 @@ yet is still a sentence rather than a stack trace.
 Making the validator total for untrusted input is the deeper fix, and it belongs to the
 diagnostic pass over the engine rather than to a site route.
 
+**Why the transitions are counted too.** The step count is half the bound and not the
+interesting half. `on.next` takes a list, and nothing about the step count sees how long it
+is: two steps whose `a.on.next` repeats a valid target a hundred thousand times is 400 kB of
+legal JSON, passes the character gate and the step gate, and builds 100 001 edges. So the
+declared transitions are counted as well, at two hundred. Both counts are taken across inline
+sub-flows, because `buildGraph` walks into a group whose `flow` is a definition rather than a
+name — a root with three steps can otherwise carry a thousand.
+
+**Why a label has to be text.** `validateFlow` has no opinion on it, and rightly so: a label
+is the host's business everywhere except here, where the host is a stranger with a paste box.
+The builder copies it onto the node and the painter renders it as a React child, so an object
+throws "Objects are not valid as a React child" and takes the island down — past the wrapped
+validator call, which guards the check and not the render.
+
 **Why forty steps.** Not a guess and not the text length. `buildGraph` emits a fall-through
 edge from every conditional step to every later one it could reach, so edges grow as the
 square of the step count: 200 steps is 20 100 edges and 800 steps is 320 400, which is a DOM
