@@ -29,24 +29,12 @@ import {
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { flowA, registryA } from '../../../contract/fixtures';
+import { FALLBACK_FIELD, FIELDS, rerouteTo } from '../lib/signup-form';
 
 import { FlowGraph, type GraphView } from './FlowGraph';
 
 /** The structure depends on the definition alone, so it is built once. */
 const graph = buildGraph(flowA);
-
-/**
- * One field per step, so a visitor changing the payer sees a different question
- * rather than a different label on the same one. The flow does not describe
- * fields - that is the host's job - so this map is the host.
- */
-const FIELDS: Record<string, { path: string; label: string; type: string; placeholder: string }> = {
-  details: { path: 'email', label: 'Email', type: 'email', placeholder: 'you@company.com' },
-  company: { path: 'company', label: 'Company name', type: 'text', placeholder: 'Acme Ltd' },
-  payment: { path: 'card', label: 'Card number', type: 'text', placeholder: '4242 4242 4242 4242' },
-};
-
-const FALLBACK_FIELD = FIELDS.details as (typeof FIELDS)[string];
 
 /** `{ email: "required" }`, the shape a reader would see in a console. */
 function printErrors(errors: Readonly<Record<string, string>>): string {
@@ -59,24 +47,6 @@ function printErrors(errors: Readonly<Record<string, string>>): string {
 interface Message {
   kind: 'ok' | 'err';
   text: string;
-}
-
-/** The definition's own sequence, for deciding which way a reroute goes. */
-const ORDER: readonly string[] = flowA.order ?? [];
-
-/**
- * Where the flow should stand when a `when` has just excluded the step it is
- * standing on - walking to `company` as a business and then choosing personal.
- *
- * Forward, to the first step of the new route that comes after the excluded one,
- * because that is where `next()` would have gone had the data been chosen
- * earlier. Only if nothing follows does it fall back to the end of the route.
- * Returns null when the flow is still where it belongs and nothing should move.
- */
-export function rerouteTo(current: string | null, active: readonly string[]): string | null {
-  if (current === null || active.includes(current)) return null;
-  const at = ORDER.indexOf(current);
-  return active.find((id) => ORDER.indexOf(id) > at) ?? active[active.length - 1] ?? null;
 }
 
 export default function HeroFlow(): ReactNode {

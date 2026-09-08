@@ -67,6 +67,7 @@
   "homepage": "https://github.com/ZizzX/wizzard-packages#readme",
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
+    "@axe-core/playwright": "^4.13.0",
     "@changesets/cli": "^2.27.8",
     "@commitlint/cli": "^20.2.0",
     "@commitlint/config-conventional": "^20.2.0",

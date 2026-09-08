@@ -14,7 +14,7 @@ import { formatExpr, layoutGraph, type Direction } from '@wizzard-packages/devto
 
 import type { FlowGraph as Graph, GraphNode } from '@wizzard-packages/core/graph';
 import type { Breadcrumb } from '@wizzard-packages/core/v1';
-import type { ReactNode } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
 
 export type NodeState = 'active' | 'error' | 'visited' | 'skipped' | 'done' | 'rest';
 
@@ -96,6 +96,17 @@ export interface FlowGraphProps {
    * The hero's Rebuild control is the only caller that needs it.
    */
   drawKey?: number;
+  /**
+   * The node being read about, drawn with a ring. Independent of which node the
+   * flow is standing on: inspecting a step is not navigating to it.
+   */
+  selected?: string | null;
+  /**
+   * Supplying this is what makes the graph interactive. Without it the drawing
+   * is inert markup with no focus stop and no handlers, which is how a page
+   * that only wants a picture ships no JavaScript for it.
+   */
+  onSelect?: (id: string | null) => void;
 }
 
 export function FlowGraph({
@@ -105,22 +116,74 @@ export function FlowGraph({
   direction = 'row',
   label,
   drawKey = 0,
+  selected = null,
+  onSelect,
 }: FlowGraphProps): ReactNode {
   const laid = layoutGraph(graph, { direction });
   const nodeById = new Map<string, GraphNode>(graph.nodes.map((node) => [node.id, node]));
   const endId = graph.nodes.find((node) => node.kind === 'end')?.id ?? '@end';
 
+  /**
+   * What the arrow keys walk: laid-out order, skipping the placeholders the
+   * layout adds for an edge whose target the flow never declares. There is
+   * nothing to say about a node the builder produced no data for.
+   */
+  const walkable = laid.nodes.filter((placed) => nodeById.has(placed.id));
+
+  const move = (delta: number): void => {
+    if (walkable.length === 0) return;
+    const at = walkable.findIndex((placed) => placed.id === selected);
+    const next = at === -1 ? 0 : Math.min(walkable.length - 1, Math.max(0, at + delta));
+    onSelect?.(walkable[next]?.id ?? null);
+  };
+
+  // One focus stop for the whole graph, and the arrows move inside it. Tab
+  // walking node by node would put a forty-step flow between a reader and the
+  // rest of the page.
+  const onKeyDown = (event: KeyboardEvent<SVGSVGElement>): void => {
+    const moves: Record<string, number> = {
+      ArrowDown: 1,
+      ArrowRight: 1,
+      ArrowUp: -1,
+      ArrowLeft: -1,
+    };
+    if (event.key in moves) {
+      event.preventDefault();
+      move(moves[event.key] as number);
+      return;
+    }
+    if (event.key === 'Escape' && selected !== null) {
+      event.preventDefault();
+      onSelect?.(null);
+    }
+  };
+
+  const interactive = onSelect !== undefined;
+
   return (
     <>
       <svg
+        {...(interactive
+          ? {
+              tabIndex: 0,
+              onKeyDown,
+              className: 'interactive',
+              ...(selected === null ? {} : { 'aria-activedescendant': `node-${selected}` }),
+            }
+          : {})}
         // Two units of bleed on every side: an edge routed along the graph's own
         // border loses the outer half of its stroke to the viewBox otherwise,
         // and reads as orphaned dashes.
         viewBox={`-2 -2 ${laid.width + 4} ${laid.height + 4}`}
         width={laid.width + 4}
         height={laid.height + 4}
-        role="img"
-        aria-label={`Flow graph of ${label}. The same information is in the table below.`}
+        role={interactive ? 'application' : 'img'}
+        {...(interactive ? { 'aria-roledescription': 'flow graph' } : {})}
+        aria-label={
+          interactive
+            ? `Flow graph of ${label}. Arrow keys move between steps, Escape clears the selection. The same information is in the table below.`
+            : `Flow graph of ${label}. The same information is in the table below.`
+        }
       >
         {laid.edges.map((edge) => (
           <g
@@ -143,6 +206,18 @@ export function FlowGraph({
           // 26 characters at 9px mono is the widest line that stays inside a
           // 160-unit node, which is why this is not `formatExpr`'s default 32.
           const when = node?.when === undefined ? undefined : formatExpr(node.when, 26);
+          // Only where there is something to read about: a click on the end
+          // marker selects nothing, because a flow's end has no step to show.
+          const pick =
+            interactive && node !== undefined
+              ? {
+                  id: `node-${placed.id}`,
+                  onClick: () => {
+                    onSelect?.(selected === placed.id ? null : placed.id);
+                  },
+                }
+              : {};
+          const ring = selected === placed.id ? ' selected' : '';
 
           if (kind === 'end') {
             return (
@@ -152,7 +227,7 @@ export function FlowGraph({
             );
           }
           return (
-            <g key={placed.id} className={`node ${kind} ${state}`}>
+            <g key={placed.id} className={`node ${kind} ${state}${ring}`} {...pick}>
               {kind === 'group' && (
                 <rect
                   className="inner"

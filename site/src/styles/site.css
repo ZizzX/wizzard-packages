@@ -370,7 +370,7 @@ body {
   padding: var(--space-6);
 }
 
-.instrument-controls .field {
+.field {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -382,13 +382,13 @@ body {
   flex: 1 1 16rem;
 }
 
-.instrument-controls .field-label {
+.field-label {
   font-family: var(--font-mono);
   color: var(--fg-muted);
   font-size: var(--text-xs);
 }
 
-.instrument-controls input {
+.field input {
   font-size: var(--text-sm);
   color: var(--fg);
   background: var(--bg);
@@ -399,18 +399,18 @@ body {
   width: 100%;
 }
 
-.instrument-controls input[aria-invalid='true'] {
+.field input[aria-invalid='true'] {
   border-color: var(--st-error);
 }
 
-.instrument-controls .segmented {
+.segmented {
   display: flex;
   border: var(--border) solid var(--line);
   border-radius: var(--radius-control);
   overflow: hidden;
 }
 
-.instrument-controls .segmented button {
+.segmented button {
   flex: 1;
   font: inherit;
   font-size: var(--text-xs);
@@ -422,16 +422,16 @@ body {
   cursor: pointer;
 }
 
-.instrument-controls .segmented button:hover {
+.segmented button:hover {
   background: var(--tint-hover);
   color: var(--fg);
 }
 
-.instrument-controls .segmented button:active {
+.segmented button:active {
   background: var(--tint-active);
 }
 
-.instrument-controls .segmented button[aria-pressed='true'] {
+.segmented button[aria-pressed='true'] {
   /* Inset rather than a border, so the control keeps its height and the
      segments do not shift by two pixels when the choice moves. */
   box-shadow: inset 0 0 0 var(--border-selected) var(--accent);
@@ -440,7 +440,8 @@ body {
   font-weight: var(--weight-strong);
 }
 
-.instrument-controls .button[disabled] {
+.button[disabled],
+.segmented button[disabled] {
   opacity: var(--opacity-disabled);
   cursor: not-allowed;
 }
@@ -671,5 +672,377 @@ body {
 
   .frame svg {
     max-width: none;
+  }
+}
+
+/* --- the inspector ------------------------------------------------------- */
+
+/* The page leads with the graph, the panel beside it and the scrubber under
+   both; the paste box is fourth and lives in a drawer. That order is the whole
+   information architecture, and it is expressed as source order so a narrow
+   screen and a screen reader get it for free. */
+
+.hero-tight {
+  padding-bottom: var(--space-8);
+}
+
+.inspector {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 64rem;
+}
+
+.inspector-modes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.inspector-modes .segmented {
+  width: fit-content;
+}
+
+.mode-reason {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+}
+
+/* Graph and panel: 60/40 where there is room for both, one column where there
+   is not. The graph goes first in the source, so stacking needs no `order`. */
+.stage {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(18rem, 2fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.stage-graph {
+  margin: 0;
+  min-width: 0;
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+
+.stage-graph-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border) solid var(--line);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+}
+
+.button-quiet {
+  min-height: var(--control-h-compact);
+  padding: 0 var(--control-pad-x-compact);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-body);
+  background: transparent;
+  color: var(--fg-muted);
+  border-color: var(--line);
+}
+
+.button-quiet:hover {
+  background: var(--tint-hover);
+  color: var(--fg);
+}
+
+/* The graph gets the width it needs or it scrolls. It never gets a scale: the
+   SVG carries its own width and height and `.frame svg` caps it at 100%. */
+.stage .frame {
+  padding: var(--space-4);
+  overflow: auto;
+}
+
+/* Below the two-column width the panel is a sheet the reader opens and closes.
+   A native details element does that, and returns focus to its own summary
+   when it closes, which is the one thing a hand-rolled sheet usually gets
+   wrong. */
+.stage-panel {
+  min-width: 0;
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+
+.stage-panel > summary {
+  display: none;
+}
+
+.stage-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+.live-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.live-form .actions {
+  margin-top: var(--space-1);
+}
+
+.panel-empty {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+}
+
+.node-card h3 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-base);
+  line-height: var(--leading-heading);
+}
+
+.node-card dl {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-2) var(--space-3);
+  margin: 0;
+  font-size: var(--text-xs);
+}
+
+.node-card dt {
+  font-family: var(--font-mono);
+  color: var(--fg-muted);
+}
+
+.node-card dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.node-card .muted {
+  color: var(--fg-muted);
+}
+
+.node-refusal {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-xs);
+  color: var(--st-error);
+}
+
+/* A dense monospace table, not a grid of cards: the delta is the thing being
+   read, and a card per changed key buries it in chrome. */
+.diff {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-align: left;
+}
+
+.diff caption {
+  text-align: left;
+  padding-bottom: var(--space-2);
+  color: var(--fg-muted);
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+}
+
+.diff th,
+.diff td {
+  padding: var(--space-2) var(--space-2) var(--space-2) 0;
+  border-bottom: var(--border) solid var(--line);
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  font-weight: var(--weight-body);
+}
+
+.diff thead th {
+  color: var(--fg-muted);
+  font-size: var(--text-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.scrubber {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.scrubber-track {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+}
+
+.scrubber-track input {
+  width: 100%;
+  min-height: var(--control-h);
+  accent-color: var(--accent);
+}
+
+.stage-status {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+}
+
+.paste-drawer {
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+
+.paste-drawer > summary {
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  font-size: var(--text-sm);
+}
+
+.paste-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+.paste-body label {
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+}
+
+.paste-body textarea {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: var(--leading-code);
+  color: var(--fg);
+  background: var(--bg);
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-control);
+  padding: var(--space-3);
+  resize: vertical;
+}
+
+.paste-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.paste-problems {
+  font-size: var(--text-xs);
+  color: var(--st-error);
+}
+
+.paste-problems p {
+  margin: 0 0 var(--space-2);
+}
+
+.paste-problems ul {
+  margin: 0;
+  padding-left: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.paste-problems code {
+  color: var(--fg);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The selected node: a ring, and never colour alone. It sits on the box the
+   node state is already carrying, two pixels wide so the two cannot be
+   confused at a glance. */
+.node.selected rect {
+  stroke: var(--accent);
+  stroke-width: var(--border-selected);
+}
+
+svg.interactive:focus-visible {
+  outline: var(--border-selected) solid var(--accent);
+  outline-offset: 2px;
+}
+
+svg.interactive .node {
+  cursor: pointer;
+}
+
+/* One column below the two-column width, and the panel becomes a real sheet:
+   its summary appears, so it can be closed to give the graph the screen. */
+@media (max-width: 1100px) {
+  .stage {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stage-panel > summary {
+    display: list-item;
+    padding: var(--space-3) var(--space-4);
+    cursor: pointer;
+    font-size: var(--text-sm);
+  }
+
+  .stage-panel[open] > summary {
+    border-bottom: var(--border) solid var(--line);
+  }
+}
+
+/* Narrow: the form is what stays usable, so the panel comes first and the
+   graph is capped and scrolls. "View graph" lifts that cap to the viewport -
+   scrolling inside it is the pan, because a graph scaled to fit a phone is a
+   picture of a graph rather than a graph. */
+@media (max-width: 640px) {
+  .stage {
+    display: flex;
+    flex-direction: column-reverse;
+    /* `align-items: start` is the grid rule above, and in a flex container it
+       means the graph sizes to its content instead of to the column - which
+       widens the page rather than scrolling inside the frame. */
+    align-items: stretch;
+  }
+
+  .stage .frame {
+    max-height: 40vh;
+  }
+
+  .stage-full .stage-graph {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+  }
+
+  .stage-full .frame {
+    max-height: none;
+    flex: 1 1 auto;
+  }
+}
+
+/* Above the narrow breakpoint the graph is already on screen, so the control
+   that would make it full-screen has nothing to do. */
+@media (min-width: 641px) {
+  .stage-expand {
+    display: none;
   }
 }
