@@ -223,6 +223,18 @@ body {
   color: var(--on-accent);
 }
 
+/* One solid accent fill per screen, and the first screen spends it on
+   Get started. Next is still the instrument's primary control, so it keeps the
+   accent as an outline on a tint - which outranks Back's neutral border
+   without spending the fill a second time. The label stays `--fg`: the accent
+   itself is 3.98:1 on that tint in the light theme, under the floor for a 15px
+   bold label, so the accent is carried by the border and the tint. */
+.button-accent {
+  background: var(--accent-soft);
+  color: var(--fg);
+  border-color: var(--accent);
+}
+
 .button-secondary {
   background: transparent;
   color: var(--fg);

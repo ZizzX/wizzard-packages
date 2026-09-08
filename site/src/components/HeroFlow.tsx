@@ -202,7 +202,7 @@ function Instrument(): ReactNode {
             &nbsp;
           </span>
           <div className="actions">
-            <button className="button button-primary" type="submit" disabled={isBusy}>
+            <button className="button button-accent" type="submit" disabled={isBusy}>
               {ended ? 'Restart' : 'Next'}
             </button>
             <button
