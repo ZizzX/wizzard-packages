@@ -13,19 +13,18 @@
   box-sizing: border-box;
 }
 
-/* The ground is a drawing sheet: a hairline grid on the same 32px step the
-   layout counts in, so the page reads as something measured rather than as a
-   dark rectangle. It is one gradient pair and no image request. */
+/* The ground is one flat fill and carries no pattern. It used to draw a
+   hairline grid on a 32px step, which cost more than the metaphor was worth:
+   a pattern on `body` shows through every element that has no fill of its own,
+   so the reference table on /docs/flow/ had grid lines running behind its rows
+   and the demo panels read as outlines over graph paper rather than as panels.
+   Depth is the surface ladder's job now - see "The ground is flat" in
+   DESIGN.md. */
 body {
   font-family: var(--font-sans);
   font-size: var(--text-base);
   line-height: var(--leading-body);
   background-color: var(--bg);
-  background-image:
-    linear-gradient(var(--grid-line) var(--border), transparent var(--border)),
-    linear-gradient(90deg, var(--grid-line) var(--border), transparent var(--border));
-  background-size: 32px 32px;
-  background-position: calc(var(--border) * -1) calc(var(--border) * -1);
   color: var(--fg);
   margin: 0;
   -webkit-font-smoothing: antialiased;
@@ -83,15 +82,23 @@ body {
 
 /* Links. DESIGN.md gives `--accent` to the active step, the primary action and
    links, and nothing implemented the third: every anchor outside the top bar
-   was shipping the browser's own blue. `:where` keeps this at zero specificity
-   so Starlight's own link colours and the button classes still win.
+   was shipping the browser's own blue.
+
+   This lives in `site.base` - the weakest layer, declared in tokens.css - and
+   not merely at zero specificity. Zero specificity does not help against a
+   layer: an unlayered rule beats every layered one whatever its selector, so
+   this used to paint Starlight's current sidebar page and its skip link in the
+   accent, on top of the accent fill Starlight had already put behind them. The
+   sidebar's current page measured 1.00:1 and could not be read at all.
 
    Underlines sit clear of descenders and match the hairline weight the rest of
    the page is drawn with. */
-:where(a) {
-  color: var(--accent);
-  text-underline-offset: 0.18em;
-  text-decoration-thickness: from-font;
+@layer site.base {
+  :where(a) {
+    color: var(--accent);
+    text-underline-offset: 0.18em;
+    text-decoration-thickness: from-font;
+  }
 }
 
 :where(a):hover {
@@ -299,10 +306,15 @@ body {
 
 /* --- feature rows -------------------------------------------------------- */
 
+/* `--line-strong` rather than `--line`, because these separate sections rather
+   than bound a box, which is the distinction the palette draws between the two.
+   It mattered less while the ground carried a grid and the rules read as part
+   of it; on a flat ground they are the only rhythm this stretch of the page
+   has, and at `--line` they were too quiet to give it one. */
 .rows {
   display: flex;
   flex-direction: column;
-  border-top: var(--border) solid var(--line);
+  border-top: var(--border) solid var(--line-strong);
 }
 
 /* The claim reads across the top, the graph runs the full width under it.
@@ -314,7 +326,7 @@ body {
   display: grid;
   gap: var(--space-6);
   padding: var(--space-12) 0;
-  border-bottom: var(--border) solid var(--line);
+  border-bottom: var(--border) solid var(--line-strong);
 }
 
 /* Capped at the widest graph the page draws - 788 user units plus the frame's
@@ -1409,4 +1421,90 @@ svg.interactive .node {
   color: var(--fg-muted);
   font-family: var(--font-mono);
   font-size: var(--text-xs);
+}
+
+/* --- the documentation shell ---------------------------------------------
+   Starlight draws its own chrome and we leave almost all of it alone. What it
+   does not draw is a surface for the things its markdown renderer emits, and
+   with the ground grid gone those had nothing behind them at all. The
+   documentation sites this one was measured against are unanimous about which
+   parts get a surface: code and cards do, and the nav, the sidebar and the
+   table of contents stay on the ground with at most a hairline. None of them
+   tints its header and none uses a shadow.
+   ------------------------------------------------------------------------- */
+
+/* Section headings get the air the comparison sites give them. They agree on
+   the shape of the rhythm - tight headings, loose body, and a large gap before
+   a new section rather than after it - and the gap left between a section and
+   the paragraph above it is roughly double the gap inside one. */
+.sl-markdown-content :is(h2, h3) {
+  margin-top: var(--space-12);
+}
+
+/* A table is a block and reads as one: a header on `--surface`, hairline rows,
+   and the whole thing inside a rounded border. Before this it was bare rows on
+   the ground, whose rules were the same weight as the grid behind them, so it
+   read as text that happened to line up rather than as a table. */
+.sl-markdown-content table {
+  margin-block: var(--space-6);
+  background: var(--surface);
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-panel);
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--text-sm);
+}
+
+/* One step above the table's own fill, so the header reads as a header in dark
+   as well as in light. On `--surface` it was a 1.05 step from the ground in
+   dark against 1.08 in light, and the dark one did not read as filled. */
+.sl-markdown-content thead {
+  background: var(--surface-raised);
+}
+
+.sl-markdown-content :is(th, td) {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border) solid var(--line);
+  text-align: start;
+  vertical-align: top;
+}
+
+/* The fill alone does not carry the header in dark: the ladder's steps are
+   small by design, and one step over the table's own fill is a 1.05 ratio there
+   against 1.08 in light. The rule under it is `--line-strong` - the palette's
+   divider weight, as opposed to the `--line` hairlines between rows - so the
+   header is separated by the same means in both themes rather than by a fill
+   that only reads in one of them. */
+.sl-markdown-content thead th {
+  border-bottom-color: var(--line-strong);
+}
+
+.sl-markdown-content th {
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+/* The last row closes on the border-radius, so it must not draw its own rule
+   underneath it - the two would cross at the corner. */
+.sl-markdown-content tbody tr:last-child :is(th, td) {
+  border-bottom: 0;
+}
+
+/* --- the page chrome on a phone ------------------------------------------
+   `--target-min` is 44px and the top bar and the footer were ignoring it: every
+   link in both was 24px tall, and "Docs" was 36x24. On a pointer device that is
+   fine and the compact rhythm is the point; on a touch screen it is the whole
+   navigation of the site sitting under the minimum.
+   ------------------------------------------------------------------------- */
+@media (pointer: coarse) {
+  .topbar a,
+  .site-footer a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--target-min);
+  }
 }

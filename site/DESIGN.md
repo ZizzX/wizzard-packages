@@ -91,22 +91,21 @@ inside their own scroll container, and never widen the page.
 
 Dark is the default and light follows the visitor's system preference; both are complete
 palettes, not an inversion. The neutral is cool - an ink ground biased toward the accent - so
-the page reads as a drawing sheet and the cyan reads as belonging to it rather than sitting on
-top of it.
+the cyan reads as belonging to the page rather than as sitting on top of it.
 
-| Token              | Dark        | Light       | Use                                         |
-| ------------------ | ----------- | ----------- | ------------------------------------------- |
-| `--bg`             | `#0B0E14`   | `#F4F6F9`   | page ground                                 |
-| `--surface`        | `#10141C`   | `#FFFFFF`   | panels, form wells, code blocks             |
-| `--surface-raised` | `#141926`   | `#EDF1F6`   | the one layer above surface; used sparingly |
-| `--line`           | `#1E2530`   | `#DCE3EC`   | hairlines, node borders at rest, the grid   |
-| `--line-strong`    | `#2C3648`   | `#B9C4D2`   | dividers that separate sections             |
-| `--fg`             | `#E6EDF3`   | `#0B0E14`   | body and headings                           |
-| `--fg-muted`       | `#93A1B4`   | `#4A5666`   | secondary text, captions, labels            |
-| `--fg-faint`       | `#6E7C90`   | `#7A8798`   | non-text only: rules, disabled glyphs       |
-| `--accent`         | `#35D6D0`   | `#0E6E6A`   | the active step, primary action, links      |
-| `--accent-soft`    | `#35D6D01F` | `#0E6E6A14` | fill behind the active node                 |
-| `--on-accent`      | `#06121A`   | `#FFFFFF`   | text on an accent fill                      |
+| Token              | Dark        | Light       | Use                                          |
+| ------------------ | ----------- | ----------- | -------------------------------------------- |
+| `--bg`             | `#0B0E14`   | `#F4F6F9`   | page ground                                  |
+| `--surface`        | `#10141C`   | `#FFFFFF`   | panels, form wells, code blocks              |
+| `--surface-raised` | `#141926`   | `#EDF1F6`   | the one layer above surface; used sparingly  |
+| `--line`           | `#1E2530`   | `#DCE3EC`   | hairlines, node borders at rest, table rules |
+| `--line-strong`    | `#2C3648`   | `#B9C4D2`   | dividers that separate sections              |
+| `--fg`             | `#E6EDF3`   | `#0B0E14`   | body and headings                            |
+| `--fg-muted`       | `#93A1B4`   | `#4A5666`   | secondary text, captions, labels             |
+| `--fg-faint`       | `#6E7C90`   | `#7A8798`   | non-text only: rules, disabled glyphs        |
+| `--accent`         | `#35D6D0`   | `#0E6E6A`   | the active step, primary action, links       |
+| `--accent-soft`    | `#35D6D01F` | `#0E6E6A14` | fill behind the active node                  |
+| `--on-accent`      | `#06121A`   | `#FFFFFF`   | text on an accent fill                       |
 
 `--fg-faint` must never carry text; it exists for rules and for glyphs that repeat a label
 already present, and it clears the 3:1 a non-text mark needs and nothing more. Every other
@@ -119,12 +118,47 @@ The amber this replaced could not make that claim. White on the light `#B4640F` 
 4.40:1 under a 15px bold label. It shipped that way and no check caught it, because the check
 was never run on that pair.
 
-### The ground is a drawing sheet
+### The ground is flat
 
-The page ground carries a hairline grid on the same 32px step the layout counts in, drawn in
-`--line` as two CSS gradients: no image, no request, and it moves with the theme. It is the
-one decorative element in the system, and it earns its place by being the same measurement the
-graph is laid out on. Nothing else may add a background pattern.
+The page ground is one fill and carries no pattern. Nothing on this site may add a background
+pattern, gradient or texture to it.
+
+It used to draw a hairline grid on the same 32px step the layout counts in, as a drawing-sheet
+metaphor. The metaphor cost more than it earned. A pattern on `body` shows through every
+element that has no fill of its own, so the reference table on `/docs/flow/` had grid lines
+running behind its rows, and the demo panels read as outlines drawn over graph paper rather
+than as panels sitting on a page. In light it was worse than in dark: a near-white ground
+exposes more of it, and the large empty areas of a documentation page are exactly where it was
+loudest.
+
+Depth is the surface ladder's job instead. Every widely read documentation site this one was
+measured against puts a flat ground under the page and lets blocks carry the contrast, and none
+of them uses a shadow to do it.
+
+### Which things get a surface
+
+A surface is a fill, a hairline, and a radius. It is not free: a page where everything is a
+card has no hierarchy at all, so the list is short and closed.
+
+| Gets a surface                                        | Stays on the ground                           |
+| ----------------------------------------------------- | --------------------------------------------- |
+| Code blocks                                           | The top bar, apart from one hairline under it |
+| Tables: filled header row, hairline rows, in a border | The documentation sidebar                     |
+| Panels that hold an instrument, and their form wells  | The table of contents                         |
+| Cards in a gallery of examples                        | Prose, headings, captions, the footer         |
+
+The nav is the case people get wrong. Every site in that comparison paints its header in
+exactly the page ground colour; one of them draws a hairline under it, and none uses a fill or
+a shadow. A tinted header is the tell of a site that reached for elevation where it needed
+whitespace.
+
+A block that scrolls keeps its own scrolling. A table or code block wider than the column
+scrolls inside itself and never widens the page - `--measure-wide` exists for exactly this. Do
+not give a table `display: table` or `overflow: hidden` to make a radius clip: `overflow` does
+not apply to a table box, so the table keeps its intrinsic width and pushes the whole page
+sideways on a phone. Starlight already makes wide tables `display: block; overflow-x: auto`,
+which is what clips the radius correctly, so the rule here is to add the fill and the border
+and leave the box alone.
 
 ### Semantic colours
 
@@ -204,6 +238,29 @@ visitor is meant to hit, and `--control-h-compact` (32px), for a control that si
 another component's frame and is not the reason the visitor is there — the copy button on a
 code block, the Rebuild control on a graph. A compact control still carries a 44px hit area
 through padding.
+
+### Where a rule sits in the cascade
+
+Half of this site is Starlight's and half is ours, and the two meet in the cascade rather than
+in a file. Starlight writes everything it draws inside `@layer starlight.*`. We therefore
+declare the order once, at the top of `tokens.css`:
+
+```css
+@layer site.base, starlight.reset, starlight.base, starlight.core, starlight.content,
+  starlight.components, starlight.utils;
+```
+
+`site.base` holds element-level defaults — what a bare `a` or `table` gets — and is the
+weakest layer on the page, so a default of ours can never beat a component rule of Starlight's.
+Everything else the site writes stays **outside** a layer, which is stronger than all of them,
+because the custom pages own their appearance completely.
+
+Zero specificity does not substitute for this. The cascade compares layers before it compares
+specificity, so an unlayered `:where(a)` beats a layered `[aria-current='page']` — which is
+exactly what happened: the base link colour repainted Starlight's current sidebar entry and its
+skip link in `--accent`, on top of the `--accent` fill Starlight had already put behind them.
+Both measured 1.00:1 and neither could be read. Anything Starlight paints on a fill takes
+`--on-accent` through `--sl-color-text-invert`, which is the pairing the palette measures.
 
 ## Browser surfaces
 
