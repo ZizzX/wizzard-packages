@@ -1,2 +1,12 @@
+# CI is not a laptop. Every pull request already runs build and tests as its own
+# job, and the release job pushes tags from inside a runner - where this hook
+# re-ran the whole suite on a loaded machine and, on 2026-09-08, refused the
+# push after `changeset publish` had already written all ten packages to npm.
+# The registry had the release, the repository had no tags for it, and the job
+# reported failure. A hook that can do that to a release has no business in CI.
+if [ -n "$CI" ]; then
+  exit 0
+fi
+
 pnpm build
 pnpm test:run

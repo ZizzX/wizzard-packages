@@ -265,8 +265,13 @@ describe('layoutGraph', () => {
       layoutGraph({ ...graph });
       times.push(performance.now() - started);
     }
-    times.sort((a, b) => a - b);
-    expect(times[1]).toBeLessThan(100);
+    // The fastest run, not the median. Noise on a shared runner only ever adds
+    // time - a scheduler steal inflates a sample and nothing deflates one - so
+    // the minimum is the closest this can get to what the algorithm costs, and
+    // the median is just a sample that happened to be interrupted less. The
+    // median read 452 ms during the 0.5.0 release on a runner that was also
+    // publishing; the same commit measured single digits on the next run.
+    expect(Math.min(...times)).toBeLessThan(100);
   });
 
   it('ratchet: the reference flows draw no more crossings than today', () => {
