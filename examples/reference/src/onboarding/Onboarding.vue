@@ -90,6 +90,9 @@ async function onNext(): Promise<void> {
   if (ended.value) {
     ended.value = false;
     announcement.value = '';
+    // `reset` keeps `ctx` - it is the host's, not the run's - so the fast path
+    // has to be put back by hand, or starting again silently takes it.
+    wizard.setCtx({ returning: false });
     wizard.reset();
     await wizard.start();
     return;

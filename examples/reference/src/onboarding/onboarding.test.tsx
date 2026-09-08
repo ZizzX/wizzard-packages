@@ -166,3 +166,38 @@ describe('R-A onboarding, Vue', () => {
     app.unmount();
   });
 });
+
+describe('R-A onboarding, starting again', () => {
+  it('starts again without the fast path it finished on', async () => {
+    render(<OnboardingApp />);
+    await act(async () => {});
+
+    const fastPath = async (): Promise<void> => {
+      await fill('Email', 'ada@example.com');
+      await click('Business');
+      await click('Next');
+      await fill('Six-digit code', '123456');
+    };
+
+    await fastPath();
+    await act(async () => {
+      screen
+        .getByLabelText('I already have an account')
+        .dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await click('Next');
+    expect(heading()).toBe('Review');
+    await click('Submit');
+    expect(heading()).toBe('Done');
+
+    await click('Start again');
+    expect(heading()).toBe('Your details');
+    await fastPath();
+    // `reset` keeps `ctx`, so the application has to put the fast path back.
+    expect((screen.getByLabelText('I already have an account') as HTMLInputElement).checked).toBe(
+      false
+    );
+    await click('Next');
+    expect(heading()).toBe('Company details');
+  });
+});

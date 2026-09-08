@@ -70,6 +70,11 @@ function Onboarding(): ReactNode {
 
   // Focus follows the flow, but only once the visitor has moved: taking focus on
   // the first paint would drag a reader who was still reading the page above.
+  //
+  // The step id is the only dependency, and the count is read off the engine
+  // inside: `active` is rebuilt on every commit, so depending on it would make
+  // a keystroke look like a step change and pull focus out of the field being
+  // typed into.
   const moved = useRef(false);
   useEffect(() => {
     if (current === null) return;
@@ -78,14 +83,18 @@ function Onboarding(): ReactNode {
       return;
     }
     heading.current?.focus();
-    const at = active.indexOf(current) + 1;
-    setAnnouncement(`${LABELS[current] ?? current}. Step ${at} of ${active.length}.`);
-  }, [current, active]);
+    const { active: route } = wizard.getSnapshot();
+    const at = route.indexOf(current) + 1;
+    setAnnouncement(`${LABELS[current] ?? current}. Step ${at} of ${route.length}.`);
+  }, [current, wizard]);
 
   async function onNext(): Promise<void> {
     if (ended) {
       setEnded(false);
       setAnnouncement('');
+      // `reset` keeps `ctx` - it is the host's, not the run's - so the fast
+      // path has to be put back by hand, or starting again silently takes it.
+      wizard.setCtx({ returning: false });
       wizard.reset();
       await wizard.start();
       return;
