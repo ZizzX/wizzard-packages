@@ -1,4 +1,20 @@
 /**
+ * Cascade order, declared before anything else on the page so it is this file
+ * that decides it. `site.base` holds the element-level defaults - the things a
+ * bare `<a>` or `<table>` gets - and it is deliberately the weakest layer:
+ * Starlight styles its own shell inside `starlight.*`, and a base rule of ours
+ * must never win against a component rule of theirs. Everything else the site
+ * writes stays outside a layer, which is stronger than all of these, because
+ * the custom pages own their own appearance.
+ *
+ * Zero specificity is not enough for this on its own. An unlayered `:where(a)`
+ * still beats a layered `[aria-current='page']`, because the cascade compares
+ * layers before it compares specificity.
+ */
+@layer site.base, starlight.reset, starlight.base, starlight.core, starlight.content,
+  starlight.components, starlight.utils;
+
+/**
  * The design system of DESIGN.md, as custom properties. Every colour, size,
  * duration and easing used anywhere on the site comes from this file.
  *
@@ -26,10 +42,11 @@
      The sans carries prose only, because a documentation page is paragraphs and
      a monospace paragraph is read slower than it is admired. The fallback face
      is metric-adjusted so the swap does not reflow. */
-  --font-sans: 'Inter Tight Variable', 'Inter Tight', 'Inter Tight Fallback', ui-sans-serif,
-    system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo,
-    Consolas, monospace;
+  --font-sans:
+    'Inter Tight Variable', 'Inter Tight', 'Inter Tight Fallback', ui-sans-serif, system-ui,
+    sans-serif;
+  --font-mono:
+    'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
   /* Type scale, px. Nothing between the steps. */
   --text-label: 0.6875rem;
@@ -139,11 +156,6 @@
   --surface-raised: #141926;
   --line: #1e2530;
   --line-strong: #2c3648;
-  /* The ground grid. It is `--line` here and softer in light, because a dark
-     line on a light ground reads stronger than a light line on a dark one at
-     the same ratio: measured 1.25 dark against 1.19 light, and the light one
-     was the one that felt loud. */
-  --grid-line: #1e2530;
   --fg: #e6edf3;
   --fg-muted: #93a1b4;
   --fg-faint: #6e7c90;
@@ -167,7 +179,6 @@
     --surface-raised: #edf1f6;
     --line: #dce3ec;
     --line-strong: #b9c4d2;
-    --grid-line: #e7ecf3;
     --fg: #0b0e14;
     --fg-muted: #4a5666;
     --fg-faint: #7a8798;
@@ -191,7 +202,6 @@
   --surface-raised: #edf1f6;
   --line: #dce3ec;
   --line-strong: #b9c4d2;
-  --grid-line: #e7ecf3;
   --fg: #0b0e14;
   --fg-muted: #4a5666;
   --fg-faint: #7a8798;
@@ -232,6 +242,13 @@
   --sl-color-accent-low: var(--accent-soft);
   --sl-color-accent-high: var(--accent);
   --sl-color-text-accent: var(--accent);
+  /* What Starlight writes on an accent fill: the sidebar's current page, the
+     skip link, a banner. Its own default is `--sl-color-accent-low`, which the
+     line above redefines as a 12% wash of the accent - so the text composited
+     to the same colour as the fill behind it and the current page was
+     unreadable at 1:1. `--on-accent` is the token the palette already measures
+     for exactly this pairing: 10.53:1 dark, 6.07:1 light. */
+  --sl-color-text-invert: var(--on-accent);
   --sl-color-bg: var(--bg);
   --sl-color-bg-nav: var(--bg);
   --sl-color-bg-sidebar: var(--bg);
