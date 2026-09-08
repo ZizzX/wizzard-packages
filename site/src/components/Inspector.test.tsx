@@ -168,4 +168,30 @@ describe('a paste that used to take the page down', () => {
 
     spy.mockRestore();
   });
+
+  it('lists two identical problems without a duplicate key', async () => {
+    // The same family, on the path a refused flow takes. `validateFlow` reports
+    // one problem per bad target, and a list may name the same one twice, so
+    // the two problems are identical in both path and message. Keying a list on
+    // a pasted value is keying it on something a stranger writes.
+    const errors: unknown[] = [];
+    const spy = vi.spyOn(console, 'error').mockImplementation((...args) => {
+      errors.push(args);
+    });
+
+    const user = userEvent.setup();
+    render(<Inspector />);
+    await screen.findByLabelText('Email');
+
+    await user.click(screen.getByText('Paste your own flow'));
+    await user.click(screen.getByLabelText(/A flow is JSON/));
+    await user.paste('{"id":"x","steps":{"a":{"on":{"next":[{"to":"zz"},{"to":"zz"}]}}}}');
+    await user.click(screen.getByRole('button', { name: 'Draw this flow' }));
+
+    expect(screen.getByText('This flow was not drawn:')).toBeDefined();
+    expect(screen.getAllByText(/unknown target/).length).toBe(2);
+    expect(errors).toEqual([]);
+
+    spy.mockRestore();
+  });
 });

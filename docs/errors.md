@@ -279,6 +279,10 @@ and React keeps one.
 | declared transitions      | 200        | the same, and the one a step count cannot see |
 | drawn nodes / drawn edges | 40 / 1 000 | what reaches the DOM                          |
 
+An edge is two elements, a `g` and a `polyline`, so the edge ceiling is about two thousand of
+them rather than one: forty conditional steps draw 780 edges and around 1 800 SVG elements,
+measured, in about 120 ms.
+
 The first three are checked on the paste, the last on the graph once it has been laid out —
 not merely built. The layout is where a transition to a target the flow never declares becomes
 a node of its own, so a graph of three nodes can draw sixty-three, all of them born after every

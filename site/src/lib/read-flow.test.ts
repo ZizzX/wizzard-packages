@@ -212,6 +212,42 @@ describe('shapes that throw out of the builder', () => {
   });
 });
 
+describe('values too deep for the message that refuses them', () => {
+  // Hand-built rather than stringified, because `JSON.stringify` is what breaks:
+  // building this input with it overflows the stack in the test itself.
+  const nest = (depth: number): string => '['.repeat(depth) + '1' + ']'.repeat(depth);
+
+  it('refuses a label nested past what JSON.stringify can print', () => {
+    const result = readFlow(`{"id":"x","steps":{"a":{"label":${nest(4000)}}}}`);
+    expect(result.flow).toBeNull();
+    expect(result.problems[0]?.message).toContain('not a string');
+  });
+
+  it('refuses a step that is a deeply nested array', () => {
+    const result = readFlow(`{"id":"x","steps":{"a":${nest(4000)}}}`);
+    expect(result.flow).toBeNull();
+    expect(result.problems[0]?.message).toContain('not an object');
+  });
+});
+
+describe('the shape check inside an inline sub-flow', () => {
+  // The recursion is latent for the drawing — `layoutGraph` does not descend
+  // into a group's nested graph — and not latent for the validator, which does.
+  it('finds a reserved @end down there', () => {
+    const result = readFlow('{"id":"x","steps":{"g":{"flow":{"id":"s","steps":{"@end":{}}}}}}');
+    expect(result.flow).toBeNull();
+    expect(result.problems[0]?.path).toBe('steps.g.flow.steps.@end');
+  });
+
+  it('finds a label that is not text down there', () => {
+    const result = readFlow(
+      '{"id":"x","steps":{"g":{"flow":{"id":"s","steps":{"b":{"label":{}}}}}}}'
+    );
+    expect(result.flow).toBeNull();
+    expect(result.problems[0]?.path).toBe('steps.g.flow.steps.b.label');
+  });
+});
+
 describe('the failure contract', () => {
   const failing = [
     '"'.padEnd(MAX_CHARS + 1, 'x'),

@@ -637,8 +637,13 @@ export default function Inspector(): ReactNode {
             <div className="paste-problems" role="alert">
               <p>This flow was not drawn:</p>
               <ul>
-                {result.problems.map((problem) => (
-                  <li key={`${problem.path}:${problem.message}`}>
+                {/* Keyed on the position, not on the text. Two identical
+                    problems are ordinary — one unknown target named twice in an
+                    `on.next` list gives `validateFlow` the same path and the
+                    same message twice — and a key built from a pasted value is
+                    a key a stranger controls. */}
+                {result.problems.map((problem, index) => (
+                  <li key={`${index}:${problem.path}`}>
                     <code>{problem.path}</code> — {problem.message}
                   </li>
                 ))}

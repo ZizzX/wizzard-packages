@@ -96,8 +96,22 @@ const problem = (path: string, what: string, why: string, fix: string): ReadResu
 
 const count = (n: number): string => n.toLocaleString('en');
 
-/** A value as it reads in a message. `undefined` has no JSON of its own. */
-const asJson = (value: unknown): string => JSON.stringify(value) ?? 'undefined';
+/**
+ * A value as it reads in a message. `undefined` has no JSON of its own.
+ *
+ * The `try` is the same one `asText` carries and for the same reason:
+ * `JSON.stringify` recurses to the depth of its argument, so a pasted step whose
+ * label is nested a few thousand deep overflows the stack *inside the sentence
+ * that was going to refuse it*. Every failure here is a value, and a message
+ * builder that throws is the one way that promise breaks.
+ */
+const asJson = (value: unknown): string => {
+  try {
+    return JSON.stringify(value) ?? 'undefined';
+  } catch {
+    return '[unprintable]';
+  }
+};
 
 /**
  * `Unexpected token } in JSON at position 42` says where, in the one unit a
