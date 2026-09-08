@@ -76,9 +76,9 @@ generated from them, so what you paste is what is tested.
 | Composable              | Returns                                                                                      |
 | ----------------------- | -------------------------------------------------------------------------------------------- |
 | `useStep()`             | `current`, `isFirst`, `isLast`, `progress`, `breadcrumbs` and the rest, each a `ComputedRef` |
-| `useNavigation()`       | `next`, `back`, `go`, `cancel`, `canBack`, `isBusy`, `isLast`                                |
+| `useNavigation()`       | `next`, `back`, `go`, `cancel`, and `canBack`, `isBusy`, `isLast` as `ComputedRef`s          |
 | `useField<T>(path)`     | a `WritableComputedRef`, usable directly with `v-model`                                      |
-| `useErrors(stepId?)`    | the error map for a step, or for the current one                                             |
+| `useErrors(stepId?)`    | a `ComputedRef` of the error map for a step, or for the current one                          |
 | `useWizardSelector(fn)` | one derived value as a `ComputedRef`                                                         |
 | `useWizard()`           | the engine itself, for anything the composables above do not cover                           |
 

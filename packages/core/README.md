@@ -75,15 +75,15 @@ entry in `registry`, so `JSON.stringify(flow)` always round-trips.
 Separate entry points because they are separate budgets. A wizard that never draws itself
 does not carry the code that would.
 
-| Entry            | What it is                                             |
-| ---------------- | ------------------------------------------------------ |
-| `/v1`            | the engine: types, expressions, navigation, selectors  |
-| `/graph`         | a flow as `{ nodes, edges }`, for drawing it           |
-| `/groups`        | traversal for repeated sub-flows                       |
-| `/session`       | serialize and resume a run                             |
-| `/snapshot`      | record and replay                                      |
-| `/expr`          | a builder for expressions, if you dislike writing JSON |
-| `/validate-flow` | checks a flow definition, for tooling and tests        |
+| Entry            | What it is                                                     |
+| ---------------- | -------------------------------------------------------------- |
+| `/v1`            | the engine: types, expressions, navigation, selectors          |
+| `/graph`         | a flow as `{ nodes, edges }`, for drawing it                   |
+| `/groups`        | traversal for repeated sub-flows                               |
+| `/session`       | a recorded run, and the check that a replay matches it         |
+| `/snapshot`      | serialize a run, and refuse stored JSON that cannot be trusted |
+| `/expr`          | a builder for expressions, if you dislike writing JSON         |
+| `/validate-flow` | checks a flow definition, for tooling and tests                |
 
 `.size-limit.js` holds the budget for each, with the measurement that set it.
 
