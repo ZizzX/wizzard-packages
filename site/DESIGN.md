@@ -54,6 +54,12 @@ paragraphs are monospace is read slower than it is admired, which is the whole c
 true, so the line is drawn between them rather than around them. Body text is never below
 16px.
 
+Inter Tight is a common choice, and a detector that flags overused typefaces flags it. That is
+a fair reading of the family and the wrong reading of this pairing: the identity here is
+carried by the monospace, and the prose face is asked to disappear. Swapping it for a less
+familiar grotesque would move the distinctiveness to the one place the design does not want it.
+Settled, not overlooked.
+
 Type scale, in px: 11, 13, 15, 17, 20, 24, 30, 38, 48. Nothing between the steps.
 
 ### What mono is for
