@@ -4,6 +4,23 @@ Deferred work, with the context needed to pick it up cold. Written by the `/auto
 of `docs/designs/v1-launch.md` on 2026-09-06; each item was considered for 1.0.0 and
 deliberately left out.
 
+## P1
+
+### 0. `go` cannot address a repeat item
+
+**What:** a navigation target that names an item of a repeat group, so a host can jump
+straight to the second passenger rather than entering at the first and advancing.
+**Why:** `enter` takes `items.keys[0]` and there is no way to say which
+(`packages/core/src/v1/groups.ts`), so "revisit any passenger" — the behaviour R-C exists to
+prove — has to be built out of `go('people')` followed by `next()` until the frame's key
+matches. That works here because every step it passes was already answered, and it would not
+work in a flow with validators between.
+**Context:** the workaround is `goToPassenger` in
+`examples/reference/src/passengers/party.ts`, written so the cost is visible rather than
+hidden. A shape worth considering is `go({ to: 'people', key: 'p2' })`, which keeps the
+existing signature for every flat target.
+**Effort:** human M / CC ~45m. **Raised by:** building R-C for S3 on 2026-09-08.
+
 ## P2
 
 ### 1. `url-sync` plugin (`?step=payment`)

@@ -1,0 +1,40 @@
+---
+import flowSource from '@examples/reference/src/passengers/flow.ts?raw';
+import partySource from '@examples/reference/src/passengers/party.ts?raw';
+import appSource from '@examples/reference/src/passengers/Trip.vue?raw';
+
+import ExampleShell from '../../../components/ExampleShell.astro';
+import PassengersVue from '../../../islands/PassengersVue.vue';
+
+const sources = [
+  {
+    name: 'flow.ts',
+    lang: 'ts' as const,
+    code: flowSource,
+    note: 'The same file the React page shows. A group is a sub-flow entered once per item, and neither rendering knows how many items there are.',
+  },
+  {
+    name: 'party.ts',
+    lang: 'ts' as const,
+    code: partySource,
+    note: 'Also the same file: where an item’s answers live, how a rendering reads the key off the frame, and the one workaround this application needed.',
+  },
+  {
+    name: 'Trip.vue',
+    lang: 'vue' as const,
+    code: appSource,
+    note: 'The rendering, with `v-for` where the React file has `map`. The engine decides which of the three views is on screen.',
+  },
+];
+---
+
+<ExampleShell
+  slug="passengers"
+  ref="R-C"
+  heading="Add passengers. Revisit any passenger."
+  lede="One block of steps per passenger, written once and run as many times as there are people. Add and remove passengers, then go back and edit the second after finishing the third."
+  framework="vue"
+  sources={sources}
+>
+  <PassengersVue client:load />
+</ExampleShell>
