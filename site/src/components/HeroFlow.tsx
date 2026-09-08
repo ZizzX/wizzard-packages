@@ -26,7 +26,7 @@ import {
   useStep,
   useWizard,
 } from '@wizzard-packages/react/v1';
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { flowA, registryA } from '../../../contract/fixtures';
 
@@ -61,6 +61,24 @@ interface Message {
   text: string;
 }
 
+/** The definition's own sequence, for deciding which way a reroute goes. */
+const ORDER: readonly string[] = flowA.order ?? [];
+
+/**
+ * Where the flow should stand when a `when` has just excluded the step it is
+ * standing on - walking to `company` as a business and then choosing personal.
+ *
+ * Forward, to the first step of the new route that comes after the excluded one,
+ * because that is where `next()` would have gone had the data been chosen
+ * earlier. Only if nothing follows does it fall back to the end of the route.
+ * Returns null when the flow is still where it belongs and nothing should move.
+ */
+export function rerouteTo(current: string | null, active: readonly string[]): string | null {
+  if (current === null || active.includes(current)) return null;
+  const at = ORDER.indexOf(current);
+  return active.find((id) => ORDER.indexOf(id) > at) ?? active[active.length - 1] ?? null;
+}
+
 export default function HeroFlow(): ReactNode {
   return (
     <WizardProvider flow={flowA} registry={registryA} data={{ payer: 'business' }}>
@@ -83,7 +101,11 @@ function Instrument(): ReactNode {
 
   const field = (current === null ? undefined : FIELDS[current]) ?? FALLBACK_FIELD;
   const [value, setValue] = useField<string>(field.path);
-  const refused = message?.kind === 'err';
+  // Read off the engine, not off the message. The message is prose that any
+  // control may overwrite - choosing a payer used to replace a refusal with a
+  // cheerful line while `email: required` was still held against the step, and
+  // the graph drew the node active over a field the next `next()` would refuse.
+  const refused = Object.keys(errors).length > 0;
 
   // Before `start` runs - on the server, and for the frame of the first paint -
   // there is no current step, so the flow stands where it is about to.
@@ -97,6 +119,21 @@ function Instrument(): ReactNode {
   const rebuild = useCallback(() => {
     setDrawing((n) => n + 1);
   }, []);
+
+  // A `when` can exclude the step the flow is standing on, and the engine does
+  // not move itself: it is the host that decides whether that means walking on
+  // or refusing the edit. Here it walks on, so the form, the route in the
+  // caption and the node the graph paints cannot disagree.
+  //
+  // It sits in an effect rather than in the payer handler because any data
+  // change can exclude the current step - typing into a field the next step's
+  // `when` reads would do it too, and a fix in one button would leave that path
+  // broken.
+  const reroute = rerouteTo(current, active);
+  useEffect(() => {
+    if (reroute === null || ended) return;
+    void wizard.go(reroute);
+  }, [reroute, ended, wizard]);
 
   const choosePayer = useCallback(
     (choice: string) => {
@@ -192,7 +229,15 @@ function Instrument(): ReactNode {
             aria-invalid={errors[field.path] !== undefined}
             onChange={(event) => {
               setValue(event.target.value);
-              if (refused) setMessage(null);
+              // The flow validates on `next()` and nowhere else, so a refusal
+              // stands until something clears it. Editing the field the refusal
+              // was about is that something - and it has to be cleared on the
+              // engine now that the field, the node and the message all read
+              // their state from there.
+              if (refused && current !== null) {
+                wizard.setErrors(current, null);
+                setMessage(null);
+              }
             }}
           />
         </label>
