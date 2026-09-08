@@ -47,7 +47,6 @@ Dependencies point one way — into core. Core has no runtime dependencies.
 | `@wizzard-packages/validate` | one Standard Schema adapter — Zod, Valibot, ArkType, Effect, Yup                                                    | **317 B**         |
 | `@wizzard-packages/plugins`  | `/persist` in 1.0.0; `/analytics`, `/logger`, `/autosave`, `/url-sync`, `/http-flow` on demand                      | 1.2 kB `/persist` |
 | `@wizzard-packages/devtools` | inspector, flow graph, time travel                                                                                  | —                 |
-| `@wizzard-packages/compat`   | the 0.x API on top of the v1 engine                                                                                 | —                 |
 
 Removed in v1: `middleware` (replaced by plugins), `adapter-zod` and `adapter-yup` (one
 Standard Schema adapter covers four validation libraries), `persistence` (a plugin).
@@ -105,7 +104,7 @@ rewrite, stated as a number.
 shared contract-test package run against both. That suite is what keeps them from drifting
 apart again.
 
-**3 — Periphery.** `validate`, `plugins`, `devtools` with the flow graph, `compat` and the
+**3 — Periphery.** `validate`, `plugins`, `devtools` with the flow graph and the
 migration guide.
 
 **4 — Site and release.** Documentation site with live examples and an interactive flow graph;

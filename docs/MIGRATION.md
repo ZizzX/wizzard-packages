@@ -79,37 +79,39 @@ Every symbol the 0.x packages exported, and what replaces it.
 | `IValidatorAdapter`                                            | none — a validator is a named resolver; see `@wizzard-packages/validate`            |
 | `ValidationResult`                                             | a resolver returns `Record<path, message> \| null`; there is no `isValid` flag      |
 | `ValidationMode`                                               | `FlowDefinition.validate.on`: `'change' \| 'blur' \| 'next' \| 'manual'`            |
-| `IPersistenceAdapter`                                          | none — `persist()` takes a `Storage` directly                                       |
+| `IPersistenceAdapter`                                          | none — `persist()` from `plugins/persist` takes a `Storage`                         |
 | `PersistenceMode`                                              | none — `persist()` writes on every commit, coalesced                                |
 | `StepDirection`                                                | none — an exit guard is an expression and cannot see the direction                  |
 | `WizardAction`, `WizardMiddleware`, `MiddlewareAPI`            | none — there are no actions; a plugin is a `Hooks` object                           |
 | `WizardEventName`, `WizardEventPayloads`, `WizardEventHandler` | none — use `subscribe`, `select`, `watch`, or a plugin hook                         |
 | `IBreadcrumb`, `BreadcrumbStatus`                              | `Breadcrumb`, on `Snapshot.breadcrumbs`                                             |
-| `Path`, `PathValue`                                            | `SliceAt<F, P>` — `wizard.get('name.full')` is typed from the flow                  |
-| `getByPath`, `setByPath`, `toPath`                             | internal to `core/v1`; no longer public                                             |
+| `Path`, `PathValue`                                            | `SliceAt<F, P>` — types a bare step id only; a nested path reads `unknown`          |
+| `getByPath`, `setByPath`                                       | `getPath`, `setPath` from `core/v1` — no default-value argument                     |
+| `toPath`                                                       | none — paths are strings throughout                                                 |
 | `shallowEqual`                                                 | none — `useWizardSelector` takes an equality function                               |
 
 ### `@wizzard-packages/react`
 
-| 0.x export                                                                                                           | v1                                                                           |
-| -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `WizardProvider`                                                                                                     | `WizardProvider` from `react/v1` — **same name, different props**, see below |
-| `WizardProviderProps`                                                                                                | `WizardProviderProps` — `{ wizard }`, or the options to build one            |
-| `createWizardFactory`                                                                                                | none — there is no factory; `createWizard` takes the flow                    |
-| `createWizardStore`, `createWizardHooks`, `WizardStoreBundle`, `CreateWizardStoreOptions`                            | none — the context-free store path is deleted                                |
-| `useWizard`                                                                                                          | `useWizard()` — returns the engine                                           |
-| `useWizardContext`                                                                                                   | `useWizard()`, or `useOptionalWizard()` outside a provider                   |
-| `useWizardState`                                                                                                     | `useWizardSnapshot()`                                                        |
-| `useWizardActions`, `IWizardActionsTyped`                                                                            | `useNavigation()`, plus `wizard.set` / `patch` / `reset`                     |
-| `useWizardValue`, `useWizardField`                                                                                   | `useField(path)` — one hook, returns `[value, setValue]`                     |
-| `useWizardError`                                                                                                     | `useErrors(stepId?)`                                                         |
-| `useWizardAllErrors`, `useWizardFlatErrors`                                                                          | none — errors are per step; merge them yourself if you need one map          |
-| `useWizardSelector`                                                                                                  | `useWizardSelector(fn, isEqual?)` — **the selector now reads a `Snapshot`**  |
-| `useWizardCurrentStep`, `useWizardSteps`, `useWizardMeta`                                                            | `useStep()` — one hook for all of it                                         |
-| `useWizardStoreState`, `useWizardStoreValue`, `useWizardStoreField`, `useWizardStoreError`, `useWizardStoreSelector` | none — the store-without-provider hooks are deleted                          |
-| `WizardStepRenderer`, `WizardStepRendererProps`                                                                      | none — render on `current`, or name a view with `AtomStep.view`              |
-| `IWizardHandle`                                                                                                      | none                                                                         |
-| re-exports of `WizardStore`, `loggerMiddleware` and the core types                                                   | gone with their packages; import from `core/v1`                              |
+| 0.x export                                                                                                           | v1                                                                                                                     |
+| -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `WizardProvider`                                                                                                     | `WizardProvider` from `react/v1` — **same name, different props**, see below                                           |
+| `WizardProviderProps`                                                                                                | `WizardProviderProps` — `{ wizard }`, or the options to build one                                                      |
+| `createWizardFactory`                                                                                                | none — there is no factory; `createWizard` takes the flow                                                              |
+| `createWizardStore`, `createWizardHooks`, `WizardStoreBundle`, `CreateWizardStoreOptions`                            | none — the context-free store path is deleted                                                                          |
+| `useWizard`                                                                                                          | `useWizard()` — returns the engine                                                                                     |
+| `useWizardContext`                                                                                                   | `useWizard()`, or `useOptionalWizard()` outside a provider                                                             |
+| `useWizardState`                                                                                                     | `useWizardSnapshot()`                                                                                                  |
+| `useWizardActions`, `IWizardActionsTyped`                                                                            | `useNavigation()`, plus `wizard.set` / `patch` / `reset`                                                               |
+| `useWizardValue`, `useWizardField`                                                                                   | `useField(path)` — one hook, returns `[value, setValue]`                                                               |
+| `useWizardError`                                                                                                     | `useErrors(stepId?)`                                                                                                   |
+| `useWizardAllErrors`, `useWizardFlatErrors`                                                                          | none — errors are per step; merge them yourself if you need one map                                                    |
+| `useWizardSelector`                                                                                                  | `useWizardSelector(fn, isEqual?)` — **the selector now reads a `Snapshot`**                                            |
+| `useWizardCurrentStep`, `useWizardSteps`                                                                             | `useStep()` — one hook for both                                                                                        |
+| `useWizardMeta`                                                                                                      | `useStep()` for the position and `useNavigation()` for `isBusy`; `isLoading`, `isDirty` and `goToStepResult` have none |
+| `useWizardStoreState`, `useWizardStoreValue`, `useWizardStoreField`, `useWizardStoreError`, `useWizardStoreSelector` | none — the store-without-provider hooks are deleted                                                                    |
+| `WizardStepRenderer`, `WizardStepRendererProps`                                                                      | none — render on `current`, or name a view with `AtomStep.view`                                                        |
+| `IWizardHandle`                                                                                                      | none                                                                                                                   |
+| re-exports of `WizardStore`, `loggerMiddleware` and the core types                                                   | gone with their packages; import from `core/v1`                                                                        |
 
 ### `@wizzard-packages/vue`
 
@@ -137,12 +139,12 @@ One adapter covers Zod, Valibot, ArkType, Effect and Yup, because they all expos
 
 ### `@wizzard-packages/persistence` and `@wizzard-packages/middleware`
 
-| 0.x export            | v1                                                                         |
-| --------------------- | -------------------------------------------------------------------------- |
-| `LocalStorageAdapter` | `persist({ key, storage: localStorage })` from `@wizzard-packages/plugins` |
-| `MemoryAdapter`       | none — pass any object implementing `Storage`, or leave `persist` out      |
-| `loggerMiddleware`    | none in 1.0.0 — a dozen lines against `onCommit` and `onAttempt`           |
-| `devToolsMiddleware`  | `@wizzard-packages/devtools`, a panel rather than a Redux bridge           |
+| 0.x export            | v1                                                                                 |
+| --------------------- | ---------------------------------------------------------------------------------- |
+| `LocalStorageAdapter` | `persist({ key, storage: localStorage })` from `@wizzard-packages/plugins/persist` |
+| `MemoryAdapter`       | none — pass any object implementing `Storage`, or leave `persist` out              |
+| `loggerMiddleware`    | none in 1.0.0 — a dozen lines against `onCommit` and `onAttempt`                   |
+| `devToolsMiddleware`  | `@wizzard-packages/devtools`, a panel rather than a Redux bridge                   |
 
 Both packages are deleted. `store.hydrate()` and `store.save()` go with them: `persist` restores
 before the first render and writes on every commit.
@@ -153,8 +155,9 @@ Each of these was a bug or a leak rather than a feature.
 
 - **`dependsOn` and `clearData`.** React-only in 0.x, never implemented in Vue. Clearing a field
   in one step when a field in another changes is yours now: `wizard.watch(path, fn)` and a `set`
-  in the listener. The nearest built-in, `clearOnLeave`, clears the leaving step's own slice and
-  nothing else.
+  in the listener. `clearOnLeave` is close but not the same thing: it fires when a step is left,
+  not when a value changes. `clearOnLeave: true` drops that step's own slice, and a list of paths
+  drops exactly those, which may live in another slice — but the trigger is still leaving.
 - **`errorsMap`.** A public `Map` mirroring `errors`. `Snapshot.errors` is a plain object.
 - **`goToStepResult: 'init'`.** A sentinel written into state so a caller could re-read it and
   discover that a middleware had intercepted the move. `NavResult` answers directly.
@@ -205,15 +208,26 @@ import { createWizard } from '@wizzard-packages/core/v1';
 
 import { readLegacyWizard } from './from-0x-storage';
 
-const legacy = readLegacyWizard(localStorage);
+// The step ids of your 0.x config, in its order. `hydrate()` read exactly
+// these, in exactly this order, and reproducing that is what keeps a stale key
+// from a deleted step out of the restored data.
+const legacy = readLegacyWizard(localStorage, ['name', 'review']);
 const wizard = createWizard({ flow: signup, data: legacy?.data });
 
 await wizard.start();
-if (legacy?.currentStepId) await wizard.go(legacy.currentStepId, { force: true });
+if (legacy?.currentStepId) {
+  const moved = await wizard.go(legacy.currentStepId, { force: true });
+  if (!moved.ok) {
+    // They stay on the first step, with their answers. Show that rather than
+    // letting it pass: a wizard that silently restarts looks like data loss.
+  }
+}
 ```
 
-`force` is there because the user has already answered the questions guarding the step they were
-on; re-running those guards against restored data would send them back to the beginning.
+`force` waives the navigation policy — `'sequential'` would otherwise refuse a jump to a step
+the restored run has not walked to in this session. It does **not** waive the step's guards or
+its `when`: a step the restored data no longer reaches is still refused, and `go` says so in its
+result. That is the right way round, and it is why the result is worth reading.
 
 ## The root import changes at 1.0.0
 

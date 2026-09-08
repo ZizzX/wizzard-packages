@@ -10,14 +10,16 @@
  * whole `Snapshot`. So a v1 wizard pointed at 0.x storage restores nothing: it
  * finds no key it recognises and starts empty, silently.
  *
- * Twenty lines, run once, and then the old keys can be dropped. This is not
+ * Thirty lines, run once, and then the old keys can be dropped. This is not
  * shipped as a package - it is here, tested, so it can be copied.
+ *
+ * It reads the step ids it is given rather than scanning the prefix, because
+ * that is what `WizardStore.hydrate()` did, and the difference is not cosmetic:
+ * see the note on `stepIds` below.
  */
 
-/** The parts of `Storage` this needs. A plain object works in a test. */
+/** The one part of `Storage` this needs. A plain object works in a test. */
 export interface ReadableStorage {
-  readonly length: number;
-  key(index: number): string | null;
   getItem(key: string): string | null;
 }
 
@@ -60,6 +62,16 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
  */
 export function readLegacyWizard(
   storage: ReadableStorage,
+  /**
+   * The step ids of the 0.x config, in its order. Required, and not discovered
+   * by scanning the prefix, because `hydrate()` read exactly these and in
+   * exactly this order. Two things follow from that, and both change which
+   * answers survive: a key left behind by a step the config no longer listed
+   * was never read, however fresh it was; and `>=` means that when two steps
+   * carry the same timestamp - one tick of a fast machine - the later step in
+   * the config wins. Scanning the prefix instead reproduces neither.
+   */
+  stepIds: readonly string[],
   prefix = 'wizard_'
 ): LegacyWizard | null {
   let data: Record<string, unknown> | null = null;
@@ -67,20 +79,12 @@ export function readLegacyWizard(
   // adapter without `getStepWithMeta`, and that value still has to win over
   // nothing at all.
   let newest = -1;
-  let meta: Record<string, unknown> | null = null;
 
-  for (let i = 0; i < storage.length; i += 1) {
-    const key = storage.key(i);
-    if (key === null || !key.startsWith(prefix)) continue;
-    const raw = storage.getItem(key);
+  for (const stepId of stepIds) {
+    const raw = storage.getItem(prefix + stepId);
     if (raw === null) continue;
     const entry = unwrap(raw);
     if (entry === null) continue;
-
-    if (key === prefix + META) {
-      if (isRecord(entry.data)) meta = entry.data;
-      continue;
-    }
     // Latest wins across steps, the rule 0.x's `hydrate()` used: every step key
     // held the whole data object, so the newest one is the whole truth and the
     // others are stale copies of it.
@@ -89,6 +93,10 @@ export function readLegacyWizard(
       data = entry.data;
     }
   }
+
+  const rawMeta = storage.getItem(prefix + META);
+  const metaEntry = rawMeta === null ? null : unwrap(rawMeta);
+  const meta = metaEntry !== null && isRecord(metaEntry.data) ? metaEntry.data : null;
 
   if (data === null && meta === null) return null;
 
