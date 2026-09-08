@@ -1,5 +1,11 @@
 # @wizzard-packages/validate
 
+## 0.1.1
+
+### Patch Changes
+
+- @wizzard-packages/core@0.5.0
+
 ## 0.1.0
 
 ### Minor Changes

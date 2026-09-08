@@ -1,5 +1,11 @@
 # @wizzard-packages/middleware
 
+## 0.1.5
+
+### Patch Changes
+
+- @wizzard-packages/core@0.5.0
+
 ## 0.1.4
 
 ### Patch Changes

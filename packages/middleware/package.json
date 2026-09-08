@@ -1,6 +1,6 @@
 {
   "name": "@wizzard-packages/middleware",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Middleware for Wizzard Stepper (logger + devtools).",
   "keywords": [
     "wizard",

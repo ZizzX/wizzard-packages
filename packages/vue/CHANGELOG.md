@@ -1,5 +1,13 @@
 # @wizzard-packages/vue
 
+## 0.2.2
+
+### Patch Changes
+
+- @wizzard-packages/core@0.5.0
+- @wizzard-packages/middleware@0.1.5
+- @wizzard-packages/persistence@0.1.5
+
 ## 0.2.1
 
 ### Patch Changes
