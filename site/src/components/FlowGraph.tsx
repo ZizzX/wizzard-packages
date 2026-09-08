@@ -10,11 +10,13 @@
  * With no client directive it renders as static HTML and ships no JavaScript,
  * which is how the feature rows use it.
  */
-import { formatExpr, layoutGraph, type Direction } from '@wizzard-packages/devtools/headless';
+import { layoutGraph, type Direction } from '@wizzard-packages/devtools/headless';
+
+import { asText, printExpr } from '../lib/print-expr';
 
 import type { FlowGraph as Graph, GraphNode } from '@wizzard-packages/core/graph';
 import type { Breadcrumb } from '@wizzard-packages/core/v1';
-import type { ReactNode } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
 
 export type NodeState = 'active' | 'error' | 'visited' | 'skipped' | 'done' | 'rest';
 
@@ -96,6 +98,17 @@ export interface FlowGraphProps {
    * The hero's Rebuild control is the only caller that needs it.
    */
   drawKey?: number;
+  /**
+   * The node being read about, drawn with a ring. Independent of which node the
+   * flow is standing on: inspecting a step is not navigating to it.
+   */
+  selected?: string | null;
+  /**
+   * Supplying this is what makes the graph interactive. Without it the drawing
+   * is inert markup with no focus stop and no handlers, which is how a page
+   * that only wants a picture ships no JavaScript for it.
+   */
+  onSelect?: (id: string | null) => void;
 }
 
 export function FlowGraph({
@@ -105,26 +118,89 @@ export function FlowGraph({
   direction = 'row',
   label,
   drawKey = 0,
+  selected = null,
+  onSelect,
 }: FlowGraphProps): ReactNode {
   const laid = layoutGraph(graph, { direction });
   const nodeById = new Map<string, GraphNode>(graph.nodes.map((node) => [node.id, node]));
   const endId = graph.nodes.find((node) => node.kind === 'end')?.id ?? '@end';
 
+  /**
+   * What the arrow keys walk: laid-out order, skipping the placeholders the
+   * layout adds for an edge whose target the flow never declares, and skipping
+   * the end marker.
+   *
+   * The end is drawn and is not a step. Walking onto it would point
+   * `aria-activedescendant` at `node-@end`, which the end branch never renders
+   * an id for, so the reference would dangle and the panel would offer a step
+   * that does not exist to inspect.
+   */
+  const walkable = laid.nodes.filter((placed) => {
+    const kind = nodeById.get(placed.id)?.kind;
+    return kind !== undefined && kind !== 'end';
+  });
+
+  const move = (delta: number): void => {
+    if (walkable.length === 0) return;
+    const at = walkable.findIndex((placed) => placed.id === selected);
+    const next = at === -1 ? 0 : Math.min(walkable.length - 1, Math.max(0, at + delta));
+    onSelect?.(walkable[next]?.id ?? null);
+  };
+
+  // One focus stop for the whole graph, and the arrows move inside it. Tab
+  // walking node by node would put a forty-step flow between a reader and the
+  // rest of the page.
+  const onKeyDown = (event: KeyboardEvent<SVGSVGElement>): void => {
+    const moves: Record<string, number> = {
+      ArrowDown: 1,
+      ArrowRight: 1,
+      ArrowUp: -1,
+      ArrowLeft: -1,
+    };
+    if (event.key in moves) {
+      event.preventDefault();
+      move(moves[event.key] as number);
+      return;
+    }
+    if (event.key === 'Escape' && selected !== null) {
+      event.preventDefault();
+      onSelect?.(null);
+    }
+  };
+
+  const interactive = onSelect !== undefined;
+
   return (
     <>
       <svg
+        {...(interactive
+          ? {
+              tabIndex: 0,
+              onKeyDown,
+              className: 'interactive',
+              ...(selected === null ? {} : { 'aria-activedescendant': `node-${selected}` }),
+            }
+          : {})}
         // Two units of bleed on every side: an edge routed along the graph's own
         // border loses the outer half of its stroke to the viewBox otherwise,
         // and reads as orphaned dashes.
         viewBox={`-2 -2 ${laid.width + 4} ${laid.height + 4}`}
         width={laid.width + 4}
         height={laid.height + 4}
-        role="img"
-        aria-label={`Flow graph of ${label}. The same information is in the table below.`}
+        role={interactive ? 'application' : 'img'}
+        {...(interactive ? { 'aria-roledescription': 'flow graph' } : {})}
+        aria-label={
+          interactive
+            ? `Flow graph of ${label}. Arrow keys move between steps, Escape clears the selection. The same information is in the table below.`
+            : `Flow graph of ${label}. The same information is in the table below.`
+        }
       >
-        {laid.edges.map((edge) => (
+        {laid.edges.map((edge, index) => (
           <g
-            key={`${edge.from}-${edge.to}-${edge.kind}-${drawKey}`}
+            // The index is in the key because a repeated target in `on.next` is
+            // legal input: `from`, `to` and `kind` alone collide, and React
+            // answers a duplicate key by dropping siblings and warning per clash.
+            key={`${edge.from}-${edge.to}-${edge.kind}-${index}-${drawKey}`}
             className={`edge ${edge.kind} ${edgeLive(edge, active, endId) ? 'live' : 'dim'}`}
           >
             <polyline
@@ -134,25 +210,45 @@ export function FlowGraph({
           </g>
         ))}
 
-        {laid.nodes.map((placed) => {
+        {laid.nodes.map((placed, index) => {
           const node = nodeById.get(placed.id);
           const kind = node?.kind ?? 'step';
           const state = nodeState(placed.id, kind, view);
           // The condition belongs to the step, not to the edge into it: an
           // `order` edge is a fall-through and carries no `when` of its own.
           // 26 characters at 9px mono is the widest line that stays inside a
-          // 160-unit node, which is why this is not `formatExpr`'s default 32.
-          const when = node?.when === undefined ? undefined : formatExpr(node.when, 26);
+          // 160-unit node, which is why this is not the printer's default 32.
+          const when = node?.when === undefined ? undefined : printExpr(node.when, 26);
+          // Only where there is something to read about: a click on the end
+          // marker selects nothing, because a flow's end has no step to show.
+          const pick =
+            interactive && node !== undefined
+              ? {
+                  id: `node-${placed.id}`,
+                  onClick: () => {
+                    onSelect?.(selected === placed.id ? null : placed.id);
+                  },
+                }
+              : {};
+          const ring = selected === placed.id ? ' selected' : '';
 
           if (kind === 'end') {
             return (
-              <g key={placed.id} className={`node end ${state}`}>
+              <g key={`${index}:${asText(placed.id)}`} className={`node end ${state}`}>
                 <circle cx={placed.x + 11} cy={placed.y + placed.h / 2} r="11" />
               </g>
             );
           }
           return (
-            <g key={placed.id} className={`node ${kind} ${state}`}>
+            // The index leads the key for the same reason it leads an edge's:
+            // a placeholder node carries whatever was in `edge.to`, so two of
+            // them - or one of them and a real step - can stringify to one
+            // name, and React answers a duplicate key by dropping siblings.
+            <g
+              key={`${index}:${asText(placed.id)}`}
+              className={`node ${kind} ${state}${ring}`}
+              {...pick}
+            >
               {kind === 'group' && (
                 <rect
                   className="inner"
@@ -165,7 +261,7 @@ export function FlowGraph({
               )}
               <rect x={placed.x} y={placed.y} width={placed.w} height={placed.h} rx="4" />
               <text x={placed.x + 12} y={placed.y + placed.h / 2 + (when === undefined ? 4 : -2)}>
-                {node?.label ?? placed.id}
+                {asText(node?.label ?? placed.id)}
               </text>
               {when !== undefined && (
                 <text className="node-when" x={placed.x + 12} y={placed.y + placed.h / 2 + 12}>
@@ -198,10 +294,10 @@ export function FlowGraph({
           <tbody>
             {graph.nodes.map((node) => (
               <tr key={node.id}>
-                <th scope="row">{node.label ?? node.id}</th>
+                <th scope="row">{asText(node.label ?? node.id)}</th>
                 <td>{node.kind}</td>
                 <td>{nodeState(node.id, node.kind, view)}</td>
-                <td>{node.when === undefined ? 'always' : formatExpr(node.when).full}</td>
+                <td>{node.when === undefined ? 'always' : printExpr(node.when).full}</td>
               </tr>
             ))}
           </tbody>

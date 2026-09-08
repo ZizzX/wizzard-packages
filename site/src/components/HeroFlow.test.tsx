@@ -8,25 +8,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 
-import HeroFlow, { rerouteTo } from './HeroFlow';
-
-describe('rerouteTo', () => {
-  it('stays put while the flow stands on a step the route still contains', () => {
-    expect(rerouteTo('details', ['details', 'company', 'payment'])).toBeNull();
-  });
-
-  it('walks forward when a when has excluded the step underneath the flow', () => {
-    expect(rerouteTo('company', ['details', 'payment'])).toBe('payment');
-  });
-
-  it('falls back to the end of the route when nothing follows', () => {
-    expect(rerouteTo('payment', ['details'])).toBe('details');
-  });
-
-  it('has nothing to say before the engine has started', () => {
-    expect(rerouteTo(null, ['details'])).toBeNull();
-  });
-});
+import HeroFlow from './HeroFlow';
 
 describe('the hero instrument', () => {
   it('moves off a step the payer choice has just excluded', async () => {

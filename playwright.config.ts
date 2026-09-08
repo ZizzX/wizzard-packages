@@ -74,6 +74,17 @@ export default defineConfig({
         baseURL: 'http://127.0.0.1:3100/',
       },
     },
+    {
+      // The documentation site, served from its production build. The base path
+      // is the repository's Pages path, so a link that only works at the root
+      // fails here the way it would fail in production.
+      name: 'site',
+      testMatch: /site\/.*\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: 'http://127.0.0.1:4321/wizzard-packages/',
+      },
+    },
   ],
 
   // Run your local dev servers before starting the tests
@@ -103,6 +114,22 @@ export default defineConfig({
       // fixture, and the e2e job builds before it tests.
       command: 'pnpm --filter @examples/next-app start --hostname 127.0.0.1 --port 3100',
       url: 'http://127.0.0.1:3100/',
+      reuseExistingServer: !process.env.CI,
+      timeout: process.env.CI ? 180 * 1000 : 120 * 1000,
+      stdout: 'pipe',
+      stderr: 'pipe',
+    },
+    {
+      // The built site, served the way Pages serves it: from `site/dist`, under
+      // the repository's base path, so a link that only works at the root fails
+      // here. `vite preview` rather than `astro preview`, because Astro 7's
+      // preview daemonises — it returns before the server is ready, which
+      // Playwright reads as a server that exited early, and it would leave an
+      // orphan listening on CI.
+      command:
+        'pnpm exec vite preview --outDir dist --base /wizzard-packages/ --host 127.0.0.1 --port 4321 --strictPort',
+      cwd: 'site',
+      url: 'http://127.0.0.1:4321/wizzard-packages/',
       reuseExistingServer: !process.env.CI,
       timeout: process.env.CI ? 180 * 1000 : 120 * 1000,
       stdout: 'pipe',
