@@ -1,0 +1,47 @@
+---
+import flowSource from '@examples/reference/src/reload/flow.ts?raw';
+import registrySource from '@examples/reference/src/reload/registry.ts?raw';
+import outcomeSource from '@examples/reference/src/reload/outcome.ts?raw';
+import appSource from '@examples/reference/src/reload/Reload.vue?raw';
+
+import ExampleShell from '../../../components/ExampleShell.astro';
+import ReloadVue from '../../../islands/ReloadVue.vue';
+
+const sources = [
+  {
+    name: 'flow.ts',
+    lang: 'ts' as const,
+    code: flowSource,
+    note: 'The same file the React page shows. A session saved on one page restores on the other: the binding is a rendering, and the snapshot does not belong to it.',
+  },
+  {
+    name: 'registry.ts',
+    lang: 'ts' as const,
+    code: registrySource,
+    note: 'Also the same file. A resolver is handed no abort signal, so cancelling does not stop the lookup - it makes the answer irrelevant.',
+  },
+  {
+    name: 'outcome.ts',
+    lang: 'ts' as const,
+    code: outcomeSource,
+    note: 'And this one, so the two renderings cannot drift into saying different things about the same event.',
+  },
+  {
+    name: 'Reload.vue',
+    lang: 'vue' as const,
+    code: appSource,
+    note: 'The rendering, with `onMounted` where the React file has an effect. The restored session appears one tick after mount for the same reason.',
+  },
+];
+---
+
+<ExampleShell
+  slug="reload"
+  ref="R-B"
+  heading="Reload halfway through. Continue safely."
+  lede="A form that survives F5, checks a name against a service that takes its time, and is not corrupted by a reload in the middle of that check. Every refusal to restore says which refusal it was."
+  framework="vue"
+  sources={sources}
+>
+  <ReloadVue client:load />
+</ExampleShell>

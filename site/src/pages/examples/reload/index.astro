@@ -1,0 +1,47 @@
+---
+import flowSource from '@examples/reference/src/reload/flow.ts?raw';
+import registrySource from '@examples/reference/src/reload/registry.ts?raw';
+import outcomeSource from '@examples/reference/src/reload/outcome.ts?raw';
+import appSource from '@examples/reference/src/reload/App.tsx?raw';
+
+import ExampleShell from '../../../components/ExampleShell.astro';
+import ReloadReact from '../../../islands/ReloadReact';
+
+const sources = [
+  {
+    name: 'flow.ts',
+    lang: 'ts' as const,
+    code: flowSource,
+    note: 'Three steps, a storage key and an application version. The version is the application’s, not the flow’s: it is bumped when the meaning of what was collected changes.',
+  },
+  {
+    name: 'registry.ts',
+    lang: 'ts' as const,
+    code: registrySource,
+    note: 'One plain validator and one that has to ask somebody. A resolver is handed no abort signal, so cancelling does not stop the lookup - it makes the answer irrelevant.',
+  },
+  {
+    name: 'outcome.ts',
+    lang: 'ts' as const,
+    code: outcomeSource,
+    note: 'The plugin answers with a reason; only the host knows what the form is called, so it is the host that turns the reason into a sentence.',
+  },
+  {
+    name: 'App.tsx',
+    lang: 'tsx' as const,
+    code: appSource,
+    note: 'The rendering. The plugin is installed in the browser only, and what it restored appears one tick after mount - a restored session differs from the empty step the server rendered.',
+  },
+];
+---
+
+<ExampleShell
+  slug="reload"
+  ref="R-B"
+  heading="Reload halfway through. Continue safely."
+  lede="A form that survives F5, checks a name against a service that takes its time, and is not corrupted by a reload in the middle of that check. Every refusal to restore says which refusal it was."
+  framework="react"
+  sources={sources}
+>
+  <ReloadReact client:load />
+</ExampleShell>
