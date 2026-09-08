@@ -166,8 +166,8 @@ navigation epoch, so a slow validator that resolves after you pressed Back canno
 Navigation returns a result — `{ ok: false, reason: 'blocked', by: 'age-check' }` — never a
 bare boolean.
 
-**One engine, two bindings.** `@wizzard-packages/react` is 906 B and `@wizzard-packages/vue`
-is 646 B, against 8.43 kB and 5.07 kB for their 0.x equivalents. Nothing was optimised to get
+**One engine, two bindings.** `@wizzard-packages/react` is 1.04 kB and `@wizzard-packages/vue`
+is 732 B, against 8.48 kB and 5.07 kB for their 0.x equivalents. Nothing was optimised to get
 there: the logic moved into the engine. A shared contract suite runs against both, which is
 what stops them drifting apart.
 
@@ -195,9 +195,9 @@ definition that comes from somewhere other than your bundle. When a `useReducer`
 
 | Package                        | What it is                                                 | gzip    |
 | ------------------------------ | ---------------------------------------------------------- | ------- |
-| `@wizzard-packages/core`       | the engine: flow types, expressions, navigation, selectors | 3.92 kB |
-| `@wizzard-packages/react`      | provider and hooks                                         | 927 B   |
-| `@wizzard-packages/vue`        | `provideWizard` and the same composables                   | 660 B   |
+| `@wizzard-packages/core`       | the engine: flow types, expressions, navigation, selectors | 5.13 kB |
+| `@wizzard-packages/react`      | provider and hooks                                         | 1.04 kB |
+| `@wizzard-packages/vue`        | `provideWizard` and the same composables                   | 732 B   |
 | `@wizzard-packages/validate`   | one adapter for Zod, Valibot, ArkType, Effect and Yup      | 317 B   |
 | `@wizzard-packages/core/graph` | a flow as `{ nodes, edges }`, for drawing it               | 754 B   |
 

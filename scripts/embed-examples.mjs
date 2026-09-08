@@ -36,7 +36,19 @@ const SNIPPETS = {
   'quickstart-devtools': { file: 'examples/quickstart/src/Devtools.tsx', lang: 'tsx' },
 };
 
-const DOCUMENTS = ['README.md', 'packages/devtools/README.md'];
+/**
+ * Every document with markers in it. A package README embeds the same snippet
+ * the root README does on purpose: npm shows the package README and nothing
+ * else, so the quickstart a reader arrives at there has to be the tested one
+ * rather than a copy that drifts.
+ */
+const DOCUMENTS = [
+  'README.md',
+  'packages/core/README.md',
+  'packages/react/README.md',
+  'packages/vue/README.md',
+  'packages/devtools/README.md',
+];
 
 const check = process.argv.includes('--check');
 /** Line endings differ between a Windows checkout and CI; the content does not. */
