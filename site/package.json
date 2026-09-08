@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Documentation and examples site for wizzard-packages",
+  "engines": {
+    "node": ">=22.12"
+  },
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",

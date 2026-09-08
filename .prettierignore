@@ -24,3 +24,6 @@ test-results
 # Frozen 0.x documentation — reformatting it would only create noise.
 docs/legacy/
 docs/api/
+
+# Local gstack state, never committed.
+.gstack
