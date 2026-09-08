@@ -12,7 +12,7 @@
  */
 import { layoutGraph, type Direction } from '@wizzard-packages/devtools/headless';
 
-import { printExpr } from '../lib/print-expr';
+import { asText, printExpr } from '../lib/print-expr';
 
 import type { FlowGraph as Graph, GraphNode } from '@wizzard-packages/core/graph';
 import type { Breadcrumb } from '@wizzard-packages/core/v1';
@@ -253,7 +253,7 @@ export function FlowGraph({
               )}
               <rect x={placed.x} y={placed.y} width={placed.w} height={placed.h} rx="4" />
               <text x={placed.x + 12} y={placed.y + placed.h / 2 + (when === undefined ? 4 : -2)}>
-                {node?.label ?? placed.id}
+                {asText(node?.label ?? placed.id)}
               </text>
               {when !== undefined && (
                 <text className="node-when" x={placed.x + 12} y={placed.y + placed.h / 2 + 12}>
@@ -286,7 +286,7 @@ export function FlowGraph({
           <tbody>
             {graph.nodes.map((node) => (
               <tr key={node.id}>
-                <th scope="row">{node.label ?? node.id}</th>
+                <th scope="row">{asText(node.label ?? node.id)}</th>
                 <td>{node.kind}</td>
                 <td>{nodeState(node.id, node.kind, view)}</td>
                 <td>{node.when === undefined ? 'always' : printExpr(node.when).full}</td>

@@ -20,9 +20,8 @@
  * accepts, whatever field turns out to be the reason.
  */
 import { buildGraph, type FlowGraph } from '@wizzard-packages/core/graph';
+import { END, type FlowDefinition } from '@wizzard-packages/core/v1';
 import { validateFlow, type FlowProblem } from '@wizzard-packages/core/validate-flow';
-
-import type { FlowDefinition } from '@wizzard-packages/core/v1';
 
 /**
  * Characters, not bytes: the box holds a string and this gate exists to stop a
@@ -145,6 +144,19 @@ function shapeProblem(flow: { id: string; steps: Record<string, unknown> }): Rea
   }
 
   for (const [id, step] of Object.entries(flow.steps)) {
+    // `@end` is the builder's own terminal, added to every graph. A step that
+    // takes the name gives the drawing two nodes under one id, which React
+    // answers by keeping one and dropping the other — so the step vanishes from
+    // the picture while remaining in the flow.
+    if (id === END) {
+      return problem(
+        `steps.${id}`,
+        `a step is named "${END}", which is the name of the end of a flow`,
+        'The builder adds a node under that id to every graph, so the drawing would hold two nodes with one name and show one of them',
+        'Rename the step; the end is drawn for you and needs no step of its own'
+      );
+    }
+
     if (!isPlainObject(step)) {
       return problem(
         `steps.${id}`,

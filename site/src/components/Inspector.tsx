@@ -31,7 +31,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 
 import { flowA, registryA } from '../../../contract/fixtures';
 import { recordingA } from '../../../contract/recording';
-import { printExpr } from '../lib/print-expr';
+import { asText, printExpr } from '../lib/print-expr';
 import { readFlow, type ReadResult } from '../lib/read-flow';
 import { replayFrames } from '../lib/replay';
 import { FALLBACK_FIELD, FIELDS, rerouteTo } from '../lib/signup-form';
@@ -82,11 +82,11 @@ function NodeCard({ node, children }: { node: GraphNode | null; children?: React
 
   return (
     <div className="node-card">
-      <h3>{node.label ?? node.id}</h3>
+      <h3>{asText(node.label ?? node.id)}</h3>
       <dl>
         <dt>id</dt>
         <dd>
-          <code>{node.id}</code>
+          <code>{asText(node.id)}</code>
         </dd>
         <dt>kind</dt>
         <dd>
@@ -499,6 +499,12 @@ export default function Inspector(): ReactNode {
   // Kept across a failed paste on purpose: a reader who breaks the JSON keeps
   // the picture they had, and the problems are listed under the box.
   const [lastValid, setLastValid] = useState<Drawn | null>(null);
+  /**
+   * Bumped on every draw. The boundary resets on it rather than on the flow's
+   * id, because the reader fixing a flow keeps the id — which made a caught
+   * boundary permanent on exactly the path out of it.
+   */
+  const [drawn, setDrawn] = useState(0);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -509,7 +515,15 @@ export default function Inspector(): ReactNode {
   // rather than a sentence written here that could stop being true.
   const replayProblem = useMemo(() => {
     if (mode !== 'preview' || lastValid === null) return null;
-    return checkSession(recordingA, lastValid.flow)[0]?.message ?? null;
+    // Wrapped because this runs in the parent's render, outside `StageBoundary`,
+    // so a throw here takes the island the boundary exists to protect. It does
+    // not throw today, and only because `knownFlows` happens to walk a pasted
+    // flow the same way `validateFlow` does — a coincidence, not a contract.
+    try {
+      return checkSession(recordingA, lastValid.flow)[0]?.message ?? null;
+    } catch {
+      return 'this recording could not be checked against the pasted flow';
+    }
   }, [mode, lastValid]);
 
   const submit = useCallback(() => {
@@ -519,6 +533,7 @@ export default function Inspector(): ReactNode {
       setLastValid({ flow: read.flow, graph: read.graph });
       setSelected(null);
       setMode('preview');
+      setDrawn((n) => n + 1);
     }
   }, [text]);
 
@@ -570,10 +585,11 @@ export default function Inspector(): ReactNode {
       </div>
 
       <div className="inspector-stage">
-        {/* The reset key is the flow on screen: a boundary that has caught once
-            stays caught until something changes, and the next paste is the
-            something. */}
-        <StageBoundary resetKey={`${mode}:${lastValid?.flow.id ?? ''}`}>
+        {/* A boundary that has caught once stays caught until its key changes,
+            and the way out of a failure is drawing something else — so the key
+            counts draws. Keying it on the flow's id trapped the reader who
+            corrects a flow in place, which is everyone. */}
+        <StageBoundary resetKey={`${mode}:${drawn}`}>
           {mode === 'live' && <LiveMode selected={selected} onSelect={setSelected} ready={ready} />}
           {mode === 'replay' && (
             <ReplayMode selected={selected} onSelect={setSelected} ready={ready} />

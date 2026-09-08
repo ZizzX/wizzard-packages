@@ -252,6 +252,20 @@ this has met yet.
 Making the validator total for untrusted input is the deeper fix, and it belongs to the
 diagnostic pass over the engine rather than to a site route.
 
+**Why the drawing coerces.** Building the graph is not drawing it, and the difference is
+where the last of these bugs lived. `validateFlow` checks a transition target with `to in
+flow.steps`, and `in` stringifies its left operand, so `{"to": {}}` passes against a step
+named `[object Object]`. The builder keeps the object, `layoutGraph` makes a placeholder node
+whose id is that object, and the painter puts an id into a text node. Same crash as the
+pasted `label`, four steps further downstream.
+
+So every value that came from the paste and reaches a text node is coerced first. That closes
+the family at the one place all of them pass, rather than at each place one of them starts —
+which is the third approach tried here, after guarding fields and after proving the graph
+builds. `@end` is refused as a step id for a neighbouring reason: the builder adds a terminal
+under that name to every graph, so a step taking it gives the drawing two nodes with one name
+and React keeps one.
+
 **The four ceilings, and what each one bounds.**
 
 | ceiling                   | value      | bounds                                        |

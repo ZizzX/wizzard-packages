@@ -241,3 +241,13 @@ describe('the failure contract', () => {
     expect(result.problems.some((p) => p.message.startsWith('[wizzard]'))).toBe(false);
   });
 });
+
+describe('names the builder reserves', () => {
+  it('refuses a step called @end', () => {
+    // `buildGraph` adds a terminal under that id to every graph, so the drawing
+    // would hold two nodes with one name and React would keep one of them.
+    const result = readFlow('{"id":"x","steps":{"@end":{"label":"my end"},"a":{}}}');
+    expect(result.flow).toBeNull();
+    expect(result.problems[0]?.message).toContain('the end of a flow');
+  });
+});

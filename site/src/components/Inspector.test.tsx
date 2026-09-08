@@ -138,3 +138,31 @@ describe('the inspector', () => {
     expect(screen.getByText(/Replay is off:/).textContent).toContain(flowA.id);
   });
 });
+
+describe('recovering from a flow that could not be drawn', () => {
+  it('draws the next paste after one fails in the renderer', async () => {
+    const user = userEvent.setup();
+    const { container } = render(<Inspector />);
+    await screen.findByLabelText('Email');
+
+    await user.click(screen.getByText('Paste your own flow'));
+    const box = screen.getByLabelText(/A flow is JSON/);
+
+    // A `to` that is an object: `validateFlow` accepts it, because `in`
+    // stringifies its left operand, and the drawing used to die on it.
+    await user.click(box);
+    await user.paste('{"id":"x","steps":{"a":{"on":{"next":[{"to":{}}]}},"[object Object]":{}}}');
+    await user.click(screen.getByRole('button', { name: 'Draw this flow' }));
+    expect(screen.getByText(/structure preview/)).toBeDefined();
+
+    // The reader corrects the flow and keeps the id, which is what everybody
+    // does. The page has to draw it.
+    await user.clear(box);
+    await user.click(box);
+    await user.paste('{"id":"x","order":["a","b"],"steps":{"a":{},"b":{}}}');
+    await user.click(screen.getByRole('button', { name: 'Draw this flow' }));
+
+    expect(container.querySelector('.stage-failed')).toBeNull();
+    expect(container.querySelectorAll('.node').length).toBeGreaterThan(0);
+  });
+});
