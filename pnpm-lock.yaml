@@ -329,6 +329,9 @@ importers:
       '@wizzard-packages/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@wizzard-packages/plugins':
+        specifier: workspace:*
+        version: link:../../packages/plugins
       '@wizzard-packages/react':
         specifier: workspace:*
         version: link:../../packages/react

@@ -1315,3 +1315,40 @@ svg.interactive .node {
   color: var(--fg-muted);
   font-size: var(--text-xs);
 }
+
+/* What happened to the saved session, said before anything else on the card:
+   a form that was half filled in and is now empty looks like a bug, and
+   silence is why the person filling it would think so. */
+.app-restore {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--bg);
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+/* A control that is about the example rather than part of it. */
+.app-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  padding-top: var(--space-4);
+  border-top: var(--border) solid var(--line);
+}
+
+.app-note span {
+  flex: 1 1 16rem;
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+}
+
+.app form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}

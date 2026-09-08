@@ -26,9 +26,9 @@ const APPS = [
     ref: 'R-B',
     heading: 'Reload halfway through. Continue safely.',
     blurb:
-      'A form that survives F5, validates a field against an asynchronous resolver, and is not corrupted by a reload during that validation.',
-    proves: ['persist', 'snapshot contract', 'busy', 'hydrateMismatch'],
-    ready: false,
+      'A form that survives F5, checks a name against a service that takes its time, and is not corrupted by a reload in the middle of that check.',
+    proves: ['persist', 'the snapshot contract', 'busy', 'the navigation epoch'],
+    ready: true,
   },
   {
     slug: 'passengers',
