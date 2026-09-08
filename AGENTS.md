@@ -85,8 +85,10 @@ problems that are returned:
 Single-clause messages are the thing this replaces: `unknown resolver: x` names the symptom
 and leaves the reader to find the cause.
 
-**The automated review is a second gate.** A review runs on every PR and on every push to
-one. Its comments are only reachable through the API - `gh api
+**The automated review is a second gate.** A review runs when a PR is opened, when a draft
+is marked ready, and when it is asked for by comment - not on every push, so a branch that
+was reviewed and then pushed to has not been reviewed again. Its comments are only reachable
+through the API - `gh api
 repos/ZizzX/wizzard-packages/pulls/<n>/comments`, not `gh pr view`. Read it before merging
 and answer every finding: fix it, or say why it is wrong with the evidence. It has been
 right far more often than not, and it has also blamed the wrong file, so verify each one
