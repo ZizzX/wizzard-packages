@@ -34,10 +34,24 @@ export default defineConfig({
         './src/styles/tokens.css',
         './src/styles/site.css',
       ],
+      // The order is the reading order, not the alphabet: what a flow is, then
+      // what decides its shape, then what happens when someone walks through
+      // it. `site/src/content/sidebar.test.ts` fails if an entry here names a
+      // page that does not exist, or if a page exists that nothing links to.
       sidebar: [
         {
           label: 'Start here',
           items: [{ label: 'Getting started', link: '/docs/start/' }],
+        },
+        {
+          label: 'Guides',
+          items: [
+            { label: 'The flow', link: '/docs/flow/' },
+            { label: 'Expressions', link: '/docs/expressions/' },
+            { label: 'Navigation', link: '/docs/navigation/' },
+            { label: 'Validation', link: '/docs/validation/' },
+            { label: 'Persistence', link: '/docs/persistence/' },
+          ],
         },
       ],
       credits: false,

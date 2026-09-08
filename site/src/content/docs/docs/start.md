@@ -44,6 +44,12 @@ came before it.
 
 ## What is next
 
-The rest of this documentation is being written alongside the 1.0.0 release. Until it lands,
-the engine's behaviour is specified by the tests in `packages/core/src/v1` and the reference
-flows in `contract/fixtures.ts`.
+[The flow](../flow/) is the shape of that object in full - every field, and the two of them
+named `validate`. [Expressions](../expressions/) is the thirteen-operator language that
+`when` is written in. [Navigation](../navigation/) covers moving through a flow and the
+refusals a move can return instead. [Validation](../validation/) separates checking a
+definition from checking a user's answers, and [Persistence](../persistence/) covers writing a
+session out and refusing to restore one that no longer fits.
+
+Where the prose is thinner than a question needs, the behaviour is specified by the tests in
+`packages/core/src/v1` and the reference flows in `contract/fixtures.ts`.
