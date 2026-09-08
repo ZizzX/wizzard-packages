@@ -118,15 +118,16 @@ flow generation from a prompt, an MCP server, a CLI, Svelte and Solid bindings.
 
 ## Compatibility
 
-`@wizzard-packages/compat` re-implements the 0.x surface on the new engine, and
-`compileLegacyConfig` maps old configs onto a flow: `condition` → `when`, `canNavigateTo` →
-`guards.enter`, `beforeLeave` → `guards.exit`, `validationAdapter` → the validator registry,
-`component` → the view registry (identity preserved), `persistenceAdapter` → the persist
-plugin, `middlewares` → one plugin each.
+There is no compatibility package. `@wizzard-packages/compat` was planned — a re-implementation
+of the 0.x surface on the new engine, with `compileLegacyConfig` mapping old configs onto a
+flow — and it was cut on 2026-09-03 on the download numbers. Writing a second public API to
+keep alive, so that a handful of installations need not read a page, is the wrong trade at this
+size. [`docs/MIGRATION.md`](docs/MIGRATION.md) replaces it, and carries the mapping the compiler
+would have applied.
 
-Data needs no migration: 0.x stores a flat dot-path object and v1 stores dot-path slices —
-the same shape, with slices as top-level keys.
+Data needs no migration: 0.x stores a flat dot-path object and v1 stores dot-path slices — the
+same shape, with slices as top-level keys.
 
-What deliberately does not carry over is listed in the migration guide, including the
+What deliberately does not carry over is in the migration guide, including the
 `goToStepResult: 'init'` probe protocol, the leaked `errorsMap`, the two-phase render of
 conditional steps, and a handful of 0.x behaviours that were bugs rather than features.

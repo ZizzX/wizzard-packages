@@ -210,10 +210,11 @@ Node 20.11+, TypeScript 5+, React 18+, Vue 3.3+. ESM and CJS, types for both.
 
 ## Status
 
-v1 is on the `canary` tag while the launch lands: the engine, both bindings and validation are
-done; persistence, devtools and the documentation site are in progress. `docs/designs/v1-launch.md`
-is the plan, and `ROADMAP.md` is where it came from. The 0.x line on `latest` is a different
-library with the same name and is being retired.
+v1 is on the `canary` tag while the launch lands. The engine, both bindings, validation,
+persistence and devtools are done, and the documentation site is up.
+`docs/designs/v1-launch.md` is the plan, and
+`ROADMAP.md` is where it came from. The 0.x line on `latest` is a different library with the
+same name and is being retired — [`docs/MIGRATION.md`](docs/MIGRATION.md) is the way across.
 
 ## License
 
