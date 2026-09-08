@@ -22,6 +22,7 @@
 import { buildGraph, type FlowGraph } from '@wizzard-packages/core/graph';
 import { END, type FlowDefinition } from '@wizzard-packages/core/v1';
 import { validateFlow, type FlowProblem } from '@wizzard-packages/core/validate-flow';
+import { layoutGraph } from '@wizzard-packages/devtools/headless';
 
 /**
  * Characters, not bytes: the box holds a string and this gate exists to stop a
@@ -95,6 +96,9 @@ const problem = (path: string, what: string, why: string, fix: string): ReadResu
 
 const count = (n: number): string => n.toLocaleString('en');
 
+/** A value as it reads in a message. `undefined` has no JSON of its own. */
+const asJson = (value: unknown): string => JSON.stringify(value) ?? 'undefined';
+
 /**
  * `Unexpected token } in JSON at position 42` says where, in the one unit a
  * reader cannot use. The position is turned into a line and a column against
@@ -129,14 +133,18 @@ function outerShape(value: unknown): value is { id: string; steps: Record<string
  * core validator total for untrusted input is the deeper fix and belongs to
  * L6, not to a site route.
  */
-function shapeProblem(flow: { id: string; steps: Record<string, unknown> }): ReadResult | null {
+function shapeProblem(
+  flow: { steps: Record<string, unknown> },
+  at = 'steps',
+  depth = 0
+): ReadResult | null {
   const { order } = flow as { order?: unknown };
   if (
     order !== undefined &&
     (!Array.isArray(order) || order.some((id) => typeof id !== 'string'))
   ) {
     return problem(
-      'order',
+      at === 'steps' ? 'order' : `${at.slice(0, -6)}order`,
       'order is not a list of step ids',
       'It names the sequence the flow walks, and everything that reads it walks it as a list of strings',
       'Give it an array of step ids, or leave it out and the steps run in the order they are written'
@@ -150,7 +158,7 @@ function shapeProblem(flow: { id: string; steps: Record<string, unknown> }): Rea
     // the picture while remaining in the flow.
     if (id === END) {
       return problem(
-        `steps.${id}`,
+        `${at}.${id}`,
         `a step is named "${END}", which is the name of the end of a flow`,
         'The builder adds a node under that id to every graph, so the drawing would hold two nodes with one name and show one of them',
         'Rename the step; the end is drawn for you and needs no step of its own'
@@ -159,21 +167,21 @@ function shapeProblem(flow: { id: string; steps: Record<string, unknown> }): Rea
 
     if (!isPlainObject(step)) {
       return problem(
-        `steps.${id}`,
-        `step "${id}" is ${JSON.stringify(step) ?? 'undefined'}, not an object`,
+        `${at}.${id}`,
+        `step "${id}" is ${asJson(step)}, not an object`,
         'Every entry in steps describes one step, and the validator reads fields off it',
         `Give it an object, empty if the step has nothing to say: "${id}": {}`
       );
     }
+
     // The builder copies `label` onto the node and the painter renders it as a
-    // React child, which throws "Objects are not valid as a React child" and
-    // takes the island down. `validateFlow` has no opinion on it: a label is
-    // the host's business everywhere except here, where the host is a stranger.
+    // React child. `validateFlow` has no opinion on it: a label is the host's
+    // business everywhere except here, where the host is a stranger.
     const { label } = step as { label?: unknown };
     if (label !== undefined && typeof label !== 'string') {
       return problem(
-        `steps.${id}.label`,
-        `step "${id}" has a label that is ${JSON.stringify(label) ?? 'undefined'}, not a string`,
+        `${at}.${id}.label`,
+        `step "${id}" has a label that is ${asJson(label)}, not a string`,
         'A label is drawn inside the node and read out in the table beside it, so it has to be text',
         'Use a string, or leave the label out and the step is drawn under its id'
       );
@@ -182,11 +190,27 @@ function shapeProblem(flow: { id: string; steps: Record<string, unknown> }): Rea
     const group = step as { flow?: unknown };
     if (group.flow !== undefined && typeof group.flow !== 'string' && !isPlainObject(group.flow)) {
       return problem(
-        `steps.${id}.flow`,
-        `group "${id}" names its sub-flow as ${JSON.stringify(group.flow) ?? 'undefined'}`,
+        `${at}.${id}.flow`,
+        `group "${id}" names its sub-flow as ${asJson(group.flow)}`,
         'A group carries either a definition or the name of one, and nothing else can be walked',
         'Use the sub-flow object itself, or a string naming a registered flow'
       );
+    }
+
+    // Into inline sub-flows, at the same depth the engine walks. They are not
+    // drawn today — `layoutGraph` does not descend into a group's nested graph
+    // — so this is latent, and it stops being latent the day the inspector
+    // expands a group.
+    if (isPlainObject(group.flow) && depth < 32) {
+      const inner = group.flow as { steps?: unknown };
+      if (isPlainObject(inner.steps)) {
+        const nested = shapeProblem(
+          inner as { steps: Record<string, unknown> },
+          `${at}.${id}.flow.steps`,
+          depth + 1
+        );
+        if (nested !== null) return nested;
+      }
     }
   }
 
@@ -321,13 +345,19 @@ export function readFlow(text: string): ReadResult {
   // is simply not one this page accepts.
   const flow = parsed as FlowDefinition;
   let graph: FlowGraph;
+  let drawn: number;
   try {
     graph = buildGraph(flow);
+    // Laid out as well as built, because the drawing gate below has to count
+    // what is drawn and the layout is where the count changes: a transition to
+    // a target the flow never declares becomes a placeholder node, born after
+    // every gate that reads the paste. A graph of three nodes drew sixty-three.
+    drawn = layoutGraph(graph).nodes.length;
   } catch (error) {
     return problem(
       'flow',
       `this flow could not be drawn: ${(error as Error).message}`,
-      'The builder reads a field whose shape it did not expect, and it is not written to survive one',
+      'The builder or the layout reads a field whose shape it did not expect, and neither is written to survive one',
       'Compare it against the example flow, which the Load example button puts in the box'
     );
   }
@@ -336,10 +366,10 @@ export function readFlow(text: string): ReadResult {
   // seemed to promise. `layoutGraph` draws the root's nodes and does not descend
   // into a group's nested graph, so counting the paste rejected flows that would
   // have drawn six nodes and told the reader they had forty-five.
-  if (graph.nodes.length > MAX_NODES) {
+  if (drawn > MAX_NODES) {
     return problem(
       'steps',
-      `this flow draws ${count(graph.nodes.length)} nodes and the inspector draws up to ${count(MAX_NODES)}`,
+      `this flow draws ${count(drawn)} nodes and the inspector draws up to ${count(MAX_NODES)}`,
       'A graph past forty nodes has stopped being readable well before it stops rendering',
       'Draw a smaller flow here, or use the devtools panel, which docks beside a running wizard'
     );

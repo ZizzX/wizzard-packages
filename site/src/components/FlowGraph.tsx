@@ -210,7 +210,7 @@ export function FlowGraph({
           </g>
         ))}
 
-        {laid.nodes.map((placed) => {
+        {laid.nodes.map((placed, index) => {
           const node = nodeById.get(placed.id);
           const kind = node?.kind ?? 'step';
           const state = nodeState(placed.id, kind, view);
@@ -234,13 +234,21 @@ export function FlowGraph({
 
           if (kind === 'end') {
             return (
-              <g key={placed.id} className={`node end ${state}`}>
+              <g key={`${index}:${asText(placed.id)}`} className={`node end ${state}`}>
                 <circle cx={placed.x + 11} cy={placed.y + placed.h / 2} r="11" />
               </g>
             );
           }
           return (
-            <g key={placed.id} className={`node ${kind} ${state}${ring}`} {...pick}>
+            // The index leads the key for the same reason it leads an edge's:
+            // a placeholder node carries whatever was in `edge.to`, so two of
+            // them - or one of them and a real step - can stringify to one
+            // name, and React answers a duplicate key by dropping siblings.
+            <g
+              key={`${index}:${asText(placed.id)}`}
+              className={`node ${kind} ${state}${ring}`}
+              {...pick}
+            >
               {kind === 'group' && (
                 <rect
                   className="inner"

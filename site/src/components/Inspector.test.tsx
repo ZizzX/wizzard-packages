@@ -7,7 +7,7 @@
  */
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { flowA } from '../../../contract/fixtures';
 
@@ -139,30 +139,33 @@ describe('the inspector', () => {
   });
 });
 
-describe('recovering from a flow that could not be drawn', () => {
-  it('draws the next paste after one fails in the renderer', async () => {
+describe('a paste that used to take the page down', () => {
+  it('draws a transition whose target is an object, and React keeps every node', async () => {
+    // `validateFlow` accepts this: `to in flow.steps` stringifies its left
+    // operand, so `{}` matches a step named `[object Object]`. The builder keeps
+    // the object, the layout makes a placeholder node whose id is that object,
+    // and the painter used to put it into a text node and into a key.
+    const errors: unknown[] = [];
+    const spy = vi.spyOn(console, 'error').mockImplementation((...args) => {
+      errors.push(args);
+    });
+
     const user = userEvent.setup();
     const { container } = render(<Inspector />);
     await screen.findByLabelText('Email');
 
     await user.click(screen.getByText('Paste your own flow'));
-    const box = screen.getByLabelText(/A flow is JSON/);
-
-    // A `to` that is an object: `validateFlow` accepts it, because `in`
-    // stringifies its left operand, and the drawing used to die on it.
-    await user.click(box);
+    await user.click(screen.getByLabelText(/A flow is JSON/));
     await user.paste('{"id":"x","steps":{"a":{"on":{"next":[{"to":{}}]}},"[object Object]":{}}}');
     await user.click(screen.getByRole('button', { name: 'Draw this flow' }));
+
     expect(screen.getByText(/structure preview/)).toBeDefined();
-
-    // The reader corrects the flow and keeps the id, which is what everybody
-    // does. The page has to draw it.
-    await user.clear(box);
-    await user.click(box);
-    await user.paste('{"id":"x","order":["a","b"],"steps":{"a":{},"b":{}}}');
-    await user.click(screen.getByRole('button', { name: 'Draw this flow' }));
-
     expect(container.querySelector('.stage-failed')).toBeNull();
     expect(container.querySelectorAll('.node').length).toBeGreaterThan(0);
+    // A duplicate key is how the last three rounds of this bug announced
+    // themselves, so the absence of one is the assertion.
+    expect(errors).toEqual([]);
+
+    spy.mockRestore();
   });
 });

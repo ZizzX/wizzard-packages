@@ -259,7 +259,11 @@ named `[object Object]`. The builder keeps the object, `layoutGraph` makes a pla
 whose id is that object, and the painter puts an id into a text node. Same crash as the
 pasted `label`, four steps further downstream.
 
-So every value that came from the paste and reaches a text node is coerced first. That closes
+So every value that came from the paste and reaches a text node is coerced first — and so is
+every value that reaches a React `key`, which is the half the first attempt at this missed. A
+placeholder node carries whatever was in `edge.to`, so two of them, or one of them and a real
+step, can stringify to one name; React answers a duplicate key by dropping siblings, and the
+drawing shows a flow that is not the one in the box. That closes
 the family at the one place all of them pass, rather than at each place one of them starts —
 which is the third approach tried here, after guarding fields and after proving the graph
 builds. `@end` is refused as a step id for a neighbouring reason: the builder adds a terminal
@@ -275,7 +279,10 @@ and React keeps one.
 | declared transitions      | 200        | the same, and the one a step count cannot see |
 | drawn nodes / drawn edges | 40 / 1 000 | what reaches the DOM                          |
 
-The first three are checked on the paste, the last on the built graph. That split is not
+The first three are checked on the paste, the last on the graph once it has been laid out —
+not merely built. The layout is where a transition to a target the flow never declares becomes
+a node of its own, so a graph of three nodes can draw sixty-three, all of them born after every
+gate that reads the paste. That split is not
 tidiness. `on.next` takes a list, and its length is invisible to any step count: two steps
 whose `a.on.next` repeats a valid target a hundred thousand times is 400 kB of legal JSON and
 100 001 edges. And in the other direction, `layoutGraph` draws the root's nodes and does not

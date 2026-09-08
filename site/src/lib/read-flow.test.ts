@@ -251,3 +251,34 @@ describe('names the builder reserves', () => {
     expect(result.problems[0]?.message).toContain('the end of a flow');
   });
 });
+
+describe('nodes the layout invents', () => {
+  const ghostly = (targets: number): string =>
+    JSON.stringify({
+      id: 'x',
+      steps: {
+        a: { on: { next: Array.from({ length: targets }, (_, i) => ({ to: { n: i } })) } },
+        // `to in flow.steps` stringifies its left operand, so every one of
+        // those distinct objects matches this step and passes validation.
+        '[object Object]': {},
+      },
+    });
+
+  it('counts them against the drawing ceiling', () => {
+    // The graph holds three nodes. The layout turns each distinct target into a
+    // placeholder, so the drawing holds one per entry — born after every gate
+    // that reads the paste, which is why the gate reads the layout instead.
+    // The premise, on a paste small enough to be accepted: three real nodes.
+    expect(readFlow(ghostly(3)).graph?.nodes.length).toBe(3);
+
+    // The same shape, past the ceiling. Counting `graph.nodes` would have let
+    // it through at three.
+    const result = readFlow(ghostly(MAX_NODES + 5));
+    expect(result.flow).toBeNull();
+    expect(result.problems[0]?.message).toContain('draws up to');
+  });
+
+  it('draws a flow whose placeholders stay under it', () => {
+    expect(readFlow(ghostly(3)).flow).not.toBeNull();
+  });
+});
