@@ -208,3 +208,48 @@ today and changes only when the shape changes in a way a reader cannot ignore.
 A bundle carries the flow definition, the recorded frames and the outcomes, so it replays
 structure and data. It does not carry resolver behaviour: a named resolver is not in the
 bundle, and a replay of a flow that fetches its options shows the options it recorded.
+
+## inspector-paste
+
+```
+[wizzard] this is not JSON: <parser message> (line <l>, column <c>). A flow is a JSON object,
+so the text has to parse before anything can read it. Fix the syntax at that position and draw
+it again. …#inspector-paste
+
+[wizzard] this is valid JSON but not a flow definition. A flow is an object with a string id
+and a steps object, and both are read before anything else. Wrap the steps: { "id": "signup",
+"steps": { … } }. …#inspector-paste
+
+[wizzard] step "<id>" is <value>, not an object. Every entry in steps describes one step, and
+the validator reads fields off it. Give it an object, empty if the step has nothing to say.
+…#inspector-paste
+
+[wizzard] this flow has <n> steps and the inspector draws up to 40. …#inspector-paste
+
+[wizzard] this flow could not be checked: <message>. …#inspector-paste
+```
+
+Returned, never thrown: these come from the documentation site's inspector, where the flow is
+a stranger's text pasted into a box. The page lists them under the box and keeps the graph it
+already had, so a bad paste costs a reader the picture they were about to see and not the one
+they were looking at.
+
+**Why the shape is checked before `validateFlow`.** `validateFlow` is typed for a
+`FlowDefinition` and reads `step.on`, `flow.order` and a group's `flow.steps` without guarding
+them. That is the right trade for a flow arriving from a typed codebase, and the wrong one for
+a paste box: a step that is `null`, a number or a string, an `order` that is not a list, and a
+group whose `flow` is neither an object nor a string each throw a `TypeError` out of it. The
+inspector checks those five before calling it, and wraps the call so a shape nobody has named
+yet is still a sentence rather than a stack trace.
+
+Making the validator total for untrusted input is the deeper fix, and it belongs to the
+diagnostic pass over the engine rather than to a site route.
+
+**Why forty steps.** Not a guess and not the text length. `buildGraph` emits a fall-through
+edge from every conditional step to every later one it could reach, so edges grow as the
+square of the step count: 200 steps is 20 100 edges and 800 steps is 320 400, which is a DOM
+no browser draws. A megabyte of JSON holds thousands of steps, so a character cap does not
+bound the work — the step count does. Forty is `--graph-max-nodes` from the site's design
+tokens, and a graph past forty nodes has stopped being readable well before it stops
+rendering. A flow larger than that is what the devtools panel is for: it docks beside a
+running wizard instead of drawing the whole definition at once.

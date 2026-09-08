@@ -260,7 +260,15 @@ function LiveInstrument({ selected, onSelect, ready }: ModeProps): ReactNode {
                   className="button button-secondary"
                   type="button"
                   disabled={!ready || !canBack || isBusy}
-                  onClick={() => void wizard.back()}
+                  onClick={() => {
+                    // `ended` is the component's, not the engine's: reaching
+                    // the end leaves the wizard standing on the last step and
+                    // says so in the `NavResult`. So going back has to clear
+                    // it here, or the form stays on "Flow complete" over a
+                    // step the engine has actually moved to.
+                    setEnded(false);
+                    void wizard.back();
+                  }}
                 >
                   Back
                 </button>

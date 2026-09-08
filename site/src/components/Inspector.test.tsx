@@ -36,6 +36,28 @@ describe('the inspector', () => {
     expect(screen.getByLabelText('Email')).toBeDefined();
   });
 
+  it('leaves the end behind when the run goes back', async () => {
+    const user = userEvent.setup();
+    render(<Inspector />);
+
+    // Walk the business route to the end: email, company, card.
+    await user.type(await screen.findByLabelText('Email'), 'ada@example.com');
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.type(await screen.findByLabelText('Company name'), 'Acme Ltd');
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await user.type(await screen.findByLabelText('Card number'), '4242');
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(await screen.findByRole('button', { name: 'Restart' })).toBeDefined();
+
+    // Back is still offered, because `payment` has a back target. Taking it
+    // moves the engine, so the form has to stop saying the flow is complete.
+    await user.click(screen.getByRole('button', { name: 'Back' }));
+
+    expect(await screen.findByRole('button', { name: 'Next' })).toBeDefined();
+    expect(screen.queryByText('Flow complete')).toBeNull();
+    expect(screen.getByLabelText('Email')).toBeDefined();
+  });
+
   it('replays the recording, and the scrubber moves the run', async () => {
     const user = userEvent.setup();
     render(<Inspector />);
