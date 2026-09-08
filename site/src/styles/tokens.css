@@ -13,19 +13,23 @@
  */
 
 @font-face {
-  font-family: 'IBM Plex Sans Fallback';
+  font-family: 'Inter Tight Fallback';
   src: local('Arial');
-  size-adjust: 104%;
-  ascent-override: 96%;
-  descent-override: 26%;
+  size-adjust: 97%;
+  ascent-override: 98%;
+  descent-override: 24%;
 }
 
 :root {
-  /* Typefaces. The fallback face is metric-adjusted so the swap does not reflow. */
-  --font-sans:
-    'IBM Plex Sans Variable', 'IBM Plex Sans', 'IBM Plex Sans Fallback', ui-sans-serif, system-ui,
-    sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  /* Two typefaces, and the split between them is the design. The monospace is
+     the voice of the product: headings, labels, controls, code, the wordmark.
+     The sans carries prose only, because a documentation page is paragraphs and
+     a monospace paragraph is read slower than it is admired. The fallback face
+     is metric-adjusted so the swap does not reflow. */
+  --font-sans: 'Inter Tight Variable', 'Inter Tight', 'Inter Tight Fallback', ui-sans-serif,
+    system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo,
+    Consolas, monospace;
 
   /* Type scale, px. Nothing between the steps. */
   --text-label: 0.6875rem;
@@ -123,70 +127,83 @@
   --edge-width: 1.5;
   --graph-max-nodes: 40;
 
-  /* Dark palette (default). */
-  --bg: #12100e;
-  --surface: #191612;
-  --surface-raised: #201c17;
-  --line: #2e2823;
-  --line-strong: #3d362f;
-  --fg: #f3eee7;
-  --fg-muted: #a0958a;
-  --fg-faint: #7a7067;
-  --accent: #e8912d;
-  --accent-soft: rgba(232, 145, 45, 0.12);
-  --on-accent: #12100e;
+  /* Blueprint: an ink ground, hairlines that read as a drawing rather than a
+     chrome, and one cold accent. Measured on this ground, the accent carries
+     text at 10.74:1 and its fill under `--on-accent` at 10.53:1; the amber it
+     replaced sat at 4.40:1 on the light fill and shipped that way.
 
-  --st-active: #e8912d;
-  --st-visited: #b8a184;
+     The comment below is a marker: tokens.test.ts finds each palette by it. */
+  /* Dark palette (default). */
+  --bg: #0b0e14;
+  --surface: #10141c;
+  --surface-raised: #141926;
+  --line: #1e2530;
+  --line-strong: #2c3648;
+  /* The ground grid. It is `--line` here and softer in light, because a dark
+     line on a light ground reads stronger than a light line on a dark one at
+     the same ratio: measured 1.25 dark against 1.19 light, and the light one
+     was the one that felt loud. */
+  --grid-line: #1e2530;
+  --fg: #e6edf3;
+  --fg-muted: #93a1b4;
+  --fg-faint: #6e7c90;
+  --accent: #35d6d0;
+  --accent-soft: rgba(53, 214, 208, 0.12);
+  --on-accent: #06121a;
+
+  --st-active: #35d6d0;
+  --st-visited: #6e8fa8;
   --st-blocked: #f2716f;
   --st-blocked-soft: rgba(242, 113, 111, 0.12);
-  --st-skipped: #8f857a;
-  --st-group: #7ea6b8;
+  --st-skipped: #7e8aa0;
+  --st-group: #8fb4c8;
   --st-error: #f2716f;
 }
 
 @media (prefers-color-scheme: light) {
   :root:not([data-theme='dark']) {
-    --bg: #fbf9f5;
+    --bg: #f4f6f9;
     --surface: #ffffff;
-    --surface-raised: #f4f0e9;
-    --line: #e4dcd1;
-    --line-strong: #cfc3b4;
-    --fg: #1a1613;
-    --fg-muted: #6b6058;
-    --fg-faint: #8b8078;
-    --accent: #b4640f;
-    --accent-soft: rgba(180, 100, 15, 0.08);
+    --surface-raised: #edf1f6;
+    --line: #dce3ec;
+    --line-strong: #b9c4d2;
+    --grid-line: #e7ecf3;
+    --fg: #0b0e14;
+    --fg-muted: #4a5666;
+    --fg-faint: #7a8798;
+    --accent: #0e6e6a;
+    --accent-soft: rgba(14, 110, 106, 0.08);
     --on-accent: #ffffff;
 
-    --st-active: #b4640f;
-    --st-visited: #8a7350;
+    --st-active: #0e6e6a;
+    --st-visited: #5a6b7d;
     --st-blocked: #b3261e;
     --st-blocked-soft: rgba(179, 38, 30, 0.08);
-    --st-skipped: #766b61;
+    --st-skipped: #5f6b7a;
     --st-group: #2f6b84;
     --st-error: #b3261e;
   }
 }
 
 :root[data-theme='light'] {
-  --bg: #fbf9f5;
+  --bg: #f4f6f9;
   --surface: #ffffff;
-  --surface-raised: #f4f0e9;
-  --line: #e4dcd1;
-  --line-strong: #cfc3b4;
-  --fg: #1a1613;
-  --fg-muted: #6b6058;
-  --fg-faint: #8b8078;
-  --accent: #b4640f;
-  --accent-soft: rgba(180, 100, 15, 0.08);
+  --surface-raised: #edf1f6;
+  --line: #dce3ec;
+  --line-strong: #b9c4d2;
+  --grid-line: #e7ecf3;
+  --fg: #0b0e14;
+  --fg-muted: #4a5666;
+  --fg-faint: #7a8798;
+  --accent: #0e6e6a;
+  --accent-soft: rgba(14, 110, 106, 0.08);
   --on-accent: #ffffff;
 
-  --st-active: #b4640f;
-  --st-visited: #8a7350;
+  --st-active: #0e6e6a;
+  --st-visited: #5a6b7d;
   --st-blocked: #b3261e;
   --st-blocked-soft: rgba(179, 38, 30, 0.08);
-  --st-skipped: #766b61;
+  --st-skipped: #5f6b7a;
   --st-group: #2f6b84;
   --st-error: #b3261e;
 }

@@ -29,9 +29,8 @@ export default defineConfig({
         { icon: 'github', label: 'GitHub', href: 'https://github.com/ZizzX/wizzard-packages' },
       ],
       customCss: [
-        '@fontsource-variable/ibm-plex-sans',
-        '@fontsource/ibm-plex-mono/400.css',
-        '@fontsource/ibm-plex-mono/500.css',
+        '@fontsource-variable/inter-tight',
+        '@fontsource-variable/jetbrains-mono',
         './src/styles/tokens.css',
         './src/styles/site.css',
       ],

@@ -36,29 +36,33 @@ elevation the graph does not use is either wrong or is telling you the graph is 
 
 ## Typefaces
 
-Two families, both IBM Plex, self-hosted through `@fontsource`:
+Two families, self-hosted through `@fontsource`, and the split between them is the design:
 
-| Role    | Family        | Weight | Size / line-height              | Tracking |
-| ------- | ------------- | ------ | ------------------------------- | -------- |
-| display | IBM Plex Sans | 600    | `clamp(30px, 5vw, 52px)` / 1.06 | -0.025em |
-| heading | IBM Plex Sans | 600    | 20-30px / 1.2                   | -0.015em |
-| body    | IBM Plex Sans | 400    | 17px / 1.6                      | 0        |
-| code    | IBM Plex Mono | 400    | 14px / 1.55                     | 0        |
-| label   | IBM Plex Mono | 500    | 11px / 1.4, uppercase           | 0.1em    |
+| Role    | Family         | Weight | Size / line-height              | Tracking |
+| ------- | -------------- | ------ | ------------------------------- | -------- |
+| display | JetBrains Mono | 500    | `clamp(30px, 5vw, 52px)` / 1.06 | -0.025em |
+| heading | JetBrains Mono | 500    | 20-30px / 1.2                   | -0.015em |
+| body    | Inter Tight    | 400    | 17px / 1.6                      | 0        |
+| code    | JetBrains Mono | 400    | 14px / 1.55                     | 0        |
+| label   | JetBrains Mono | 500    | 11px / 1.4, uppercase           | 0.1em    |
 
-IBM Plex Sans is the reason the site does not read as a template: it is the typeface of
-technical documentation rather than of landing pages, and it has a mono companion that shares
-its skeleton, so a step id set in code sits beside its label without a seam. Body text is
-never below 16px.
+**The monospace is the voice and the sans is the prose.** Headings, labels, controls, the
+wordmark, code and every string the library produced are set in JetBrains Mono; running text
+is set in Inter Tight and nothing else is. A site whose headings are monospace reads as an
+instrument rather than as a landing page, which is the whole claim; a documentation page whose
+paragraphs are monospace is read slower than it is admired, which is the whole cost. Both are
+true, so the line is drawn between them rather than around them. Body text is never below
+16px.
 
 Type scale, in px: 11, 13, 15, 17, 20, 24, 30, 38, 48. Nothing between the steps.
 
 ### What mono is for
 
-Mono carries code, identifiers, expressions, and measurements: a step id, a `when`
-expression, a package name, a bundle size, an install command, and any string the library
-itself produced. It is not a costume for "technical". The site's own sentences are set in
-sans even when they sit beside code, and a caption explaining a graph is prose, not a readout.
+Mono carries the interface and the machine: headings, labels, controls, the wordmark, code,
+identifiers, expressions and measurements - a step id, a `when` expression, a package name, a
+bundle size, an install command, and any string the library itself produced. What it never
+carries is a sentence. The site's own prose is set in sans even when it sits beside code, and
+a caption explaining a graph is prose, not a readout.
 
 ### Where the label style may appear
 
@@ -80,26 +84,41 @@ inside their own scroll container, and never widen the page.
 ## Colour
 
 Dark is the default and light follows the visitor's system preference; both are complete
-palettes, not an inversion. The neutral is warm — a charcoal biased toward the accent — so the
-amber reads as belonging to the page rather than sitting on top of it.
+palettes, not an inversion. The neutral is cool - an ink ground biased toward the accent - so
+the page reads as a drawing sheet and the cyan reads as belonging to it rather than sitting on
+top of it.
 
 | Token              | Dark        | Light       | Use                                         |
 | ------------------ | ----------- | ----------- | ------------------------------------------- |
-| `--bg`             | `#12100E`   | `#FBF9F5`   | page ground                                 |
-| `--surface`        | `#191612`   | `#FFFFFF`   | panels, form wells, code blocks             |
-| `--surface-raised` | `#201C17`   | `#F4F0E9`   | the one layer above surface; used sparingly |
-| `--line`           | `#2E2823`   | `#E4DCD1`   | hairlines, node borders at rest             |
-| `--line-strong`    | `#3D362F`   | `#CFC3B4`   | dividers that separate sections             |
-| `--fg`             | `#F3EEE7`   | `#1A1613`   | body and headings                           |
-| `--fg-muted`       | `#A0958A`   | `#6B6058`   | secondary text, captions, labels            |
-| `--fg-faint`       | `#7A7067`   | `#8B8078`   | non-text only: rules, disabled glyphs       |
-| `--accent`         | `#E8912D`   | `#B4640F`   | the active step, primary action, links      |
-| `--accent-soft`    | `#E8912D1F` | `#B4640F14` | fill behind the active node                 |
-| `--on-accent`      | `#12100E`   | `#FFFFFF`   | text on an accent fill                      |
+| `--bg`             | `#0B0E14`   | `#F4F6F9`   | page ground                                 |
+| `--surface`        | `#10141C`   | `#FFFFFF`   | panels, form wells, code blocks             |
+| `--surface-raised` | `#141926`   | `#EDF1F6`   | the one layer above surface; used sparingly |
+| `--line`           | `#1E2530`   | `#DCE3EC`   | hairlines, node borders at rest, the grid   |
+| `--line-strong`    | `#2C3648`   | `#B9C4D2`   | dividers that separate sections             |
+| `--fg`             | `#E6EDF3`   | `#0B0E14`   | body and headings                           |
+| `--fg-muted`       | `#93A1B4`   | `#4A5666`   | secondary text, captions, labels            |
+| `--fg-faint`       | `#6E7C90`   | `#7A8798`   | non-text only: rules, disabled glyphs       |
+| `--accent`         | `#35D6D0`   | `#0E6E6A`   | the active step, primary action, links      |
+| `--accent-soft`    | `#35D6D01F` | `#0E6E6A14` | fill behind the active node                 |
+| `--on-accent`      | `#06121A`   | `#FFFFFF`   | text on an accent fill                      |
 
-`--fg-faint` fails 4.5:1 against `--bg` by design and must never carry text; it exists for
-rules and for glyphs that repeat a label already present. Every other pairing in the table
-clears 4.5:1 in both themes, and `axe` in CI is what proves it.
+`--fg-faint` must never carry text; it exists for rules and for glyphs that repeat a label
+already present, and it clears the 3:1 a non-text mark needs and nothing more. Every other
+pairing clears 4.5:1 in both themes, measured on the rendered page rather than assumed: the
+accent carries text at 10.74 dark and 5.61 light, its solid fill under `--on-accent` at 10.53
+and 6.07, and the lowest reading anywhere in the system is 4.78. `axe` in CI is what keeps it
+that way.
+
+The amber this replaced could not make that claim. White on the light `#B4640F` measured
+4.40:1 under a 15px bold label. It shipped that way and no check caught it, because the check
+was never run on that pair.
+
+### The ground is a drawing sheet
+
+The page ground carries a hairline grid on the same 32px step the layout counts in, drawn in
+`--line` as two CSS gradients: no image, no request, and it moves with the theme. It is the
+one decorative element in the system, and it earns its place by being the same measurement the
+graph is laid out on. Nothing else may add a background pattern.
 
 ### Semantic colours
 
@@ -108,11 +127,11 @@ problems list and the state diff.
 
 | State   | Token          | Dark      | Light     | Means                                           |
 | ------- | -------------- | --------- | --------- | ----------------------------------------------- |
-| active  | `--st-active`  | `#E8912D` | `#B4640F` | the step the flow is on                         |
-| visited | `--st-visited` | `#B8A184` | `#8A7350` | entered and left; history, not progress bar     |
+| active  | `--st-active`  | `#35D6D0` | `#0E6E6A` | the step the flow is on                         |
+| visited | `--st-visited` | `#6E8FA8` | `#5A6B7D` | entered and left; history, not progress bar     |
 | blocked | `--st-blocked` | `#F2716F` | `#B3261E` | a validator refused the move                    |
-| skipped | `--st-skipped` | `#8F857A` | `#766B61` | `when` evaluated false; drawn dashed            |
-| group   | `--st-group`   | `#7EA6B8` | `#2F6B84` | a repeat group or a sub-flow                    |
+| skipped | `--st-skipped` | `#7E8AA0` | `#5F6B7A` | `when` evaluated false; drawn dashed            |
+| group   | `--st-group`   | `#8FB4C8` | `#2F6B84` | a repeat group or a sub-flow                    |
 | error   | `--st-error`   | `#F2716F` | `#B3261E` | a thrown error, distinct from a refusal in copy |
 
 ### One fill per viewport
@@ -123,8 +142,10 @@ fill is visible at a time.** Everything else that wants the accent takes the bor
 
 The rule exists because the accent is also the colour that means "this is where the flow is
 now". A second filled control competes with the graph for the same glance, and the graph is
-what the page is for. It is also the rule the homepage currently bends: the form's Next and
-the section's Get started are both filled, and one of them should take the border form.
+what the page is for. The homepage spends its one fill on `Get started`, and the instrument's
+`Next` takes the border form: an accent outline over `--accent-soft`, which outranks a neutral
+border without spending the fill twice. Its label is `--fg` rather than the accent, because
+the accent as text on that tint measures under the floor in the light theme.
 
 `--st-skipped` is a step's colour, not a rule's: it carries the label of a node that is off
 the route, so it clears 4.5:1 against `--surface-raised` in both themes. It deliberately does

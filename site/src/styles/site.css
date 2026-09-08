@@ -13,17 +13,35 @@
   box-sizing: border-box;
 }
 
+/* The ground is a drawing sheet: a hairline grid on the same 32px step the
+   layout counts in, so the page reads as something measured rather than as a
+   dark rectangle. It is one gradient pair and no image request. */
 body {
   font-family: var(--font-sans);
   font-size: var(--text-base);
   line-height: var(--leading-body);
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(var(--grid-line) var(--border), transparent var(--border)),
+    linear-gradient(90deg, var(--grid-line) var(--border), transparent var(--border));
+  background-size: 32px 32px;
+  background-position: calc(var(--border) * -1) calc(var(--border) * -1);
   color: var(--fg);
   margin: 0;
   -webkit-font-smoothing: antialiased;
 }
 
+/* The monospace is the interface and the machine; the sans is prose and only
+   prose. A form control inherits neither by default - a bare `<button>` was
+   rendering in Arial under both typefaces - so the reset says so explicitly. */
+:where(button, input, select, textarea) {
+  font: inherit;
+  font-family: var(--font-mono);
+}
+
 :where(h1, h2, h3, h4) {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-strong);
   letter-spacing: var(--track-heading);
   line-height: var(--leading-heading);
   text-wrap: balance;
@@ -111,6 +129,7 @@ body {
 .topbar nav {
   display: flex;
   gap: var(--space-6);
+  font-family: var(--font-mono);
   font-size: var(--text-sm);
 }
 
@@ -130,6 +149,7 @@ body {
 .site-footer {
   display: flex;
   flex-wrap: wrap;
+  font-family: var(--font-mono);
   align-items: center;
   gap: var(--space-6);
   min-height: 60px;
@@ -363,12 +383,12 @@ body {
 }
 
 .instrument-controls .field-label {
+  font-family: var(--font-mono);
   color: var(--fg-muted);
   font-size: var(--text-xs);
 }
 
 .instrument-controls input {
-  font: inherit;
   font-size: var(--text-sm);
   color: var(--fg);
   background: var(--bg);
