@@ -1,6 +1,6 @@
 {
   "name": "@wizzard-packages/plugins",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Plugins for Wizzard flows — persistence today, one entry per concern.",
   "keywords": [
     "wizard",
