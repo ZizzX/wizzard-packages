@@ -11,17 +11,15 @@ this file is the view one level above it.
 
 ## Now
 
-<!-- The session brief hands this section to every new session. Keep it short and true. -->
+<!-- The session brief hands this section to every new session. Keep it short and true; the
+brief shows the board and the last merged PRs live, so they are not repeated here. -->
 
 - **In progress:** S4, the documentation pages (#57). Next is S4-1 (#71), the runnable-example
   mechanism and Getting started; S4-2 to S4-4 (#72-#74) are blocked by it.
-- **Also in progress:** the project's own memory - this file, the board and the session brief
-  (#81).
+- **Also in progress:** the project's own memory (#81) - this file, the board and the session
+  brief. The beads tracker is retired; see "Legacy ids" below.
 - **Next after S4:** L6, the diagnostic contract (#59), which also owns the `/errors/` pages.
-- **Waiting on the owner:** R3 (#80), because `main` has no branch protection; and the `project`
-  token scope, without which the board cannot be created or read.
-- **Last merged:** #79 the flat ground and the surface list, #77 the documentation and tracking
-  rules.
+- **Waiting on the owner:** R3 (#80), because `main` has no branch protection.
 
 ## Tracks
 
@@ -100,3 +98,21 @@ close the door. The constraint over all four: the library never binds to its own
 | Server-driven UI and server-rendered steps  | #68   |
 | An MCP server, and agent rules on the site  | #69   |
 | Prompt to graph                             | #70   |
+
+## Legacy ids
+
+The `wizzard-N` ids cited in `docs/designs/` and in two test comments come from the beads tracker
+this repository used until 2026-09-11. Where each one went:
+
+| Id         | What                                               | Where it went                                                |
+| ---------- | -------------------------------------------------- | ------------------------------------------------------------ |
+| wizzard-9  | Replace the hard sleeps in the e2e suite           | L7, #63                                                      |
+| wizzard-10 | The missing Vue demo pages                         | Dropped: `examples/vue-demo` is 0.x, and L8 (#64) deletes it |
+| wizzard-11 | Decide the core size budget before group traversal | Done before L9                                               |
+| wizzard-12 | Group and repeat traversal                         | L9, #38, #40, #41                                            |
+| wizzard-13 | Type the store against a flow                      | L2, #36                                                      |
+| wizzard-14 | `"use client"` survives the build                  | L3, #37                                                      |
+| wizzard-17 | `canBack` stayed true after a backward move        | Fixed in #39                                                 |
+| wizzard-18 | `validate-flow` accepts a `step` root              | #83                                                          |
+
+The whole tracker, closed items included, is in git: `git show 1c6323c:.beads/issues.jsonl`.

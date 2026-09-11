@@ -156,20 +156,21 @@ a lower standard. Remove an entry when its v1 replacement lands. Never add one.
 
 ## Issue tracking
 
-Issues live in `.beads/issues.jsonl` under the `wizzard-N` scheme, and the design documents
-in `docs/designs/` refer to them by that id. `tasks/session-state.md` uses an older scheme
-and is not maintained.
+Work is tracked in three places, one job each, and nothing else is a source of truth:
 
-`bd` (beads), prefix `wizzard-`:
+- `docs/PLAN.md` - what is being built, in what order, and where each track stands.
+- The project board, <https://github.com/users/ZizzX/projects/2> - status is the column
+  (Backlog, Ready, In progress, In review, Blocked, Done) and order is the position in Ready.
+  Epics are parents of native sub-issues, and a dependency is a native "blocked by" link.
+- The issue itself - the spec in its body; what was learned, decided and left half-done in its
+  comments. The PR that finishes it says `Closes #N`.
 
-```bash
-bd ready                             # available work
-bd show <id>                         # details
-bd update <id> --status in_progress  # claim
-bd close <id>                        # complete
-```
+Moving a card is part of the work: taking a task moves it to In progress, opening its PR to In
+review, and the merge to Done, with the plan's row updated in the same PR.
 
-Do not run `bd sync` — it rewrites project files.
+The `wizzard-N` ids in `docs/designs/` and in a few test comments come from the beads tracker
+this repository used until 2026-09-11. `docs/PLAN.md` maps every id still referenced to where it
+went; the full history is in git.
 
 ## Coding Tasks
 

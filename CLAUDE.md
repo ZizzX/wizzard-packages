@@ -29,7 +29,7 @@ Three places, one job each. Nothing else is a source of truth for the state of t
   stands. Its "Now" section is what every new session is handed. Change it in the same PR that
   changes a status. `docs/designs/v1-launch.md` is the frozen record of _why_; status is never
   tracked there.
-- **The board** - the GitHub Projects board `wizzard-packages`, over this repository's issues.
+- **The board** - <https://github.com/users/ZizzX/projects/2>, over this repository's issues.
   Status is the column: Backlog, Ready, In progress, In review, Blocked, Done. Order is the
   position in Ready: the top card is next. An epic is a parent issue with native sub-issues, and
   a dependency is a native "blocked by" link, never a sentence in a comment.

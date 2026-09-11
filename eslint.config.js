@@ -26,7 +26,6 @@ export default [
       'docs/api/**',
       'playwright-report/**',
       'test-results/**',
-      '.beads/**',
       // Standalone example with its own flat config (react-refresh plugin).
       'examples/shadcn-ui-connector/**',
       '**/*.bak',
