@@ -51,6 +51,19 @@ and true: it is the first thing every session reads. The same settings file sets
 to empty, so no commit or PR from this repository carries an assistant trailer - rule 1 of
 `AGENTS.md`, enforced by configuration rather than by memory.
 
+## Starting a session
+
+The session brief arrives before the owner says anything, so the first reply carries it. When
+the owner's first message does not already name the work - a greeting, "continue", a bare
+question - open with where the project stands in three or four lines: what is in progress, what
+is blocked and by what, and what is next on the board. Then ask one question with three
+answers: continue the task on top (name it), take another one from the board, or start
+something new. Starting something new means opening an issue for it first.
+
+Continuing a task means reading its issue before touching code - the spec in the body and the
+last handoff comment - and saying in two lines where it stopped and what comes next. If the
+brief could not reach GitHub, read `docs/PLAN.md` and say that the board was not available.
+
 ## Skill routing
 
 When the user's request matches an available skill, invoke it via the Skill tool. When in doubt, invoke the skill.
