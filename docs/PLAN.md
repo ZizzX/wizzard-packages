@@ -16,8 +16,6 @@ brief shows the board and the last merged PRs live, so they are not repeated her
 
 - **In progress:** S4, the documentation pages (#57). Next is S4-1 (#71), the runnable-example
   mechanism and Getting started; S4-2 to S4-4 (#72-#74) are blocked by it.
-- **Also in progress:** the project's own memory (#81) - this file, the board and the session
-  brief. The beads tracker is retired; see "Legacy ids" below.
 - **Next after S4:** L6, the diagnostic contract (#59), which also owns the `/errors/` pages.
 - **Waiting on the owner:** R3 (#80), because `main` has no branch protection.
 
