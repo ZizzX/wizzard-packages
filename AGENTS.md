@@ -111,6 +111,27 @@ build time. `examples/next-app` is the proof, built on every `pnpm build` and dr
 Outside RSC - Vite, Remix, plain bundlers, Node - the directive is inert. Keep the react
 `tsup` config on esbuild only; the rollup pass drops directives.
 
+## Documentation is part of the change
+
+Every feature, fix or behaviour change updates the README section that describes
+that surface **and** the docs page that teaches it, in the same change. Never a
+follow-up PR, never a tracked "docs debt" issue.
+
+Before opening a PR, name the README section and the `/docs/` page that describe
+what you changed, and edit both:
+
+- a new public option, prop or return value → the API behaviour table, plus the
+  guide page that owns the concept
+- a new error → its `/errors/<code>` page
+- a changed default → every snippet that relied on the old one
+- a snippet that is generated (`scripts/embed-examples.mjs`) or `?raw`-imported →
+  edit the source file and let the mechanism carry it; do not hand-write a copy
+
+Docs voice: plain prose, no emoji, no icon bullets, no decorative badges.
+
+The docs site is versioned per release, starting at 1.0.0. 0.x is not archived
+as an older version: it is torn down, not supported.
+
 ## Quality gates
 
 These run in CI and must pass locally before a PR:
@@ -171,6 +192,28 @@ review, and the merge to Done, with the plan's row updated in the same PR.
 The `wizzard-N` ids in `docs/designs/` and in a few test comments come from the beads tracker
 this repository used until 2026-09-11. `docs/PLAN.md` maps every id still referenced to where it
 went; the full history is in git.
+
+Open an issue when work is identified, and re-file rather than silently widening one already
+open. Labels carry priority (`P0`-`P3`) and kind (`epic`, `story`, `task`, `bug`, `design`,
+`documentation`); status is the board's job, never a label's. `TODOS.md` is work deliberately
+deferred out of 1.0.0, not the tracker.
+
+### Starting a session
+
+When a session begins and the owner's first message does not already name the work - a
+greeting, "continue", a bare question - open with where the project stands in three or four
+lines: what is in progress, what is blocked and by what, and what is next on the board. Then ask
+one question with three answers: continue the task on top (name it), take another one from the
+board, or start something new. Starting something new means opening an issue for it first.
+
+Continuing a task means reading its issue before touching code - the spec in the body and the
+last handoff comment - and saying in two lines where it stopped and what comes next.
+
+Claude Code sessions are handed this state before the owner types anything: a SessionStart hook
+in `.claude/settings.json` runs `scripts/session-brief.mjs`, which prints the plan's "Now", the
+board's live columns, the last merged PRs and any uncommitted work. Any other agent reads
+`docs/PLAN.md` and the board itself. If the board cannot be reached, say so and work from the
+plan.
 
 ## Coding Tasks
 
