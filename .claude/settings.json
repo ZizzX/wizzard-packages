@@ -1,0 +1,22 @@
+{
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/session-brief.mjs\"",
+            "shell": "bash",
+            "timeout": 30,
+            "statusMessage": "Reading the plan and the board"
+          }
+        ]
+      }
+    ]
+  }
+}

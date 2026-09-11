@@ -23,19 +23,33 @@ as an older version: it is torn down, not supported.
 
 ## Work tracking
 
-Epics, stories and tasks live in **GitHub Issues** on this repository.
+Three places, one job each. Nothing else is a source of truth for the state of the project.
 
-- milestone = epic
-- issue with a task checklist = story
-- issue = task, closed by its PR via `Closes #N`
+- **The plan** - `docs/PLAN.md`: what is being built, in what order, and where each track
+  stands. Its "Now" section is what every new session is handed. Change it in the same PR that
+  changes a status. `docs/designs/v1-launch.md` is the frozen record of _why_; status is never
+  tracked there.
+- **The board** - <https://github.com/users/ZizzX/projects/2>, over this repository's issues.
+  Status is the column: Backlog, Ready, In progress, In review, Blocked, Done. Order is the
+  position in Ready: the top card is next. An epic is a parent issue with native sub-issues, and
+  a dependency is a native "blocked by" link, never a sentence in a comment.
+- **The issue itself** - the body is the spec and its acceptance criteria. Comments carry what
+  was learned, the decisions taken, and a handoff note whenever work stops part-way ("stopped
+  here, next is ..."). The PR that finishes it says `Closes #N`.
 
-Labels carry priority (`P0`–`P3`), kind (`epic`, `story`, `task`, `bug`,
-`docs`, `design`) and state (`blocked`). An issue that is blocked names its
-blocker in the body. `TODOS.md` stays what it is: work deliberately deferred out
-of 1.0.0, with the context to pick it up cold.
+Moving a card is part of the work, not a report on it: taking a task moves it to In progress,
+opening its PR moves it to In review, and the merge moves it to Done and updates the plan's row.
+Open an issue when work is identified, and re-file rather than silently widening one already
+open. Labels carry priority (`P0`-`P3`) and kind (`epic`, `story`, `task`, `bug`, `design`,
+`documentation`); status is the board's job, never a label's. `TODOS.md` stays what it is: work
+deliberately deferred out of 1.0.0.
 
-Keep it current. Open an issue when work is identified, close it when its PR
-merges, and re-file rather than silently widening one that is already open.
+**The session brief.** `.claude/settings.json` runs `scripts/session-brief.mjs` when a session
+starts. It prints the plan's "Now" section, the board's In progress, In review and Blocked
+columns with the top of Ready, the last merged PRs, and any uncommitted work. Keep "Now" short
+and true: it is the first thing every session reads. The same settings file sets `attribution`
+to empty, so no commit or PR from this repository carries an assistant trailer - rule 1 of
+`AGENTS.md`, enforced by configuration rather than by memory.
 
 ## Skill routing
 
