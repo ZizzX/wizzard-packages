@@ -28,8 +28,15 @@ A `FlowDefinition` is JSON. Everything it cannot carry - a validator, a predicat
 named by a `$ref` and answered by a registry the client already holds.
 
 That split is the security property, not a convenience. A definition from a server can ask for a
-check to run; it cannot supply the code that runs it. The worst a hostile payload can do is name
-a resolver you do not have, which `validateFlow` reports before anything runs.
+check to run; it cannot supply the code that runs it. A name it invents is reported by
+`validateFlow` before anything runs.
+
+One qualification, because it decides how you build the registry. `validateFlow` asks
+`name in registry`, and `in` walks the prototype chain - so against an ordinary object literal,
+`{ "$ref": "toString" }` passes as a known resolver and the engine then calls
+`Object.prototype.toString`, which returns a truthy string and quietly changes which steps are
+reachable. Build the registry with a null prototype, as the example does, and the only names that
+resolve are the ones you put there.
 
 <RunnableExample
   reactSources={[
@@ -101,6 +108,13 @@ absence as a deletion would refuse every patch made while someone stands inside 
 
 A patch that introduces a group step without a traversal installed throws rather than returning
 `false`. That is a wiring mistake in your application, not an outcome of the payload.
+
+**Check a patch before applying it.** `patchFlow` merges and installs; it does not validate. A
+patch carrying `order: 1` is accepted and the failure surfaces later, inside a selector, with the
+payload long out of sight. Merge it against the current definition yourself, run the same checks
+you ran on the first payload, and hand over the patch only if the flow it produces is one the
+engine can run - which is what the example does, and why the refusal it shows names a problem
+rather than a stack trace.
 
 **Deleting a step is the one change a payload cannot express.** A step is removed by setting it
 to `undefined`, and JSON has no `undefined` - `null` is a different value and is not treated as a

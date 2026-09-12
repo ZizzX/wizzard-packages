@@ -5,9 +5,9 @@ import { describe, expect, it, vi } from 'vitest';
 
 import AppVue from './App.vue';
 import { App } from './App';
-import { FROM_SERVER, registry } from './contract';
+import { FROM_SERVER, PATCH_FROM_SERVER, registry } from './contract';
 import expectedOutput from './headless.out.txt?raw';
-import { loadFlow } from './load';
+import { checkPatch, loadFlow } from './load';
 
 /**
  * The contract, checked from both ends: a definition that arrives as text runs,
@@ -35,6 +35,37 @@ describe('server-driven', () => {
     const result = loadFlow(FROM_SERVER, registry);
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.flow.id).toBe('signup');
+  });
+
+  it('reports a shape the validator would have thrown on', () => {
+    // `validateFlow` reads `flow.order` unguarded, so these reach it as a
+    // TypeError unless the shape is checked first. Both are ordinary things for
+    // a broken service to send.
+    for (const bad of ['{"id":"x","steps":{"a":{}},"order":1}', '{"id":"x","steps":{"a":null}}']) {
+      const result = loadFlow(bad, registry);
+      expect(result.ok, `"${bad}" should be reported, not thrown`).toBe(false);
+      if (!result.ok) expect(result.problems[0]?.message).toMatch(/^\[wizzard\] /);
+    }
+  });
+
+  it('does not accept an inherited name as a resolver', () => {
+    // `validateFlow` asks `name in registry`, and `in` walks the prototype
+    // chain: against an object literal this passes and the engine then calls
+    // `Object.prototype.toString`. The registry has a null prototype for this.
+    const hostile = `{"id":"x","steps":{"a":{"when":{"$ref":"toString"}}}}`;
+    const result = loadFlow(hostile, registry);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.problems.some((p) => /toString/.test(p.message))).toBe(true);
+  });
+
+  it('refuses a patch that would break the flow, before the engine sees it', () => {
+    const loaded = loadFlow(FROM_SERVER, registry);
+    expect(loaded.ok).toBe(true);
+    if (!loaded.ok) return;
+
+    expect(checkPatch(loaded.flow, '{"order":1}', registry).ok).toBe(false);
+    expect(checkPatch(loaded.flow, 'not json', registry).ok).toBe(false);
+    expect(checkPatch(loaded.flow, PATCH_FROM_SERVER, registry).ok).toBe(true);
   });
 
   it('applies a patch and refuses the one that deletes the current step, on React', async () => {

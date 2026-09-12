@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import type { Wizard } from '@wizzard-packages/core/v1';
+import type { FlowDefinition, Wizard as Engine } from '@wizzard-packages/core/v1';
 import { useField, useNavigation, useStep, useWizard } from '@wizzard-packages/vue/v1';
 import { computed, ref, useId } from 'vue';
 
-import { PATCH_FROM_SERVER } from './contract';
+import { PATCH_FROM_SERVER, registry } from './contract';
+import { checkPatch } from './load';
 
-const wizard = useWizard() as Wizard;
+const props = defineProps<{ flow: FlowDefinition }>();
+
+const wizard = useWizard() as Engine;
 const { current } = useStep();
 const { next, isBusy } = useNavigation();
 const email = useField<string>('account.email');
@@ -16,9 +19,16 @@ const emailId = useId();
 const step = computed(() => current.value ?? 'account');
 const starting = computed(() => current.value === null);
 
+/**
+ * A patch is checked before it is applied. `patchFlow` merges and installs; it
+ * does not validate, so an `order` of the wrong type would be accepted here and
+ * fail later, in a selector, with the payload long out of sight.
+ */
 const applyPatch = (): void => {
-  const patch = JSON.parse(PATCH_FROM_SERVER) as Parameters<typeof wizard.patchFlow>[0];
-  note.value = `Patch: ${wizard.patchFlow(patch) ? 'applied' : 'refused'}`;
+  const checked = checkPatch(props.flow, PATCH_FROM_SERVER, registry);
+  note.value = checked.ok
+    ? `Patch: ${wizard.patchFlow(checked.patch) ? 'applied' : 'refused'}`
+    : `Patch: refused before applying - ${checked.problems[0]?.message ?? ''}`;
 };
 
 /**

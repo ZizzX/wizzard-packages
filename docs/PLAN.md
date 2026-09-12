@@ -14,10 +14,11 @@ this file is the view one level above it.
 <!-- The session brief hands this section to every new session. Keep it short and true; the
 brief shows the board and the last merged PRs live, so they are not repeated here. -->
 
-- **In progress:** S4, the documentation pages (#57). S4-1 (#71) landed in #87 - the
-  runnable-example mechanism and Getting started - and S4-2 (#72) in #89 - the four task pages,
-  each with a runnable example on that mechanism. S4-3 and S4-4 (#73, #74) are next.
-- **Next after S4:** L6, the diagnostic contract (#59), which also owns the `/errors/` pages.
+- **Just done:** S4, the documentation pages (#57), in four parts - the runnable-example
+  mechanism and Getting started (#87), the four task pages (#89), the API behaviour table and the
+  five guides (#94), and the Devtools and Server-driven pages (#96).
+- **Next:** L6, the diagnostic contract (#59), which also owns the `/errors/` pages. S5, the API
+  reference from typedoc (#62), is unblocked now that S4 is finished.
 - **Waiting on the owner:** R3 (#80), because `main` has no branch protection.
 
 ## Tracks
@@ -49,8 +50,8 @@ only the owner can do.
 | S1  | Site shell and the hero               | done        | #48                                              |
 | S2  | The flow inspector                    | done        | #50                                              |
 | S3  | The three reference applications      | done        | #54, #55, #56; the StackBlitz button waits on R0 |
-| S4  | The documentation pages               | in progress | #57                                              |
-| S5  | API reference from typedoc            | blocked     | #62, by S4                                       |
+| S4  | The documentation pages               | done        | #57; #87, #89, #94, #96                          |
+| S5  | API reference from typedoc            | next        | #62                                              |
 | S6  | Deploy switch                         | todo        | #66                                              |
 | -   | A flat ground and surfaces            | in progress | #58; #75 done, #76 open                          |
 | -   | Versioned documentation               | todo        | #60                                              |

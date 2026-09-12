@@ -88,5 +88,28 @@ It never navigates, never writes to the wizard, and never throws into the host. 
 crashes the application it is diagnosing is worse than no tool, and one that moves the wizard
 while you read it destroys the state you opened it to see.
 
-Install it as a dev dependency and it goes where dev dependencies go: out of the production
-bundle. The engine carries no reference to it - the plugin is something you pass in.
+## Keeping it out of production
+
+A dev dependency is about who installs the package, not about what a bundler does with it. A
+static import that is rendered unconditionally is in the bundle, and the same install without dev
+dependencies fails to build because the import has nothing to resolve. Gate the render yourself:
+
+```tsx
+{
+  process.env.NODE_ENV !== 'production' && (
+    <div style={{ height: 360 }}>
+      <WizardDevtools plugin={dt} />
+    </div>
+  );
+}
+```
+
+```tsx
+// Vite reads the same thing from its own flag.
+{
+  import.meta.env.DEV && <WizardDevtools plugin={dt} />;
+}
+```
+
+The engine itself carries no reference to the panel - the plugin is something you pass in - so
+what a gate has to cover is the panel and its import, not the wizard.

@@ -1,4 +1,8 @@
-import { createWizard, type Wizard } from '@wizzard-packages/core/v1';
+import {
+  createWizard,
+  type FlowDefinition,
+  type Wizard as Engine,
+} from '@wizzard-packages/core/v1';
 import {
   WizardProvider,
   useField,
@@ -9,7 +13,7 @@ import {
 import { useId, useMemo, useState, type ReactNode } from 'react';
 
 import { FROM_SERVER, PATCH_FROM_SERVER, registry } from './contract';
-import { loadFlow } from './load';
+import { checkPatch, loadFlow } from './load';
 
 export function App(): ReactNode {
   // The definition is read once, and the engine is built from what came back.
@@ -33,13 +37,13 @@ export function App(): ReactNode {
 
   return (
     <WizardProvider wizard={wizard}>
-      <Wizard />
+      <Wizard flow={loaded.flow} />
     </WizardProvider>
   );
 }
 
-export function Wizard(): ReactNode {
-  const wizard = useWizard() as Wizard;
+export function Wizard(props: { flow: FlowDefinition }): ReactNode {
+  const wizard = useWizard() as Engine;
   const { current } = useStep();
   const { next, isBusy } = useNavigation();
   const [email, setEmail] = useField<string>('account.email');
@@ -49,9 +53,18 @@ export function Wizard(): ReactNode {
   const step = current ?? 'account';
   const starting = current === null;
 
+  /**
+   * A patch is checked before it is applied. `patchFlow` merges and installs;
+   * it does not validate, so an `order` of the wrong type would be accepted
+   * here and fail later, in a selector, with the payload long out of sight.
+   */
   const apply = (text: string, label: string) => {
-    const patch = JSON.parse(text) as Parameters<typeof wizard.patchFlow>[0];
-    setNote(`${label}: ${wizard.patchFlow(patch) ? 'applied' : 'refused'}`);
+    const checked = checkPatch(props.flow, text, registry);
+    if (!checked.ok) {
+      setNote(`${label}: refused before applying - ${checked.problems[0]?.message ?? ''}`);
+      return;
+    }
+    setNote(`${label}: ${wizard.patchFlow(checked.patch) ? 'applied' : 'refused'}`);
   };
 
   return (
@@ -77,8 +90,8 @@ export function Wizard(): ReactNode {
       </button>
       {/* The patch a backend should not send: it deletes the step the person is
           standing on, and the engine answers false rather than relocating them.
-          Note that it is built here rather than parsed: JSON has no `undefined`,
-          so deleting a step is the one change a payload cannot express. */}
+          Built here rather than parsed, because JSON has no `undefined` and so
+          cannot express a deletion at all. */}
       <button
         type="button"
         onClick={() => {

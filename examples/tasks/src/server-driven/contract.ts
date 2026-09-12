@@ -28,14 +28,14 @@ export const FROM_SERVER = `{
  * the code that runs it - which is the property that makes accepting one
  * safe at all.
  */
-export const registry: AsyncRegistry = {
-  account: (_args, scope: Scope): Record<string, string> | null => {
+export const registry: AsyncRegistry = Object.assign(Object.create(null) as AsyncRegistry, {
+  account: (_args: unknown, scope: Scope): Record<string, string> | null => {
     const { email } = (scope.data['account'] as { email?: string } | undefined) ?? {};
     return typeof email === 'string' && email.includes('@')
       ? null
       : { email: 'Enter your email address.' };
   },
-};
+});
 
 /**
  * A later message from the same backend: one step replaced, one added. Steps
