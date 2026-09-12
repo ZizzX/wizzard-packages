@@ -1,0 +1,137 @@
+---
+title: Server-driven flows
+description: The JSON contract the engine accepts today, and what is planned for sending flows over the wire.
+---
+
+import RunnableExample from '../../../components/RunnableExample.astro';
+import ServerDrivenReact from '../../../islands/ServerDrivenReact';
+import ServerDrivenVue from '../../../islands/ServerDrivenVue.vue';
+import contractSource from '@examples/tasks/src/server-driven/contract.ts?raw';
+import loadSource from '@examples/tasks/src/server-driven/load.ts?raw';
+import appSource from '@examples/tasks/src/server-driven/App.tsx?raw';
+import appVueSource from '@examples/tasks/src/server-driven/App.vue?raw';
+import wizardVueSource from '@examples/tasks/src/server-driven/Wizard.vue?raw';
+import headlessSource from '@examples/tasks/src/server-driven/headless.ts?raw';
+import headlessOutput from '@examples/tasks/src/server-driven/headless.out.txt?raw';
+
+A flow is data, and that decision has a consequence this page is about: a definition can be
+written somewhere other than your bundle. It can live in a column, be assembled by a service, be
+edited by someone who does not deploy, and arrive over the wire.
+
+This page has two halves, and they are not the same kind of thing. The first is the contract the
+engine accepts today and is covered by tests. The second is what is planned on top of it, and is
+not here yet.
+
+## What the engine accepts today
+
+A `FlowDefinition` is JSON. Everything it cannot carry - a validator, a predicate, a loader - is
+named by a `$ref` and answered by a registry the client already holds.
+
+That split is the security property, not a convenience. A definition from a server can ask for a
+check to run; it cannot supply the code that runs it. A name it invents is reported by
+`validateFlow` before anything runs.
+
+One qualification, because it decides how you build the registry. `validateFlow` asks
+`name in registry`, and `in` walks the prototype chain - so against an ordinary object literal,
+`{ "$ref": "toString" }` passes as a known resolver and the engine then calls
+`Object.prototype.toString`, which returns a truthy string and quietly changes which steps are
+reachable. Build the registry with a null prototype, as the example does, and the only names that
+resolve are the ones you put there.
+
+<RunnableExample
+  reactSources={[
+    {
+      name: 'contract.ts',
+      lang: 'ts',
+      code: contractSource,
+      note: 'The definition as text, and the half that never travels.',
+    },
+    {
+      name: 'load.ts',
+      lang: 'ts',
+      code: loadSource,
+      note: 'Cheapest check first: size, JSON, shape, then the flow rules.',
+    },
+    { name: 'App.tsx', lang: 'tsx', code: appSource },
+  ]}
+  vueSources={[
+    { name: 'contract.ts', lang: 'ts', code: contractSource },
+    { name: 'load.ts', lang: 'ts', code: loadSource },
+    { name: 'App.vue', lang: 'vue', code: appVueSource },
+    { name: 'Wizard.vue', lang: 'vue', code: wizardVueSource },
+  ]}
+  headlessSources={[
+    { name: 'contract.ts', lang: 'ts', code: contractSource },
+    { name: 'load.ts', lang: 'ts', code: loadSource },
+    { name: 'headless.ts', lang: 'ts', code: headlessSource },
+    {
+      name: 'Output',
+      lang: 'text',
+      code: headlessOutput,
+      note: 'A test in the repository asserts these exact lines.',
+    },
+  ]}
+>
+  <ServerDrivenReact client:visible slot="react" />
+  <ServerDrivenVue client:visible slot="vue" />
+</RunnableExample>
+
+## Check it in the order things go wrong
+
+A definition that arrived from elsewhere is untrusted input, and the checks are worth doing
+cheapest first: the size of the text, then whether it is JSON at all, then whether it has the
+shape a flow has, and only then the flow's own rules.
+
+The shape check is not politeness. `validateFlow` is typed for a `FlowDefinition` and reads
+fields off it without guarding them, so an ordinary malformed payload - a string where `steps`
+should be, `order` holding a number - throws out of the validator rather than being reported by
+it. Checking `id` and `steps` yourself first is what turns that into a list of problems.
+
+Every failure is a value here, which is what lets a page render the problems instead of
+disappearing behind a stack trace. [Validation](../validation/) is what `validateFlow` reports
+and how `assertFlow` differs.
+
+## Changing a flow that is already running
+
+`patchFlow` takes a partial definition and merges it: steps are replaced by id, so a patch names
+only what changed, and fields at the top level are replaced whole.
+
+```ts
+wizard.patchFlow({ order: ['account', 'billing', 'invoice', 'done'], steps: { invoice: {} } });
+```
+
+It returns whether it applied, and there is one patch it refuses: the one that deletes the step
+the person is standing on. Relocating them silently loses a half-filled form, and a backend
+sending that has a bug worth surfacing rather than smoothing over. The refusal only applies at
+the root of the flow - a step inside a group is never in the root's `steps`, and reading its
+absence as a deletion would refuse every patch made while someone stands inside a group.
+
+A patch that introduces a group step without a traversal installed throws rather than returning
+`false`. That is a wiring mistake in your application, not an outcome of the payload.
+
+**Check a patch before applying it.** `patchFlow` merges and installs; it does not validate. A
+patch carrying `order: 1` is accepted and the failure surfaces later, inside a selector, with the
+payload long out of sight. Merge it against the current definition yourself, run the same checks
+you ran on the first payload, and hand over the patch only if the flow it produces is one the
+engine can run - which is what the example does, and why the refusal it shows names a problem
+rather than a stack trace.
+
+**Deleting a step is the one change a payload cannot express.** A step is removed by setting it
+to `undefined`, and JSON has no `undefined` - `null` is a different value and is not treated as a
+deletion. Removal has to be built in code, which is why the example builds that patch rather than
+parsing it.
+
+## What is planned, and is not here
+
+Sending flows over the wire as a feature - fetching, caching, revalidating, patching from a
+stream - is roadmap work, and `http-flow` is the plugin that would carry it. It is not part of
+1.0.0, and this page is deliberately the only server-driven surface the release ships.
+
+The reason for the order is that the contract has to be right before the transport is
+interesting. Everything a transport would need already exists and is tested: a definition is
+JSON, it can be validated before it runs, it can be swapped while the wizard is running, and the
+part that cannot be serialized is named rather than sent. What `http-flow` adds is the plumbing,
+not the model.
+
+Until it lands, `fetch` and `patchFlow` are the plumbing, and they are the same two calls the
+plugin would make.

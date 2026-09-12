@@ -1,0 +1,115 @@
+---
+title: Devtools
+description: The panel that answers one question - why is the wizard where it is - and how to mount it.
+---
+
+import { Code } from '@astrojs/starlight/components';
+import DevtoolsReact from '../../../islands/DevtoolsReact';
+import devtoolsSource from '@examples/quickstart/src/Devtools.tsx?raw';
+
+A wizard that will not move is the hard bug, because nothing happened: no exception, no log line,
+a button that does nothing. The panel exists for that one question - why is the wizard where it
+is - and answers it with three views over one snapshot.
+
+<div class="example-stage" data-example-stage="react">
+  <DevtoolsReact client:visible />
+</div>
+
+<Code code={devtoolsSource} lang="tsx" title="Devtools.tsx" />
+
+## Three views, one snapshot
+
+**Graph** draws the flow the wizard is standing in: which steps are reachable now, which branch
+it took, and where the current step sits among them. Selecting a node inspects it. It never
+navigates, so reading the picture cannot move the wizard someone is debugging.
+
+**State** is what was committed, with a diff per commit. It is the answer to "did that field
+actually reach the wizard", which is a different question from "did I call `set`".
+
+**Activity** is the one that pays for the panel. It lists what the wizard did in order - commits
+it made, moves it refused, and the one in flight. A refusal is not a commit, so it does not reach
+a subscriber at all: without this view a refused `next()` is invisible, which is exactly the
+moment someone opens devtools. The rows come from the plugin, and the header says so when the
+plugin is missing.
+
+## Mounting it
+
+Three steps, and two ways to get it wrong.
+
+```bash
+npm i -D @wizzard-packages/devtools
+```
+
+```tsx
+const dt = devtools();
+const wizard = createWizard({ flow: signup, plugins: [dt] });
+
+<WizardDevtools plugin={dt} />;
+```
+
+**The same object goes to both.** `devtools()` returns a plugin; the engine writes to it and the
+panel reads from it. Two calls produce two objects, the panel reads the one nothing writes to,
+and the Activity view sits empty while everything else looks correct.
+
+**The container needs a height.** The panel is docked rather than floating: it fills what it is
+given. Dropped into a page with no height it collapses to nothing, which reads as "the panel is
+broken" rather than "the panel is zero pixels tall".
+
+## The props
+
+| Prop         | What it is                                                                   |
+| ------------ | ---------------------------------------------------------------------------- |
+| `wizard`     | The wizard to watch. Defaults to the one from `WizardProvider`.              |
+| `plugin`     | The object from `devtools()`. Without it there are no refusal rows.          |
+| `subFlows`   | Definitions a group step names, so nested flows can be drawn.                |
+| `layout`     | Your own positions. There is a built-in layout; this replaces it.            |
+| `redact`     | Runs once, at export, over a copy of the whole bundle.                       |
+| `onRecord`   | Receives a recorded session bundle.                                          |
+| `defaultTab` | `'graph'`, `'state'` or `'activity'`. Defaults to the graph.                 |
+| `limits`     | Ceilings on activity rows, frames and diff rows, for a long-running session. |
+
+## It is a React panel
+
+`WizardDevtools` is a React component, and `react` is a peer dependency. A Vue application does
+not mount it.
+
+What a Vue host uses instead is `@wizzard-packages/devtools/headless`, which is the same
+machinery without React or the DOM: `devtools()` installs into any wizard, and `recordSession`
+produces the same bundle the panel's record button writes. The recording can then be read
+anywhere - a test, a bug report, the inspector on this site.
+
+```ts
+import { devtools, recordSession } from '@wizzard-packages/devtools/headless';
+```
+
+## What it never does
+
+It never navigates, never writes to the wizard, and never throws into the host. A tool that
+crashes the application it is diagnosing is worse than no tool, and one that moves the wizard
+while you read it destroys the state you opened it to see.
+
+## Keeping it out of production
+
+A dev dependency is about who installs the package, not about what a bundler does with it. A
+static import that is rendered unconditionally is in the bundle, and the same install without dev
+dependencies fails to build because the import has nothing to resolve. Gate the render yourself:
+
+```tsx
+{
+  process.env.NODE_ENV !== 'production' && (
+    <div style={{ height: 360 }}>
+      <WizardDevtools plugin={dt} />
+    </div>
+  );
+}
+```
+
+```tsx
+// Vite reads the same thing from its own flag.
+{
+  import.meta.env.DEV && <WizardDevtools plugin={dt} />;
+}
+```
+
+The engine itself carries no reference to the panel - the plugin is something you pass in - so
+what a gate has to cover is the panel and its import, not the wizard.

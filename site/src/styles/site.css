@@ -1195,6 +1195,25 @@ svg.interactive .node {
   max-width: var(--measure);
 }
 
+/* The devtools panel carries its own theme as six custom properties, and left
+   alone it paints its own light ground: in the dark theme that put the page's
+   light text on a white panel at 1.18:1, across fifty-eight nodes.
+
+   It declares those properties on `.wz-panel` itself, so a value set on an
+   ancestor never reaches it - a declaration on the element always beats one
+   inherited from above, whatever the ancestor's selector. The override has to
+   land on the same element and outrank the panel's own rule, which one extra
+   class does. Six declarations rather than a rule per element, because the
+   panel already routes every colour through them. */
+.example-stage .wz-panel {
+  --wz-bg: var(--surface);
+  --wz-fg: var(--fg);
+  --wz-muted: var(--fg-muted);
+  --wz-accent: var(--accent);
+  --wz-line: var(--line-strong);
+  --wz-danger: var(--st-error);
+}
+
 .example-source {
   border-top: var(--border) solid var(--line);
   padding-top: var(--space-8);

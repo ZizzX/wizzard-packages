@@ -28,6 +28,8 @@ const DOCS = [
   ['API behaviour', 'docs/api-behaviour/'],
   ['Validation', 'docs/validation/'],
   ['Persistence', 'docs/persistence/'],
+  ['Devtools', 'docs/devtools/'],
+  ['Server-driven flows', 'docs/server-driven/'],
 ] as const;
 
 /** Starlight reads the theme from this key before it paints. */

@@ -63,6 +63,8 @@ export default defineConfig({
             { label: 'API behaviour', link: '/docs/api-behaviour/' },
             { label: 'Validation', link: '/docs/validation/' },
             { label: 'Persistence', link: '/docs/persistence/' },
+            { label: 'Devtools', link: '/docs/devtools/' },
+            { label: 'Server-driven flows', link: '/docs/server-driven/' },
           ],
         },
       ],
