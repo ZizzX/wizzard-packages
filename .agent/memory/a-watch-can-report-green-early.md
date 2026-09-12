@@ -17,19 +17,36 @@ while any check is still pending (`gh pr checks --help`, "Additional exit codes"
 2.98). So the answer is the exit code of a plain call, not the end of a watch.
 
 ```bash
-for i in $(seq 1 45); do
+for i in $(seq 1 60); do
   out=$(gh pr checks <n> 2>&1)
   status=$?
-  [ "$status" -ne 8 ] && { echo "$out"; exit "$status"; }
-  sleep 20
+  # 8 is running. Exit 1 with "no checks reported" is the window after a push
+  # where the checks do not exist yet, and it carries the same code as a failure.
+  if [ "$status" -eq 8 ] || echo "$out" | grep -q 'no checks reported'; then
+    sleep 20
+    continue
+  fi
+  echo "$out"
+  exit "$status"
 done
-echo "still pending after 15 minutes"
+echo "checks never settled"
 exit 2
 ```
 
-The last two lines are the point. A loop that runs out of iterations and falls through returns
+There are three states, not two, and the third is what makes this harder than it looks. Between
+the push and the checks being registered, the command prints
+`no checks reported on the '<branch>' branch` and exits **1** - the same code a failed run gives.
+A loop waiting only on 8 leaves in the first twenty seconds and calls that settled; a caller
+reading 1 as "the checks failed" is wrong the other way. Wait for the checks to exist before
+waiting for them to finish, and tell that state apart by the message, since the code cannot.
+
+The last two lines matter as much. A loop that runs out of iterations and falls through returns
 whatever the final `sleep` returned, which is zero - the same false green, rebuilt by the thing
 written to avoid it. Every bounded wait needs an explicit failure at the bound.
+
+This note was wrong twice before it was right, both times in the direction of reporting success:
+first the fall-through, then the missing third state. That is the shape of the mistake worth
+remembering, more than the commands.
 
 **A heavy run beside the e2e suite fails a test that is fine.** `pnpm verify` and
 `pnpm test:e2e` at the same time failed the inspector's "label as text" spec on a five-second
