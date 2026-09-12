@@ -62,6 +62,24 @@ An atom step adds `view` (a name your renderer maps to a component) and `validat
 definition or the name of one), `repeat` for running that subflow over a list, and `input` for
 the values passed into it.
 
+A `repeat` group runs its subflow once per item of `over`. Items are identified by `keyBy` - a
+path inside each item whose value becomes that item's key - and by position when `keyBy` is
+absent. The difference appears the moment the list changes under a running wizard: with a key,
+answers follow their item through an insertion or a sort; without one, they follow the index,
+which is a different passenger.
+
+### What happens to a step's data
+
+It is kept. That is the default and it holds for a branch the user walked away from: a step
+whose `when` stops holding is off the route, but what it collected stays in `data`, because the
+engine cannot know whether you wanted it gone and someone who switches back expects their
+answers to still be there.
+
+`clearOnLeave` is how a step says otherwise, and it applies whenever that step is left, forwards
+included. It does not run on completion - the last step's data is the submission.
+[Clear abandoned branch data](../clear-abandoned-branch-data/) shows both halves, and says what
+clearing does not protect.
+
 ## The two fields called validate
 
 They sit at different levels and mean different things, and confusing them is the most common

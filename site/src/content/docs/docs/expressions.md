@@ -76,15 +76,21 @@ Hand-written JSON has no type checking and a typo in `'data.payr'` is silent. Th
 `@wizzard-packages/core/expr` produces exactly the same objects with the paths typed:
 
 ```ts
-import { get, eq, and, isIn } from '@wizzard-packages/core/expr';
+import * as e from '@wizzard-packages/core/expr';
 
-const businessPayer = eq(get('data.payer'), 'business');
-const eligible = and(businessPayer, isIn(get('data.country'), ['DE', 'FR']));
+const businessPayer = e.eq(e.get('data.payer'), 'business');
+const eligible = e.and(businessPayer, e.isIn(e.get('data.country'), ['DE', 'FR']));
 ```
 
 `get`, `ref`, `not`, `and`, `or`, `empty`, `eq`, `ne`, `gt`, `gte`, `lt`, `lte` and `isIn` -
 one per operator, named for it. Only `isIn` differs from its operator, because `in` is a
 reserved word.
+
+Import it as a namespace. The names are the shortest words in the language - `get`, `and`,
+`or`, `not`, `eq` - and pulled in one by one they collide with a local variable, with a utility
+library, and with each other across files. Behind `e.` they stay together and the condition
+reads as the language it is. Named imports work exactly the same way, and a flow that only ever
+writes one condition is welcome to use them.
 
 The builder is a separate entry point, so importing it never pulls the runtime into a bundle
 that only needed to construct a flow, and constructing a flow never pulls in the builder.

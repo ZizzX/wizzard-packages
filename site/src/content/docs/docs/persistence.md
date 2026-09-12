@@ -70,6 +70,45 @@ and `version` at all.
 older payload before it is read, `epoch` sets the navigation epoch the restored session
 continues from, and `subFlows` supplies the definitions a group step referenced by name.
 
+## Letting the plugin do it
+
+The two functions are the contract. `@wizzard-packages/plugins/persist` is the wiring most
+applications want instead: it reads on start, writes on every commit, coalesces those writes to
+one per frame, and flushes what is pending when the page hides or the wizard is destroyed.
+
+```ts
+import { persist } from '@wizzard-packages/plugins/persist';
+
+createWizard({
+  flow: signup,
+  plugins: [persist({ key: 'signup', version: APP_VERSION, onRestore })],
+});
+```
+
+`onRestore` is how the outcome reaches your interface. It receives a `RestoreOutcome`, which is
+`{ restored: true }` or `{ restored: false, reason }` - the reasons above, plus
+`persist/nothing-stored` for a first visit and `persist/unavailable` for a browser that refuses
+storage at all. Saying which happened is not optional politeness: a form that was half filled in
+and is now empty looks like a bug to the person who filled it, and silence is why they would
+think so. [Restore after reload](../restore-after-reload/) is that turned into a working page.
+
+**Storage is synchronous.** `storage` takes anything with `getItem`, `setItem` and `removeItem`
+returning values rather than promises - `localStorage` and `sessionStorage` both qualify, and so
+does an object of your own over a `Map`. An asynchronous store such as IndexedDB does not, and
+1.0 does not wrap one: a write that resolves later cannot be flushed inside `pagehide`, which is
+the moment the last answer is most likely to be lost.
+
+## Sensitive data
+
+A persisted session is a file on someone's device that outlives the tab. Decide what belongs in
+it before you turn persistence on.
+
+For a flow carrying card numbers, health answers or anything else you would not put in a log,
+point `storage` at `sessionStorage`, which is cleared when the tab closes, or do not persist the
+flow at all. `clearOnLeave` is not the tool for this: it drops a value when the step is left, by
+which time every edit has already been committed and written. Keep such a field out of the
+persisted state instead of clearing it afterwards.
+
 ## Size
 
 The decoder enforces a ceiling on payload size and nesting depth, and a migration chain that

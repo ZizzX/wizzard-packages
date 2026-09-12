@@ -25,6 +25,7 @@ const DOCS = [
   ['The flow', 'docs/flow/'],
   ['Expressions', 'docs/expressions/'],
   ['Navigation', 'docs/navigation/'],
+  ['API behaviour', 'docs/api-behaviour/'],
   ['Validation', 'docs/validation/'],
   ['Persistence', 'docs/persistence/'],
 ] as const;

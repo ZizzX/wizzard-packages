@@ -24,10 +24,19 @@ if (!result.ok) {
 | `go(to, opts?)` | `(to: StepId \| END, opts?: { validate?: boolean; force?: boolean }) => Promise<NavResult>` | A named step, if policy allows.                       |
 | `cancel()`      | `() => void`                                                                                | Nowhere. It abandons the move in flight.              |
 
-`validate: false` skips the step's validator for that move. `force: true` on `go` ignores the
-navigation policy. Both exist for the cases a product genuinely needs - a "save and exit" that
-must not be blocked, an admin jumping into a step to reproduce a bug - and both are the wrong
-default, which is why they are opt-in per call.
+`validate: false` skips the step's validator for that move. `force: true` on `go` skips the
+navigation policy - the rule that decides which steps a jump may land on - and skips nothing
+else. Both exist for the cases a product genuinely needs, a "save and exit" that must not be
+blocked and an admin opening a step to reproduce a bug, and both are the wrong default, which is
+why they are opt-in per call.
+
+Guards are not among them. `guards.enter` and `guards.exit` run on every move, `force` included,
+and refuse with `reason: 'blocked'`. A guard is where "this user may not see this step" lives,
+and an option that switched it off would make it advice rather than a rule.
+
+`back()` reads the history stack rather than `order`: it returns the user to where they actually
+came from, which is why a jump forwards and a `back()` afterwards do not strand them in a step
+they skipped. `on.back` overrides it per step, and `'auto'` asks for the stack explicitly.
 
 ## The result
 
