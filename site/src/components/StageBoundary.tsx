@@ -1,4 +1,4 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Component, useState, type ComponentType, type ErrorInfo, type ReactNode } from 'react';
 
 /**
  * The net under the drawing.
@@ -15,6 +15,32 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
  *
  * A class is the only way React offers to catch a render error.
  */
+/**
+ * An application, wrapped in the net above and mounted as an island.
+ *
+ * Every example page needs the same three lines - a boundary, an attempt
+ * counter, and a child keyed on it - and there are eight of them. The wrapper
+ * lives here rather than in each island so the message a reader sees when an
+ * example stops, and what Restart does, are written once. `RestartableStage.vue`
+ * is the same thing for the Vue binding.
+ */
+export function restartable(App: ComponentType): () => ReactNode {
+  return function Island(): ReactNode {
+    const [attempt, setAttempt] = useState(0);
+
+    return (
+      <StageBoundary
+        resetKey={attempt}
+        onRestart={() => {
+          setAttempt((n) => n + 1);
+        }}
+      >
+        <App key={attempt} />
+      </StageBoundary>
+    );
+  };
+}
+
 interface Props {
   children: ReactNode;
   /** Changing this clears the failure, so the next paste draws again. */

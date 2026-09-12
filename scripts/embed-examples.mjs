@@ -32,8 +32,19 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const SNIPPETS = {
   'quickstart-flow': { file: 'examples/quickstart/src/flow.ts', lang: 'ts' },
   'quickstart-react': { file: 'examples/quickstart/src/App.tsx', lang: 'tsx' },
+  // Both Vue files, because the one that provides the wizard is not the one
+  // that uses it: a reader who pastes `Wizard.vue` alone gets a binding error
+  // rather than a wizard.
+  'quickstart-vue-app': { file: 'examples/quickstart/src/App.vue', lang: 'vue' },
   'quickstart-vue': { file: 'examples/quickstart/src/Wizard.vue', lang: 'vue' },
   'quickstart-devtools': { file: 'examples/quickstart/src/Devtools.tsx', lang: 'tsx' },
+  // The install commands are files for the same reason the code is: the site
+  // reads them too (`?raw`), so the line a reader copies from npm and the line
+  // they copy from the documentation cannot say different things. At R1 the
+  // dist-tag changes in three files and nowhere else.
+  'install-react': { file: 'examples/quickstart/install/react.sh', lang: 'bash' },
+  'install-vue': { file: 'examples/quickstart/install/vue.sh', lang: 'bash' },
+  'install-core': { file: 'examples/quickstart/install/core.sh', lang: 'bash' },
 };
 
 /**

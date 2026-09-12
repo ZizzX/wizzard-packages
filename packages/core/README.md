@@ -11,9 +11,14 @@ rather than two implementations of the same rules.
 
 ## Install
 
+<!-- example:install-core -->
+
+<!-- prettier-ignore -->
 ```bash
 pnpm add @wizzard-packages/core@canary
 ```
+
+<!-- /example -->
 
 ## A flow
 

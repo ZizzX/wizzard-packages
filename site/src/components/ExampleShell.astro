@@ -84,15 +84,41 @@ const here = `${base}/examples/${slug}`;
 </Page>
 
 <script>
+  import { FRAMEWORK_LABELS, FRAMEWORK_STORAGE_KEY } from '../lib/framework';
+
   // Remember the framework this page rendered, so the index links here next
-  // time. Written on arrival rather than on a click: the visitor may have
-  // reached the page from anywhere.
+  // time and the documentation tabs open on the same binding. The key is
+  // Starlight's, because its tabs own that storage and cannot be told to read
+  // another one; `lib/framework.ts` says so in full.
+  //
+  // Written on arrival rather than on a click: the visitor may have reached the
+  // page from anywhere. The exception is a reader who chose Headless in the
+  // documentation - no reference application has a headless rendering, so
+  // opening one is not an answer to that question and must not overwrite it.
+  // Clicking the toggle below always is an answer, and always writes.
+  const here = document.location.pathname.replace(/\/$/, '').endsWith('/vue')
+    ? FRAMEWORK_LABELS.vue
+    : FRAMEWORK_LABELS.react;
+
+  const remember = (label: string): void => {
+    try {
+      localStorage.setItem(FRAMEWORK_STORAGE_KEY, label);
+    } catch {
+      // A browser that refuses storage simply does not remember.
+    }
+  };
+
   try {
-    localStorage.setItem(
-      'wizzard:framework',
-      document.location.pathname.replace(/\/$/, '').endsWith('/vue') ? 'vue' : 'react'
-    );
+    if (localStorage.getItem(FRAMEWORK_STORAGE_KEY) !== FRAMEWORK_LABELS.headless) {
+      remember(here);
+    }
   } catch {
-    // A browser that refuses storage simply does not remember.
+    // Reading can throw where writing would; the page is unaffected either way.
+  }
+
+  for (const link of document.querySelectorAll<HTMLAnchorElement>('.framework a')) {
+    link.addEventListener('click', () => {
+      remember(link.textContent?.trim() ?? here);
+    });
   }
 </script>

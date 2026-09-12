@@ -771,6 +771,9 @@ importers:
 
   site:
     dependencies:
+      '@examples/quickstart':
+        specifier: workspace:*
+        version: link:../examples/quickstart
       '@examples/reference':
         specifier: workspace:*
         version: link:../examples/reference

@@ -21,7 +21,12 @@ const near = (path: string): string => fileURLToPath(new URL(path, import.meta.u
 
 const config = readFileSync(near('../../astro.config.mjs'), 'utf8');
 
-/** Starlight reads from `src/content/docs/`, so `/docs/flow/` is `docs/flow.md`. */
+/**
+ * Starlight reads from `src/content/docs/`, so `/docs/flow/` is `docs/flow.md`.
+ * A page that mounts a component is `.mdx` instead, and both extensions resolve
+ * to the same route - so a check that knows only one of them reports a page
+ * that exists as missing.
+ */
 const pagesDir = near('./docs/docs');
 
 const linked = Array.from(config.matchAll(/link:\s*'\/docs\/([\w-]+)\/'/g), (m) => m[1]).filter(
@@ -29,8 +34,8 @@ const linked = Array.from(config.matchAll(/link:\s*'\/docs\/([\w-]+)\/'/g), (m) 
 );
 
 const onDisk = readdirSync(pagesDir)
-  .filter((name) => name.endsWith('.md'))
-  .map((name) => name.replace(/\.md$/, ''));
+  .filter((name) => /\.mdx?$/.test(name))
+  .map((name) => name.replace(/\.mdx?$/, ''));
 
 describe('the documentation sidebar', () => {
   it('links only to pages that exist', () => {
