@@ -1,0 +1,41 @@
+# Memory index — wizzard-packages
+
+- [No assistant attribution](no-assistant-attribution.md) — hard rule, overrides default commit trailers.
+- [npm scope @wizzard is unavailable](npm-scope-wizzard-unavailable.md) — why packages stay on `@wizzard-packages/*`.
+- [v1 is flow-as-data](wizzard-v1-flow-as-data.md) — the one architectural decision everything follows from.
+- [0.x duplication diagnosis](wizzard-0x-duplication-diagnosis.md) — the numbers that justify a rewrite.
+- [ESLint legacy quarantine](eslint-legacy-quarantine.md) — how strict gates were adopted without breaking CI.
+- [Yup speaks Standard Schema](yup-speaks-standard-schema.md) — why the planned Yup shim was never built.
+- [Release PR needs manual approval](release-pr-needs-manual-approval.md) — `action_required` is not a failure.
+- [NPM token blocks publishing](npm-token-rotation-blocks-publishing.md) — RESOLVED: the E404 -> EOTP -> working diagnosis chain.
+- [Green publish is not proof](changeset-publish-reports-false-success.md) — changesets lists packages the registry never saved, and exits 0.
+- [1.0.0 showcase is the flow graph](v1-showcase-is-the-flow-graph.md) — the plan was reordered, and compat was cut on measured downloads.
+- [Getting started is all v1 now](v1-readme-still-documents-0x.md) — what still teaches 0.x is only what L8 deletes.
+- [Work autonomously through the plan](work-autonomously-through-the-plan.md) — run the agreed list to merge; npm publishes still get asked.
+- [core v1 entries are budget boundaries](core-v1-entries-are-budget-boundaries.md) — never re-export validate-flow or graph from v1/index.ts.
+- [Automated review runs on every PR](automated-review-on-every-pr.md) — a second gate after CI; on open/ready/request, NOT on every push, and its quota can run out.
+- [Rewrite from scratch mandate](rewrite-from-scratch-mandate.md) — library, README and examples site are new products; 0.x support only on concrete need.
+- [Auto-save context at half full](auto-save-context-at-half-full.md) — save at 50%, validate before commit, work the PR review.
+- [fast-check property pitfalls](fast-check-property-pitfalls.md) — predicate return value and `-0` from jsonValue fail only on some seeds.
+- [tsup treeshake drops directives](tsup-treeshake-drops-directives.md) — why react builds on esbuild only, and where the Next.js proof lives.
+- [Nobody depends on these packages](zero-external-dependents.md) — measured, and it makes breaking changes cheap.
+- [Worktree merge quirks](worktree-merge-quirks.md) — gh pr merge "fails" after merging here; confirm, then checkout ZizzX/main and delete the remote branch by hand.
+- [Layout perf test flakes on CI](layout-perf-test-flakes-on-ci.md) — 3% over a 100 ms threshold; rerun the SHA before believing it.
+- [Run tests from repo root](run-tests-from-repo-root.md) — package-scoped vitest breaks on the shared setup path.
+- [Stale dist fails local tests](stale-dist-fails-local-tests.md) — build before believing a local-only failure; a fresh worktree needs next-app built too.
+- [Panel is twice its budget estimate](devtools-panel-measured-twice-the-budget.md) — 13.4 kB, and why the number stands.
+- [Server components cannot carry plugins](server-components-cannot-carry-plugins.md) — why next-app has two routes.
+- [No emoji in docs](no-emoji-in-docs.md) — plain prose; icon bullets read as AI-written.
+- [impeccable needs the owner](impeccable-not-model-invocable.md) — installed, but blocked for model invocation.
+- [Hero island is the static frame](hero-island-is-the-static-frame.md) — one graph painter, picture or instrument by one prop; SSR quirks that bite when editing it.
+- [SVG graphs never scale up](svg-graphs-never-scale-up.md) — the 3.24x stretch that voided the whole design system, and the 0.79 floor below it.
+- [The worktree is shared by sessions](worktree-is-shared-by-sessions.md) — one HEAD between two sessions; stage by path, never by wildcard.
+- [Reference apps are the site's examples](reference-apps-are-the-sites-examples.md) — where R-A/B/C live, and the rules that keep a page honest.
+- [Two signals for a finished wizard](two-signals-for-a-finished-wizard.md) — `status` or `completed`, decided by whether the wizard is persisted.
+- [Docs follow every change](docs-follow-every-change.md) — README section + docs page land in the same PR as the code.
+- [Docs are versioned from v1](docs-versioned-from-v1.md) — the switcher ships now, seeded with 1.0.0; 0.x is not archived.
+- [Post-1.0 product direction](post-1-0-product-direction.md) — step builder, SDUI, MCP, prompt-to-graph, and the UI-agnostic constraint over all of them.
+- [The site ground is a solid fill](site-ground-is-a-solid-fill.md) — DONE in #79; the closed list of what takes a surface, and why the nav does not.
+- [Unlayered CSS beats Starlight](unlayered-css-beats-starlight.md) — layers outrank specificity; the 1.00:1 sidebar bug.
+- [Docs pages had no e2e coverage](docs-pages-had-no-e2e-coverage.md) — and the three screenshot findings that were not real.
+- [Project state lives in three places](project-state-lives-in-three-places.md) — PLAN.md, board projects/2, the issue; beads retired; the SessionStart brief hands them over.

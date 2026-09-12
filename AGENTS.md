@@ -198,6 +198,19 @@ open. Labels carry priority (`P0`-`P3`) and kind (`epic`, `story`, `task`, `bug`
 `documentation`); status is the board's job, never a label's. `TODOS.md` is work deliberately
 deferred out of 1.0.0, not the tracker.
 
+### What earlier sessions learned
+
+`.agent/memory/` holds what working on this repository taught, where the code cannot say it: why
+a decision went the way it did, which green result is not proof, what a tool does that its
+documentation does not. One file per fact, linked to related ones with `[[slug]]`, and
+`MEMORY.md` beside them is the index - one line each. The session brief prints that index, so a
+session knows what exists without reading forty files, and reads the ones it needs.
+
+This is the fourth place work is written down and the only one that is not a tracker: it carries
+knowledge, never status. Add a file when something durable and non-obvious is learned; delete one
+that turns out to be wrong. Do not record what the repository already states - structure, git
+history, and the rules in this file are not memory. Rule 1 applies here as everywhere.
+
 ### Starting a session
 
 When a session begins and the owner's first message does not already name the work - a

@@ -60,6 +60,20 @@ const now = () => {
   }
 };
 
+/**
+ * The memory index: one line per durable fact, each naming a file beside it. Only the index is
+ * printed - the facts themselves are read on demand - so a session starts knowing what exists
+ * without carrying forty files it may not need. A local read, so it costs the brief no deadline.
+ */
+const memory = () => {
+  try {
+    const index = readFileSync(new URL('../.agent/memory/MEMORY.md', import.meta.url), 'utf8');
+    return index.replace(/^#[^\n]*\n/, '').trim() || undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 const card = (item) => {
   const number = item.content?.number;
   return `  - ${number ? `#${number} ` : ''}${item.title ?? item.content?.title ?? '(untitled)'}`;
@@ -187,6 +201,9 @@ const emit = (sections) => {
 const sections = [];
 const plan = now();
 if (plan) sections.push(`## Now (from docs/PLAN.md)\n${plan}`);
+
+const learned = memory();
+if (learned) sections.push(`## What earlier sessions learned (.agent/memory/)\n${learned}`);
 
 // The safety net: if something outlives its own timeout, the plan still reaches the session.
 setTimeout(() => {
