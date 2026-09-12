@@ -15,8 +15,8 @@ this file is the view one level above it.
 brief shows the board and the last merged PRs live, so they are not repeated here. -->
 
 - **In progress:** S4, the documentation pages (#57). S4-1 (#71) landed in #87 - the
-  runnable-example mechanism and Getting started - so S4-2 to S4-4 (#72-#74) are unblocked and
-  S4-2, the four task pages, is being built.
+  runnable-example mechanism and Getting started - and S4-2 (#72) in #89 - the four task pages,
+  each with a runnable example on that mechanism. S4-3 and S4-4 (#73, #74) are next.
 - **Next after S4:** L6, the diagnostic contract (#59), which also owns the `/errors/` pages.
 - **Waiting on the owner:** R3 (#80), because `main` has no branch protection.
 
