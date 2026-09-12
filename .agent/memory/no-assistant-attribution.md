@@ -14,7 +14,7 @@ the `Generated with` line in a PR body — omit all of them.
 design or documentation references — the sites a design was measured against, say — is a
 violation and was flagged as P1 on PR #79. Write the comparison without the names; the
 measurements are the argument, not the brands. The exception the repository already lives with
-is a vendor named as a _dependency or a competitor_ (`@stepperize/react` in `site/PRODUCT.md`,
+is a vendor named as a _dependency or a competitor_ (a package named in `site/PRODUCT.md`,
 the framework an e2e fixture is built on) — that is a technical fact, not an attribution.
 
 **Why:** the owner ships this as their own library and wants no attribution artefacts in a

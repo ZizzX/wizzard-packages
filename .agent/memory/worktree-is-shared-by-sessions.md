@@ -37,4 +37,4 @@ refs, the stash stack and the remote — so a branch name or a `git fetch --prun
 worth a word, and nothing else is. The rules above apply while two sessions really are in one
 tree; they are not a reason to stay that way.
 
-Related: [[work-autonomously-through-the-plan]], [[worktree-merge-quirks]].
+Related: [[work-autonomously-through-the-plan]].

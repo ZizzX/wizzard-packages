@@ -10,8 +10,8 @@ directives with a warning that looks harmless ("was ignored"). Neither `banner` 
 `renderChunk` plugin survives it: rollup parses the prepended string as a directive too.
 `treeshake: false` on `packages/react` is the whole fix (PR #37, 2026-09-06).
 
-**Why:** a React Server Components bundler reads `'use client'` from `dist`; without it a
-Next.js server component importing `WizardProvider` fails at `next build`.
+**Why:** a React Server Components bundler reads `'use client'` from `dist`; without it an
+RSC server component importing `WizardProvider` fails the framework's build.
 
 **How to apply:** never re-enable `treeshake` on `react`. `directive.test.ts` reads the built
 files; `examples/next-app` fails to build without the directive and runs on every

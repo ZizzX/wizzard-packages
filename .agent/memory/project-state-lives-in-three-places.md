@@ -34,8 +34,8 @@ failure by design.
 #82, its 26 live items triaged on #81, two carried over (#83, #84), and every
 `wizzard-N` id still cited in `docs/designs/` or tests mapped under "Legacy ids"
 in `docs/PLAN.md`; the full tracker is `git show 1c6323c:.beads/issues.jsonl`.
-When the owner writes **"bd" they mean beads, not "БД" (a database)** — that
-misread once cost a whole tracker migration.
+When the owner writes **"bd" they mean beads, not the Russian abbreviation for
+"database"** — that misread once cost a whole tracker migration.
 
 **Demoted, by the owner's choice:** `agentmemory` is a search index over past
 sessions — write only a short digest there, never treat it as the truth. gstack
@@ -51,3 +51,4 @@ sessions never loaded `AGENTS.md` at all - the root cause of missing its
 attribution rule and its beads section. A rule that exists only in that file
 is not a rule here.
 Related: [[docs-follow-every-change]], [[no-assistant-attribution]].
+</content>

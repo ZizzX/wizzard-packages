@@ -8,9 +8,9 @@ metadata:
   modified: 2026-09-08T20:08:24.881Z
 ---
 
-Stated 2026-09-09: "если мы добавляем какую-то фичу, фикс и прочее, всегда
-обновлять это в readme библиотеке в соответствующих разделах и документацию
-обновлять!"
+Stated 2026-09-09, the owner's rule was: whenever we add a feature, a fix, or anything
+else, always update the library's README in the matching section, and update the
+documentation too.
 
 A change is not done when the code lands. It is done when the README section
 that describes that surface and the docs page that teaches it both describe
@@ -30,3 +30,4 @@ relied on the old one. Where a snippet is generated (`scripts/embed-examples.mjs
 or `?raw`-imported, change the source file and let the generation carry it —
 that is why those mechanisms exist. Docs voice stays [[no-emoji-in-docs]].
 The docs themselves are versioned per release: [[docs-versioned-from-v1]].
+</content>

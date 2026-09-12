@@ -17,9 +17,9 @@
 - [Rewrite from scratch mandate](rewrite-from-scratch-mandate.md) — library, README and examples site are new products; 0.x support only on concrete need.
 - [Auto-save context at half full](auto-save-context-at-half-full.md) — save at 50%, validate before commit, work the PR review.
 - [fast-check property pitfalls](fast-check-property-pitfalls.md) — predicate return value and `-0` from jsonValue fail only on some seeds.
-- [tsup treeshake drops directives](tsup-treeshake-drops-directives.md) — why react builds on esbuild only, and where the Next.js proof lives.
+- [tsup treeshake drops directives](tsup-treeshake-drops-directives.md) — why react builds on esbuild only, and where the RSC build proof lives.
 - [Nobody depends on these packages](zero-external-dependents.md) — measured, and it makes breaking changes cheap.
-- [Worktree merge quirks](worktree-merge-quirks.md) — gh pr merge "fails" after merging here; confirm, then checkout ZizzX/main and delete the remote branch by hand.
+- [Merging a pull request](merging-a-pull-request.md) — squash without --delete-branch merges clean; excluding a nested worktree from the root vitest run.
 - [Layout perf test flakes on CI](layout-perf-test-flakes-on-ci.md) — 3% over a 100 ms threshold; rerun the SHA before believing it.
 - [Run tests from repo root](run-tests-from-repo-root.md) — package-scoped vitest breaks on the shared setup path.
 - [Stale dist fails local tests](stale-dist-fails-local-tests.md) — build before believing a local-only failure; a fresh worktree needs next-app built too.

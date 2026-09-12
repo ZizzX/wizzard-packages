@@ -5,9 +5,10 @@ metadata:
   type: feedback
 ---
 
-Given 2026-09-06: "в будущем при заполнении контекста на 50% сам делай сохранение
-контекста, очистка и продолжение. не спрашивай меня. делай все пока не закончишь все по
-плану... перед коммитом и пушкой прогоняй валидацию скилл. и учитывай комментарии в PR".
+Given 2026-09-06, the owner's instruction was: in the future, once context fills to 50%,
+save the checkpoint, clear, and continue on your own — don't ask. Keep going until
+everything in the plan is done. Run the validation skill before every commit and push,
+and take the PR comments into account.
 
 Three standing rules:
 

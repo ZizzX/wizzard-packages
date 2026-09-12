@@ -6,8 +6,9 @@ metadata:
 ---
 
 No emoji or decorative icons anywhere a reader sees: READMEs (root and per-package), docs
-pages, the site, section headings, feature lists, tables. Stated 2026-09-07: "делать их
-правильными, понятными, красивыми без иконок как сейчас, что сразу видно что это ИИ делал".
+pages, the site, section headings, feature lists, tables. Stated 2026-09-07, the owner's
+verdict was: make them correct, clear and good-looking, without icons like now — right now
+it is obvious this was AI-made.
 
 **Why:** the owner ships this as their own library. Emoji headings and icon bullets are the
 tell of generated text, and they undercut the credibility of everything else on the page.
@@ -17,3 +18,4 @@ short paragraphs, tables, code blocks — never a picture-glyph standing in for 
 extends [[no-assistant-attribution]] from authorship to voice: the docs must read as written
 by a person who knows the library. Applies to the D3/D4 README rewrites and the whole Track S
 site.
+</content>
