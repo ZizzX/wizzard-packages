@@ -69,10 +69,13 @@ describe('quickstart', () => {
    * - and Next says it cannot be pressed yet, rather than being pressed and
    * doing nothing.
    */
-  it('draws the first step with Next out of reach before React starts', async () => {
+  it('draws the first step with every control out of reach before React starts', async () => {
     render(<App />);
 
-    expect(screen.getByRole('textbox')).toBeDefined();
+    // The field is drawn and refuses input: what a visitor types into a frame
+    // the engine has not seen is not in its state, and the first commit after
+    // `start` would write over it.
+    expect((screen.getByRole('textbox') as HTMLInputElement).disabled).toBe(true);
     expect((screen.getByRole('button', { name: 'Next' }) as HTMLButtonElement).disabled).toBe(true);
 
     await waitFor(() => {
@@ -80,16 +83,18 @@ describe('quickstart', () => {
         false
       );
     });
+    expect((screen.getByRole('textbox') as HTMLInputElement).disabled).toBe(false);
   });
 
-  it('draws the first step with Next out of reach before Vue starts', async () => {
+  it('draws the first step with every control out of reach before Vue starts', async () => {
     const app = mount(AppVue);
 
-    expect(app.find('input').exists()).toBe(true);
+    expect(app.get('input').attributes('disabled')).toBeDefined();
     expect(app.get('button[type="button"]:last-of-type').attributes('disabled')).toBeDefined();
 
     await flushPromises();
     expect(app.get('button[type="button"]:last-of-type').attributes('disabled')).toBeUndefined();
+    expect(app.get('input').attributes('disabled')).toBeUndefined();
   });
 
   /**

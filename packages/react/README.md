@@ -52,8 +52,10 @@ export function Wizard() {
 
   // Nothing is current until the engine starts, which happens in the browser:
   // on the server, and for the first paint, `current` is null. So the form
-  // draws the step it is about to enter and keeps the buttons out of reach
-  // until the engine can act on them.
+  // draws the step it is about to enter and keeps every control out of reach
+  // until the engine can act on it - the field included, because anything typed
+  // before the engine exists is not in its state and the first commit would
+  // wipe it.
   const step = current ?? 'name';
   const starting = current === null;
 
@@ -62,7 +64,7 @@ export function Wizard() {
       {step === 'name' && (
         <label>
           Your name
-          <input value={full ?? ''} onChange={(e) => setFull(e.target.value)} />
+          <input value={full ?? ''} onChange={(e) => setFull(e.target.value)} disabled={starting} />
         </label>
       )}
       {step === 'review' && <p>Hello, {full || 'stranger'}.</p>}

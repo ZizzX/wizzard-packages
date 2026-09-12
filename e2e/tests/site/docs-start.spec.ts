@@ -64,8 +64,11 @@ test.describe('Getting started', () => {
     await still.goto(START);
     const react = stage(still, 'react');
 
-    // The step is drawn, not a spinner, and Next says it is not ready.
+    // The step is drawn, not a spinner, and every control says it is not ready
+    // - the field included, or a visitor types into a frame the engine has not
+    // seen and loses it at the first commit.
     await expect(react.getByLabel('Your name')).toBeVisible();
+    await expect(react.getByLabel('Your name')).toBeDisabled();
     await expect(react.getByRole('button', { name: 'Next' })).toBeDisabled();
     // And the source is there without any JavaScript at all.
     await expect(still.getByText('defineFlow', { exact: false }).first()).toBeVisible();
