@@ -1,0 +1,6 @@
+step: plan
+go: blocked by done
+go force: blocked by done
+go after choosing: blocked by done
+go force after choosing: ok
+step: done

@@ -1,0 +1,109 @@
+---
+title: API behaviour
+description: What each method does, what refuses it, and which switch changes that - on one page.
+---
+
+import RunnableExample from '../../../components/RunnableExample.astro';
+import GuardsReact from '../../../islands/GuardsReact';
+import GuardsVue from '../../../islands/GuardsVue.vue';
+import flowSource from '@examples/tasks/src/guards-and-force/flow.ts?raw';
+import appSource from '@examples/tasks/src/guards-and-force/App.tsx?raw';
+import appVueSource from '@examples/tasks/src/guards-and-force/App.vue?raw';
+import wizardVueSource from '@examples/tasks/src/guards-and-force/Wizard.vue?raw';
+import headlessSource from '@examples/tasks/src/guards-and-force/headless.ts?raw';
+import headlessOutput from '@examples/tasks/src/guards-and-force/headless.out.txt?raw';
+
+The guides explain one concept each. This page is the other view: every rule that decides what a
+call does, in one table, so you can check a belief without reading four pages.
+
+| Rule                                                                                                                                           | Where to see it running                                        |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `go(to)` moves only where `policy` allows, which is `visited` unless the flow says otherwise. `force: true` skips that check and nothing else. | [Navigation](../navigation/)                                   |
+| Guards always run, `force` included. A guard, a plugin and the policy all refuse with `blocked`, and `by` names the step or the plugin.        | [Navigation](../navigation/)                                   |
+| Validation is its own switch: `validate: false` skips the step's validator for that move.                                                      | [Block Next until valid](../block-next-until-valid/)           |
+| `back()` takes `on.back` when the step sets one, and otherwise walks `order` backwards.                                                        | [Navigation](../navigation/)                                   |
+| `set(path, value)` replaces the value at that path. `patch(partial)` merges shallowly into `data`.                                             | [The flow](../flow/)                                           |
+| `validate(step?)` runs one step's validator and resolves to a boolean.                                                                         | [Validation](../validation/)                                   |
+| Data is kept when a branch is abandoned, unless the step declares `clearOnLeave`.                                                              | [Clear abandoned branch data](../clear-abandoned-branch-data/) |
+| `repeat` items are keyed by `keyBy`, and by position when it is absent.                                                                        | [The flow](../flow/)                                           |
+| The provider creates one engine and keeps it across rerenders. It never starts on the server.                                                  | [Getting started](../start/)                                   |
+
+## The three switches are not one switch
+
+`force`, `validate` and guards are read as one idea - "let me through" - and they are three, with
+three different answers.
+
+`force: true` on `go()` skips the **navigation policy**: the rule that decides which steps a jump
+may land on. A flow that names no policy gets `visited`, so what the policy usually stops is
+someone opening a step they have never been to. That is all `force` skips. It is there for the
+cases a product genuinely has, an admin opening a step to reproduce a bug among them.
+
+`validate: false` skips **the step's own validator** for that one move. A "save and exit" that
+must not be blocked by a half-filled field is what it is for.
+
+**Guards have no switch.** `guards.enter` and `guards.exit` run on every move, `force` included,
+and a refusal comes back as `{ ok: false, reason: 'blocked', by }`. This is deliberate: a guard
+is where "this user may not see this step" is written, and an option that turned it off would
+make it a suggestion. If a guard is refusing a move you want to allow, the condition is wrong -
+change the condition.
+
+The two refusals are not told apart by their reason. The policy and a guard both come back as
+`blocked` naming the target step, so reading the reason cannot tell you which one stopped the
+move. What tells you is which change makes it stop refusing.
+
+Try it. The jump below is refused twice for two different causes, and the two causes need two
+different answers: `force` for the policy, a plan for the guard. Press the buttons in order, then
+type a plan and press them again.
+
+<RunnableExample
+  reactSources={[
+    {
+      name: 'flow.ts',
+      lang: 'ts',
+      code: flowSource,
+      note: 'Three steps so that `done` is not adjacent, and one guard that asks about the data.',
+    },
+    {
+      name: 'App.tsx',
+      lang: 'tsx',
+      code: appSource,
+      note: 'Two buttons, one difference: the second passes `force`.',
+    },
+  ]}
+  vueSources={[
+    { name: 'flow.ts', lang: 'ts', code: flowSource },
+    { name: 'App.vue', lang: 'vue', code: appVueSource },
+    { name: 'Wizard.vue', lang: 'vue', code: wizardVueSource },
+  ]}
+  headlessSources={[
+    { name: 'flow.ts', lang: 'ts', code: flowSource },
+    {
+      name: 'headless.ts',
+      lang: 'ts',
+      code: headlessSource,
+      note: 'Four attempts, because two of them look identical and are not.',
+    },
+    {
+      name: 'Output',
+      lang: 'text',
+      code: headlessOutput,
+      note: 'A test in the repository asserts these exact lines.',
+    },
+  ]}
+>
+  <GuardsReact client:visible slot="react" />
+  <GuardsVue client:visible slot="vue" />
+</RunnableExample>
+
+## What is not here
+
+There is no `validateAll()`. `validate(step?)` checks the current step or a named one, and
+checking several means calling it for each. The engine validates a step when it is left, so a
+whole-flow check is a question about steps nobody has reached yet, and the answer would go stale
+before it was read.
+
+## Refusals are values
+
+None of the rules above throw. A refused move returns `{ ok: false, reason }` and the flow stays
+where it was, because a refusal is an ordinary outcome of a wizard rather than a failure of the
+program. [Navigation](../navigation/) lists every reason and what each one means.

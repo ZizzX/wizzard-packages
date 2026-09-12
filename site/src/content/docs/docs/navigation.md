@@ -16,13 +16,13 @@ if (!result.ok) {
 
 ## The methods
 
-| Method          | Signature                                                                                   | Moves to                                              |
-| --------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| `start()`       | `() => Promise<NavResult>`                                                                  | The first step the definition includes.               |
-| `next(opts?)`   | `(opts?: { validate?: boolean }) => Promise<NavResult>`                                     | Whatever `on.next` or `order` says is next.           |
-| `back()`        | `() => Promise<NavResult>`                                                                  | Whatever `on.back` says, or where the user came from. |
-| `go(to, opts?)` | `(to: StepId \| END, opts?: { validate?: boolean; force?: boolean }) => Promise<NavResult>` | A named step, if policy allows.                       |
-| `cancel()`      | `() => void`                                                                                | Nowhere. It abandons the move in flight.              |
+| Method          | Signature                                                                                   | Moves to                                                            |
+| --------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `start()`       | `() => Promise<NavResult>`                                                                  | The first step the definition includes.                             |
+| `next(opts?)`   | `(opts?: { validate?: boolean }) => Promise<NavResult>`                                     | Whatever `on.next` or `order` says is next.                         |
+| `back()`        | `() => Promise<NavResult>`                                                                  | Whatever `on.back` says, or the previous reachable step in `order`. |
+| `go(to, opts?)` | `(to: StepId \| END, opts?: { validate?: boolean; force?: boolean }) => Promise<NavResult>` | A named step, if policy allows.                                     |
+| `cancel()`      | `() => void`                                                                                | Nowhere. It abandons the move in flight.                            |
 
 `validate: false` skips the step's validator for that move. `force: true` on `go` skips the
 navigation policy - the rule that decides which steps a jump may land on - and skips nothing
@@ -34,9 +34,16 @@ Guards are not among them. `guards.enter` and `guards.exit` run on every move, `
 and refuse with `reason: 'blocked'`. A guard is where "this user may not see this step" lives,
 and an option that switched it off would make it advice rather than a rule.
 
-`back()` reads the history stack rather than `order`: it returns the user to where they actually
-came from, which is why a jump forwards and a `back()` afterwards do not strand them in a step
-they skipped. `on.back` overrides it per step, and `'auto'` asks for the stack explicitly.
+`back()` resolves its target from the definition rather than from where the user has been. A step
+with `on.back` goes there. Otherwise the resolver walks `order` backwards and takes the first step
+whose `when` still holds, so a branch that closed behind the user is skipped rather than
+revisited. `'auto'` is that same walk, written out.
+
+The history the wizard keeps is a different thing. It records the stack at each move, which is
+what restores a position inside nested groups on the way back; it does not choose the target. The
+distinction shows after a forced jump: `go('summary', { force: true })` from the first step and
+then `back()` lands on whatever precedes `summary` in `order`, not on the step the jump came
+from.
 
 ## The result
 
@@ -49,14 +56,14 @@ type NavResult =
   | { ok: false; reason: NavReason; by?: string; errors?: Record<string, string> };
 ```
 
-| `reason`        | What happened                                                                |
-| --------------- | ---------------------------------------------------------------------------- |
-| `invalid`       | The step's validator refused. `errors` carries the field messages.           |
-| `blocked`       | A guard or a plugin refused. `by` names it.                                  |
-| `no-target`     | Nothing said where to go from here, and `order` had nothing after this step. |
-| `not-reachable` | `go()` named a step the policy does not allow from here.                     |
-| `superseded`    | Another move started before this one finished. The later move wins.          |
-| `aborted`       | `cancel()` was called while this move was in flight.                         |
+| `reason`        | What happened                                                                          |
+| --------------- | -------------------------------------------------------------------------------------- |
+| `invalid`       | The step's validator refused. `errors` carries the field messages.                     |
+| `blocked`       | A guard, a plugin or the navigation policy refused. `by` names the step or the plugin. |
+| `no-target`     | Nothing said where to go from here, and `order` had nothing after this step.           |
+| `not-reachable` | The target's `when` is false, so it is not part of the flow right now.                 |
+| `superseded`    | Another move started before this one finished. The later move wins.                    |
+| `aborted`       | `cancel()` was called while this move was in flight.                                   |
 
 `superseded` is the one worth designing for. Navigation carries an epoch: when a second `next()`
 begins, the first is stamped stale, and whatever it was awaiting cannot commit when it
