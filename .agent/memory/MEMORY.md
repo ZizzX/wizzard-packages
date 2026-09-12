@@ -39,3 +39,5 @@
 - [Unlayered CSS beats Starlight](unlayered-css-beats-starlight.md) — layers outrank specificity; the 1.00:1 sidebar bug.
 - [Docs pages had no e2e coverage](docs-pages-had-no-e2e-coverage.md) — and the three screenshot findings that were not real.
 - [Project state lives in three places](project-state-lives-in-three-places.md) — PLAN.md, board projects/2, the issue; beads retired; the SessionStart brief hands them over.
+- [Prose drifts from the engine](prose-drifts-from-the-engine.md) — eight documented rules the engine does not have, and the only two things that found them.
+- [A watch can report green early](a-watch-can-report-green-early.md) — `--watch` exits 0 mid-run; a verify run beside e2e fails a healthy test.
