@@ -68,6 +68,32 @@ test.describe('the task pages', () => {
     await expect(submitted).not.toContainText('SPRING');
   });
 
+  test('the devtools panel mounts over a running wizard', async ({ page }) => {
+    await page.goto('docs/devtools/');
+    const react = stage(page, 'react');
+    await react.scrollIntoViewIfNeeded();
+
+    // The panel is docked and fills its container, so a zero-height stage reads
+    // as "broken" rather than "empty" - which is the mistake the page warns
+    // about, and worth catching here rather than in a screenshot.
+    await expect(react.getByRole('tab', { name: 'Activity' })).toBeVisible();
+    expect((await react.boundingBox())?.height ?? 0).toBeGreaterThan(100);
+  });
+
+  test('a server-driven flow takes a patch and refuses the deleting one', async ({ page }) => {
+    await page.goto('docs/server-driven/');
+    const react = stage(page, 'react');
+    await react.scrollIntoViewIfNeeded();
+    await expect(react.getByRole('status')).toContainText('Loaded from the server');
+
+    await react.getByRole('button', { name: 'Apply the patch' }).click();
+    await expect(react.getByRole('status')).toContainText('applied');
+
+    // The one change a payload must not be able to make.
+    await react.getByRole('button', { name: 'Apply a patch that deletes this step' }).click();
+    await expect(react.getByRole('status')).toContainText('refused');
+  });
+
   test('force gets past the policy and not past the guard', async ({ page }) => {
     await page.goto('docs/api-behaviour/');
     const react = stage(page, 'react');

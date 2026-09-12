@@ -1,0 +1,6 @@
+loaded: signup
+step: account
+patch applied: true
+active: account, invoice, done
+removal applied: false
+step: account
