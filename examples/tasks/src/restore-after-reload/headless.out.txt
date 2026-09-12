@@ -1,0 +1,5 @@
+first visit: Nothing saved yet. This one will be, from the first answer.
+left on: colour
+after reload: Restored. You are back where you left off.
+back on: colour
+name kept: Ada

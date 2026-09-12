@@ -1,0 +1,109 @@
+---
+title: Restore after reload
+description: Save a half-finished wizard and bring it back after the page reloads, telling the person what happened.
+---
+
+import RunnableExample from '../../../components/RunnableExample.astro';
+import RestoreReact from '../../../islands/RestoreReact';
+import RestoreVue from '../../../islands/RestoreVue.vue';
+import flowSource from '@examples/tasks/src/restore-after-reload/flow.ts?raw';
+import outcomeSource from '@examples/tasks/src/restore-after-reload/outcome.ts?raw';
+import appSource from '@examples/tasks/src/restore-after-reload/App.tsx?raw';
+import appVueSource from '@examples/tasks/src/restore-after-reload/App.vue?raw';
+import wizardVueSource from '@examples/tasks/src/restore-after-reload/Wizard.vue?raw';
+import headlessSource from '@examples/tasks/src/restore-after-reload/headless.ts?raw';
+import headlessOutput from '@examples/tasks/src/restore-after-reload/headless.out.txt?raw';
+
+A wizard that loses everything when someone reloads the page is a wizard people restart in a
+worse mood. The `persist` plugin writes each commit to storage and reads it back on start.
+
+Type a name below, press Next, then reload this page.
+
+<RunnableExample
+  reactSources={[
+    {
+      name: 'flow.ts',
+      lang: 'ts',
+      code: flowSource,
+      note: 'The storage key and the application version live beside the flow they belong to.',
+    },
+    {
+      name: 'App.tsx',
+      lang: 'tsx',
+      code: appSource,
+      note: 'The plugin is installed in the browser only, and what it restored is said after the first paint.',
+    },
+    {
+      name: 'outcome.ts',
+      lang: 'ts',
+      code: outcomeSource,
+      note: 'The reason turned into a sentence. Only the host knows what the form is called.',
+    },
+  ]}
+  vueSources={[
+    { name: 'flow.ts', lang: 'ts', code: flowSource },
+    { name: 'App.vue', lang: 'vue', code: appVueSource },
+    { name: 'Wizard.vue', lang: 'vue', code: wizardVueSource },
+    { name: 'outcome.ts', lang: 'ts', code: outcomeSource },
+  ]}
+  headlessSources={[
+    { name: 'flow.ts', lang: 'ts', code: flowSource },
+    {
+      name: 'headless.ts',
+      lang: 'ts',
+      code: headlessSource,
+      note: 'A reload without a browser: a `Map` behind the three storage methods, and a second wizard over the same bytes.',
+    },
+    {
+      name: 'Output',
+      lang: 'text',
+      code: headlessOutput,
+      note: 'A test in the repository asserts these exact lines.',
+    },
+  ]}
+>
+  <RestoreReact client:only="react" slot="react" />
+  <RestoreVue client:only="vue" slot="vue" />
+</RunnableExample>
+
+## Three things this gets right
+
+**It never throws.** A browser that refuses storage, a quota that fills up, a session written
+before the flow changed shape: each one means this session is not coming back, and none of them
+is a reason to break the wizard someone is filling in right now.
+
+**It says what happened.** `onRestore` hands you `{ restored: true }` or a reason, and the
+example turns that into a sentence. A form that was half filled in and is now empty looks like a
+bug to whoever filled it, and silence is why they would think so.
+
+**It writes once per frame, not once per keystroke.** A pending write is flushed when the page
+hides and when the wizard is destroyed, so the last answer is not lost to a timer nobody waited
+for.
+
+## This one is mounted in the browser only
+
+A wizard is created with its plugins already in place: the engine initialises them before it
+hands itself out, so by the time anything renders, `persist` has read storage and committed what
+it found. That is what makes a restored session available on the first frame instead of the
+second, and it is also why this example is not rendered on the server.
+
+Follow it through with a stored session. The server has no storage, so it renders the first step.
+The browser restores the third and renders that. The two do not match, the framework throws its
+markup away and starts again, and the person watching sees the first step flash past. Rendering
+nothing on the server is the honest answer here, not a workaround: there is no correct server
+rendering of a session the server cannot see.
+
+Both renderings above are mounted with Astro's `client:only` for that reason. Every framework
+spells the same instruction differently - `dynamic(() => import('./App'), { ssr: false })` in
+Next.js, `<ClientOnly>` in Nuxt - and what it means in each is that this subtree belongs to the
+browser.
+
+The `typeof window === 'undefined'` guard in the sources stays regardless. It is what keeps the
+plugin from being built at all where there is no storage to build it against, and your own
+application may reach that code by a path this page does not.
+
+## Where to read more
+
+[Persistence](../persistence/) is the format underneath: what a snapshot carries, which stored
+sessions are refused and why, and the `migrate` hook for the ones you would rather upgrade than
+discard.

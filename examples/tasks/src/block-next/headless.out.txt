@@ -1,0 +1,5 @@
+step: details
+next: invalid ({"email":"Enter your email address."})
+step: details
+next: ok
+step: done
