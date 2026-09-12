@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useErrors, useField, useNavigation, useStep, useWizard } from '@wizzard-packages/vue/v1';
-import { computed } from 'vue';
+import { computed, useId } from 'vue';
 
 const wizard = useWizard();
 const { current } = useStep();
@@ -11,6 +11,13 @@ const errors = useErrors();
 
 const step = computed(() => current.value ?? 'details');
 const starting = computed(() => current.value === null);
+
+// Generated, not written. Both renderings of this example are in the page at
+// once - the tab that is not showing is hidden, not removed - so a fixed `id`
+// would be in the document twice, and `for` and `aria-describedby` would both
+// resolve to whichever came first rather than to the field beside them.
+const emailId = useId();
+const cardId = useId();
 </script>
 
 <template>
@@ -19,29 +26,29 @@ const starting = computed(() => current.value === null);
       <!-- Each input points at its own message with `aria-describedby` and says
            it is wrong with `aria-invalid`, which is what a screen reader reads. -->
       <p>
-        <label for="email">Your email</label>
+        <label :for="emailId">Your email</label>
         <input
-          id="email"
+          :id="emailId"
           v-model="email"
           :disabled="starting"
           :aria-invalid="errors['email'] !== undefined"
-          :aria-describedby="errors['email'] === undefined ? undefined : 'email-error'"
+          :aria-describedby="errors['email'] === undefined ? undefined : `${emailId}-error`"
         />
-        <span v-if="errors['email'] !== undefined" id="email-error" role="alert">
+        <span v-if="errors['email'] !== undefined" :id="`${emailId}-error`" role="alert">
           {{ errors['email'] }}
         </span>
       </p>
 
       <p>
-        <label for="card">Card number</label>
+        <label :for="cardId">Card number</label>
         <input
-          id="card"
+          :id="cardId"
           v-model="card"
           :disabled="starting"
           :aria-invalid="errors['card'] !== undefined"
-          :aria-describedby="errors['card'] === undefined ? undefined : 'card-error'"
+          :aria-describedby="errors['card'] === undefined ? undefined : `${cardId}-error`"
         />
-        <span v-if="errors['card'] !== undefined" id="card-error" role="alert">
+        <span v-if="errors['card'] !== undefined" :id="`${cardId}-error`" role="alert">
           {{ errors['card'] }}
         </span>
       </p>

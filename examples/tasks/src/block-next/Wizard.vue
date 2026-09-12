@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useErrors, useField, useNavigation, useStep } from '@wizzard-packages/vue/v1';
-import { computed } from 'vue';
+import { computed, useId } from 'vue';
 
 const { current } = useStep();
 const { next, isBusy } = useNavigation();
@@ -10,6 +10,12 @@ const errors = useErrors();
 // Nothing is current until the engine starts, which happens in the browser.
 const step = computed(() => current.value ?? 'details');
 const starting = computed(() => current.value === null);
+
+// A generated id rather than a written one. On the page this example appears on,
+// the React and Vue renderings are both in the document - the tab that is not
+// showing is hidden, not removed - so a fixed `id` would be there twice and
+// every `for` pointing at it would find the wrong field.
+const emailId = useId();
 </script>
 
 <template>
@@ -17,15 +23,15 @@ const starting = computed(() => current.value === null);
        `{ ok: false, reason: 'invalid', errors }` and the flow stays put. -->
   <form @submit.prevent="next()">
     <template v-if="step === 'details'">
-      <label for="email">Your email</label>
+      <label :for="emailId">Your email</label>
       <input
-        id="email"
+        :id="emailId"
         v-model="email"
         :disabled="starting"
         :aria-invalid="errors['email'] !== undefined"
-        :aria-describedby="errors['email'] === undefined ? undefined : 'email-error'"
+        :aria-describedby="errors['email'] === undefined ? undefined : `${emailId}-error`"
       />
-      <p v-if="errors['email'] !== undefined" id="email-error" role="alert">
+      <p v-if="errors['email'] !== undefined" :id="`${emailId}-error`" role="alert">
         {{ errors['email'] }}
       </p>
     </template>

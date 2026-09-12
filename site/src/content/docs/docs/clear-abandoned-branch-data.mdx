@@ -76,10 +76,25 @@ paths drops exactly those:
 clearOnLeave: ['payment.cvv'],
 ```
 
-The rule is **whenever the step is left**, forwards included. That is right for a one-time code,
-a card's security number, a coupon that was either applied or was not - things you never want in
-the object the last step submits, or in a snapshot waiting in storage. It is wrong for anything
-the review step needs, so do not reach for it to tidy up a branch.
+The rule is **whenever the step is left**, forwards included. That is right for a one-time code
+or a coupon that was either applied or was not - things the last step has no business submitting.
+It is wrong for anything the review step needs, so do not reach for it to tidy up a branch.
+
+## What it does not protect
+
+`clearOnLeave` runs on a move away from the step, and only on that. Two things follow, and both
+matter if you were about to reach for it to keep a card number out of storage.
+
+**While the person is still on the step, what they typed is already written.** Every edit is a
+commit, and a persistence plugin writes on every commit. Leaving the step keeps the value out of
+the next write; it does not reach back into the one that has already happened.
+
+**Completion is not a move away.** A flow that ends keeps the last step's data, because that data
+is the submission.
+
+So for a field that must never be stored, keep it out of the persisted state rather than clearing
+it afterwards: hold it in the component that collects it, or give the wizard a storage that
+refuses to write that path.
 
 ## Where to read more
 

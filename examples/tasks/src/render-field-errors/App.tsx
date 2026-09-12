@@ -6,6 +6,7 @@ import {
   useStep,
   useWizard,
 } from '@wizzard-packages/react/v1';
+import { useId } from 'react';
 
 import { checkout } from './flow';
 import { registry } from './registry';
@@ -24,20 +25,24 @@ export function App() {
  * with `aria-invalid`, which is what a screen reader reads out.
  */
 function Field(props: {
-  id: string;
   label: string;
   value: string | undefined;
   error: string | undefined;
   disabled: boolean;
   onChange: (value: string) => void;
 }) {
-  const describedBy = props.error === undefined ? undefined : `${props.id}-error`;
+  // Generated, not written. Both renderings of this example are in the page at
+  // once - the tab that is not showing is hidden, not removed - so a fixed `id`
+  // would be in the document twice, and `for` and `aria-describedby` would both
+  // resolve to whichever came first rather than to the field beside them.
+  const id = useId();
+  const describedBy = props.error === undefined ? undefined : `${id}-error`;
 
   return (
     <p>
-      <label htmlFor={props.id}>{props.label}</label>
+      <label htmlFor={id}>{props.label}</label>
       <input
-        id={props.id}
+        id={id}
         value={props.value ?? ''}
         onChange={(e) => props.onChange(e.target.value)}
         disabled={props.disabled}
@@ -74,7 +79,6 @@ export function Wizard() {
       {step === 'details' && (
         <>
           <Field
-            id="email"
             label="Your email"
             value={email}
             error={errors['email']}
@@ -82,7 +86,6 @@ export function Wizard() {
             onChange={setEmail}
           />
           <Field
-            id="card"
             label="Card number"
             value={card}
             error={errors['card']}

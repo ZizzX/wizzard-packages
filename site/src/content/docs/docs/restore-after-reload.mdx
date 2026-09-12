@@ -62,8 +62,8 @@ Type a name below, press Next, then reload this page.
     },
   ]}
 >
-  <RestoreReact client:visible slot="react" />
-  <RestoreVue client:visible slot="vue" />
+  <RestoreReact client:only="react" slot="react" />
+  <RestoreVue client:only="vue" slot="vue" />
 </RunnableExample>
 
 ## Three things this gets right
@@ -80,12 +80,27 @@ bug to whoever filled it, and silence is why they would think so.
 hides and when the wizard is destroyed, so the last answer is not lost to a timer nobody waited
 for.
 
-## Install it in the browser only
+## This one is mounted in the browser only
 
-On a server there is no storage to read, and a session restored into the server's markup is a
-hydration mismatch waiting to happen. Both renderings above build the plugin list behind a
-`typeof window === 'undefined'` check for that reason, and say what they restored one tick after
-mount rather than during the first paint.
+A wizard is created with its plugins already in place: the engine initialises them before it
+hands itself out, so by the time anything renders, `persist` has read storage and committed what
+it found. That is what makes a restored session available on the first frame instead of the
+second, and it is also why this example is not rendered on the server.
+
+Follow it through with a stored session. The server has no storage, so it renders the first step.
+The browser restores the third and renders that. The two do not match, the framework throws its
+markup away and starts again, and the person watching sees the first step flash past. Rendering
+nothing on the server is the honest answer here, not a workaround: there is no correct server
+rendering of a session the server cannot see.
+
+Both renderings above are mounted with Astro's `client:only` for that reason. Every framework
+spells the same instruction differently - `dynamic(() => import('./App'), { ssr: false })` in
+Next.js, `<ClientOnly>` in Nuxt - and what it means in each is that this subtree belongs to the
+browser.
+
+The `typeof window === 'undefined'` guard in the sources stays regardless. It is what keeps the
+plugin from being built at all where there is no storage to build it against, and your own
+application may reach that code by a path this page does not.
 
 ## Where to read more
 

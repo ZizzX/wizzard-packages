@@ -5,6 +5,7 @@ import {
   useNavigation,
   useStep,
 } from '@wizzard-packages/react/v1';
+import { useId } from 'react';
 
 import { signup } from './flow';
 import { registry } from './registry';
@@ -27,6 +28,12 @@ export function Wizard() {
   const step = current ?? 'details';
   const starting = current === null;
 
+  // A generated id rather than a written one. On the page this example appears
+  // on, the React and Vue renderings are both in the document - the tab that is
+  // not showing is hidden, not removed - so a fixed `id` would be there twice
+  // and every `for` pointing at it would find the wrong field.
+  const emailId = useId();
+
   return (
     <form
       onSubmit={(e) => {
@@ -38,17 +45,17 @@ export function Wizard() {
     >
       {step === 'details' && (
         <>
-          <label htmlFor="email">Your email</label>
+          <label htmlFor={emailId}>Your email</label>
           <input
-            id="email"
+            id={emailId}
             value={email ?? ''}
             onChange={(e) => setEmail(e.target.value)}
             disabled={starting}
             aria-invalid={errors['email'] !== undefined}
-            aria-describedby={errors['email'] === undefined ? undefined : 'email-error'}
+            aria-describedby={errors['email'] === undefined ? undefined : `${emailId}-error`}
           />
           {errors['email'] !== undefined && (
-            <p id="email-error" role="alert">
+            <p id={`${emailId}-error`} role="alert">
               {errors['email']}
             </p>
           )}
