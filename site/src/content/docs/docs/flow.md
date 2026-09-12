@@ -25,10 +25,12 @@ pass is the object the engine reads, and nothing is added to it.
 | `policy`   | `'sequential' \| 'visited' \| 'free'` | no       | Which steps `go()` may jump to.                                                            |
 | `validate` | `{ on?, debounceMs? }`                | no       | **When** validation runs, not what it checks.                                              |
 
-The `policy` values differ only in what a jump is allowed to skip. `sequential` permits the
-next step and the ones behind it; `visited` adds every step already seen; `free` permits any
-reachable step. A flow that omits `policy` gets `sequential`, which is the setting that cannot
-strand a user in a step whose prerequisites never ran.
+The `policy` values differ in which jumps they permit. `sequential` allows a move to an adjacent
+step and no further - the one before or the one after, counted among the steps currently
+reachable. `visited` allows any step the user has already been to. `free` allows any step at all.
+
+A flow that omits `policy` gets `visited`: someone may return to anything they have seen and
+cannot skip ahead into a step whose prerequisites never ran.
 
 ## Steps
 
@@ -62,6 +64,28 @@ An atom step adds `view` (a name your renderer maps to a component) and `validat
 definition or the name of one), `repeat` for running that subflow over a list, and `input` for
 the values passed into it.
 
+A `repeat` group runs its subflow once per item of `over`. Items are identified by `keyBy` - a
+path inside each item whose value becomes that item's key - and by position when `keyBy` is
+absent. The key is what the frame stores, so a wizard halfway through the third passenger stays
+on that passenger when the list is sorted underneath it, and `loop.key` names them in an
+expression.
+
+What a key does not do is move the answers. `set()` writes the literal path it is given, so items
+that all write to `data.passenger.name` share one value however they are keyed. Data belonging to
+an item has to be keyed by you: read `loop.key` and write beneath it.
+
+### What happens to a step's data
+
+It is kept. That is the default and it holds for a branch the user walked away from: a step
+whose `when` stops holding is off the route, but what it collected stays in `data`, because the
+engine cannot know whether you wanted it gone and someone who switches back expects their
+answers to still be there.
+
+`clearOnLeave` is how a step says otherwise, and it applies whenever that step is left, forwards
+included. It does not run on completion - the last step's data is the submission.
+[Clear abandoned branch data](../clear-abandoned-branch-data/) shows both halves, and says what
+clearing does not protect.
+
 ## The two fields called validate
 
 They sit at different levels and mean different things, and confusing them is the most common
@@ -77,9 +101,8 @@ reverse is also legal: a step names a validator and the flow leaves the default 
 ## Where a step leads
 
 `on.next` accepts a step id, an object `{ to, when }`, or an array of those - the first entry
-whose `when` holds is taken. `on.back` accepts the same, plus the literal `'auto'`, which
-returns to wherever the user actually came from rather than to whatever precedes this step in
-`order`.
+whose `when` holds is taken. `on.back` accepts the same, plus the literal `'auto'`, which is the
+default written out: walk `order` backwards and take the first step that is still reachable.
 
 `when` and `on.next` answer different questions, and a step that sets both is usually a
 mistake: `when` decides whether the step exists at all, `on.next` decides where it goes once
@@ -88,6 +111,23 @@ it does. When both appear on the same step, `on.next` wins and `when` is ignored
 
 The constant `END` marks the exit. `go(END)` finishes the flow, and `on: { next: END }` sends a
 step straight to it.
+
+## Writing into data
+
+Two methods write, and they differ in what they touch:
+
+```ts
+wizard.set('details.email', 'ada@example.com'); // replaces the value at that path
+wizard.patch({ plan: 'pro' }); // merges shallowly into the root of `data`
+```
+
+`set` takes a dotted path, replaces what is there and creates the objects along the way. `patch`
+takes an object and merges it one level into `data`, which means a key it carries replaces that
+key whole rather than being merged into what was there. Reach for `patch` when a server hands you
+several top-level values at once, and for `set` everywhere else.
+
+Both go through the same commit, so a plugin sees each write exactly once and a selector
+recomputes once.
 
 ## Checking a definition before it runs
 

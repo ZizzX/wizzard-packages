@@ -60,6 +60,11 @@ wizard.setErrors('details', null); // clear
 read through `useErrors()`, so a field component does not need the result of the call that
 created them.
 
+There is no `validateAll()`. The engine checks a step as it is left, so a whole-flow check is a
+question about steps nobody has reached yet, and its answer goes stale as soon as anything is
+typed. Checking several steps on purpose is a loop over `validate(step)`, which also says which
+one failed. [API behaviour](../api-behaviour/) collects that rule beside the others.
+
 ## When it runs
 
 `FlowDefinition.validate` schedules the whole thing:

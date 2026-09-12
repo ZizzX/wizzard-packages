@@ -68,6 +68,25 @@ test.describe('the task pages', () => {
     await expect(submitted).not.toContainText('SPRING');
   });
 
+  test('force gets past the policy and not past the guard', async ({ page }) => {
+    await page.goto('docs/api-behaviour/');
+    const react = stage(page, 'react');
+    await react.scrollIntoViewIfNeeded();
+    await expect(react.getByRole('button', { name: 'Jump to Done' })).toBeEnabled();
+
+    // Both refusals read `blocked`, so this does what the page asks a reader to
+    // do: change one thing at a time and watch which refusal stops.
+    await react.getByRole('button', { name: 'Jump to Done' }).click();
+    await expect(react.getByRole('status')).toContainText('blocked');
+
+    await react.getByRole('button', { name: 'Jump with force' }).click();
+    await expect(react.getByRole('status')).toContainText('blocked');
+
+    await react.getByLabel('Your plan').fill('pro');
+    await react.getByRole('button', { name: 'Jump with force' }).click();
+    await expect(react.getByRole('status')).toContainText('Moved to Done');
+  });
+
   for (const [name, path] of PAGES) {
     test(`searching "${name}" finds its page first`, async ({ page }) => {
       // Any page will do: the index is the site's, not the page's.
