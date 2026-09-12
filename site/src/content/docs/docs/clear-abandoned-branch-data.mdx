@@ -1,0 +1,89 @@
+---
+title: Clear abandoned branch data
+description: Decide what a step leaves behind when the visitor changes their mind, and what never reaches the submission.
+---
+
+import RunnableExample from '../../../components/RunnableExample.astro';
+import ClearBranchReact from '../../../islands/ClearBranchReact';
+import ClearBranchVue from '../../../islands/ClearBranchVue.vue';
+import flowSource from '@examples/tasks/src/clear-branch-data/flow.ts?raw';
+import appSource from '@examples/tasks/src/clear-branch-data/App.tsx?raw';
+import appVueSource from '@examples/tasks/src/clear-branch-data/App.vue?raw';
+import wizardVueSource from '@examples/tasks/src/clear-branch-data/Wizard.vue?raw';
+import headlessSource from '@examples/tasks/src/clear-branch-data/headless.ts?raw';
+import headlessOutput from '@examples/tasks/src/clear-branch-data/headless.out.txt?raw';
+
+Two different questions get confused here, so this page separates them:
+
+- A step went **off the route** because a condition changed. What it collected is **kept**.
+- A step says its answers **must not travel onward**. They are dropped whenever it is left.
+
+Pick Business, fill the company in, then go back and pick Personal. The review step shows what
+would be submitted.
+
+<RunnableExample
+  reactSources={[
+    {
+      name: 'flow.ts',
+      lang: 'ts',
+      code: flowSource,
+      note: '`when` decides reachability; `clearOnLeave` decides what survives leaving. They are not the same instruction.',
+    },
+    { name: 'App.tsx', lang: 'tsx', code: appSource },
+  ]}
+  vueSources={[
+    { name: 'flow.ts', lang: 'ts', code: flowSource },
+    { name: 'App.vue', lang: 'vue', code: appVueSource },
+    { name: 'Wizard.vue', lang: 'vue', code: wizardVueSource },
+  ]}
+  headlessSources={[
+    { name: 'flow.ts', lang: 'ts', code: flowSource },
+    { name: 'headless.ts', lang: 'ts', code: headlessSource },
+    {
+      name: 'Output',
+      lang: 'text',
+      code: headlessOutput,
+      note: 'A test in the repository asserts these exact lines.',
+    },
+  ]}
+>
+  <ClearBranchReact client:visible slot="react" />
+  <ClearBranchVue client:visible slot="vue" />
+</RunnableExample>
+
+## Abandoned is not deleted
+
+A step whose `when` is false is off the route: it is skipped forwards and backwards, and it is
+drawn as a step this visitor will not see. The engine does not throw away what it collected
+before the condition changed, because it cannot know whether you wanted that. A visitor who
+switches back to Business finds the company name still there.
+
+If that is not what you want for a particular step, say so on the step:
+
+```ts
+coupon: step<{ code: string }>({
+  label: 'Coupon',
+  clearOnLeave: true,
+}),
+```
+
+## What `clearOnLeave` drops, and when
+
+`true` drops the whole slice - the step's own `slice`, or its id when it has none. A list of
+paths drops exactly those:
+
+```ts
+clearOnLeave: ['payment.cvv'],
+```
+
+The rule is **whenever the step is left**, forwards included. That is right for a one-time code,
+a card's security number, a coupon that was either applied or was not - things you never want in
+the object the last step submits, or in a snapshot waiting in storage. It is wrong for anything
+the review step needs, so do not reach for it to tidy up a branch.
+
+## Where to read more
+
+[The flow](../flow/) has the full step table, including `slice` and `when`.
+[Expressions](../expressions/) is the language a `when` is written in, and
+[Navigation](../navigation/) covers what happens to the back stack when a step stops being
+reachable.

@@ -1,0 +1,100 @@
+---
+title: Render field errors
+description: Put each validation message beside the field it belongs to, accessibly, from the validator or from your server.
+---
+
+import RunnableExample from '../../../components/RunnableExample.astro';
+import FieldErrorsReact from '../../../islands/FieldErrorsReact';
+import FieldErrorsVue from '../../../islands/FieldErrorsVue.vue';
+import flowSource from '@examples/tasks/src/render-field-errors/flow.ts?raw';
+import registrySource from '@examples/tasks/src/render-field-errors/registry.ts?raw';
+import appSource from '@examples/tasks/src/render-field-errors/App.tsx?raw';
+import appVueSource from '@examples/tasks/src/render-field-errors/App.vue?raw';
+import wizardVueSource from '@examples/tasks/src/render-field-errors/Wizard.vue?raw';
+import headlessSource from '@examples/tasks/src/render-field-errors/headless.ts?raw';
+import headlessOutput from '@examples/tasks/src/render-field-errors/headless.out.txt?raw';
+
+Validation messages are keyed by field, so each one can be drawn next to the input it is about
+rather than collected into a list at the top of the form.
+
+Press Next with both fields empty.
+
+<RunnableExample
+  reactSources={[
+    { name: 'flow.ts', lang: 'ts', code: flowSource },
+    {
+      name: 'registry.ts',
+      lang: 'ts',
+      code: registrySource,
+      note: 'One message per field, keyed by the field name. The keys are what make the placement possible.',
+    },
+    {
+      name: 'App.tsx',
+      lang: 'tsx',
+      code: appSource,
+      note: 'The field and its message are one component, so the two cannot drift apart.',
+    },
+  ]}
+  vueSources={[
+    { name: 'flow.ts', lang: 'ts', code: flowSource },
+    { name: 'registry.ts', lang: 'ts', code: registrySource },
+    { name: 'App.vue', lang: 'vue', code: appVueSource },
+    { name: 'Wizard.vue', lang: 'vue', code: wizardVueSource },
+  ]}
+  headlessSources={[
+    { name: 'flow.ts', lang: 'ts', code: flowSource },
+    { name: 'registry.ts', lang: 'ts', code: registrySource },
+    { name: 'headless.ts', lang: 'ts', code: headlessSource },
+    {
+      name: 'Output',
+      lang: 'text',
+      code: headlessOutput,
+      note: 'A test in the repository asserts these exact lines.',
+    },
+  ]}
+>
+  <FieldErrorsReact client:visible slot="react" />
+  <FieldErrorsVue client:visible slot="vue" />
+</RunnableExample>
+
+## Reading the messages
+
+`useErrors()` returns the map for the current step, or for a step you name. It is a plain
+object keyed by field:
+
+```ts
+const errors = useErrors();
+errors['email']; // string | undefined
+```
+
+On Vue it is a `ComputedRef` of the same object, which the template unwraps for you.
+
+## Making it accessible
+
+Three attributes do the work, and the example above carries all three:
+
+- `aria-invalid` on the input, so the field announces itself as wrong.
+- `aria-describedby` pointing at the message's `id`, so the message is read with the field
+  rather than stranded somewhere after it.
+- `role="alert"` on the message, so it is announced when it appears.
+
+A message that is only a red border says nothing to anyone who cannot see the border.
+
+## Messages your server produced
+
+A card can be perfectly well formed and still be declined. `setErrors` puts that message in the
+same place as the validator's, so the rendering needs no second path for it:
+
+```ts
+wizard.setErrors('details', { card: 'That card was declined.' });
+wizard.setErrors('details', null); // clear
+```
+
+The next successful validation of that step replaces what is there, which is why the message
+disappears once the field is corrected.
+
+## Where to read more
+
+[Validation](../validation/) covers when validators run and how to run one by hand.
+[Block Next until valid](../block-next-until-valid/) is the other half of this page: the refusal
+that produces these messages in the first place.

@@ -1,0 +1,6 @@
+both fields: {"email":"Enter your email address.","card":"A card number is sixteen digits."}
+email fixed: {"card":"A card number is sixteen digits."}
+from the host: {"card":"That card was declined."}
+next: ok
+step: done
+errors now: undefined

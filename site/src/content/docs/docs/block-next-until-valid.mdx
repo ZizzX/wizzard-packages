@@ -1,0 +1,93 @@
+---
+title: Block Next until valid
+description: Stop a wizard leaving a step until its validator is happy, and say which field is wrong.
+---
+
+import RunnableExample from '../../../components/RunnableExample.astro';
+import BlockNextReact from '../../../islands/BlockNextReact';
+import BlockNextVue from '../../../islands/BlockNextVue.vue';
+import flowSource from '@examples/tasks/src/block-next/flow.ts?raw';
+import registrySource from '@examples/tasks/src/block-next/registry.ts?raw';
+import appSource from '@examples/tasks/src/block-next/App.tsx?raw';
+import appVueSource from '@examples/tasks/src/block-next/App.vue?raw';
+import wizardVueSource from '@examples/tasks/src/block-next/Wizard.vue?raw';
+import headlessSource from '@examples/tasks/src/block-next/headless.ts?raw';
+import headlessOutput from '@examples/tasks/src/block-next/headless.out.txt?raw';
+
+A step that must be filled in correctly before the flow moves on declares a validator, and the
+engine refuses the move until it passes. You do not write that check into the button.
+
+Press Next below with the field empty.
+
+<RunnableExample
+  reactSources={[
+    {
+      name: 'flow.ts',
+      lang: 'ts',
+      code: flowSource,
+      note: '`validate` names a resolver rather than holding a function, because the flow has to stay JSON.',
+    },
+    {
+      name: 'registry.ts',
+      lang: 'ts',
+      code: registrySource,
+      note: 'The function that name resolves to. It answers with a message per field, or `null` when the step is fit to leave.',
+    },
+    { name: 'App.tsx', lang: 'tsx', code: appSource },
+  ]}
+  vueSources={[
+    { name: 'flow.ts', lang: 'ts', code: flowSource },
+    { name: 'registry.ts', lang: 'ts', code: registrySource },
+    {
+      name: 'App.vue',
+      lang: 'vue',
+      code: appVueSource,
+      note: 'The parent provides the wizard; `inject` reads the parent chain.',
+    },
+    { name: 'Wizard.vue', lang: 'vue', code: wizardVueSource },
+  ]}
+  headlessSources={[
+    { name: 'flow.ts', lang: 'ts', code: flowSource },
+    { name: 'registry.ts', lang: 'ts', code: registrySource },
+    { name: 'headless.ts', lang: 'ts', code: headlessSource },
+    {
+      name: 'Output',
+      lang: 'text',
+      code: headlessOutput,
+      note: 'A test in the repository asserts these exact lines.',
+    },
+  ]}
+>
+  <BlockNextReact client:visible slot="react" />
+  <BlockNextVue client:visible slot="vue" />
+</RunnableExample>
+
+## What happens
+
+`next()` does not throw when the validator refuses. It resolves to a value that says why:
+
+```ts
+const result = await next();
+// { ok: false, reason: 'invalid', errors: { email: 'Enter your email address.' } }
+```
+
+The flow stays where it was, and the messages are written into the wizard's state, where
+`useErrors()` reads them. A component that renders a field does not need the result of the call
+that produced its message.
+
+## Things worth knowing
+
+The validator is a function of the data, not of a form: it reads `scope.data` and returns field
+messages. That is what makes it testable without a browser, and what lets the headless tab above
+drive the same check with no rendering at all.
+
+A validator may be asynchronous. While it is in the air `isBusy` is true, which is what disables
+the button - and if the person presses Back before it answers, the answer is discarded rather
+than applied to a step they have left.
+
+## Where to read more
+
+[Validation](../validation/) separates checking a definition from checking a user's answers and
+covers `validate(step?)`, `validateAll()` and `setErrors`. [Navigation](../navigation/) has the
+full table of refusal reasons. [Render field errors](../render-field-errors/) is the other half
+of this page: where the messages go once you have them.

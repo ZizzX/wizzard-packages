@@ -1,0 +1,5 @@
+step: review
+submitted: {"plan":{"payer":"business"},"company":{"name":"Acme"}}
+skipped to: coupon
+step: review
+submitted: {"plan":{"payer":"personal"},"company":{"name":"Acme"}}

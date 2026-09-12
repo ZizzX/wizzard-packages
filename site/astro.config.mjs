@@ -44,6 +44,17 @@ export default defineConfig({
           items: [{ label: 'Getting started', link: '/docs/start/' }],
         },
         {
+          // Titled by the phrase a person would search for, because that is how
+          // they arrive: with a task, not with a concept.
+          label: 'Tasks',
+          items: [
+            { label: 'Block Next until valid', link: '/docs/block-next-until-valid/' },
+            { label: 'Restore after reload', link: '/docs/restore-after-reload/' },
+            { label: 'Clear abandoned branch data', link: '/docs/clear-abandoned-branch-data/' },
+            { label: 'Render field errors', link: '/docs/render-field-errors/' },
+          ],
+        },
+        {
           label: 'Guides',
           items: [
             { label: 'The flow', link: '/docs/flow/' },
