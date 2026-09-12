@@ -12,15 +12,24 @@ while `e2e` was still `pending`, printing only the jobs that had finished. Pushi
 while it watched was one trigger; the second had no obvious cause. Exit 0 from it means "the
 command ended", not "the checks passed".
 
-What works: poll until nothing reads `pending`, then decide.
+What the command does say, and what to read instead of "it finished": `gh pr checks` exits **8**
+while any check is still pending (`gh pr checks --help`, "Additional exit codes", confirmed on
+2.98). So the answer is the exit code of a plain call, not the end of a watch.
 
 ```bash
 for i in $(seq 1 45); do
   out=$(gh pr checks <n> 2>&1)
-  echo "$out" | grep -q pending || { echo "$out"; break; }
+  status=$?
+  [ "$status" -ne 8 ] && { echo "$out"; exit "$status"; }
   sleep 20
 done
+echo "still pending after 15 minutes"
+exit 2
 ```
+
+The last two lines are the point. A loop that runs out of iterations and falls through returns
+whatever the final `sleep` returned, which is zero - the same false green, rebuilt by the thing
+written to avoid it. Every bounded wait needs an explicit failure at the bound.
 
 **A heavy run beside the e2e suite fails a test that is fine.** `pnpm verify` and
 `pnpm test:e2e` at the same time failed the inspector's "label as text" spec on a five-second
