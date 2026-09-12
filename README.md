@@ -8,9 +8,14 @@ branches in your components. Here the flow is **data** â€” a plain JSON object â
 runs it for React and Vue alike. Because it is data, you can draw it, send it from a server,
 diff it, and replay a recorded run of it.
 
+<!-- example:install-react -->
+
+<!-- prettier-ignore -->
 ```bash
 pnpm add @wizzard-packages/core@canary @wizzard-packages/react@canary
 ```
+
+<!-- /example -->
 
 ## A wizard in twenty lines
 
@@ -63,20 +68,29 @@ export function Wizard() {
   const { next, back, canBack } = useNavigation();
   const [full, setFull] = useField<string>('name.full');
 
+  // Nothing is current until the engine starts, which happens in the browser:
+  // on the server, and for the first paint, `current` is null. So the form
+  // draws the step it is about to enter and keeps every control out of reach
+  // until the engine can act on it - the field included, because anything typed
+  // before the engine exists is not in its state and the first commit would
+  // wipe it.
+  const step = current ?? 'name';
+  const starting = current === null;
+
   return (
     <form onSubmit={(e) => e.preventDefault()}>
-      {current === 'name' && (
+      {step === 'name' && (
         <label>
           Your name
-          <input value={full ?? ''} onChange={(e) => setFull(e.target.value)} />
+          <input value={full ?? ''} onChange={(e) => setFull(e.target.value)} disabled={starting} />
         </label>
       )}
-      {current === 'review' && <p>Hello, {full || 'stranger'}.</p>}
+      {step === 'review' && <p>Hello, {full || 'stranger'}.</p>}
 
-      <button type="button" onClick={() => back()} disabled={!canBack}>
+      <button type="button" onClick={() => back()} disabled={starting || !canBack}>
         Back
       </button>
-      <button type="button" onClick={() => next()} disabled={isLast}>
+      <button type="button" onClick={() => next()} disabled={starting || isLast}>
         Next
       </button>
     </form>
@@ -89,35 +103,68 @@ export function Wizard() {
 Vue is the same engine and the same hook names. The component that provides the wizard is not
 the one that uses it, because Vue's `inject` reads the parent chain:
 
+<!-- example:quickstart-vue-app -->
+
+<!-- prettier-ignore -->
+```vue
+<script setup lang="ts">
+import { provideWizard } from '@wizzard-packages/vue/v1';
+
+import Wizard from './Wizard.vue';
+import { signup } from './flow';
+
+// The wizard is provided here and consumed by the child. Vue's inject reads the
+// parent chain, so the component that provides cannot also use the composables.
+provideWizard({ flow: signup });
+</script>
+
+<template>
+  <Wizard />
+</template>
+```
+
+<!-- /example -->
+
+The child is where the composables are called:
+
 <!-- example:quickstart-vue -->
 
 <!-- prettier-ignore -->
 ```vue
 <script setup lang="ts">
 import { useField, useNavigation, useStep } from '@wizzard-packages/vue/v1';
+import { computed } from 'vue';
 
 const { current, isLast } = useStep();
 const { next, back, canBack } = useNavigation();
 const full = useField<string>('name.full');
+
+// Nothing is current until the engine starts, which happens in the browser: on
+// the server, and for the first paint, `current` is null. So the form draws the
+// step it is about to enter and keeps every control out of reach until the
+// engine can act on it - the field included, because anything typed before the
+// engine exists is not in its state and the first commit would wipe it.
+const step = computed(() => current.value ?? 'name');
+const starting = computed(() => current.value === null);
 </script>
 
 <template>
   <form @submit.prevent>
-    <label v-if="current === 'name'">
+    <label v-if="step === 'name'">
       Your name
-      <input v-model="full" />
+      <input v-model="full" :disabled="starting" />
     </label>
-    <p v-else-if="current === 'review'">Hello, {{ full || 'stranger' }}.</p>
+    <p v-else-if="step === 'review'">Hello, {{ full || 'stranger' }}.</p>
 
-    <button type="button" :disabled="!canBack" @click="back()">Back</button>
-    <button type="button" :disabled="isLast" @click="next()">Next</button>
+    <button type="button" :disabled="starting || !canBack" @click="back()">Back</button>
+    <button type="button" :disabled="starting || isLast" @click="next()">Next</button>
   </form>
 </template>
 ```
 
 <!-- /example -->
 
-Those three files are `examples/quickstart`. CI runs them on both bindings and fails if this
+The files above are `examples/quickstart`. CI runs them on both bindings and fails if this
 README drifts from them, so what you paste is what is tested.
 
 ## Groups and repeat

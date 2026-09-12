@@ -11,9 +11,14 @@ against 8.48 kB for its 0.x equivalent — nothing was optimised, the logic move
 
 ## Install
 
+<!-- example:install-react -->
+
+<!-- prettier-ignore -->
 ```bash
 pnpm add @wizzard-packages/core@canary @wizzard-packages/react@canary
 ```
+
+<!-- /example -->
 
 React 18 or newer. The provider subscribes through `useSyncExternalStore`, so concurrent
 rendering and StrictMode's double mount are handled by the store rather than by an effect.
@@ -45,20 +50,29 @@ export function Wizard() {
   const { next, back, canBack } = useNavigation();
   const [full, setFull] = useField<string>('name.full');
 
+  // Nothing is current until the engine starts, which happens in the browser:
+  // on the server, and for the first paint, `current` is null. So the form
+  // draws the step it is about to enter and keeps every control out of reach
+  // until the engine can act on it - the field included, because anything typed
+  // before the engine exists is not in its state and the first commit would
+  // wipe it.
+  const step = current ?? 'name';
+  const starting = current === null;
+
   return (
     <form onSubmit={(e) => e.preventDefault()}>
-      {current === 'name' && (
+      {step === 'name' && (
         <label>
           Your name
-          <input value={full ?? ''} onChange={(e) => setFull(e.target.value)} />
+          <input value={full ?? ''} onChange={(e) => setFull(e.target.value)} disabled={starting} />
         </label>
       )}
-      {current === 'review' && <p>Hello, {full || 'stranger'}.</p>}
+      {step === 'review' && <p>Hello, {full || 'stranger'}.</p>}
 
-      <button type="button" onClick={() => back()} disabled={!canBack}>
+      <button type="button" onClick={() => back()} disabled={starting || !canBack}>
         Back
       </button>
-      <button type="button" onClick={() => next()} disabled={isLast}>
+      <button type="button" onClick={() => next()} disabled={starting || isLast}>
         Next
       </button>
     </form>

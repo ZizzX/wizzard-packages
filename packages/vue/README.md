@@ -11,9 +11,14 @@ against 5.07 kB for its 0.x equivalent — nothing was optimised, the logic move
 
 ## Install
 
+<!-- example:install-vue -->
+
+<!-- prettier-ignore -->
 ```bash
 pnpm add @wizzard-packages/core@canary @wizzard-packages/vue@canary
 ```
+
+<!-- /example -->
 
 Vue 3.3 or newer. Reactivity rides on snapshot identity: the engine returns the same object
 until a commit, so a `shallowRef` holding it invalidates exactly once per commit and every
@@ -25,13 +30,18 @@ until a commit, so a `shallowRef` holding it invalidates exactly once per commit
 provides the wizard is not the one that uses it. Pass a flow and the scope owns and destroys
 the engine, or pass a `Wizard` you built yourself and it stays yours.
 
+<!-- example:quickstart-vue-app -->
+
+<!-- prettier-ignore -->
 ```vue
 <script setup lang="ts">
 import { provideWizard } from '@wizzard-packages/vue/v1';
 
-import { signup } from './flow';
 import Wizard from './Wizard.vue';
+import { signup } from './flow';
 
+// The wizard is provided here and consumed by the child. Vue's inject reads the
+// parent chain, so the component that provides cannot also use the composables.
 provideWizard({ flow: signup });
 </script>
 
@@ -40,35 +50,48 @@ provideWizard({ flow: signup });
 </template>
 ```
 
+<!-- /example -->
+
+The child is where the composables are called:
+
 <!-- example:quickstart-vue -->
 
 <!-- prettier-ignore -->
 ```vue
 <script setup lang="ts">
 import { useField, useNavigation, useStep } from '@wizzard-packages/vue/v1';
+import { computed } from 'vue';
 
 const { current, isLast } = useStep();
 const { next, back, canBack } = useNavigation();
 const full = useField<string>('name.full');
+
+// Nothing is current until the engine starts, which happens in the browser: on
+// the server, and for the first paint, `current` is null. So the form draws the
+// step it is about to enter and keeps every control out of reach until the
+// engine can act on it - the field included, because anything typed before the
+// engine exists is not in its state and the first commit would wipe it.
+const step = computed(() => current.value ?? 'name');
+const starting = computed(() => current.value === null);
 </script>
 
 <template>
   <form @submit.prevent>
-    <label v-if="current === 'name'">
+    <label v-if="step === 'name'">
       Your name
-      <input v-model="full" />
+      <input v-model="full" :disabled="starting" />
     </label>
-    <p v-else-if="current === 'review'">Hello, {{ full || 'stranger' }}.</p>
+    <p v-else-if="step === 'review'">Hello, {{ full || 'stranger' }}.</p>
 
-    <button type="button" :disabled="!canBack" @click="back()">Back</button>
-    <button type="button" :disabled="isLast" @click="next()">Next</button>
+    <button type="button" :disabled="starting || !canBack" @click="back()">Back</button>
+    <button type="button" :disabled="starting || isLast" @click="next()">Next</button>
   </form>
 </template>
 ```
 
 <!-- /example -->
 
-That file and the flow it imports are `examples/quickstart`, which CI runs — this block is
+Both files and the flow they import are `examples/quickstart`, which CI runs — these blocks are
 generated from them, so what you paste is what is tested.
 
 ## Composables

@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import App from '@examples/reference/src/onboarding/App.vue';
+import App from '@examples/quickstart/src/App.vue';
 
 import RestartableStage from '../components/RestartableStage.vue';
 </script>
 
-<!-- R-A on the Vue binding. The site owns the net; the example owns the application. -->
+<!-- The quickstart on the Vue binding, mounted beside its source. -->
 <template>
   <RestartableStage v-slot="{ attempt }">
     <App :key="attempt" />

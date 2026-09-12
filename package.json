@@ -7,8 +7,8 @@
   "scripts": {
     "dev": "pnpm -r dev",
     "build": "turbo run build",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,mdx}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,mdx}\"",
     "examples:embed": "node scripts/embed-examples.mjs",
     "examples:check": "node scripts/embed-examples.mjs --check",
     "lint": "eslint .",
@@ -121,7 +121,7 @@
       "eslint --fix",
       "prettier --write"
     ],
-    "*.{js,mjs,cjs,jsx,json,md,yml,yaml}": [
+    "*.{js,mjs,cjs,jsx,json,md,mdx,yml,yaml}": [
       "prettier --write"
     ],
     "examples/quickstart/src/*": [

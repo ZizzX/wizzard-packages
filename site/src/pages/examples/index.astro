@@ -84,11 +84,14 @@ const description =
 </Page>
 
 <script>
+  import { FRAMEWORK_LABELS, FRAMEWORK_STORAGE_KEY } from '../../lib/framework';
+
   // The remembered framework, applied to the links out of this page and nowhere
   // else. Storage is unavailable in some browsers and empty in most of them, so
-  // the default is what the markup already says.
+  // the default is what the markup already says. The key is Starlight's, shared
+  // with the documentation tabs; `lib/framework.ts` says why.
   try {
-    if (localStorage.getItem('wizzard:framework') === 'vue') {
+    if (localStorage.getItem(FRAMEWORK_STORAGE_KEY) === FRAMEWORK_LABELS.vue) {
       for (const link of document.querySelectorAll<HTMLAnchorElement>('a[data-example]')) {
         link.href = `${link.href}vue/`;
       }

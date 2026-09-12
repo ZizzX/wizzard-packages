@@ -1,0 +1,172 @@
+---
+title: Getting started
+description: Install wizzard, define a flow, and render it with React, Vue, or neither.
+---
+
+import { Code, TabItem, Tabs } from '@astrojs/starlight/components';
+import RunnableExample from '../../../components/RunnableExample.astro';
+import QuickstartReact from '../../../islands/QuickstartReact';
+import QuickstartVue from '../../../islands/QuickstartVue.vue';
+import { FRAMEWORK_LABELS, FRAMEWORK_SYNC_KEY } from '../../../lib/framework';
+import flowSource from '@examples/quickstart/src/flow.ts?raw';
+import appSource from '@examples/quickstart/src/App.tsx?raw';
+import appVueSource from '@examples/quickstart/src/App.vue?raw';
+import wizardVueSource from '@examples/quickstart/src/Wizard.vue?raw';
+import headlessSource from '@examples/quickstart/src/headless.ts?raw';
+import headlessOutput from '@examples/quickstart/src/headless.out.txt?raw';
+import installReact from '@examples/quickstart/install/react.sh?raw';
+import installVue from '@examples/quickstart/install/vue.sh?raw';
+import installCore from '@examples/quickstart/install/core.sh?raw';
+
+A flow is a definition: the order of steps, the conditions that include them, and the
+validation that guards them. The engine reads that definition; your components render whatever
+step it says the flow is on. Below is the whole of that, running, in about two minutes.
+
+## Install
+
+Pick the binding you render with. The choice is remembered, here and on every other page.
+
+### In an app you already have
+
+<Tabs syncKey={FRAMEWORK_SYNC_KEY}>
+  <TabItem label={FRAMEWORK_LABELS.react}>
+    <Code code={installReact} lang="bash" />
+  </TabItem>
+  <TabItem label={FRAMEWORK_LABELS.vue}>
+    <Code code={installVue} lang="bash" />
+  </TabItem>
+  <TabItem label={FRAMEWORK_LABELS.headless}>
+    <Code code={installCore} lang="bash" />
+
+    The engine has no framework in it, so `core` alone is a wizard you drive yourself.
+
+  </TabItem>
+</Tabs>
+
+The `@canary` tag is where v1 lives until the 1.0.0 release; it moves to `latest` then.
+
+### In a new app
+
+Any bundler will do. These are the templates the examples are built with:
+
+<Tabs syncKey={FRAMEWORK_SYNC_KEY}>
+  <TabItem label={FRAMEWORK_LABELS.react}>
+    <Code code={`pnpm create vite my-wizard --template react-ts\ncd my-wizard`} lang="bash" />
+    <Code code={installReact} lang="bash" />
+  </TabItem>
+  <TabItem label={FRAMEWORK_LABELS.vue}>
+    <Code code={`pnpm create vite my-wizard --template vue-ts\ncd my-wizard`} lang="bash" />
+    <Code code={installVue} lang="bash" />
+  </TabItem>
+  <TabItem label={FRAMEWORK_LABELS.headless}>
+    <Code code={`pnpm create vite my-wizard --template vanilla-ts\ncd my-wizard`} lang="bash" />
+    <Code code={installCore} lang="bash" />
+
+    Import the file below from `src/main.ts`; its output goes to the console.
+
+  </TabItem>
+</Tabs>
+
+## The quickstart
+
+Two steps, one field, Next, Back - and the value is still there after Back. That last part is
+the whole reason this library exists, so it is what the smallest example proves. Type a name,
+move forward, come back.
+
+<RunnableExample
+  reactSources={[
+    {
+      name: 'flow.ts',
+      lang: 'ts',
+      code: flowSource,
+      note: 'The definition. Two steps and the data one of them collects; no functions, so it is JSON.',
+    },
+    {
+      name: 'App.tsx',
+      lang: 'tsx',
+      code: appSource,
+      note: 'The rendering. The provider owns the engine; the component below it asks which step is current and draws that one.',
+    },
+  ]}
+  vueSources={[
+    {
+      name: 'flow.ts',
+      lang: 'ts',
+      code: flowSource,
+      note: 'The same file the React tab shows. One definition, two renderings.',
+    },
+    {
+      name: 'App.vue',
+      lang: 'vue',
+      code: appVueSource,
+      note: 'The parent provides the wizard. It has to be a parent: `inject` reads the parent chain, so the component that provides cannot also use the composables.',
+    },
+    {
+      name: 'Wizard.vue',
+      lang: 'vue',
+      code: wizardVueSource,
+      note: 'The rendering, step for step the React file, with `v-if` where the other has `&&`.',
+    },
+  ]}
+  headlessSources={[
+    {
+      name: 'flow.ts',
+      lang: 'ts',
+      code: flowSource,
+      note: 'The same definition again. Nothing in it knows about a framework.',
+    },
+    {
+      name: 'headless.ts',
+      lang: 'ts',
+      code: headlessSource,
+      note: 'The engine driven by hand: start, set, next, back, get. A binding makes these four calls for you and renders the result.',
+    },
+    {
+      name: 'Output',
+      lang: 'text',
+      code: headlessOutput,
+      note: 'What that script prints. A test in the repository asserts these exact lines, so this is not a transcript of a good run.',
+    },
+  ]}
+>
+  <QuickstartReact client:visible slot="react" />
+  <QuickstartVue client:visible slot="vue" />
+</RunnableExample>
+
+## The flow
+
+A definition does more than order two steps. This one branches, guards a step with a named
+validator, and sends Back somewhere other than where it came from:
+
+```ts
+import { defineFlow } from '@wizzard-packages/core/v1';
+
+export const signup = defineFlow({
+  id: 'signup',
+  version: 1,
+  order: ['details', 'company', 'payment'],
+  steps: {
+    details: { label: 'Details', validate: { $ref: 'needsEmail' } },
+    company: { label: 'Company', when: { $eq: [{ $get: 'data.payer' }, 'business'] } },
+    payment: { label: 'Payment', on: { back: 'details' } },
+  },
+  policy: 'free',
+});
+```
+
+Three things are already true of this object and of nothing you wrote by hand: `company` is
+part of the flow only while `payer` is `business`, `next()` from `details` is refused until
+`needsEmail` passes, and going back from `payment` lands on `details` rather than on whatever
+came before it.
+
+## What is next
+
+[The flow](../flow/) is the shape of that object in full - every field, and the two of them
+named `validate`. [Expressions](../expressions/) is the thirteen-operator language that
+`when` is written in. [Navigation](../navigation/) covers moving through a flow and the
+refusals a move can return instead. [Validation](../validation/) separates checking a
+definition from checking a user's answers, and [Persistence](../persistence/) covers writing a
+session out and refusing to restore one that no longer fits.
+
+Where the prose is thinner than a question needs, the behaviour is specified by the tests in
+`packages/core/src/v1` and the reference flows in `contract/fixtures.ts`.

@@ -1,0 +1,91 @@
+---
+import { Code, TabItem, Tabs } from '@astrojs/starlight/components';
+
+import { FRAMEWORK_LABELS, FRAMEWORK_SYNC_KEY } from '../lib/framework';
+
+/**
+ * A running example beside the files it is running, inside a documentation
+ * page. The docs equivalent of `ExampleShell.astro`, so "every page has a
+ * runnable example" is one component rather than thirteen.
+ *
+ * Three tabs, one per way of using the engine. Starlight renders all three
+ * panels and hides the inactive ones with the `hidden` attribute, so the
+ * islands are mounted `client:visible` by the page: a hidden panel never
+ * intersects anything, and the framework it would need is never fetched until
+ * a reader opens that tab. One runtime per page, the same promise the example
+ * pages keep with one route per binding.
+ *
+ * `syncKey` makes the choice stick across every page that uses this component,
+ * and `lib/framework.ts` is where that key and these labels are written down
+ * once - the example pages remember the same answer under the same key.
+ *
+ * The sources are `?raw` imports of the very files the island mounts, so a code
+ * block cannot drift from the code beside it: there is one file, read twice.
+ * `Code` is Starlight's, which is the site's highlighter; `astro:components`'
+ * own `Code` fails at build here because Starlight owns the themes.
+ *
+ * The props are `*Sources` rather than `react` and `vue` because MDX has no
+ * slot syntax of its own: a child written `<Island slot="react" />` arrives as
+ * a *prop* named `react`, which silently replaced a prop of that name. The
+ * page then built a component whose `react` was a slot function, and
+ * `react.map` threw at the end of a stack trace that named neither.
+ */
+export interface Source {
+  /** The file name, shown as the block's title. */
+  name: string;
+  lang: 'ts' | 'tsx' | 'vue' | 'bash' | 'text';
+  code: string;
+  /** One line on what the file is for. Optional: some blocks speak for themselves. */
+  note?: string;
+}
+
+interface Props {
+  reactSources: Source[];
+  vueSources: Source[];
+  /** No island: the headless tab is a script and the text it prints. */
+  headlessSources: Source[];
+}
+
+const { reactSources, vueSources, headlessSources } = Astro.props;
+---
+
+<Tabs syncKey={FRAMEWORK_SYNC_KEY}>
+  <TabItem label={FRAMEWORK_LABELS.react}>
+    <div class="example-stage" data-example-stage="react">
+      <slot name="react" />
+    </div>
+    {
+      reactSources.map((source) => (
+        <>
+          {source.note && <p>{source.note}</p>}
+          <Code code={source.code} lang={source.lang} title={source.name} />
+        </>
+      ))
+    }
+  </TabItem>
+
+  <TabItem label={FRAMEWORK_LABELS.vue}>
+    <div class="example-stage" data-example-stage="vue">
+      <slot name="vue" />
+    </div>
+    {
+      vueSources.map((source) => (
+        <>
+          {source.note && <p>{source.note}</p>}
+          <Code code={source.code} lang={source.lang} title={source.name} />
+        </>
+      ))
+    }
+  </TabItem>
+
+  <TabItem label={FRAMEWORK_LABELS.headless}>
+    {
+      headlessSources.map((source) => (
+        <>
+          {source.note && <p>{source.note}</p>}
+          <Code code={source.code} lang={source.lang} title={source.name} />
+        </>
+      ))
+    }
+  </TabItem>
+</Tabs>

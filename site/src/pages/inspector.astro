@@ -1,4 +1,6 @@
 ---
+import installReact from '@examples/quickstart/install/react.sh?raw';
+
 import Page from '../layouts/Page.astro';
 import Inspector from '../components/Inspector';
 
@@ -23,7 +25,7 @@ const description =
             <a class="button button-secondary" href={`${base}/examples/`}>See the examples</a>
             <span class="install">
               <span class="tag">install</span>
-              <span>npm i @wizzard-packages/core @wizzard-packages/react</span>
+              <span>{installReact.trim()}</span>
             </span>
           </div>
         </section>
