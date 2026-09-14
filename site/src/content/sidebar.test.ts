@@ -52,4 +52,16 @@ describe('the documentation sidebar', () => {
   it('found the entries at all, rather than a pattern that stopped matching', () => {
     expect(linked.length).toBeGreaterThan(1);
   });
+
+  /**
+   * Releases published before the error pages existed end their messages in a
+   * link to a heading in `docs/errors.md`. The headings stay, and renaming a
+   * page out from under one breaks a link that is already on someone's disk.
+   */
+  it('keeps a page for every code a published release links to', () => {
+    const index = readFileSync(near('../../../docs/errors.md'), 'utf8');
+    const codes = Array.from(index.matchAll(/^## ([\w-]+)$/gm), (m) => `errors/${m[1]}`);
+    expect(codes.length).toBeGreaterThan(1);
+    expect(codes.filter((code) => !onDisk.includes(code))).toEqual([]);
+  });
 });
