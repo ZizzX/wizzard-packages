@@ -1,16 +1,16 @@
 /**
  * Every message the panel shows, in one file, in the shape AGENTS.md fixes:
- * `[wizzard] <what went wrong>. <why>. <the fix>. <docs url>#<code>`.
+ * `[wizzard] <what went wrong>. <why>. <the fix>. <site>/errors/<code>`.
  *
  * They live here rather than beside their call sites so the template test can
- * read them as data, and so a message and its `docs/errors.md` section are
- * written together: `messages.test.ts` fails when an anchor has no heading.
+ * read them as data, and so a message and its `/errors/<code>` page are
+ * written together: `messages.test.ts` fails when a code has no page.
  */
 
-const DOCS = 'https://github.com/ZizzX/wizzard-packages/blob/main/docs/errors.md';
+const DOCS = 'https://zizzx.github.io/wizzard-packages/errors/';
 
 const message = (code: string, what: string, why: string, fix: string): string =>
-  `[wizzard] ${what}. ${why}. ${fix}. ${DOCS}#${code}`;
+  `[wizzard] ${what}. ${why}. ${fix}. ${DOCS}${code}`;
 
 /** No provider above the panel and no `wizard` prop. The whole panel is this line. */
 export const noWizard = (): string =>

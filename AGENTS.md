@@ -84,11 +84,12 @@ exposes gets a contract test that runs against both React and Vue.
 problems that are returned:
 
 ```
-[wizzard] <what went wrong>. <why>. <the fix>. <docs url>#<code>
+[wizzard] <what went wrong>. <why>. <the fix>. https://zizzx.github.io/wizzard-packages/errors/<code>
 ```
 
 Single-clause messages are the thing this replaces: `unknown resolver: x` names the symptom
-and leaves the reader to find the cause.
+and leaves the reader to find the cause. The code is a kebab-case slug, and it is the page:
+`site/src/content/docs/errors/<code>.md` is written in the same change as the message.
 
 **The automated review is a second gate.** A review runs when a PR is opened, when a draft
 is marked ready, and when it is asked for by comment - not on every push, so a branch that

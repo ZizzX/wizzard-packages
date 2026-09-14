@@ -65,8 +65,7 @@ export interface Recorder {
   readonly stopped: boolean;
 }
 
-const DOCS =
-  'https://github.com/ZizzX/wizzard-packages/blob/main/docs/errors.md#devtools-export-failed';
+const DOCS = 'https://zizzx.github.io/wizzard-packages/errors/devtools-export-failed';
 
 const isBundle = (v: unknown): v is SessionBundle => {
   const b = v as Partial<SessionBundle> | null;

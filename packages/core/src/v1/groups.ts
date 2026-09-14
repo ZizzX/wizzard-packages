@@ -25,7 +25,7 @@ import type { Frame, WizardState } from './state';
 /** Same cap as `session.ts` and `graph.ts`. Thirty-two frames deep is not nesting. */
 const MAX_DEPTH = 32;
 
-const DOCS = 'https://github.com/ZizzX/wizzard-packages/blob/main/docs/errors.md';
+const DOCS = 'https://zizzx.github.io/wizzard-packages/errors/';
 
 /**
  * One frame's worth of context: the flow the frame belongs to, the scope its
@@ -122,7 +122,7 @@ export function itemsOf(
         `[wizzard] item ${i} of repeat group "${id}" has no key at "${keyBy}". ` +
         `A repeat frame stores the item's key and nothing else, and undefined, null and "" name no item. ` +
         `Give item ${i} a "${keyBy}", or drop keyBy to identify items by position. ` +
-        `${DOCS}#repeat-keys`
+        `${DOCS}repeat-keys`
       );
     }
     const key = String(value);
@@ -132,7 +132,7 @@ export function itemsOf(
         `[wizzard] repeat keys collide in group "${id}": "${key}" at ${first} and ${i}. ` +
         `Keys are compared as strings, so 1 and "1" are one key, and a frame naming "${key}" could mean either item. ` +
         `Make "${keyBy}" unique across the items, or drop keyBy to identify items by position. ` +
-        `${DOCS}#repeat-keys`
+        `${DOCS}repeat-keys`
       );
     }
     seen.set(key, i);

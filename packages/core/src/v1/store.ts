@@ -74,7 +74,7 @@ function assertGroups(flow: FlowDefinition, installed: boolean): void {
         `[wizzard] step "${id}" is a group, but no traversal is installed. ` +
           `Without one the engine walks flat flows only. ` +
           `Pass groups from @wizzard-packages/core/groups to createWizard. ` +
-          `https://github.com/ZizzX/wizzard-packages/blob/main/docs/errors.md#groups-not-installed`
+          `https://zizzx.github.io/wizzard-packages/errors/groups-not-installed`
       );
     }
   }

@@ -106,7 +106,7 @@ describe('4.1b keys are unique', () => {
     expect(result).toMatchObject({ ok: false, reason: 'invalid', by: 'each' });
     const message = (result as { errors: Record<string, string> }).errors.id;
     expect(message).toContain('[wizzard] repeat keys collide in group "each": "dup" at 0 and 2.');
-    expect(message).toContain('docs/errors.md#repeat-keys');
+    expect(message).toContain('/errors/repeat-keys');
     expect(stepOf(wizard)).toBe('who');
   });
 
@@ -698,7 +698,7 @@ describe('5.2 the guard', () => {
     '[wizzard] step "each" is a group, but no traversal is installed. ' +
     'Without one the engine walks flat flows only. ' +
     'Pass groups from @wizzard-packages/core/groups to createWizard. ' +
-    'https://github.com/ZizzX/wizzard-packages/blob/main/docs/errors.md#groups-not-installed';
+    'https://zizzx.github.io/wizzard-packages/errors/groups-not-installed';
 
   it('throws from createWizard when a flow has a group and nothing walks it', () => {
     expect(() => createWizard({ flow: booking() })).toThrow(message);

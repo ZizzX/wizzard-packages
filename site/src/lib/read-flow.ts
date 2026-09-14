@@ -71,7 +71,7 @@ export const MAX_TOTAL_STEPS = 400;
  */
 export const MAX_TARGETS = 200;
 
-const DOCS = 'https://github.com/ZizzX/wizzard-packages/blob/main/docs/errors.md#inspector-paste';
+const DOCS = 'https://zizzx.github.io/wizzard-packages/errors/inspector-paste';
 
 export interface ReadResult {
   /** Non-null only when `problems` is empty: a flow is drawn or it is not. */

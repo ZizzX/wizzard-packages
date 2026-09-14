@@ -10,17 +10,20 @@ import * as messages from './messages';
  * general form, or the sixth is written in a different shape from the first
  * and the reader has to learn two.
  *
- * Two rules: every message matches the template, and its anchor is a heading
- * a reader actually lands on.
+ * Two rules: every message matches the template, and its code is a page a
+ * reader actually lands on.
  */
 
 const ROOT = join(__dirname, '..', '..', '..');
-const TEMPLATE = /^\[wizzard] [^.]+\.(?: [^.]+\.)+ https:\/\/\S+#[a-z-]+$/;
+const TEMPLATE = /^\[wizzard] [^.]+\.(?: [^.]+\.)+ https:\/\/\S+\/errors\/[a-z-]+$/;
 
-const anchors = (): Set<string> => {
-  const doc = readFileSync(join(ROOT, 'docs', 'errors.md'), 'utf8');
-  return new Set([...doc.matchAll(/^## (.+)$/gm)].map((match) => match[1]?.trim() ?? ''));
-};
+/** The codes that have a page: `/errors/<code>/` is `errors/<code>.md` on disk. */
+const pages = (): Set<string> =>
+  new Set(
+    readdirSync(join(ROOT, 'site', 'src', 'content', 'docs', 'errors'))
+      .filter((name) => /\.mdx?$/.test(name))
+      .map((name) => name.replace(/\.mdx?$/, ''))
+  );
 
 /** Every exported message, called with the arguments its signature needs. */
 const all = (): string[] => [
@@ -49,11 +52,11 @@ describe('messages', () => {
     }
   });
 
-  it('names an anchor that exists as a heading in docs/errors.md', () => {
-    const headings = anchors();
+  it('names a code that has its own page on the site', () => {
+    const codes = pages();
     for (const message of all()) {
-      const anchor = message.slice(message.lastIndexOf('#') + 1);
-      expect(headings, `${anchor} has no section`).toContain(anchor);
+      const code = message.slice(message.lastIndexOf('/') + 1);
+      expect(codes, `${code} has no page`).toContain(code);
     }
   });
 

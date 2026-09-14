@@ -67,6 +67,26 @@ export default defineConfig({
             { label: 'Server-driven flows', link: '/docs/server-driven/' },
           ],
         },
+        {
+          // One page per code, and the code is the slug: every message the
+          // library prints ends in the URL of the page that explains it.
+          label: 'Errors',
+          collapsed: true,
+          items: [
+            { label: 'groups-not-installed', link: '/errors/groups-not-installed/' },
+            { label: 'repeat-keys', link: '/errors/repeat-keys/' },
+            { label: 'devtools-no-wizard', link: '/errors/devtools-no-wizard/' },
+            { label: 'devtools-no-plugin', link: '/errors/devtools-no-plugin/' },
+            { label: 'devtools-render-failed', link: '/errors/devtools-render-failed/' },
+            { label: 'devtools-stopped', link: '/errors/devtools-stopped/' },
+            { label: 'devtools-export-failed', link: '/errors/devtools-export-failed/' },
+            { label: 'devtools-bundle-unsupported', link: '/errors/devtools-bundle-unsupported/' },
+            { label: 'persist-unavailable', link: '/errors/persist-unavailable/' },
+            { label: 'persist-not-restored', link: '/errors/persist-not-restored/' },
+            { label: 'persist-write-failed', link: '/errors/persist-write-failed/' },
+            { label: 'inspector-paste', link: '/errors/inspector-paste/' },
+          ],
+        },
       ],
       credits: false,
     }),

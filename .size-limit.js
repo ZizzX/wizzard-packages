@@ -67,7 +67,8 @@ export default [
   //   44 B   the scan that finds the group and throws it.
   //
   // The message is the piece that will not move. `AGENTS.md` requires four
-  // clauses and a documentation link, and the link alone is 101 characters. It
+  // clauses and a documentation link, and the link alone is 68 characters (101
+  // until the pages moved from `docs/errors.md` to the site's `/errors/`). It
   // is the only such URL in this entry, so hoisting it into a shared `DOCS`
   // constant would have nothing to share it with. Dropping to 4.8 kB would mean
   // deleting seven eighths of that message or half the seam, and neither is a

@@ -1,3 +1,6 @@
+import { readdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
@@ -30,6 +33,14 @@ const DOCS = [
   ['Persistence', 'docs/persistence/'],
   ['Devtools', 'docs/devtools/'],
   ['Server-driven flows', 'docs/server-driven/'],
+  // One page per error code, read from disk: every code the library gains adds a page, and a
+  // hand-kept list here would be the one place that forgets it.
+  ...readdirSync(fileURLToPath(new URL('../../../site/src/content/docs/errors/', import.meta.url)))
+    .filter((name) => /\.mdx?$/.test(name))
+    .map((name) => {
+      const code = name.replace(/\.mdx?$/, '');
+      return [code, `errors/${code}/`] as const;
+    }),
 ] as const;
 
 /** Starlight reads the theme from this key before it paints. */
