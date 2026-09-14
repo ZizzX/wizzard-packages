@@ -66,11 +66,16 @@ docs/designs/           the plan of record: v1-launch.md, flow-inspector.md
 and force-pushes to a shared branch are not allowed. Commit and push your own work — do not
 leave it staged for someone else. Conventional Commits are enforced by commitlint.
 
+A branch carries one task and is named after it: `<type>/T-NNN/<slug>`, where the type is
+`feature`, `fix`, `chore`, `docs`, `refactor`, `test` or `hotfix`, `T-NNN` is the task's id on
+the board, and the slug says in a few kebab-case words what the branch does -
+`feature/T-009/diagnostic-contract`.
+
 **Trunk-based.** There is no `dev` or `stage` branch. An unfinished feature ships behind a
 config flag and is tried from the `canary` dist-tag, published on every merge to `main`.
 
-**Scope.** Do the task that was asked. If you find a real problem outside it, say so and file
-an issue rather than widening the change.
+**Scope.** Do the task that was asked. If you find a real problem outside it, say so and add
+a task for it rather than widening the change.
 
 **Every block ships with its check.** Core logic gets property tests; anything a binding
 exposes gets a contract test that runs against both React and Vue.
@@ -177,37 +182,41 @@ a lower standard. Remove an entry when its v1 replacement lands. Never add one.
 
 ## Issue tracking
 
-Work is tracked in three places, one job each, and nothing else is a source of truth:
+Work is tracked on one board, the owner's `pm` board, and nothing else is a source of truth. It
+is a directory of markdown files kept outside the repository's branches and shared by every
+worktree on the machine; its CLI is `pm`, and `pm help` lists the commands.
 
-- `docs/PLAN.md` - what is being built, in what order, and where each track stands.
-- The project board, <https://github.com/users/ZizzX/projects/2> - status is the column
-  (Backlog, Ready, In progress, In review, Blocked, Done) and order is the position in Ready.
-  Epics are parents of native sub-issues, and a dependency is a native "blocked by" link.
-- The issue itself - the spec in its body; what was learned, decided and left half-done in its
-  comments. The PR that finishes it says `Closes #N`.
+- `PLAN.md` - the goal, the milestones (`1.0.0`, `after-1.0`) and one focus line per epic. The
+  epics are the tracks: `L` the library, `S` the site, `D` the docs, `R` the release, and
+  `post-1.0`.
+- `tasks/T-NNN.md` - one task, one branch, one PR. Status is one of `todo`, `in_progress`,
+  `waiting`, `done` and `dropped`; order and dependencies decide what `pm ready` offers next;
+  the log says what was done and what comes next.
+- `decisions.md` - why the plan is the way it is, one entry per decision.
 
-Moving a card is part of the work: taking a task moves it to In progress, opening its PR to In
-review, and the merge to Done, with the plan's row updated in the same PR.
+`docs/designs/v1-launch.md` stays the frozen record of why 1.0.0 is shaped as it is. A task
+carried over from GitHub links its issue, which still holds the spec, and the PR that finishes it
+says `Closes #N`. New work gets a task, not an issue; GitHub issues stay open for reports from
+outside.
+
+Updating the board is part of the work: taking a task is `pm claim T-NNN`, stopping part-way is
+`pm log T-NNN --did "..." --next "..."`, and the merge is `pm set T-NNN status=done`. Work found
+along the way becomes a new task, rather than silently widening the one at hand. `TODOS.md` is
+work deliberately deferred out of 1.0.0, not the tracker.
 
 The `wizzard-N` ids in `docs/designs/` and in a few test comments come from the beads tracker
-this repository used until 2026-09-11. `docs/PLAN.md` maps every id still referenced to where it
-went; the full history is in git.
-
-Open an issue when work is identified, and re-file rather than silently widening one already
-open. Labels carry priority (`P0`-`P3`) and kind (`epic`, `story`, `task`, `bug`, `design`,
-`documentation`); status is the board's job, never a label's. `TODOS.md` is work deliberately
-deferred out of 1.0.0, not the tracker.
+this repository used until 2026-09-11. `docs/designs/legacy-ids.md` maps every id still
+referenced to where it went; the full history is in git.
 
 ### What earlier sessions learned
 
 `.agent/memory/` holds what working on this repository taught, where the code cannot say it: why
 a decision went the way it did, which green result is not proof, what a tool does that its
 documentation does not. One file per fact, linked to related ones with `[[slug]]`, and
-`MEMORY.md` beside them is the index - one line each. The session brief prints that index, so a
-session knows what exists without reading forty files, and reads the ones it needs.
+`MEMORY.md` beside them is the index - one line each. A session reads that index first, so it
+knows what exists without reading forty files, and opens the ones it needs.
 
-This is the fourth place work is written down and the only one that is not a tracker: it carries
-knowledge, never status. Add a file when something durable and non-obvious is learned; delete one
+It sits beside the board and is not a tracker: it carries knowledge, never status. Add a file when something durable and non-obvious is learned; delete one
 that turns out to be wrong. Do not record what the repository already states - structure, git
 history, and the rules in this file are not memory. Rule 1 applies here as everywhere.
 
@@ -215,18 +224,18 @@ history, and the rules in this file are not memory. Rule 1 applies here as every
 
 When a session begins and the owner's first message does not already name the work - a
 greeting, "continue", a bare question - open with where the project stands in three or four
-lines: what is in progress, what is blocked and by what, and what is next on the board. Then ask
-one question with three answers: continue the task on top (name it), take another one from the
-board, or start something new. Starting something new means opening an issue for it first.
+lines: what is in progress, what is waiting and on what, and what `pm ready` offers next. Then
+ask one question with three answers: continue the task on top (name it), take another one from
+the board, or start something new. Starting something new means adding a task for it first.
 
-Continuing a task means reading its issue before touching code - the spec in the body and the
-last handoff comment - and saying in two lines where it stopped and what comes next.
+Continuing a task means reading its task file before touching code - the understanding, the
+checklist, the last log entry, and the issue it links if it has one - and saying in two lines
+where it stopped and what comes next.
 
-Claude Code sessions are handed this state before the owner types anything: a SessionStart hook
-in `.claude/settings.json` runs `scripts/session-brief.mjs`, which prints the plan's "Now", the
-board's live columns, the last merged PRs and any uncommitted work. Any other agent reads
-`docs/PLAN.md` and the board itself. If the board cannot be reached, say so and work from the
-plan.
+Claude Code sessions are handed the board's summary by the `pm` plugin before the owner types
+anything, and `CLAUDE.md` imports the memory index. Any other agent runs `pm summary` and reads
+`.agent/memory/MEMORY.md` itself. If the board cannot be reached, say so and ask the owner where
+the work stands.
 
 ## Coding Tasks
 

@@ -2,18 +2,20 @@
 
 @AGENTS.md
 
+@.agent/memory/MEMORY.md
+
 `AGENTS.md`, imported above, is the rulebook for every contributor, this one included: the hard
-rules, documentation, issue tracking and how a session starts all live there. This file adds only
-what is specific to Claude Code.
+rules, documentation, issue tracking and how a session starts all live there. The memory index
+is imported beside it. This file adds only what is specific to Claude Code.
 
 ## Claude Code specifics
 
-- `.claude/settings.json` runs `scripts/session-brief.mjs` when a session starts; its output is
-  the brief that "Starting a session" in `AGENTS.md` refers to. Keep the "Now" section of
-  `docs/PLAN.md` short and true - it is the first thing every session reads.
-- The same file empties `attribution`, so no commit or PR carries an assistant trailer. That is
-  rule 1 of `AGENTS.md`, held by configuration because a reminder at the top of every session
-  says otherwise.
+- The `pm` plugin's SessionStart hook hands every session the board's summary, which "Starting a
+  session" in `AGENTS.md` refers to. Keep each epic's focus line in the board's `PLAN.md` short
+  and true - it is the first thing every session reads.
+- `.claude/settings.json` empties `attribution`, so no commit or PR carries an assistant trailer.
+  That is rule 1 of `AGENTS.md`, held by configuration because a reminder at the top of every
+  session says otherwise.
 
 ## Skill routing
 
@@ -31,6 +33,5 @@ Key routing rules:
 - Code review/diff check → invoke /review
 - Visual polish → invoke /design-review
 - Ship/deploy/PR → invoke /ship or /land-and-deploy
-- Save progress → invoke /context-save
-- Resume context → invoke /context-restore
+- What's next, save progress, hand off → invoke /project-memory:pm
 - Author a backlog-ready spec/issue → invoke /spec
