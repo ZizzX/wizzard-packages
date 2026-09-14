@@ -1,9 +1,13 @@
 import { groups } from '@wizzard-packages/core/groups';
+import {
+  WizardError,
+  type FlowDefinition,
+  type SubFlows,
+  type Traversal,
+} from '@wizzard-packages/core/v1';
 import { describe, expect, it } from 'vitest';
 
 import { flowC as tripFlow, subFlowsC } from './fixtures';
-
-import type { FlowDefinition, SubFlows, Traversal } from '@wizzard-packages/core/v1';
 
 /**
  * The contract every framework binding owes.
@@ -40,6 +44,11 @@ export interface BindingHarness {
     /** Sub-flow definitions a string `GroupStep.flow` names. */
     subFlows?: SubFlows;
   }) => Promise<Probe>;
+  /**
+   * Renders a component that calls `useWizard` with no provider above it, and
+   * returns whatever that threw - `undefined` if nothing did.
+   */
+  outsideProvider: () => unknown;
 }
 
 /**
@@ -115,6 +124,19 @@ export function describeBindingContract(harness: BindingHarness): void {
     harness.mount({ flow, registry, data });
 
   describe(`binding contract: ${harness.name}`, () => {
+    // The one failure a binding throws on its own. Both name the same code, so
+    // the page a developer lands on does not depend on the framework.
+    it('refuses useWizard outside a provider, with a code and a fix', () => {
+      const error = harness.outsideProvider();
+      expect(error).toBeInstanceOf(WizardError);
+      expect(error).toMatchObject({
+        code: 'provider-missing',
+        op: 'useWizard',
+        url: 'https://zizzx.github.io/wizzard-packages/errors/provider-missing',
+      });
+      expect((error as WizardError).fix).not.toBe('');
+    });
+
     it('is on the first step as soon as it mounts', async () => {
       // No click. A binding starts the engine when it mounts, so the first
       // paint already has a current step; a wizard that renders nothing until

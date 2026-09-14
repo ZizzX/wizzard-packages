@@ -106,8 +106,8 @@ sending that has a bug worth surfacing rather than smoothing over. The refusal o
 the root of the flow - a step inside a group is never in the root's `steps`, and reading its
 absence as a deletion would refuse every patch made while someone stands inside a group.
 
-A patch that introduces a group step without a traversal installed throws rather than returning
-`false`. That is a wiring mistake in your application, not an outcome of the payload.
+A patch that introduces a group step without a traversal installed throws
+[`groups-not-installed`](../../errors/groups-not-installed/) rather than returning `false`. That is a wiring mistake in your application, not an outcome of the payload.
 
 **Check a patch before applying it.** `patchFlow` merges and installs; it does not validate. A
 patch carrying `order: 1` is accepted and the failure surfaces later, inside a selector, with the

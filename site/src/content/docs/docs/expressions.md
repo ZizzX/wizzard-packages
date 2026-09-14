@@ -64,7 +64,7 @@ A resolver takes the `args` from the `$ref` and the scope, in that order:
 `(args: Json | undefined, scope: Scope) => unknown`. Most ignore the first.
 
 Two evaluators exist because two situations exist. `evaluate` is synchronous and throws
-`ExprError` if a resolver hands back a promise; `evaluateAsync` awaits it and short-circuits
+a [`resolver-is-async`](../../errors/resolver-is-async/) error if a resolver hands back a promise; `evaluateAsync` awaits it and short-circuits
 `$and` and `$or` in order. `test` and `testAsync` wrap them and coerce to a boolean, treating
 an absent expression as `true` - which is what makes `when` optional. `isSync(expr)` reports
 whether an expression contains any `$ref` at all, and so whether it can be evaluated during

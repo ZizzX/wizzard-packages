@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { evaluate, ExprError, isSync, test as truthy, type Expr, type Scope } from './expr';
+import { WizardError } from './diagnostic';
+import { evaluate, isSync, test as truthy, type Expr, type Scope } from './expr';
 
 const scope: Scope = {
   data: {
@@ -88,16 +89,18 @@ describe('evaluate', () => {
   });
 
   it('refuses an unknown resolver rather than silently returning false', () => {
-    expect(() => evaluate({ $ref: 'nope' }, scope, {})).toThrow(ExprError);
+    expect(() => evaluate({ $ref: 'nope' }, scope, {})).toThrow(WizardError);
   });
 
   it('refuses an async resolver on the synchronous path', () => {
     const registry = { later: () => Promise.resolve(true) };
-    expect(() => evaluate({ $ref: 'later' }, scope, registry)).toThrow(/async/);
+    expect(() => evaluate({ $ref: 'later' }, scope, registry)).toThrow(/resolver-is-async$/);
   });
 
   it('refuses an unknown operator', () => {
-    expect(() => evaluate({ $nope: 1 } as unknown as Expr, scope)).toThrow(/unknown operator/);
+    expect(() => evaluate({ $nope: 1 } as unknown as Expr, scope)).toThrow(
+      /expr-unknown-operator$/
+    );
   });
 
   it('evaluates array literals element-wise', () => {

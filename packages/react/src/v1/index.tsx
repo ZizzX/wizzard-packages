@@ -9,6 +9,7 @@ import {
   type Snapshot,
   type Wizard,
   type WizardOptions,
+  WizardError,
 } from '@wizzard-packages/core/v1';
 import {
   createContext,
@@ -104,7 +105,15 @@ export function WizardProvider({ wizard, children, ...options }: WizardProviderP
 /** `useWizard<typeof signup>()` types `go`, `get` and `set` against that flow. */
 export function useWizard<F extends FlowDefinition = FlowDefinition>(): Wizard<F> {
   const wizard = useContext(WizardContext);
-  if (!wizard) throw new Error('[wizzard] useWizard must be used inside a WizardProvider');
+  if (!wizard) {
+    throw new WizardError(
+      'provider-missing',
+      'useWizard',
+      'useWizard was called outside a WizardProvider',
+      'It reads the wizard from context, and no ancestor component provides one',
+      'Render this component inside <WizardProvider>'
+    );
+  }
   return wizard as Wizard<F>;
 }
 

@@ -1,5 +1,6 @@
 import { commit, restart } from './commit';
 import { type SliceAt, type StepIdOf } from './define';
+import { notRegistered, WizardError } from './diagnostic';
 import { END, isGroup, type FlowDefinition, type StepDef } from './flow';
 import {
   runNav,
@@ -66,15 +67,17 @@ const BACK: NavIntent = { type: 'back' };
  * it is refused where an unknown resolver is refused - by throwing, before the
  * first render rather than on the first `next()`.
  */
-function assertGroups(flow: FlowDefinition, installed: boolean): void {
+function assertGroups(flow: FlowDefinition, installed: boolean, op: string): void {
   if (installed) return;
   for (const id in flow.steps) {
     if (isGroup(flow.steps[id] as StepDef)) {
-      throw new Error(
-        `[wizzard] step "${id}" is a group, but no traversal is installed. ` +
-          `Without one the engine walks flat flows only. ` +
-          `Pass groups from @wizzard-packages/core/groups to createWizard. ` +
-          `https://zizzx.github.io/wizzard-packages/errors/groups-not-installed`
+      throw new WizardError(
+        'groups-not-installed',
+        op,
+        `step "${id}" is a group, but no traversal is installed`,
+        'Without one the engine walks flat flows only',
+        'Pass groups from @wizzard-packages/core/groups to createWizard',
+        `steps.${id}`
       );
     }
   }
@@ -158,7 +161,7 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
   const traversal = options.groups;
   const subFlows = options.subFlows;
 
-  assertGroups(flow, traversal !== undefined);
+  assertGroups(flow, traversal !== undefined, 'createWizard');
 
   let state: WizardState = options.state ?? initialState(options.data ?? {}, options.ctx ?? {});
   const listeners = new Set<() => void>();
@@ -264,11 +267,13 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
   const resolverFor = async (
     ref: { $ref: string; args?: Json } | undefined,
     fallback: unknown,
-    scope: Scope
+    scope: Scope,
+    op: string,
+    stepId: string
   ): Promise<unknown> => {
     if (!ref) return fallback;
     const fn = registry?.[ref.$ref];
-    if (!fn) throw new Error(`[wizzard] unknown resolver: ${ref.$ref}`);
+    if (!fn) throw notRegistered(ref.$ref, op, `steps.${stepId}`);
     return await fn(ref.args, scope);
   };
 
@@ -284,7 +289,7 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
   ): Promise<Readonly<Record<string, string>> | null> => {
     const step: StepDef | undefined = where.flow.steps[stepId];
     const rule = step && 'validate' in step ? step.validate : undefined;
-    const result = await resolverFor(rule, null, where.scope);
+    const result = await resolverFor(rule, null, where.scope, 'validate', stepId);
     return (result as Readonly<Record<string, string>> | null) ?? null;
   };
 
@@ -298,8 +303,14 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
     // that threw once keeps running half its contract.
     hooks: destroyed ? [] : plugins.filter((h) => !disabled.has(h.name)),
     validate: (stepId) => validateStep(stepId),
-    load: async (_stepId, load, scope) => {
-      await resolverFor(load as { $ref: string; args?: Json } | undefined, undefined, scope);
+    load: async (stepId, load, scope) => {
+      await resolverFor(
+        load as { $ref: string; args?: Json } | undefined,
+        undefined,
+        scope,
+        'load',
+        stepId
+      );
     },
     signal: controller?.signal,
   });
@@ -506,7 +517,7 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
       }
       // The other place a flow arrives, so the other place a group can appear
       // without a traversal to walk it.
-      assertGroups(merged, traversal !== undefined);
+      assertGroups(merged, traversal !== undefined, 'patchFlow');
       flow = merged;
       write(commit(state, {}));
       return true;

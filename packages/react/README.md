@@ -96,7 +96,8 @@ generated from them, so what you paste is what is tested.
 | `useWizardSelector(fn)` | one derived value, re-rendering only when it changes                                |
 | `useWizard()`           | the engine itself, for anything the hooks above do not cover                        |
 
-`useOptionalWizard()` returns `null` outside a provider instead of throwing, which is what a
+Outside a `WizardProvider`, `useWizard()` and every hook built on it throw a `WizardError` with
+the code `provider-missing`. `useOptionalWizard()` returns `null` there instead, which is what a
 component rendered both inside and outside a wizard needs.
 
 Navigation is async and returns a result, not a boolean: `await next()` gives

@@ -5,6 +5,7 @@ import {
   type Snapshot,
   type Wizard,
   type WizardOptions,
+  WizardError,
 } from '@wizzard-packages/core/v1';
 import {
   computed,
@@ -61,7 +62,15 @@ export function provideWizard<F extends FlowDefinition>(
 /** `useWizard<typeof signup>()` types `go`, `get` and `set` against that flow. */
 export function useWizard<F extends FlowDefinition = FlowDefinition>(): Wizard<F> {
   const wizard = inject(KEY, null);
-  if (!wizard) throw new Error('[wizzard] useWizard must be used under provideWizard');
+  if (!wizard) {
+    throw new WizardError(
+      'provider-missing',
+      'useWizard',
+      'useWizard was called outside provideWizard',
+      'It injects the wizard, and no ancestor component provided one',
+      'Call provideWizard in the setup of an ancestor component'
+    );
+  }
   return wizard as Wizard<F>;
 }
 

@@ -107,3 +107,21 @@ before it was read.
 None of the rules above throw. A refused move returns `{ ok: false, reason }` and the flow stays
 where it was, because a refusal is an ordinary outcome of a wizard rather than a failure of the
 program. [Navigation](../navigation/) lists every reason and what each one means.
+
+## Failures are one class
+
+What does throw is a mistake in the program: a `$ref` the registry does not hold, a group step
+with no traversal installed, `useWizard` called outside a provider. Every one of them is a
+`WizardError`, exported from `@wizzard-packages/core/v1`, and every one carries the same fields:
+
+| Field  | What it holds                                                                              |
+| ------ | ------------------------------------------------------------------------------------------ |
+| `code` | a stable kebab-case name, such as `resolver-not-registered`                                |
+| `op`   | the public operation that failed: `evaluate`, `createWizard`, `useWizard`                  |
+| `path` | where in the flow, when there is a where: `steps.account`                                  |
+| `fix`  | what to change, as a sentence                                                              |
+| `url`  | the page for that code, such as [/errors/provider-missing](../../errors/provider-missing/) |
+
+The `message` is those fields as four sentences - what went wrong, why, the fix, the page - so a
+failure read in a console says what to do next without a lookup. The `url` is built from the code
+alone and never carries a value the application passed in.

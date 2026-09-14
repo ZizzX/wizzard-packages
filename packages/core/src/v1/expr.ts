@@ -1,3 +1,5 @@
+import { notRegistered, WizardError } from './diagnostic';
+
 /**
  * The expression language.
  *
@@ -48,8 +50,17 @@ export interface Scope {
 export type Resolver = (args: Json | undefined, scope: Scope) => unknown;
 export type Registry = Readonly<Record<string, Resolver>>;
 
-/** Thrown when a synchronous evaluation meets a `$ref` it cannot resolve. */
-export class ExprError extends Error {}
+/** An expression object whose first key is not an operator. Both evaluators end in it. */
+const unknownOperator = (e: object, op: string): WizardError => {
+  const key = Object.keys(e)[0];
+  return new WizardError(
+    'expr-unknown-operator',
+    op,
+    `"${key}" is not an operator`,
+    'An expression object names its operation with a key, and none of its keys is an operator',
+    `Replace ${key} with an operator from the expressions guide, or check it for a typo`
+  );
+};
 
 const isNode = (e: Expr): e is Exclude<Expr, null | boolean | number | string | readonly Expr[]> =>
   typeof e === 'object' && e !== null && !Array.isArray(e);
@@ -92,8 +103,8 @@ function empty(v: unknown): boolean {
 }
 
 /**
- * Evaluates synchronously. Throws `ExprError` on a `$ref` that the registry
- * does not define, or whose resolver returns a promise.
+ * Evaluates synchronously. Throws a `WizardError` on a `$ref` that the
+ * registry does not define, or whose resolver returns a promise.
  *
  * Most flows contain no `$ref` at all, so `isSync` lets the engine take this
  * path and know which steps are reachable before the first paint.
@@ -124,13 +135,21 @@ export function evaluate(e: Expr, scope: Scope, registry?: Registry): unknown {
 
   if ('$ref' in e) {
     const fn = registry?.[e.$ref];
-    if (!fn) throw new ExprError(`unknown resolver: ${e.$ref}`);
+    if (!fn) throw notRegistered(e.$ref, 'evaluate');
     const out = fn(e.args, scope);
-    if (out instanceof Promise) throw new ExprError(`resolver is async: ${e.$ref}`);
+    if (out instanceof Promise) {
+      throw new WizardError(
+        'resolver-is-async',
+        'evaluate',
+        `resolver "${e.$ref}" returned a promise`,
+        'This expression is evaluated synchronously - a when, a transition guard or a repeat source - and cannot wait for it',
+        `Make ${e.$ref} synchronous, or move the asynchronous work into the step's validate or load`
+      );
+    }
     return out;
   }
 
-  throw new ExprError(`unknown operator: ${Object.keys(e)[0]}`);
+  throw unknownOperator(e, 'evaluate');
 }
 
 /** Evaluates to a boolean. An absent expression is `true`. */
@@ -176,7 +195,7 @@ export async function evaluateAsync(
 
   if ('$ref' in e) {
     const fn = registry?.[e.$ref];
-    if (!fn) throw new ExprError(`unknown resolver: ${e.$ref}`);
+    if (!fn) throw notRegistered(e.$ref, 'evaluateAsync');
     return await fn(e.args, scope);
   }
 
@@ -229,7 +248,7 @@ export async function evaluateAsync(
     return Array.isArray(hay) && hay.includes(needle);
   }
 
-  throw new ExprError(`unknown operator: ${Object.keys(e)[0]}`);
+  throw unknownOperator(e, 'evaluateAsync');
 }
 
 export type AsyncResolver = (args: Json | undefined, scope: Scope) => unknown | Promise<unknown>;

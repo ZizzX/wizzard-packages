@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { Profiler, type ReactElement } from 'react';
-import { afterEach } from 'vitest';
+import { Component, Profiler, type ReactElement, type ReactNode } from 'react';
+import { afterEach, vi } from 'vitest';
 
 import {
   describeBindingContract,
@@ -109,8 +109,48 @@ function Probe(): ReactElement {
   );
 }
 
+/** Catches what a child throws while rendering, so the test can read it. */
+class Catch extends Component<{ onError: (error: unknown) => void; children: ReactNode }> {
+  override state = { failed: false };
+  static getDerivedStateFromError(): { failed: boolean } {
+    return { failed: true };
+  }
+  override componentDidCatch(error: unknown): void {
+    this.props.onError(error);
+  }
+  override render(): ReactNode {
+    return this.state.failed ? null : this.props.children;
+  }
+}
+
+function Bare(): ReactElement {
+  useWizard();
+  return <span />;
+}
+
 const harness: BindingHarness = {
   name: 'react',
+  outsideProvider: () => {
+    let caught: unknown;
+    // React reports a caught render error to the console as well; the test
+    // asserts on the error itself, so the report is noise here.
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      render(
+        <Catch
+          onError={(error) => {
+            caught = error;
+          }}
+        >
+          <Bare />
+        </Catch>
+      );
+    } finally {
+      quiet.mockRestore();
+      cleanup();
+    }
+    return caught;
+  },
   mount: async ({ flow, registry, data, groups, subFlows }) => {
     // Counted with Profiler rather than inside the component: a render-phase
     // side effect is exactly what the hooks lint exists to stop, and onRender

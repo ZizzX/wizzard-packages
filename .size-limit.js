@@ -68,9 +68,9 @@ export default [
   //
   // The message is the piece that will not move. `AGENTS.md` requires four
   // clauses and a documentation link, and the link alone is 68 characters (101
-  // until the pages moved from `docs/errors.md` to the site's `/errors/`). It
-  // is the only such URL in this entry, so hoisting it into a shared `DOCS`
-  // constant would have nothing to share it with. Dropping to 4.8 kB would mean
+  // until the pages moved from `docs/errors.md` to the site's `/errors/`). Since
+  // L6 that link is built once, in `WizardError`, from the code, and every
+  // message in this entry shares it. Dropping to 4.8 kB would have meant
   // deleting seven eighths of that message or half the seam, and neither is a
   // size decision.
   //
@@ -88,7 +88,15 @@ export default [
   // plugin can explain a refused move that never committed. Measured 5098 B;
   // the shared dispatch helper is where the bytes went, and it is also what
   // keeps the two hooks from drifting apart.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '5.2 kB', gzip: true },
+  //
+  // 5.2 to 5.6 kB on 2026-09-15 for the diagnostic contract (L6,
+  // docs/designs/v1-launch.md): every throw is a `WizardError` carrying code,
+  // op, path, fix and url, and its message is four sentences rather than one
+  // clause. Measured 5583 B. The class is the smaller part; the rest is the
+  // why and the fix of `resolver-not-registered`, `resolver-is-async` and
+  // `expr-unknown-operator`, which used to be `unknown resolver: x` - the
+  // single-clause message `AGENTS.md` names as the thing the template replaces.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '5.6 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a
@@ -107,7 +115,11 @@ export default [
   // them, and evaluates `over` and `input` with the expression evaluator, so it
   // pulls `resolve`, `expr`, `path` and the step types in behind it. An
   // application that already imports the engine pays for those once.
-  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '3.0 kB', gzip: true },
+  //
+  // 3.0 to 3.4 kB on 2026-09-15, measured 3394 B, for the same reason as
+  // `core-v1` above and by the same bytes: this entry evaluates expressions, so
+  // it carries the evaluator's `WizardError` messages with it.
+  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '3.4 kB', gzip: true },
 
   // The recorded-session checker. Its own entry because replay is a devtools and
   // documentation concern: an application that only runs a wizard never needs to
@@ -195,7 +207,10 @@ export default [
   {
     name: 'core-v1 validate-flow',
     path: 'packages/core/src/v1/validate-flow.ts',
-    limit: '1.3 kB',
+    // 1.3 to 1.45 kB on 2026-09-15, measured 1425 B: `assertFlow` throws a
+    // `WizardError` with the code `flow-invalid`, so the class and one sentence
+    // of why and fix now ship here too.
+    limit: '1.45 kB',
     gzip: true,
   },
 
@@ -212,10 +227,15 @@ export default [
   // costs a little more because StrictMode mounts twice against one instance
   // and the provider has to notice an engine it already tore down. Both stay
   // far under the 1.5 kB the rewrite budgeted for them.
+  //
+  // react 1.1 to 1.15 kB on 2026-09-15, measured 1119 B: `useWizard` outside a
+  // provider throws a `WizardError` whose why and fix say where the provider
+  // goes. The class itself is core's and is not counted here. Vue carries the
+  // same message and still measures 797 B, under its 800 B.
   {
     name: 'react-v1',
     path: 'packages/react/src/v1/index.tsx',
-    limit: '1.1 kB',
+    limit: '1.15 kB',
     gzip: true,
     ignore: ['react', 'react-dom', '@wizzard-packages/core/v1'],
   },
