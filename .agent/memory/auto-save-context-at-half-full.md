@@ -1,6 +1,6 @@
 ---
 name: auto-save-context-at-half-full
-description: At 50% context, save the checkpoint and tell the user to clear and restore — never ask permission; also validate before every commit and push, and act on PR review comments.
+description: At 50% context, log the active pm task and tell the user to clear — never ask permission; also validate before every commit and push, and act on PR review comments.
 metadata:
   type: feedback
 ---
@@ -12,10 +12,10 @@ and take the PR comments into account.
 
 Three standing rules:
 
-1. **At ~50% context, save without being asked.** Write the `/context-save` checkpoint,
-   name the file in one line, and tell the user to press `/clear` then `/context-restore`.
-   Only the user can clear, so that hand-off sentence is the whole ask — no question, no
-   waiting for approval to save.
+1. **At ~50% context, save without being asked.** Log the active task on the board
+   (`pm log T-NNN --did "..." --next "..."`) and tell the user to press `/clear`; the next
+   session starts from the board's summary. Only the user can clear, so that hand-off
+   sentence is the whole ask — no question, no waiting for approval to save.
 2. **Validate before every commit and push.** Run the repository's gates (here:
    `pnpm lint && pnpm type-check && pnpm test:run && pnpm format:check && pnpm size`, plus
    `pnpm examples:check` since the README is generated) and only then commit. The husky

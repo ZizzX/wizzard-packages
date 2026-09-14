@@ -38,6 +38,6 @@
 - [The site ground is a solid fill](site-ground-is-a-solid-fill.md) — DONE in #79; the closed list of what takes a surface, and why the nav does not.
 - [Unlayered CSS beats Starlight](unlayered-css-beats-starlight.md) — layers outrank specificity; the 1.00:1 sidebar bug.
 - [Docs pages had no e2e coverage](docs-pages-had-no-e2e-coverage.md) — and the three screenshot findings that were not real.
-- [Project state lives in three places](project-state-lives-in-three-places.md) — PLAN.md, board projects/2, the issue; beads retired; the SessionStart brief hands them over.
+- [Project state lives on the pm board](project-state-lives-on-the-pm-board.md) — since 2026-09-14 it replaces PLAN.md, projects/2 and the session brief; epics L/S/D/R/post-1.0; branches `<type>/T-NNN/<slug>`.
 - [Prose drifts from the engine](prose-drifts-from-the-engine.md) — eight documented rules the engine does not have, and the only two things that found them.
 - [A watch can report green early](a-watch-can-report-green-early.md) — `--watch` exits 0 mid-run; a verify run beside e2e fails a healthy test.
