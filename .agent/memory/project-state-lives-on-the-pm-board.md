@@ -12,11 +12,10 @@ work - and the brief made every session start wait on `gh` and on a token with t
 scope. The board sits outside the repository, keyed by the main checkout's path, so every
 worktree on the machine shares it; another machine sees it only through `pm sync`.
 
-Epics are the old plan's tracks: `L`, `S`, `D`, `R`, `post-1.0`. The 22 issues open at the move
-stayed open: each carried-over task links its issue, which holds the spec, and nothing was
-copied. The release epic #66 became five tasks in the order of its chain - D3 phase two, R0,
-S6, R1, R2 - and R0 depends on every other 1.0.0 task, so `pm ready` cannot offer it early.
-Branches are `<type>/T-NNN/<slug>` (pm D-002).
+The issues open at the move stayed open and kept their specs: a carried-over task links its
+issue instead of copying it, so a spec has one home. What the board holds - tasks, order,
+dependencies - is read from the board, never restated here. Branches are `<type>/T-NNN/<slug>`
+(pm D-002).
 
 **Before that (2026-09-11, #81):** PLAN.md + projects/2 + the issue, which replaced beads. When
 the owner writes **"bd" they mean beads, not the Russian abbreviation for "database"** - that
