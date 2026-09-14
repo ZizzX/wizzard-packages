@@ -174,7 +174,8 @@ Six custom properties, set on any ancestor: `--wz-bg`, `--wz-fg`, `--wz-muted`, 
 
 ## Errors
 
-Every message names a section in [docs/errors.md](https://github.com/ZizzX/wizzard-packages/blob/main/docs/errors.md):
+Every message ends in the URL of the page that explains it,
+`https://zizzx.github.io/wizzard-packages/errors/<code>`, one page per code:
 `devtools-no-wizard`, `devtools-no-plugin`, `devtools-render-failed`, `devtools-stopped`,
 `devtools-export-failed`, `devtools-bundle-unsupported`.
 

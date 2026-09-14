@@ -210,7 +210,7 @@ describe('recordSession', () => {
       },
     });
     expect(() => throwing.bundle()).toThrow(
-      /redact threw bad hook.*docs\/errors\.md#devtools-export-failed/
+      /redact threw bad hook.*\/errors\/devtools-export-failed$/
     );
     const wrong = recordSession(w, { redact: () => null as unknown as SessionBundle });
     expect(() => wrong.bundle()).toThrow(/not a SessionBundle/);

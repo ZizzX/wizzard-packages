@@ -263,7 +263,7 @@ describe('the failure contract', () => {
     for (const text of failing) {
       const message = readFlow(text).problems[0]?.message ?? '';
       expect(message.startsWith('[wizzard] ')).toBe(true);
-      expect(message).toContain('docs/errors.md#inspector-paste');
+      expect(message).toContain('/errors/inspector-paste');
       // What went wrong, why, the fix, the url: four sentences.
       expect(message.split('. ').length).toBeGreaterThanOrEqual(4);
     }

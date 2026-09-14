@@ -22,20 +22,23 @@ const near = (path: string): string => fileURLToPath(new URL(path, import.meta.u
 const config = readFileSync(near('../../astro.config.mjs'), 'utf8');
 
 /**
- * Starlight reads from `src/content/docs/`, so `/docs/flow/` is `docs/flow.md`.
- * A page that mounts a component is `.mdx` instead, and both extensions resolve
- * to the same route - so a check that knows only one of them reports a page
- * that exists as missing.
+ * Starlight reads from `src/content/docs/`, so `/docs/flow/` is `docs/flow.md`
+ * and `/errors/repeat-keys/` is `errors/repeat-keys.md`. A page that mounts a
+ * component is `.mdx` instead, and both extensions resolve to the same route -
+ * so a check that knows only one of them reports a page that exists as missing.
  */
-const pagesDir = near('./docs/docs');
+const SECTIONS = ['docs', 'errors'];
 
-const linked = Array.from(config.matchAll(/link:\s*'\/docs\/([\w-]+)\/'/g), (m) => m[1]).filter(
-  (slug): slug is string => slug !== undefined
+const linked = Array.from(
+  config.matchAll(/link:\s*'\/(docs|errors)\/([\w-]+)\/'/g),
+  (m) => `${m[1]}/${m[2]}`
 );
 
-const onDisk = readdirSync(pagesDir)
-  .filter((name) => /\.mdx?$/.test(name))
-  .map((name) => name.replace(/\.mdx?$/, ''));
+const onDisk = SECTIONS.flatMap((section) =>
+  readdirSync(near(`./docs/${section}`))
+    .filter((name) => /\.mdx?$/.test(name))
+    .map((name) => `${section}/${name.replace(/\.mdx?$/, '')}`)
+);
 
 describe('the documentation sidebar', () => {
   it('links only to pages that exist', () => {
