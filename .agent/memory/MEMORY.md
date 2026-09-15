@@ -40,4 +40,5 @@
 - [Docs pages had no e2e coverage](docs-pages-had-no-e2e-coverage.md) — and the three screenshot findings that were not real.
 - [Project state lives on the pm board](project-state-lives-on-the-pm-board.md) — since 2026-09-14 it replaces PLAN.md, projects/2 and the session brief; epics L/S/D/R/post-1.0; branches `<type>/T-NNN/<slug>`.
 - [Prose drifts from the engine](prose-drifts-from-the-engine.md) — eight documented rules the engine does not have, and the only two things that found them.
+- [Vue plugin takes React's refresh](vue-plugin-takes-react-refresh.md) — dev-only `$RefreshSig$` 500 on Vue islands; the astro.config.mjs plugin and the dev-server spec.
 - [A watch can report green early](a-watch-can-report-green-early.md) — `--watch` exits 0 mid-run; a verify run beside e2e fails a healthy test.
