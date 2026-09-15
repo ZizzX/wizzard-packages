@@ -17,16 +17,18 @@ import { expect, test } from '../../fixtures/base';
  * CLI moves itself to the background when it thinks an agent is running it,
  * and a process that returns before its server listens cannot be awaited.
  */
-const PORT = 4398;
-const BASE = `http://127.0.0.1:${PORT}/wizzard-packages/`;
 const ROOT = resolve(fileURLToPath(import.meta.url), '..', '..', '..', '..');
+// Port 0 lets the system choose, and the server reports what it bound. A fixed
+// port is taken by a retry whose previous server is still shutting down, and
+// Vite then moves to the next free port without saying so.
 const START = `
   import { dev } from 'astro';
-  await dev({ root: process.cwd(), server: { host: '127.0.0.1', port: ${PORT} }, logLevel: 'error' });
-  console.log('listening');
+  const { address } = await dev({ root: process.cwd(), server: { host: '127.0.0.1', port: 0 }, logLevel: 'error' });
+  console.log('listening on ' + address.port);
 `;
 
 let server: ChildProcess | undefined;
+let base = '';
 
 test.describe('the site in development', () => {
   test.describe.configure({ mode: 'serial', timeout: 180_000 });
@@ -41,7 +43,10 @@ test.describe('the site in development', () => {
     await new Promise<void>((done, fail) => {
       const read = (chunk: Buffer): void => {
         output += String(chunk);
-        if (output.includes('listening')) done();
+        const port = /listening on (\d+)/.exec(output)?.[1];
+        if (!port) return;
+        base = `http://127.0.0.1:${port}/wizzard-packages/`;
+        done();
       };
       child.stdout.on('data', read);
       child.stderr.on('data', read);
@@ -49,15 +54,18 @@ test.describe('the site in development', () => {
     });
   });
 
-  test.afterAll(() => {
-    server?.kill();
+  test.afterAll(async () => {
+    if (!server || server.exitCode !== null) return;
+    const exited = new Promise((done) => server?.once('exit', done));
+    server.kill();
+    await exited;
   });
 
   for (const example of ['onboarding', 'passengers', 'reload']) {
     test(`renders the Vue ${example} page`, async ({ page }) => {
       const errors: string[] = [];
       page.on('pageerror', (error) => errors.push(error.message));
-      const response = await page.goto(`${BASE}examples/${example}/vue/`);
+      const response = await page.goto(`${base}examples/${example}/vue/`);
       expect(response?.status()).toBe(200);
       expect(errors).toEqual([]);
     });
@@ -66,10 +74,19 @@ test.describe('the site in development', () => {
   test('keeps Fast Refresh for React and out of Vue', async ({ request }) => {
     // `/@fs/C:/...` on Windows, `/@fs/home/...` elsewhere.
     const root = ROOT.replace(/\\/g, '/').replace(/^\//, '');
-    const source = `${BASE}@fs/${root}/examples/reference/src/onboarding/`;
-    const react = await (await request.get(`${source}App.tsx`)).text();
-    const vue = await (await request.get(`${source}Onboarding.vue`)).text();
-    expect(react).toContain('$RefreshReg$');
+    const source = `${base}@fs/${root}/examples/reference/src/onboarding/`;
+    // Each module is checked for being the compiled component first, so a 404 or
+    // an error page cannot pass the negative assertion by containing nothing.
+    const compiled = async (file: string): Promise<string> => {
+      const response = await request.get(`${source}${file}`);
+      expect(response.status(), file).toBe(200);
+      const text = await response.text();
+      expect(text, file).toContain('export default');
+      return text;
+    };
+    expect(await compiled('App.tsx')).toContain('$RefreshReg$');
+    const vue = await compiled('Onboarding.vue');
+    expect(vue).toContain('_sfc_main');
     expect(vue).not.toContain('$RefreshSig$');
   });
 });
