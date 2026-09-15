@@ -73,8 +73,13 @@ export default defineConfig({
           label: 'Errors',
           collapsed: true,
           items: [
+            { label: 'resolver-not-registered', link: '/errors/resolver-not-registered/' },
+            { label: 'resolver-is-async', link: '/errors/resolver-is-async/' },
+            { label: 'expr-unknown-operator', link: '/errors/expr-unknown-operator/' },
+            { label: 'flow-invalid', link: '/errors/flow-invalid/' },
             { label: 'groups-not-installed', link: '/errors/groups-not-installed/' },
             { label: 'repeat-keys', link: '/errors/repeat-keys/' },
+            { label: 'provider-missing', link: '/errors/provider-missing/' },
             { label: 'devtools-no-wizard', link: '/errors/devtools-no-wizard/' },
             { label: 'devtools-no-plugin', link: '/errors/devtools-no-plugin/' },
             { label: 'devtools-render-failed', link: '/errors/devtools-render-failed/' },

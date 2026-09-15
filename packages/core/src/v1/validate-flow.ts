@@ -1,3 +1,4 @@
+import { WizardError } from './diagnostic';
 import { isGroup, type FlowDefinition } from './flow';
 
 /**
@@ -176,6 +177,12 @@ export function assertFlow(
 ): void {
   const problems = validateFlow(flow, registry);
   if (problems.length === 0) return;
-  const lines = problems.map((p) => `  ${p.path}: ${p.message}`).join('\n');
-  throw new Error(`[wizzard] invalid flow ${flow.id}:\n${lines}`);
+  const lines = problems.map((p) => `\n  ${p.path}: ${p.message}`).join('');
+  throw new WizardError(
+    'flow-invalid',
+    'assertFlow',
+    `flow "${flow.id}" failed validation:${lines}`,
+    'assertFlow throws when validateFlow reports anything',
+    'Fix each problem listed, or call validateFlow to render them instead'
+  );
 }

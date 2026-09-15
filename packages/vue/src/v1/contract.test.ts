@@ -1,4 +1,5 @@
 import { mount } from '@vue/test-utils';
+import { vi } from 'vitest';
 import { computed, defineComponent, h, nextTick, onMounted, onUpdated } from 'vue';
 
 import {
@@ -124,6 +125,25 @@ const ProbeComponent = defineComponent({
 
 const harness: BindingHarness = {
   name: 'vue',
+  outsideProvider: () => {
+    const Bare = defineComponent({
+      setup() {
+        useWizard();
+        return () => h('span');
+      },
+    });
+    // With no app error handler Vue rethrows a setup error out of mount, and
+    // warns about it first; the test asserts on the error, so the warning is noise.
+    const quiet = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      mount(Bare).unmount();
+      return undefined;
+    } catch (error) {
+      return error;
+    } finally {
+      quiet.mockRestore();
+    }
+  },
   mount: async ({ flow, registry, data, groups, subFlows }) => {
     const Root = defineComponent({
       setup() {

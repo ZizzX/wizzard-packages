@@ -75,6 +75,11 @@ value, or one data path.
 Anything a flow cannot serialize — a validator, a predicate, an async guard — is a **named**
 entry in `registry`, so `JSON.stringify(flow)` always round-trips.
 
+What throws is a mistake in the program, never an outcome of the wizard: a `$ref` the registry
+does not hold, a group step with no traversal installed. Every such failure is a `WizardError`
+with `code`, `op`, `path`, `fix` and `url`, where `url` is the page for that code under
+`https://zizzx.github.io/wizzard-packages/errors/`.
+
 ## Entries
 
 Separate entry points because they are separate budgets. A wizard that never draws itself

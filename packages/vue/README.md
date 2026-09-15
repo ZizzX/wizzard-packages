@@ -105,8 +105,9 @@ generated from them, so what you paste is what is tested.
 | `useWizardSelector(fn)` | one derived value as a `ComputedRef`                                                         |
 | `useWizard()`           | the engine itself, for anything the composables above do not cover                           |
 
-`useOptionalWizard()` returns `null` outside a provider instead of throwing, which is what a
-component rendered both inside and outside a wizard needs.
+Below no `provideWizard`, `useWizard()` and every composable built on it throw a `WizardError`
+with the code `provider-missing`. `useOptionalWizard()` returns `null` there instead, which is
+what a component rendered both inside and outside a wizard needs.
 
 Navigation is async and returns a result, not a boolean: `await next()` gives
 `{ ok: false, reason: 'blocked', by: 'age-check' }` when a guard refuses. Every `await` inside

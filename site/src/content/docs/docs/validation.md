@@ -27,7 +27,7 @@ resolver the registry does not hold, an `order` entry with no matching step, a s
 both `when` and `on.next` where only one of them will be honoured.
 
 `assertFlow` is the same check that throws instead of returning, with every problem in the
-message. Use it where a definition crossing a boundary should stop the program - a backend
+message of one [`flow-invalid`](../../errors/flow-invalid/) error. Use it where a definition crossing a boundary should stop the program - a backend
 response in development, a fixture in a test - and use `validateFlow` where the problems are
 something to render.
 
