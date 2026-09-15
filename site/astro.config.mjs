@@ -5,6 +5,30 @@ import react from '@astrojs/react';
 import vue from '@astrojs/vue';
 
 /**
+ * `@vitejs/plugin-vue` (6.0.8 and 6.0.9) compiles a `lang="ts"` script with the
+ * dev server's whole `oxc` config, and `@vitejs/plugin-react` has set
+ * `jsx.refresh` there. The Vue plugin ignores the refresh include and exclude
+ * filters and the server-environment check that Vite's own transform applies, so
+ * every Vue component gets React Fast Refresh calls and server rendering throws
+ * `$RefreshSig$ is not defined`. The build has no refresh, so only dev breaks.
+ * This hands the Vue plugin a view of the server whose `oxc` has refresh off,
+ * and leaves React's transform untouched. Delete it when plugin-vue applies the
+ * filters itself.
+ */
+const vueWithoutReactRefresh = {
+  name: 'site:vue-without-react-refresh',
+  enforce: /** @type {const} */ ('post'),
+  /** @param {import('vite').ViteDevServer} server */
+  configureServer(server) {
+    const vue = server.config.plugins.find((plugin) => plugin.name === 'vite:vue');
+    const { oxc } = server.config;
+    if (!vue?.api?.options || !oxc || typeof oxc.jsx !== 'object') return;
+    const config = { ...server.config, oxc: { ...oxc, jsx: { ...oxc.jsx, refresh: false } } };
+    vue.api.options.devServer = Object.assign(Object.create(server), { config });
+  },
+};
+
+/**
  * The site is static and lives under the repository's Pages path. Starlight
  * injects a catch-all `[...slug]` route; a static `src/pages/*.astro` file
  * outsorts it in Astro's route priority, which is how the homepage stays fully
@@ -18,7 +42,7 @@ export default defineConfig({
   output: 'static',
   // The reference flows live in the repository's `contract/` directory, outside
   // this package, so the dev server has to be allowed to read one level up.
-  vite: { server: { fs: { allow: ['..'] } } },
+  vite: { server: { fs: { allow: ['..'] } }, plugins: [vueWithoutReactRefresh] },
   integrations: [
     react(),
     vue(),
