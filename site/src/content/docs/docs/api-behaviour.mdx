@@ -125,3 +125,7 @@ with no traversal installed, `useWizard` called outside a provider. Every one of
 The `message` is those fields as four sentences - what went wrong, why, the fix, the page - so a
 failure read in a console says what to do next without a lookup. The `url` is built from the code
 alone and never carries a value the application passed in.
+
+`error instanceof WizardError` holds whichever entry threw it. An error from
+`@wizzard-packages/core/validate-flow` or `/groups` is caught by the class imported from `/v1`,
+though each entry is bundled on its own and carries its own copy.

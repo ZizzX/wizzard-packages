@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { WizardError } from './diagnostic';
 import { evaluate, evaluateAsync, type Expr, type Scope } from './expr';
@@ -140,6 +140,34 @@ describe('flow-invalid', () => {
     const error = thrown(() => assertFlow({ id: 'broken', order: ['a', 'b'], steps: { a: {} } }));
     keepsTheContract(error, 'flow-invalid', 'assertFlow');
     expect(error.message).toContain('order');
+  });
+});
+
+/**
+ * Each built entry inlines its own copy of the class, so an error from
+ * `/validate-flow` is caught by the `WizardError` imported from `/v1`. A fresh
+ * module graph gives the second copy the build does.
+ */
+describe('instanceof across copies of the class', () => {
+  it('holds for an error thrown by another copy', async () => {
+    vi.resetModules();
+    const other = await import('./validate-flow');
+    const error = (() => {
+      try {
+        other.assertFlow({ id: 'broken', order: ['a'], steps: {} });
+      } catch (caught) {
+        return caught;
+      }
+    })();
+    const copy = (await import('./diagnostic')).WizardError;
+    expect(copy).not.toBe(WizardError);
+    expect(error).toBeInstanceOf(WizardError);
+    expect(error).toBeInstanceOf(copy);
+  });
+
+  it('does not hold for an ordinary error', () => {
+    expect(new Error('[wizzard] x')).not.toBeInstanceOf(WizardError);
+    expect({ name: 'WizardError', code: 'flow-invalid' }).not.toBeInstanceOf(WizardError);
   });
 });
 

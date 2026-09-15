@@ -22,6 +22,20 @@ export class WizardError extends Error {
   /** Built from the code alone, so it never carries anything the host passed in. */
   readonly url: string;
 
+  /**
+   * Every core entry is bundled on its own, so `/v1`, `/groups` and
+   * `/validate-flow` each carry a copy of this class, and so does a second
+   * install of the package. Identity is the shape, not the constructor, so
+   * `instanceof` holds across all of them.
+   */
+  static [Symbol.hasInstance](value: unknown): boolean {
+    return (
+      value instanceof Error &&
+      value.name === 'WizardError' &&
+      typeof (value as WizardError).code === 'string'
+    );
+  }
+
   constructor(code: string, op: string, what: string, why: string, fix: string, path?: string) {
     const url = DOCS + code;
     super(`[wizzard] ${what}. ${why}. ${fix}. ${url}`);

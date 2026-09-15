@@ -96,7 +96,13 @@ export default [
   // why and the fix of `resolver-not-registered`, `resolver-is-async` and
   // `expr-unknown-operator`, which used to be `unknown resolver: x` - the
   // single-clause message `AGENTS.md` names as the thing the template replaces.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '5.6 kB', gzip: true },
+  //
+  // 5.6 to 5.65 kB the same day, measured 5.62 kB: `WizardError` answers
+  // `instanceof` by shape through `Symbol.hasInstance`. Each entry is bundled on
+  // its own and inlines a copy of the class, so without it an error thrown by
+  // `/validate-flow` or `/groups` is not an instance of the one imported here.
+  // The same 21 to 34 B lands on those two entries.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '5.65 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a
@@ -118,8 +124,9 @@ export default [
   //
   // 3.0 to 3.4 kB on 2026-09-15, measured 3394 B, for the same reason as
   // `core-v1` above and by the same bytes: this entry evaluates expressions, so
-  // it carries the evaluator's `WizardError` messages with it.
-  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '3.4 kB', gzip: true },
+  // it carries the evaluator's `WizardError` messages with it. 3.4 to 3.45 kB
+  // the same day, measured 3.43 kB, for `Symbol.hasInstance` (see `core-v1`).
+  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '3.45 kB', gzip: true },
 
   // The recorded-session checker. Its own entry because replay is a devtools and
   // documentation concern: an application that only runs a wizard never needs to
@@ -209,8 +216,9 @@ export default [
     path: 'packages/core/src/v1/validate-flow.ts',
     // 1.3 to 1.45 kB on 2026-09-15, measured 1425 B: `assertFlow` throws a
     // `WizardError` with the code `flow-invalid`, so the class and one sentence
-    // of why and fix now ship here too.
-    limit: '1.45 kB',
+    // of why and fix now ship here too. 1.45 to 1.5 kB the same day, measured
+    // 1.47 kB, for `Symbol.hasInstance` (see `core-v1`).
+    limit: '1.5 kB',
     gzip: true,
   },
 
