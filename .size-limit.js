@@ -116,7 +116,7 @@ export default [
   // its plugin, which is what the list now carries beside each function. The
   // exit move now guards afterNavigate like a step move: a plugin that threw on
   // the last step used to reject next() and undo `done`.
-  // 5.9 to 5.95 kB the same day, measured 5907 B: one `guard` calls every
+  // 5.9 to 5.95 kB the same day, measured 5913 B: one `guard` calls every
   // plugin hook the engine does not await, so an async hook whose promise
   // rejects is reported, or disables the plugin, like one that throws.
   { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '5.95 kB', gzip: true },
@@ -375,7 +375,7 @@ export default [
   // persistence plugin is worth having rather than fifteen lines of
   // localStorage in an application.
   //
-  // 1.2 to 1.35 kB on 2026-09-16, measured 1310 B: `onRestore` is the host's
+  // 1.2 to 1.35 kB on 2026-09-16, measured 1323 B: `onRestore` is the host's
   // callback, and one that threw inside `init` disabled the whole plugin, so the
   // session silently stopped being saved. It is now caught and reported once,
   // and so is an async one whose promise rejects.

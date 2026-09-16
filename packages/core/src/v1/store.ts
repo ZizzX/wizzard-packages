@@ -250,6 +250,9 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
    * half-filled form.
    */
   const fail = (name: string, at: string, error: unknown): void => {
+    // Several async calls can be pending when the first rejects, and each
+    // rejection lands here; the plugin is reported once, as the page says.
+    if (disabled.has(name)) return;
     disabled.add(name);
     console.error(
       explain('plugin-disabled', [

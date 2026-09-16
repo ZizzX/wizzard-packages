@@ -9,7 +9,7 @@ fix the callback passed to persist(). …/errors/persist-on-restore-threw
 ```
 
 A warning from `persist()` in `@wizzard-packages/plugins/persist`, printed with `console.warn` once
-for the life of the plugin, followed by what the callback threw. An async callback whose promise
+for the life of the plugin, with what the callback threw as the second argument. An async callback whose promise
 rejects is reported the same way, a moment later.
 
 `onRestore` is your code, called while the wizard is being built. `persist()` catches what it

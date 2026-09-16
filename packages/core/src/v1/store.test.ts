@@ -531,7 +531,7 @@ describe('the plugin lifecycle', () => {
     spy.mockRestore();
   });
 
-  it('disables a plugin whose async onCommit rejects, and reports a rejecting teardown', async () => {
+  it('disables a plugin whose async onCommit rejects, and says so once', async () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     let commits = 0;
     const w = createWizard({
@@ -544,21 +544,42 @@ describe('the plugin lifecycle', () => {
             commits += 1;
             return Promise.reject(new Error('commit'));
           },
+        } as unknown as Hooks,
+      ],
+    });
+
+    // Three writes before the first rejection lands: three pending calls.
+    w.set('name', 'Ann');
+    w.set('name', 'Bo');
+    w.set('name', 'Cy');
+    await Promise.resolve();
+    w.set('name', 'Di');
+
+    expect(commits).toBe(3);
+    const messages = spy.mock.calls.map((call) => String(call[0]));
+    expect(messages.filter((m) => m.includes('/errors/plugin-disabled'))).toHaveLength(1);
+    spy.mockRestore();
+  });
+
+  it('reports a teardown whose promise rejects', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const w = createWizard({
+      flow,
+      registry,
+      plugins: [
+        {
+          name: 'async',
           init: () => () => Promise.reject(new Error('teardown')),
         } as unknown as Hooks,
       ],
     });
 
-    w.set('name', 'Ann');
-    await Promise.resolve();
-    w.set('name', 'Bo');
     w.destroy();
     await Promise.resolve();
 
-    expect(commits).toBe(1);
-    const messages = spy.mock.calls.map((call) => String(call[0]));
-    expect(messages.some((m) => m.includes('/errors/plugin-disabled'))).toBe(true);
-    expect(messages.some((m) => m.includes('/errors/plugin-teardown-failed'))).toBe(true);
+    const message = String(spy.mock.calls[0]?.[0]);
+    expect(message).toMatch(/^\[wizzard\] plugin "async" threw while being torn down\. .+\. .+\. /);
+    expect(message).toContain('/errors/plugin-teardown-failed');
     spy.mockRestore();
   });
 

@@ -72,27 +72,37 @@ export function persist(options: PersistOptions): Hooks {
    * takes. A message that names only the symptom leaves the reader to find the
    * rest, which is the thing the template exists to stop.
    */
-  const warn = (code: string, problem: string, cause: string, fix: string): void => {
+  const warn = (
+    code: string,
+    problem: string,
+    cause: string,
+    fix: string,
+    error?: unknown
+  ): void => {
     if (warned.has(code)) return;
     warned.add(code);
-    console.warn(`[wizzard] ${problem}. ${cause}. ${fix}. ${DOCS}/${code.replace('/', '-')}`);
+    const message = `[wizzard] ${problem}. ${cause}. ${fix}. ${DOCS}/${code.replace('/', '-')}`;
+    if (error === undefined) console.warn(message);
+    else console.warn(message, error);
   };
 
   /**
    * The host's callback, called so that it cannot take the plugin down: thrown
    * from inside `init`, it would disable persistence for the whole session. An
    * async callback that rejects is caught too, or it becomes an unhandled
-   * rejection that says nothing about where it came from.
+   * rejection that says nothing about where it came from. Core's `guard` does
+   * the same for plugin hooks, but it is not a public export, and making it one
+   * would put it in every runtime bundle.
    */
-  const onRestore = (outcome: RestoreOutcome): void => {
+  const notifyRestore = (outcome: RestoreOutcome): void => {
     const report = (error: unknown): void => {
       warn(
         'persist/on-restore-threw',
         'onRestore threw',
         `persist() caught it, and the outcome it was reporting, ${outcome.restored ? 'restored' : outcome.reason}, stands`,
-        'fix the callback passed to persist()'
+        'fix the callback passed to persist()',
+        error
       );
-      console.warn(error);
     };
     try {
       // Typed to return void, and an async function is still assignable to that.
@@ -144,7 +154,7 @@ export function persist(options: PersistOptions): Hooks {
           `the stored session was refused (${reason})`,
           'this is expected after a flow or version change; clear the key to stop the warning'
         );
-        onRestore({ restored: false, reason });
+        notifyRestore({ restored: false, reason });
         return teardown;
       };
 
@@ -156,7 +166,7 @@ export function persist(options: PersistOptions): Hooks {
           'this browser did not allow storage, which private windows commonly do',
           'pass a storage of your own, or accept that this session will not survive a reload'
         );
-        onRestore({ restored: false, reason: 'persist/unavailable' });
+        notifyRestore({ restored: false, reason: 'persist/unavailable' });
         return;
       }
 
@@ -171,7 +181,7 @@ export function persist(options: PersistOptions): Hooks {
           'pass a storage of your own, or accept that this session starts fresh'
         );
         storage = undefined;
-        onRestore({ restored: false, reason: 'persist/unavailable' });
+        notifyRestore({ restored: false, reason: 'persist/unavailable' });
         return;
       }
 
@@ -193,7 +203,7 @@ export function persist(options: PersistOptions): Hooks {
       };
 
       if (raw === null) {
-        onRestore({ restored: false, reason: 'persist/nothing-stored' });
+        notifyRestore({ restored: false, reason: 'persist/nothing-stored' });
         return teardown;
       }
 
@@ -225,7 +235,7 @@ export function persist(options: PersistOptions): Hooks {
       // Through `commit`, like every other write: the restore is a commit, the
       // epoch moves with it, and anything begun before it is superseded.
       host.commit(result.state);
-      onRestore({ restored: true });
+      notifyRestore({ restored: true });
       return teardown;
     },
 
