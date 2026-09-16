@@ -1,6 +1,6 @@
 import { commit, restart } from './commit';
 import { type SliceAt, type StepIdOf } from './define';
-import { explain, notRegistered, WizardError } from './diagnostic';
+import { explain, guard, notRegistered, WizardError } from './diagnostic';
 import { END, isGroup, type FlowDefinition, type StepDef } from './flow';
 import {
   runNav,
@@ -235,11 +235,12 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
   const dispatch = (at: 'onCommit' | 'onAttempt', call: (h: Hooks) => void): void => {
     for (const h of plugins) {
       if (initializing || destroyed || h[at] === undefined || disabled.has(h.name)) continue;
-      try {
-        call(h);
-      } catch (error) {
-        fail(h.name, at, error);
-      }
+      guard(
+        () => call(h),
+        (error) => {
+          fail(h.name, at, error);
+        }
+      );
     }
   };
 
@@ -535,9 +536,7 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
       // One teardown that throws must not strand the rest: the list is already
       // spliced, so an early exit would leak every plugin after the failure.
       for (const [name, t] of teardowns.splice(0)) {
-        try {
-          t();
-        } catch (error) {
+        guard(t, (error) => {
           console.error(
             explain('plugin-teardown-failed', [
               `plugin "${name}" threw while being torn down`,
@@ -546,7 +545,7 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
             ]),
             error
           );
-        }
+        });
       }
     },
   };

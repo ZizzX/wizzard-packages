@@ -1,5 +1,5 @@
 import { add, beginNav, commit, isCurrent } from './commit';
-import { explain, pageFor } from './diagnostic';
+import { explain, guard, pageFor } from './diagnostic';
 import { testAsync, type AsyncRegistry, type Registry, type Scope } from './expr';
 import { END, type FlowDefinition, type StepDef } from './flow';
 import { unsetPath } from './path';
@@ -284,18 +284,19 @@ async function pipeline(
    */
   const after = (to: string | typeof END): void => {
     for (const h of ctx.hooks ?? []) {
-      try {
-        h.afterNavigate?.({ from, to, state: host.read() });
-      } catch (error) {
-        console.error(
-          explain('after-navigate-threw', [
-            `plugin "${h.name}" threw in afterNavigate`,
-            'The move stands, and the plugin runs again on the next one',
-            'Fix the plugin, or catch inside its afterNavigate',
-          ]),
-          error
-        );
-      }
+      guard(
+        () => h.afterNavigate?.({ from, to, state: host.read() }),
+        (error) => {
+          console.error(
+            explain('after-navigate-threw', [
+              `plugin "${h.name}" threw in afterNavigate`,
+              'The move stands, and the plugin runs again on the next one',
+              'Fix the plugin, or catch inside its afterNavigate',
+            ]),
+            error
+          );
+        }
+      );
     }
   };
 

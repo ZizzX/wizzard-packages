@@ -20,6 +20,22 @@ export type Explained = readonly [what: string, why: string, fix: string];
 export const explain = (code: string, [what, why, fix]: Explained): string =>
   `[wizzard] ${what}. ${why}. ${fix}. ${DOCS}${code}`;
 
+/**
+ * Calls a plugin's hook and routes whatever it throws to `report` - including
+ * a rejection. A hook is typed to return void, and an async function is still
+ * assignable to that, so a `try` alone would let its rejection escape unhandled
+ * and without the diagnostic. Only a thenable is watched, so a synchronous hook
+ * on the commit path allocates nothing.
+ */
+export const guard = (call: () => unknown, report: (error: unknown) => void): void => {
+  try {
+    const result = call() as PromiseLike<unknown> | undefined;
+    if (typeof result?.then === 'function') result.then(undefined, report);
+  } catch (error) {
+    report(error);
+  }
+};
+
 /** The page for a code, built from the code alone. */
 export const pageFor = (code: string): string => DOCS + code;
 

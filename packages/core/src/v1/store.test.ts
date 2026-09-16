@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { pageFor } from './diagnostic';
 import type { FlowDefinition } from './flow';
+import type { Hooks } from './navigate';
 import type { WizardState } from './state';
 import { createWizard } from './store';
 
@@ -527,6 +528,37 @@ describe('the plugin lifecycle', () => {
     expect(message).toContain(
       'https://zizzx.github.io/wizzard-packages/errors/plugin-teardown-failed'
     );
+    spy.mockRestore();
+  });
+
+  it('disables a plugin whose async onCommit rejects, and reports a rejecting teardown', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    let commits = 0;
+    const w = createWizard({
+      flow,
+      registry,
+      plugins: [
+        {
+          name: 'async',
+          onCommit: () => {
+            commits += 1;
+            return Promise.reject(new Error('commit'));
+          },
+          init: () => () => Promise.reject(new Error('teardown')),
+        } as unknown as Hooks,
+      ],
+    });
+
+    w.set('name', 'Ann');
+    await Promise.resolve();
+    w.set('name', 'Bo');
+    w.destroy();
+    await Promise.resolve();
+
+    expect(commits).toBe(1);
+    const messages = spy.mock.calls.map((call) => String(call[0]));
+    expect(messages.some((m) => m.includes('/errors/plugin-disabled'))).toBe(true);
+    expect(messages.some((m) => m.includes('/errors/plugin-teardown-failed'))).toBe(true);
     spy.mockRestore();
   });
 

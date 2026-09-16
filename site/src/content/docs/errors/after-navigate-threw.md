@@ -15,7 +15,7 @@ the plugin threw as the second argument, each time it throws.
 move stands and `next()`, `back()` or `go()` still resolves `{ ok: true }`. Unlike a throw in
 `onCommit` or `onAttempt`, which [switches the plugin off](../plugin-disabled/), this one leaves the
 plugin enabled: it runs on the next move, and if the cause is still there it throws and prints this
-again.
+again. An async `afterNavigate` whose promise rejects is reported the same way, when it rejects.
 
 Read the error logged beside the message. Fix the plugin, or wrap the body of its `afterNavigate` in
 a `try` if what it calls is allowed to fail - a request to an analytics service, for one.

@@ -15,7 +15,8 @@ threw as the second argument.
 A plugin's `init` may return a function, and `destroy()` runs each of them once. A provider in
 either binding calls `destroy()` when it unmounts, if it created the wizard. One teardown that
 throws does not stop the others: every plugin after it is still torn down, and `destroy()` itself
-returns normally.
+returns normally. A teardown that returns a promise which rejects is reported the same way, after
+`destroy()` has returned.
 
 Read the error logged beside the message. The usual cause is a teardown that assumes something
 `init` set up and that was never there - a listener on an object that does not exist on the server,

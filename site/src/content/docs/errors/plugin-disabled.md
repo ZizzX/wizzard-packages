@@ -19,6 +19,9 @@ write, the move or the build goes on, and the plugin is switched off for the res
 life: none of its hooks run again, `beforeNavigate` and `loadStep` included. A plugin that threw in
 `init` never returned a teardown, so `destroy()` has nothing of it to run.
 
+An async `onCommit` or `onAttempt` whose promise rejects counts as a throw: the plugin is switched
+off when the rejection arrives, which can be after the write or move that started it.
+
 Read the error logged beside the message: it is what the plugin threw. Fix the plugin, or remove it
 from `options.plugins`. A plugin that throws in `afterNavigate` is not switched off; that is
 [`after-navigate-threw`](../after-navigate-threw/).
