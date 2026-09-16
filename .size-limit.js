@@ -268,10 +268,10 @@ export default [
     // `expr-unknown-operator` share their sentences with the evaluator through
     // `diagnostic.ts`, so the two wordings cannot drift apart.
     //
-    // 2.65 to 2.7 kB on 2026-09-17, measured 2664 B: the checks of one step -
-    // its targets, `clearOnLeave`, `when` beside `on.next` - run on every step
-    // of an inline sub-flow too, with targets read against that sub-flow's
-    // steps, instead of on the root's steps alone.
+    // 2.65 to 2.7 kB on 2026-09-17, measured 2699 B: an inline sub-flow is
+    // checked like the root - its steps and its `order`, and each step's
+    // targets, `clearOnLeave` and `when` beside `on.next`, with targets read
+    // against that sub-flow's steps - instead of the root alone.
     limit: '2.7 kB',
     gzip: true,
   },

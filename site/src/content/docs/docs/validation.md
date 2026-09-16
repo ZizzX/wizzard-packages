@@ -38,8 +38,8 @@ resolver the registry does not hold, an expression object whose key is not an op
 `order` entry with no matching step, a step carrying both `when` and `on.next` where only one of
 them will be honoured.
 
-A group whose `flow` is an inline definition is checked step by step like the root, and its
-transitions are read against its own `steps`: inside a sub-flow, `on.next` names a step of that
+A group whose `flow` is an inline definition is checked like the root - its `order` and each of
+its steps - and its transitions are read against its own `steps`: inside a sub-flow, `on.next` names a step of that
 sub-flow. A sub-flow named by a string is a definition `validateFlow` was not handed, so it is
 checked where it is defined.
 

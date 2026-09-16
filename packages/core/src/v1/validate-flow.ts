@@ -62,50 +62,56 @@ export function validateFlow(
   registry?: Readonly<Record<string, unknown>>
 ): FlowProblem[] {
   const problems: FlowProblem[] = [];
-  const ids = Object.keys(flow.steps);
   const report = (code: string, path: string, text: Explained): void => {
     problems.push({ path, message: explain(code, text), code, fix: text[2], url: pageFor(code) });
   };
 
-  if (ids.length === 0) {
-    report('flow-no-steps', 'steps', [
-      `flow "${flow.id}" has no steps`,
-      'A wizard is its steps, so there is nothing to start on or to finish',
-      'Add at least one step, or check that the definition arrived whole',
-    ]);
-  }
-
-  if (flow.order) {
-    for (const id of flow.order) {
-      if (!(id in flow.steps)) {
-        report('order-unknown-step', 'order', [
-          `order names "${id}", which is not a step`,
-          'order lists the default path by step id, and every id in it has to be a key of steps',
-          'Correct the id in order, or add the step it names',
-        ]);
-      }
-    }
-    for (const id of ids) {
-      if (!flow.order.includes(id)) {
-        report('step-not-in-order', `steps.${id}`, [
-          `step "${id}" is not in order`,
-          'next() and back() walk order, so the step is reachable only through a transition or go()',
-          "Add it to order, or lead to it from another step's on.next",
-        ]);
-      }
-    }
-    // One pass, and one report per id however many times it repeats.
-    const once = new Set<string>();
-    const twice = new Set<string>();
-    for (const id of flow.order) (once.has(id) ? twice : once).add(id);
-    for (const id of twice) {
-      report('order-duplicate', 'order', [
-        `order names "${id}" more than once`,
-        'A step has one position in order, and next() and back() find their way from it',
-        `Keep one occurrence of ${id}`,
+  // The shape of one flow: its steps and its order. `at` is empty for the root
+  // and ends in `flow.` for an inline sub-flow, whose order is walked on its own.
+  const checkShape = (f: FlowDefinition, at: string): void => {
+    const ids = Object.keys(f.steps);
+    if (ids.length === 0) {
+      report('flow-no-steps', `${at}steps`, [
+        `flow "${f.id}" has no steps`,
+        'A wizard is its steps, so there is nothing to start on or to finish',
+        'Add at least one step, or check that the definition arrived whole',
       ]);
     }
-  }
+
+    if (f.order) {
+      for (const id of f.order) {
+        if (!(id in f.steps)) {
+          report('order-unknown-step', `${at}order`, [
+            `order names "${id}", which is not a step`,
+            'order lists the default path by step id, and every id in it has to be a key of steps',
+            'Correct the id in order, or add the step it names',
+          ]);
+        }
+      }
+      for (const id of ids) {
+        if (!f.order.includes(id)) {
+          report('step-not-in-order', `${at}steps.${id}`, [
+            `step "${id}" is not in order`,
+            'next() and back() walk order, so the step is reachable only through a transition or go()',
+            "Add it to order, or lead to it from another step's on.next",
+          ]);
+        }
+      }
+      // One pass, and one report per id however many times it repeats.
+      const once = new Set<string>();
+      const twice = new Set<string>();
+      for (const id of f.order) (once.has(id) ? twice : once).add(id);
+      for (const id of twice) {
+        report('order-duplicate', `${at}order`, [
+          `order names "${id}" more than once`,
+          'A step has one position in order, and next() and back() find their way from it',
+          `Keep one occurrence of ${id}`,
+        ]);
+      }
+    }
+  };
+
+  checkShape(flow, '');
 
   const checkExpr = (expr: unknown, path: string): void => {
     if (typeof expr === 'function') {
@@ -255,6 +261,7 @@ export function validateFlow(
   const scanRepeats = (f: FlowDefinition, path: string, depth: number): boolean => {
     if (depth > MAX_DEPTH || seen.has(f)) return false;
     seen.add(f);
+    if (depth > 0) checkShape(f, path.slice(0, -'steps'.length));
 
     let found = false;
     for (const [id, step_] of Object.entries(f.steps)) {
