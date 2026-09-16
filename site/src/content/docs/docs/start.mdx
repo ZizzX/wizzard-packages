@@ -32,11 +32,11 @@ Pick the binding you render with. The choice is remembered, here and on every ot
   <TabItem label={FRAMEWORK_LABELS.react}>
     <Code code={installReact} lang="bash" />
 
-    The binding is a client module: its build opens with `'use client'`, so a React Server
-    Component can render `WizardProvider` directly with a `flow`. Anything carrying functions - a `registry`,
-    `plugins`, a built `wizard` - and the hooks belong in a client component.
-    Only a Server Components bundler, such as the Next.js App
-    Router, reads that line; in Vite, Remix, webpack or Node it does nothing.
+    The binding is a client module: its build opens with `'use client'`. Only a Server Components
+    bundler, such as the Next.js App Router, reads that directive; in Vite, Remix, webpack or Node
+    it does nothing. Under Server Components a server component can render `WizardProvider`
+    directly with a `flow`; anything carrying functions - a `registry`, `plugins`, a built
+    `wizard` - and the hooks belong in a client component.
 
   </TabItem>
   <TabItem label={FRAMEWORK_LABELS.vue}>
