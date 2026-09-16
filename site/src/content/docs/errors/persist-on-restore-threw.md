@@ -1,6 +1,6 @@
 ---
 title: persist-on-restore-threw
-description: The onRestore callback passed to persist() threw, and the plugin carried on without it.
+description: The onRestore callback passed to persist() threw or rejected, and the plugin carried on without it.
 ---
 
 ```
@@ -9,7 +9,8 @@ fix the callback passed to persist(). …/errors/persist-on-restore-threw
 ```
 
 A warning from `persist()` in `@wizzard-packages/plugins/persist`, printed with `console.warn` once
-for the life of the plugin, followed by what the callback threw.
+for the life of the plugin, followed by what the callback threw. An async callback whose promise
+rejects is reported the same way, a moment later.
 
 `onRestore` is your code, called while the wizard is being built. `persist()` catches what it
 throws, so the outcome it was reporting still holds and the plugin stays enabled: a restored session

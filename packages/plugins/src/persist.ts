@@ -80,12 +80,12 @@ export function persist(options: PersistOptions): Hooks {
 
   /**
    * The host's callback, called so that it cannot take the plugin down: thrown
-   * from inside `init`, it would disable persistence for the whole session.
+   * from inside `init`, it would disable persistence for the whole session. An
+   * async callback that rejects is caught too, or it becomes an unhandled
+   * rejection that says nothing about where it came from.
    */
   const onRestore = (outcome: RestoreOutcome): void => {
-    try {
-      options.onRestore?.(outcome);
-    } catch (error) {
+    const report = (error: unknown): void => {
       warn(
         'persist/on-restore-threw',
         'onRestore threw',
@@ -93,6 +93,12 @@ export function persist(options: PersistOptions): Hooks {
         'fix the callback passed to persist()'
       );
       console.warn(error);
+    };
+    try {
+      // Typed to return void, and an async function is still assignable to that.
+      void Promise.resolve(options.onRestore?.(outcome)).catch(report);
+    } catch (error) {
+      report(error);
     }
   };
 

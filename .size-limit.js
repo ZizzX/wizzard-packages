@@ -372,13 +372,14 @@ export default [
   // persistence plugin is worth having rather than fifteen lines of
   // localStorage in an application.
   //
-  // 1.2 to 1.3 kB on 2026-09-16, measured 1269 B: `onRestore` is the host's
+  // 1.2 to 1.35 kB on 2026-09-16, measured 1310 B: `onRestore` is the host's
   // callback, and one that threw inside `init` disabled the whole plugin, so the
-  // session silently stopped being saved. It is now caught and reported once.
+  // session silently stopped being saved. It is now caught and reported once,
+  // and so is an async one whose promise rejects.
   {
     name: 'plugins persist',
     path: 'packages/plugins/src/persist.ts',
-    limit: '1.3 kB',
+    limit: '1.35 kB',
     gzip: true,
     ignore: ['@wizzard-packages/core/v1', '@wizzard-packages/core/snapshot'],
   },
