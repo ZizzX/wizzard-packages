@@ -53,17 +53,28 @@ exception:
 ```ts
 type NavResult =
   | { ok: true; from: string | null; to: string | typeof END }
-  | { ok: false; reason: NavReason; by?: string; errors?: Record<string, string> };
+  | {
+      ok: false;
+      reason: NavReason;
+      code: `nav-${NavReason}`;
+      url: string;
+      by?: string;
+      errors?: Record<string, string>;
+    };
 ```
 
-| `reason`        | What happened                                                                          |
-| --------------- | -------------------------------------------------------------------------------------- |
-| `invalid`       | The step's validator refused. `errors` carries the field messages.                     |
-| `blocked`       | A guard, a plugin or the navigation policy refused. `by` names the step or the plugin. |
-| `no-target`     | Nothing said where to go from here, and `order` had nothing after this step.           |
-| `not-reachable` | The target's `when` is false, so it is not part of the flow right now.                 |
-| `superseded`    | Another move started before this one finished. The later move wins.                    |
-| `aborted`       | `cancel()` was called while this move was in flight.                                   |
+`code` is the reason with a `nav-` prefix, and `url` is the page that explains it: what causes the
+refusal and what to do about it. Log the `url` beside an unexpected refusal and the reader lands on
+the explanation.
+
+| `reason`                                           | What happened                                                                          |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| [`invalid`](../../errors/nav-invalid/)             | The step's validator refused. `errors` carries the field messages.                     |
+| [`blocked`](../../errors/nav-blocked/)             | A guard, a plugin or the navigation policy refused. `by` names the step or the plugin. |
+| [`no-target`](../../errors/nav-no-target/)         | There was no step to move to: `back()` on the first step, or `go()` to an unknown id.  |
+| [`not-reachable`](../../errors/nav-not-reachable/) | The target's `when` is false, so it is not part of the flow right now.                 |
+| [`superseded`](../../errors/nav-superseded/)       | Another move started before this one finished. The later move wins.                    |
+| [`aborted`](../../errors/nav-aborted/)             | `cancel()` was called while this move was in flight.                                   |
 
 `superseded` is the one worth designing for. Navigation carries an epoch: when a second `next()`
 begins, the first is stamped stale, and whatever it was awaiting cannot commit when it

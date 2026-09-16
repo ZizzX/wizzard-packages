@@ -26,6 +26,8 @@ describe('devtools()', () => {
     expect(dt.outcomes[1]?.result).toEqual({
       ok: false,
       reason: 'invalid',
+      code: 'nav-invalid',
+      url: 'https://zizzx.github.io/wizzard-packages/errors/nav-invalid',
       by: 'details',
       errors: { email: 'required' },
     });

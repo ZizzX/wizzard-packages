@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { END, type FlowDefinition } from './flow';
+import { pageFor } from './diagnostic';
 import { runNav, type Hooks, type NavContext, type NavHost } from './navigate';
 import { createSelector } from './select';
 import { initialState, type WizardState } from './state';
@@ -95,6 +96,8 @@ describe('runNav — refusals carry a reason', () => {
     expect(result).toEqual({
       ok: false,
       reason: 'invalid',
+      code: 'nav-invalid',
+      url: pageFor('nav-invalid'),
       by: 'trip',
       errors: { email: 'required' },
     });
@@ -132,7 +135,13 @@ describe('runNav — refusals carry a reason', () => {
 
     const result = await runNav({ flow: guarded }, host, { type: 'next' });
 
-    expect(result).toEqual({ ok: false, reason: 'blocked', by: 'trip' });
+    expect(result).toEqual({
+      ok: false,
+      reason: 'blocked',
+      code: 'nav-blocked',
+      url: pageFor('nav-blocked'),
+      by: 'trip',
+    });
     expect(host.read().stack[0]?.step).toBe('trip');
   });
 
@@ -145,21 +154,38 @@ describe('runNav — refusals carry a reason', () => {
 
     const result = await runNav({ flow: guarded }, host, { type: 'next' });
 
-    expect(result).toEqual({ ok: false, reason: 'blocked', by: 'payment' });
+    expect(result).toEqual({
+      ok: false,
+      reason: 'blocked',
+      code: 'nav-blocked',
+      url: pageFor('nav-blocked'),
+      by: 'payment',
+    });
   });
 
   it('reports not-reachable rather than moving somewhere invisible', async () => {
     const host = makeHost(on('trip'));
     const result = await runNav(base, host, { type: 'go', to: 'company', force: true });
 
-    expect(result).toEqual({ ok: false, reason: 'not-reachable', by: 'company' });
+    expect(result).toEqual({
+      ok: false,
+      reason: 'not-reachable',
+      code: 'nav-not-reachable',
+      url: pageFor('nav-not-reachable'),
+      by: 'company',
+    });
   });
 
   it('reports no-target for a step that is not in the flow', async () => {
     const host = makeHost(on('trip'));
     const result = await runNav(base, host, { type: 'go', to: 'ghost' });
 
-    expect(result).toEqual({ ok: false, reason: 'no-target' });
+    expect(result).toEqual({
+      ok: false,
+      reason: 'no-target',
+      code: 'nav-no-target',
+      url: pageFor('nav-no-target'),
+    });
   });
 
   it('applies the navigation policy to a jump, and `force` overrides it', async () => {
@@ -176,6 +202,8 @@ describe('runNav — refusals carry a reason', () => {
     expect(await runNav({ flow: sequential }, far, { type: 'go', to: 'payment' })).toEqual({
       ok: false,
       reason: 'blocked',
+      code: 'nav-blocked',
+      url: pageFor('nav-blocked'),
       by: 'payment',
     });
     expect(
@@ -191,7 +219,13 @@ describe('runNav — plugins', () => {
 
     const result = await runNav({ flow, hooks }, host, { type: 'next' });
 
-    expect(result).toEqual({ ok: false, reason: 'blocked', by: 'paywall' });
+    expect(result).toEqual({
+      ok: false,
+      reason: 'blocked',
+      code: 'nav-blocked',
+      url: pageFor('nav-blocked'),
+      by: 'paywall',
+    });
   });
 
   it('lets a plugin name a different blocker', async () => {
@@ -201,6 +235,8 @@ describe('runNav — plugins', () => {
     expect(await runNav({ flow, hooks }, host, { type: 'next' })).toEqual({
       ok: false,
       reason: 'blocked',
+      code: 'nav-blocked',
+      url: pageFor('nav-blocked'),
       by: 'quota',
     });
   });
@@ -283,7 +319,12 @@ describe('runNav — races', () => {
 
     // The first one now finds errors — which must not reach the state.
     gate.resolve({ email: 'required' });
-    expect(await first).toEqual({ ok: false, reason: 'superseded' });
+    expect(await first).toEqual({
+      ok: false,
+      reason: 'superseded',
+      code: 'nav-superseded',
+      url: pageFor('nav-superseded'),
+    });
     expect(host.read().errors).toEqual({});
     expect(host.read().stack[0]?.step).toBe('payment');
   });
@@ -304,7 +345,12 @@ describe('runNav — races', () => {
     await runNav(base, host, { type: 'go', to: 'payment', force: true });
 
     gate.resolve(false);
-    expect(await first).toEqual({ ok: false, reason: 'superseded' });
+    expect(await first).toEqual({
+      ok: false,
+      reason: 'superseded',
+      code: 'nav-superseded',
+      url: pageFor('nav-superseded'),
+    });
     // The status belongs to the winner, not to the loser that finished later.
     expect(host.read().status).toBe('idle');
     expect(host.read().nav).toBeGreaterThan(secondToken);
@@ -333,7 +379,12 @@ describe('runNav — races', () => {
     controller.abort();
     gate.resolve();
 
-    expect(await running).toEqual({ ok: false, reason: 'aborted' });
+    expect(await running).toEqual({
+      ok: false,
+      reason: 'aborted',
+      code: 'nav-aborted',
+      url: pageFor('nav-aborted'),
+    });
     expect(host.read().stack[0]?.step).toBe('trip');
     expect(host.read().status).toBe('idle');
   });
@@ -418,7 +469,11 @@ describe('runNav — the back stack', () => {
     await runNav(ctx, host, { type: 'next' });
     await runNav(ctx, host, { type: 'back' });
 
-    expect(await runNav(ctx, host, { type: 'back' })).toMatchObject({ reason: 'no-target' });
+    expect(await runNav(ctx, host, { type: 'back' })).toMatchObject({
+      reason: 'no-target',
+      code: 'nav-no-target',
+      url: pageFor('nav-no-target'),
+    });
     expect(host.read().history).toEqual([]);
   });
 

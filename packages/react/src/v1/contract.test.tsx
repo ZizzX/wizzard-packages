@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { Component, Profiler, type ReactElement, type ReactNode } from 'react';
+import { Component, Profiler, useState, type ReactElement, type ReactNode } from 'react';
 import { afterEach, vi } from 'vitest';
 
 import {
@@ -29,6 +29,7 @@ function Probe(): ReactElement {
   const step = useStep();
   const nav = useNavigation();
   const errors = useErrors();
+  const [refusal, setRefusal] = useState('');
   const [name, setName] = useField<string>('name');
 
   // The repeat-group probe. Every value is read back out of the engine - the
@@ -54,6 +55,7 @@ function Probe(): ReactElement {
           .map(([field, message]) => `${field}: ${message}`)
           .join(', ')}
       </span>
+      <span data-testid="refusal">{refusal}</span>
       <span data-testid="name-value">{name ?? ''}</span>
       <input
         data-testid="name-input"
@@ -65,7 +67,9 @@ function Probe(): ReactElement {
       <button
         data-testid="next"
         onClick={() => {
-          void nav.next();
+          void nav.next().then((result) => {
+            if (!result.ok) setRefusal(`${result.code} ${result.url}`);
+          });
         }}
       >
         next

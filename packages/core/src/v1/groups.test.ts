@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { pageFor } from './diagnostic';
 import { END, isGroup, type FlowDefinition } from './flow';
 import { groups, here, itemsOf, step, walk } from './groups';
 import { checkSession } from './session';
@@ -358,6 +359,8 @@ describe('4.7 go() into a group, and out of one', () => {
     expect(await wizard.go('each', { force: true })).toEqual({
       ok: false,
       reason: 'not-reachable',
+      code: 'nav-not-reachable',
+      url: pageFor('nav-not-reachable'),
       by: 'each',
     });
     expect(at(wizard)).toEqual([{ flow: 'booking', step: 'who' }]);

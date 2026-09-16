@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { pageFor } from './diagnostic';
 import type { FlowDefinition } from './flow';
 import type { Attempt, NavResult } from './navigate';
 import { createWizard } from './store';
@@ -54,6 +55,8 @@ describe('onAttempt', () => {
     expect(result).toEqual({
       ok: false,
       reason: 'invalid',
+      code: 'nav-invalid',
+      url: pageFor('nav-invalid'),
       by: 'trip',
       errors: { name: 'required' },
     });
@@ -113,7 +116,12 @@ describe('onAttempt', () => {
 
     const [first, second] = await Promise.all([w.next(), w.next()]);
 
-    expect(first).toEqual({ ok: false, reason: 'superseded' });
+    expect(first).toEqual({
+      ok: false,
+      reason: 'superseded',
+      code: 'nav-superseded',
+      url: pageFor('nav-superseded'),
+    });
     expect(second.ok).toBe(true);
     // Both attempts started before either ended; each still gets exactly one end.
     expect(seen.map((a) => `${a.id}:${a.phase}`)).toEqual([
@@ -146,7 +154,12 @@ describe('onAttempt', () => {
     w.cancel();
     const result = await moving;
 
-    expect(result).toEqual({ ok: false, reason: 'aborted' });
+    expect(result).toEqual({
+      ok: false,
+      reason: 'aborted',
+      code: 'nav-aborted',
+      url: pageFor('nav-aborted'),
+    });
     expect(phases(seen, 2)).toEqual(['start', 'end']);
     expect(seen).toHaveLength(4);
   });

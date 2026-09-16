@@ -102,7 +102,13 @@ export default [
   // its own and inlines a copy of the class, so without it an error thrown by
   // `/validate-flow` or `/groups` is not an instance of the one imported here.
   // The same 21 to 34 B lands on those two entries.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '5.65 kB', gzip: true },
+  //
+  // 5.65 to 5.7 kB on 2026-09-16, measured 5697 B: a refused move carries
+  // `code` and `url` (D-007). Added once, where `runNav` returns, from the
+  // reason, so no refusal site grows. The text is on the six `/errors/nav-*`
+  // pages rather than in the result: a refusal is an ordinary outcome and
+  // four sentences for each would cost every wizard several hundred bytes.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '5.7 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a
