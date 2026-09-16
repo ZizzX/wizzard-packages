@@ -218,7 +218,17 @@ export default [
     // `WizardError` with the code `flow-invalid`, so the class and one sentence
     // of why and fix now ship here too. 1.45 to 1.5 kB the same day, measured
     // 1.47 kB, for `Symbol.hasInstance` (see `core-v1`).
-    limit: '1.5 kB',
+    //
+    // 1.5 to 1.9 kB on 2026-09-16, measured 1849 B, for the returned half of
+    // the diagnostic contract (L6-3): every problem carries a `code` and the
+    // `url` of its page, which is thirteen kebab-case slugs, and the check the
+    // evaluator's `expr-unknown-operator` throw needed before a flow runs. That
+    // check keeps its own list of the thirteen operators rather than importing
+    // one from `expr.ts`, which would pull the evaluator in behind it, and it
+    // walks only the fields the engine evaluates, so a `$`-key in `ui` or in a
+    // `$ref`'s `args` is not reported. The fix of each code is on its page, not
+    // in this bundle.
+    limit: '1.9 kB',
     gzip: true,
   },
 

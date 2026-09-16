@@ -36,4 +36,5 @@ const wizard = createWizard({
 Refusing is deliberate. Treating an unknown name as `false` would make a `when` silently hide a
 step and a `validate` silently pass, which is the failure that is hardest to see. To catch the
 mismatch before the wizard runs, pass the registry to `validateFlow` or `assertFlow`: both report a
-`$ref` the registry does not hold, with its path.
+`$ref` the registry does not hold, with its path, as a problem with the code
+`resolver-not-registered`.

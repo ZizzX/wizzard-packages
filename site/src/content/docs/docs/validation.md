@@ -18,13 +18,19 @@ const problems = validateFlow(signup, registry);
 // [{ path: 'steps.payment.on.next', message: 'unknown target: confrm' }]
 ```
 
-Each problem is `{ path, message }` - where it is and what is wrong, in prose. There are no
-error codes, because the audience is a developer reading a list, not a handler switching on a
-value.
+Each problem is `{ code, path, message, url }`: a stable code to switch on, where the problem is,
+what is wrong in one sentence, and the page for the code, which explains the cause and the fix.
+The message is written for a list; the page is where to go when the sentence is not enough.
+
+```ts
+// { code: 'target-unknown-step', path: 'steps.payment.on.next', message: 'unknown target: confrm',
+//   url: 'https://zizzx.github.io/wizzard-packages/errors/target-unknown-step' }
+```
 
 It catches what a type cannot: a target naming a step that does not exist, a `$ref` naming a
-resolver the registry does not hold, an `order` entry with no matching step, a step carrying
-both `when` and `on.next` where only one of them will be honoured.
+resolver the registry does not hold, an expression object whose key is not an operator, an
+`order` entry with no matching step, a step carrying both `when` and `on.next` where only one of
+them will be honoured.
 
 `assertFlow` is the same check that throws instead of returning, with every problem in the
 message of one [`flow-invalid`](../../errors/flow-invalid/) error. Use it where a definition crossing a boundary should stop the program - a backend

@@ -93,7 +93,7 @@ does not carry the code that would.
 | `/session`       | a recorded run, and the check that a replay matches it         |
 | `/snapshot`      | serialize a run, and refuse stored JSON that cannot be trusted |
 | `/expr`          | a builder for expressions, if you dislike writing JSON         |
-| `/validate-flow` | checks a flow definition, for tooling and tests                |
+| `/validate-flow` | checks a flow definition, each problem with a code and a page  |
 
 `.size-limit.js` holds the budget for each, with the measurement that set it.
 

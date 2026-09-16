@@ -8,7 +8,8 @@
  * from the template in `AGENTS.md`: what went wrong, why, the fix, the page.
  */
 
-const DOCS = 'https://zizzx.github.io/wizzard-packages/errors/';
+/** The site's error pages. A code appended to it is the page for that code. */
+export const DOCS = 'https://zizzx.github.io/wizzard-packages/errors/';
 
 export class WizardError extends Error {
   /** Kebab-case, stable across releases, and the slug of the page that explains it. */

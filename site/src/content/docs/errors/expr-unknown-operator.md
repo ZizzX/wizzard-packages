@@ -12,6 +12,11 @@ check it for a typo. …/errors/expr-unknown-operator
 Thrown as a `WizardError` by `evaluate` or `evaluateAsync`, and `op` says which. `<key>` is the
 object's first key.
 
+`validateFlow` finds the same objects before anything is evaluated, in every place the engine reads
+an expression - `when`, `guards`, a transition's `when`, `repeat.over` and `input` - and returns
+each as `{ code: 'expr-unknown-operator', path, message: 'unknown operator: <key>' }`. The `ui` of a
+step and the `args` of a `$ref` are data rather than expressions, and are not read.
+
 An expression is JSON: a literal, a list, or an object whose key names the operation - `$get`,
 `$eq`, `$and`, `$ref` and the rest in the [expressions guide](../../docs/expressions/). The
 evaluator looks for one of those keys, and when the object has none it throws rather than
