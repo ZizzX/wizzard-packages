@@ -54,13 +54,12 @@ export interface WizardProviderProps extends Partial<WizardOptions> {
 
 export function WizardProvider({ wizard, children, ...options }: WizardProviderProps): ReactNode {
   // A passed engine was built with its own options, so any given here would be
-  // silently ignored. Development only, as React's own checks are: the mistake
-  // shows on the first render, and every bundler that builds React replaces
-  // this condition, so a production bundle carries none of it.
+  // silently ignored. Thrown in every build, like `provider-missing`: a check
+  // that only development runs would leave production dropping them quietly.
   const ignored =
-    process.env.NODE_ENV !== 'production' && wizard !== undefined
-      ? Object.keys(options).filter((key) => options[key as keyof typeof options] !== undefined)
-      : [];
+    wizard === undefined
+      ? []
+      : Object.keys(options).filter((key) => options[key as keyof typeof options] !== undefined);
   if (ignored.length > 0) {
     throw new WizardError(
       'provider-wizard-and-options',

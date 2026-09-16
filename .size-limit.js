@@ -296,11 +296,9 @@ export default [
   // each binding; shared through core it would be a public export for a
   // console line.
   //
-  // react 1.25 to 1.4 kB on 2026-09-17, measured 1356 B: a WizardProvider given
+  // react 1.25 to 1.4 kB on 2026-09-17, measured 1376 B: a WizardProvider given
   // both a wizard and options throws `provider-wizard-and-options` instead of
-  // ignoring the options. The check sits behind `process.env.NODE_ENV`, which
-  // every React build replaces, so production bundles drop it - but this
-  // measurement does not define it, so the budget counts it.
+  // silently ignoring the options, in every build.
   {
     name: 'react-v1',
     path: 'packages/react/src/v1/index.tsx',

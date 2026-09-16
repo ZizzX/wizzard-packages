@@ -10,9 +10,9 @@ the provider, or drop wizard and let the provider build one.
 …/errors/provider-wizard-and-options
 ```
 
-Thrown as a `WizardError` with `op: 'WizardProvider'` by `@wizzard-packages/react/v1`, on the
-provider's first render. The message lists every option that was passed with a value; a prop set
-to `undefined` does not count.
+Thrown as a `WizardError` with `op: 'WizardProvider'` by `@wizzard-packages/react/v1`, on any
+render where both are set, in development and production builds alike. The message lists every
+option that was passed with a value; a prop set to `undefined` does not count.
 
 `WizardProvider` gets its wizard one of two ways. Given `wizard`, it uses that engine as it is, and
 that engine was configured when `createWizard` built it. Given options instead - `flow`,
