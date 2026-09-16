@@ -218,6 +218,35 @@ describe('validateFlow, on a repeat group', () => {
     );
   });
 
+  it('checks the steps of an inline sub-flow the way it checks the root', () => {
+    const flow: FlowDefinition = {
+      id: 'booking',
+      order: ['trip'],
+      steps: {
+        trip: {
+          flow: {
+            id: 'leg',
+            order: ['from', 'to'],
+            steps: {
+              from: {
+                when: { $get: 'data.go' },
+                on: { next: 'nowhere', back: 'trip' },
+                clearOnLeave: 'data.x' as unknown as true,
+              },
+              to: { on: { next: '@end' } },
+            },
+          },
+        },
+      },
+    };
+    expect(problems(flow)).toEqual([
+      'steps.trip.flow.steps.from.on.next: unknown target "nowhere"',
+      'steps.trip.flow.steps.from.on.back: unknown target "trip"',
+      'steps.trip.flow.steps.from.clearOnLeave: clearOnLeave of step "from" is neither true nor a list of data paths',
+      'steps.trip.flow.steps.from: step "from" has both when and on.next',
+    ]);
+  });
+
   it('cannot see inside a sub-flow named by reference, and does not pretend to', () => {
     // The definition behind a string lives wherever it was written, and is
     // validated there. Reporting this flow for it would be a guess.

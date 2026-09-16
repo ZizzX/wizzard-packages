@@ -145,56 +145,7 @@ export function validateFlow(
     }
   };
 
-  for (const [id, step_] of Object.entries(flow.steps)) {
-    const at = `steps.${id}`;
-    checkExpr(step_, at);
-
-    const targets = step_.on?.next;
-    const list = targets === undefined ? [] : Array.isArray(targets) ? targets : [targets];
-    const unknownTarget = (to: string, path: string): void => {
-      report('target-unknown-step', path, [
-        `unknown target "${to}"`,
-        'A transition leads to a key of steps, or to @end from on.next',
-        'Correct the id, or add the step it names',
-      ]);
-    };
-    for (const target of list) {
-      const to = typeof target === 'string' ? target : target.to;
-      if (to !== '@end' && !(to in flow.steps)) unknownTarget(to, `${at}.on.next`);
-    }
-
-    const back = step_.on?.back;
-    if (back !== undefined && back !== 'auto') {
-      const to = typeof back === 'string' ? back : back.to;
-      if (!(to in flow.steps)) unknownTarget(to, `${at}.on.back`);
-    }
-
-    // A flow from a backend has no types behind it, so the shape is checked here
-    // rather than discovered as a TypeError in the middle of a navigation.
-    const clear = step_.clearOnLeave as unknown;
-    if (
-      clear !== undefined &&
-      clear !== true &&
-      !(Array.isArray(clear) && clear.every((p) => typeof p === 'string'))
-    ) {
-      report('clear-on-leave-invalid', `${at}.clearOnLeave`, [
-        `clearOnLeave of step "${id}" is neither true nor a list of data paths`,
-        'It is read when the step is left, and any other value fails that navigation',
-        'Set it to true, or put the paths in a list',
-      ]);
-    }
-
-    // Both at once is legal and does two things: `when` still decides whether
-    // this step is on the path, and `on.next` only where it leads. A condition
-    // meant to choose the next step is easily written on the step instead.
-    if (step_.when !== undefined && step_.on?.next !== undefined) {
-      report('when-with-next', at, [
-        `step "${id}" has both when and on.next`,
-        'when decides whether the step is on the path, and on.next only where it leads, so a condition on the step never picks the next one',
-        "To pick the next step, move the condition into a transition's when; if both are meant, leave them",
-      ]);
-    }
-  }
+  for (const [id, step_] of Object.entries(flow.steps)) checkExpr(step_, `steps.${id}`);
 
   // Where the engine evaluates an expression, and only there: `ui` is the host's
   // JSON and may carry `$`-keys of its own. The evaluator throws on an object
@@ -244,6 +195,56 @@ export function validateFlow(
     }
   };
 
+  // The shape of one step, against the flow that holds it: a target in an inline
+  // sub-flow names a step of that sub-flow, not of the root.
+  const checkStep = (f: FlowDefinition, id: string, step_: StepDef, at: string): void => {
+    const targets = step_.on?.next;
+    const list = targets === undefined ? [] : Array.isArray(targets) ? targets : [targets];
+    const unknownTarget = (to: string, path: string): void => {
+      report('target-unknown-step', path, [
+        `unknown target "${to}"`,
+        'A transition leads to a key of steps, or to @end from on.next',
+        'Correct the id, or add the step it names',
+      ]);
+    };
+    for (const target of list) {
+      const to = typeof target === 'string' ? target : target.to;
+      if (to !== '@end' && !(to in f.steps)) unknownTarget(to, `${at}.on.next`);
+    }
+
+    const back = step_.on?.back;
+    if (back !== undefined && back !== 'auto') {
+      const to = typeof back === 'string' ? back : back.to;
+      if (!(to in f.steps)) unknownTarget(to, `${at}.on.back`);
+    }
+
+    // A flow from a backend has no types behind it, so the shape is checked here
+    // rather than discovered as a TypeError in the middle of a navigation.
+    const clear = step_.clearOnLeave as unknown;
+    if (
+      clear !== undefined &&
+      clear !== true &&
+      !(Array.isArray(clear) && clear.every((p) => typeof p === 'string'))
+    ) {
+      report('clear-on-leave-invalid', `${at}.clearOnLeave`, [
+        `clearOnLeave of step "${id}" is neither true nor a list of data paths`,
+        'It is read when the step is left, and any other value fails that navigation',
+        'Set it to true, or put the paths in a list',
+      ]);
+    }
+
+    // Both at once is legal and does two things: `when` still decides whether
+    // this step is on the path, and `on.next` only where it leads. A condition
+    // meant to choose the next step is easily written on the step instead.
+    if (step_.when !== undefined && step_.on?.next !== undefined) {
+      report('when-with-next', at, [
+        `step "${id}" has both when and on.next`,
+        'when decides whether the step is on the path, and on.next only where it leads, so a condition on the step never picks the next one',
+        "To pick the next step, move the condition into a transition's when; if both are meant, leave them",
+      ]);
+    }
+  };
+
   // Repeat groups anywhere in the flow, not only among its own steps. A group
   // whose `flow` is an inline definition carries its sub-flow inside this one,
   // so a repeat two levels down is still this flow's to stamp a version for -
@@ -257,6 +258,7 @@ export function validateFlow(
 
     let found = false;
     for (const [id, step_] of Object.entries(f.steps)) {
+      checkStep(f, id, step_, `${path}.${id}`);
       checkExpressions(step_, `${path}.${id}`);
       if (!isGroup(step_)) continue;
       if (step_.repeat !== undefined) {
