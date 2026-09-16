@@ -295,10 +295,16 @@ export default [
   // is, rather than "could not start". The message is one string literal in
   // each binding; shared through core it would be a public export for a
   // console line.
+  //
+  // react 1.25 to 1.45 kB on 2026-09-17, measured 1434 B: a WizardProvider given
+  // both a wizard and options throws `provider-wizard-and-options` instead of
+  // silently ignoring the options, in every build. It checks a list of the
+  // option keys rather than every leftover prop, so `data-*` or a React 19
+  // `ref` forwarded by a wrapper is not mistaken for an option.
   {
     name: 'react-v1',
     path: 'packages/react/src/v1/index.tsx',
-    limit: '1.25 kB',
+    limit: '1.45 kB',
     gzip: true,
     ignore: ['react', 'react-dom', '@wizzard-packages/core/v1'],
   },

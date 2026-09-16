@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { Component, Profiler, useState, type ReactElement, type ReactNode } from 'react';
-import { afterEach, vi } from 'vitest';
+import { createWizard, WizardError } from '@wizzard-packages/core/v1';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   describeBindingContract,
@@ -199,3 +200,51 @@ const harness: BindingHarness = {
 };
 
 describeBindingContract(harness);
+
+// React only: `provideWizard` takes one argument, a wizard or options, so Vue
+// cannot express the mistake this case catches.
+describe('WizardProvider given a wizard and options', () => {
+  it('refuses, naming what it would ignore', () => {
+    const quiet = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const wizard = createWizard({ flow: { id: 'x', order: ['one'], steps: { one: {} } } });
+    let caught: unknown;
+    try {
+      render(
+        <Catch
+          onError={(error) => {
+            caught = error;
+          }}
+        >
+          <WizardProvider wizard={wizard} data={{ name: 'Ann' }} registry={undefined}>
+            <span />
+          </WizardProvider>
+        </Catch>
+      );
+    } finally {
+      quiet.mockRestore();
+      cleanup();
+    }
+
+    expect(caught).toBeInstanceOf(WizardError);
+    expect(caught).toMatchObject({
+      code: 'provider-wizard-and-options',
+      op: 'WizardProvider',
+      url: 'https://zizzx.github.io/wizzard-packages/errors/provider-wizard-and-options',
+    });
+    // An explicitly undefined prop is not an option given.
+    expect((caught as WizardError).message).toContain('also data.');
+  });
+
+  it('accepts a wizard alone, even with props a wrapper forwards', () => {
+    const wizard = createWizard({ flow: { id: 'x', order: ['one'], steps: { one: {} } } });
+    // Not options: a wrapper component may spread these onto the provider.
+    const forwarded = { 'data-testid': 'provider', ref: () => undefined } as object;
+    render(
+      <WizardProvider wizard={wizard} {...forwarded}>
+        <span data-testid="ok" />
+      </WizardProvider>
+    );
+    expect(screen.getByTestId('ok')).toBeTruthy();
+    cleanup();
+  });
+});

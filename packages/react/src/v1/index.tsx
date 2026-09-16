@@ -46,6 +46,18 @@ const WizardContext = createContext<Wizard | null>(null);
  */
 const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
+/** Every `WizardOptions` key; the `Record` makes a new option a type error here until added. */
+const OPTION_KEYS: Record<keyof WizardOptions, 0> = {
+  flow: 0,
+  registry: 0,
+  plugins: 0,
+  data: 0,
+  ctx: 0,
+  state: 0,
+  groups: 0,
+  subFlows: 0,
+};
+
 export interface WizardProviderProps extends Partial<WizardOptions> {
   /** An existing engine. Supply this or `flow`, not both. */
   wizard?: Wizard;
@@ -53,6 +65,25 @@ export interface WizardProviderProps extends Partial<WizardOptions> {
 }
 
 export function WizardProvider({ wizard, children, ...options }: WizardProviderProps): ReactNode {
+  // A passed engine was built with its own options, so any given here would be
+  // silently ignored. Thrown in every build, like `provider-missing`: a check
+  // that only development runs would leave production dropping them quietly.
+  // Only real options count: a wrapper may forward `data-*` or, in React 19,
+  // `ref`, and neither is one.
+  const ignored =
+    wizard === undefined
+      ? []
+      : Object.keys(OPTION_KEYS).filter((key) => options[key as keyof WizardOptions] !== undefined);
+  if (ignored.length > 0) {
+    throw new WizardError(
+      'provider-wizard-and-options',
+      'WizardProvider',
+      `WizardProvider was given a wizard and also ${ignored.join(', ')}`,
+      'The wizard was already built with its own options, so any passed beside it are ignored',
+      'Pass the options to createWizard and only wizard to the provider, or drop wizard and let the provider build one'
+    );
+  }
+
   // Created once. A new engine on every render would restart the wizard.
   const [instance, setInstance] = useState<Wizard>(
     () => wizard ?? createWizard(options as unknown as WizardOptions)

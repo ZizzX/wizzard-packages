@@ -121,6 +121,10 @@ export default defineConfig({
             { label: 'groups-not-installed', link: '/errors/groups-not-installed/' },
             { label: 'repeat-keys', link: '/errors/repeat-keys/' },
             { label: 'provider-missing', link: '/errors/provider-missing/' },
+            {
+              label: 'provider-wizard-and-options',
+              link: '/errors/provider-wizard-and-options/',
+            },
             { label: 'start-failed', link: '/errors/start-failed/' },
             { label: 'plugin-disabled', link: '/errors/plugin-disabled/' },
             { label: 'after-navigate-threw', link: '/errors/after-navigate-threw/' },
