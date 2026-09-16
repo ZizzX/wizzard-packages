@@ -164,10 +164,12 @@ export function validateFlow(
   }
 
   // Where the engine evaluates an expression, and only there: `ui` is the host's
-  // JSON and may carry `$`-keys of its own. The evaluator reads the first
-  // operator among an object's keys and throws when there is none, so this
-  // reports exactly the objects that would throw. A `$ref`'s `args` are data
-  // handed to the resolver, never evaluated, and are not looked inside.
+  // JSON and may carry `$`-keys of its own. The evaluator throws on an object
+  // with no operator among its keys. Of an object with several it takes one,
+  // and `evaluate` and `evaluateAsync` test them in different orders, so every
+  // operator present is followed rather than guessing which one runs. A
+  // `$ref`'s `args` are data handed to the resolver, never evaluated, and are
+  // not looked inside.
   const checkOperators = (e: unknown, path: string): void => {
     if (e === null || typeof e !== 'object') return;
     if (Array.isArray(e)) {
@@ -176,12 +178,13 @@ export function validateFlow(
       });
       return;
     }
-    const op = OPERATORS.find((key) => key in e);
-    if (op === undefined) {
+    const ops = OPERATORS.filter((key) => key in e);
+    if (ops.length === 0) {
       const key = Object.keys(e)[0] ?? '{}';
       report('expr-unknown-operator', path, `unknown operator: ${key}`);
-    } else if (op !== '$ref') {
-      checkOperators((e as Record<string, unknown>)[op], `${path}.${op}`);
+    }
+    for (const op of ops) {
+      if (op !== '$ref') checkOperators((e as Record<string, unknown>)[op], `${path}.${op}`);
     }
   };
 

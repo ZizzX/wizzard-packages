@@ -271,6 +271,12 @@ describe('validateFlow, on an operator the evaluator does not have', () => {
     ]);
   });
 
+  it('follows every operator of an object that has several, since the evaluators disagree on which runs', () => {
+    // `evaluate` tests `$empty` before `$eq`, and would descend into the typo.
+    const when = { $eq: [1, 1], $empty: { typo: true } } as never;
+    expect(at({ a: { when } })).toEqual(['steps.a.when.$empty: unknown operator: typo']);
+  });
+
   it('reports an empty object, which names no operation at all', () => {
     expect(at({ a: { when: {} as never } })).toEqual(['steps.a.when: unknown operator: {}']);
   });
