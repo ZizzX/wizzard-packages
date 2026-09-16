@@ -24,8 +24,9 @@ React 18 or newer. The provider subscribes through `useSyncExternalStore`, so co
 rendering and StrictMode's double mount are handled by the store rather than by an effect.
 
 The binding is a client module: its build opens with `'use client'`, so a React Server Component
-can render `WizardProvider` without a wrapper file of your own. The hooks still belong in a client
-component, as any hook does. Only a Server
+can render `WizardProvider` without a wrapper file of your own, as long as every prop it passes is
+serializable: a `flow` crosses that boundary, a `registry`, `plugins` or a built `wizard` does not,
+because they carry functions. Build those, and call the hooks, inside a client component. Only a Server
 Components bundler, such as the Next.js App Router, reads that line. In Vite, Remix, webpack or
 Node it does nothing, and there is nothing to configure.
 

@@ -33,7 +33,8 @@ Pick the binding you render with. The choice is remembered, here and on every ot
     <Code code={installReact} lang="bash" />
 
     The binding is a client module: its build opens with `'use client'`, so a React Server
-    Component can render `WizardProvider` directly; the hooks still belong in a client component.
+    Component can render `WizardProvider` directly with a `flow`. Anything carrying functions - a `registry`,
+    `plugins`, a built `wizard` - and the hooks belong in a client component.
     Only a Server Components bundler, such as the Next.js App
     Router, reads that line; in Vite, Remix, webpack or Node it does nothing.
 
