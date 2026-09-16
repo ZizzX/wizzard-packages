@@ -89,7 +89,7 @@ export function persist(options: PersistOptions): Hooks {
       warn(
         'persist/on-restore-threw',
         'onRestore threw',
-        `the outcome was ${outcome.restored ? 'restored' : outcome.reason}, and the session is still saved`,
+        `persist() caught it, and the outcome it was reporting, ${outcome.restored ? 'restored' : outcome.reason}, stands`,
         'fix the callback passed to persist()'
       );
       console.warn(error);

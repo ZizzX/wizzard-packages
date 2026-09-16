@@ -280,6 +280,27 @@ describe('runNav — plugins', () => {
     expect(order).toEqual(['a', 'b']);
   });
 
+  it('finishes the flow when a plugin throws in afterNavigate on the exit', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const host = makeHost(on('trip'));
+    const last: FlowDefinition = { id: 'last', order: ['trip'], steps: { trip: {} } };
+    const hooks: Hooks[] = [
+      {
+        name: 'analytics',
+        afterNavigate: () => {
+          throw new Error('boom');
+        },
+      },
+    ];
+
+    const result = await runNav({ flow: last, hooks }, host, { type: 'next' });
+
+    expect(result).toEqual({ ok: true, from: 'trip', to: END });
+    expect(host.read().status).toBe('done');
+    expect(String(spy.mock.calls[0]?.[0])).toContain('/errors/after-navigate-threw');
+    spy.mockRestore();
+  });
+
   it('survives a plugin that throws in afterNavigate', async () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const host = makeHost(on('trip'));

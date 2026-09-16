@@ -277,6 +277,28 @@ async function pipeline(
   const forward = intent.type !== 'back';
   const stale = (): boolean => !isCurrent(host.read(), token);
 
+  /**
+   * Phase 10, for a step and for the exit alike. The move is committed before
+   * this runs, so a plugin that throws cannot fail it: one broken analytics
+   * plugin must not break a checkout, least of all on its last step.
+   */
+  const after = (to: string | typeof END): void => {
+    for (const h of ctx.hooks ?? []) {
+      try {
+        h.afterNavigate?.({ from, to, state: host.read() });
+      } catch (error) {
+        console.error(
+          explain('after-navigate-threw', [
+            `plugin "${h.name}" threw in afterNavigate`,
+            'The move stands, and the plugin runs again on the next one',
+            'Fix the plugin, or catch inside its afterNavigate',
+          ]),
+          error
+        );
+      }
+    }
+  };
+
   /** Releases the lock without touching anything a newer navigation may own. */
   const fail = (result: Refused): Refused => {
     if (!stale()) host.write(commit(host.read(), { status: 'idle' }));
@@ -368,7 +390,7 @@ async function pipeline(
           completed: from ? add(state.completed, from) : state.completed,
         })
       );
-      for (const h of ctx.hooks ?? []) h.afterNavigate?.({ from, to: END, state: host.read() });
+      after(END);
       return { ok: true, from, to: END };
     }
 
@@ -474,21 +496,7 @@ async function pipeline(
     );
 
     // 10. afterNavigate. Cannot fail the navigation that already happened.
-    for (const h of ctx.hooks ?? []) {
-      try {
-        h.afterNavigate?.({ from, to: target, state: host.read() });
-      } catch (error) {
-        // One broken analytics plugin must not break a checkout.
-        console.error(
-          explain('after-navigate-threw', [
-            `plugin "${h.name}" threw in afterNavigate`,
-            'The move stands, and the plugin runs again on the next one',
-            'Fix the plugin, or catch inside its afterNavigate',
-          ]),
-          error
-        );
-      }
-    }
+    after(target);
 
     return { ok: true, from, to: target };
   } catch (error) {

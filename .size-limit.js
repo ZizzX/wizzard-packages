@@ -109,12 +109,14 @@ export default [
   // pages rather than in the result: a refusal is an ordinary outcome and
   // four sentences for each would cost every wizard several hundred bytes.
   //
-  // 5.7 to 5.85 kB on 2026-09-16, measured 5849 B: the three messages this entry
+  // 5.7 to 5.9 kB on 2026-09-16, measured 5858 B: the three messages this entry
   // prints to the console - a plugin disabled, a teardown that threw, an
   // afterNavigate that threw - take the template every failure takes, a why, a
   // fix and a page, instead of naming the symptom. The teardown message names
-  // its plugin, which is what the list now carries beside each function.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '5.85 kB', gzip: true },
+  // its plugin, which is what the list now carries beside each function. The
+  // exit move now guards afterNavigate like a step move: a plugin that threw on
+  // the last step used to reject next() and undo `done`.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '5.9 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a
