@@ -129,3 +129,21 @@ alone and never carries a value the application passed in.
 `error instanceof WizardError` holds whichever entry threw it. An error from
 `@wizzard-packages/core/validate-flow` or `/groups` is caught by the class imported from `/v1`,
 though each entry is bundled on its own and carries its own copy.
+
+## Failures with no caller are logged
+
+Some failures happen where nothing called the library and nothing could catch a throw: inside a
+plugin's hook, while the wizard is torn down, or when a provider starts the wizard on mount. Those
+are logged with `console.error` in the same four sentences, with what was thrown as the second
+argument, and the wizard carries on.
+
+| What failed                                                                 | What happens next                                  | Code                                                               |
+| --------------------------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------ |
+| a plugin's `init` threw, or its `onCommit` or `onAttempt` threw or rejected | the plugin is switched off, reported once          | [plugin-disabled](../../errors/plugin-disabled/)                   |
+| a plugin's `afterNavigate` threw or rejected                                | the move stands, the plugin stays on               | [after-navigate-threw](../../errors/after-navigate-threw/)         |
+| a teardown threw or rejected during `destroy()`                             | the other teardowns still run                      | [plugin-teardown-failed](../../errors/plugin-teardown-failed/)     |
+| the provider's first move threw on mount                                    | no step is current until the provider mounts again | [start-failed](../../errors/start-failed/)                         |
+| `persist()`'s `onRestore` threw or rejected                                 | the outcome stands, logged with `console.warn`     | [persist-on-restore-threw](../../errors/persist-on-restore-threw/) |
+
+A plugin switched off gets none of its hooks again, including the rest of a move that was already
+under way when it failed.
