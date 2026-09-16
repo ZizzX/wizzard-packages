@@ -38,6 +38,11 @@ resolver the registry does not hold, an expression object whose key is not an op
 `order` entry with no matching step, a step carrying both `when` and `on.next` where only one of
 them will be honoured.
 
+A group whose `flow` is an inline definition is checked like the root - its `order` and each of
+its steps - and its transitions are read against its own `steps`: inside a sub-flow, `on.next` names a step of that
+sub-flow. A sub-flow named by a string is a definition `validateFlow` was not handed, so it is
+checked where it is defined.
+
 `assertFlow` is the same check that throws instead of returning, with every problem in the
 message of one [`flow-invalid`](../../errors/flow-invalid/) error. Use it where a definition crossing a boundary should stop the program - a backend
 response in development, a fixture in a test - and use `validateFlow` where the problems are

@@ -62,50 +62,56 @@ export function validateFlow(
   registry?: Readonly<Record<string, unknown>>
 ): FlowProblem[] {
   const problems: FlowProblem[] = [];
-  const ids = Object.keys(flow.steps);
   const report = (code: string, path: string, text: Explained): void => {
     problems.push({ path, message: explain(code, text), code, fix: text[2], url: pageFor(code) });
   };
 
-  if (ids.length === 0) {
-    report('flow-no-steps', 'steps', [
-      `flow "${flow.id}" has no steps`,
-      'A wizard is its steps, so there is nothing to start on or to finish',
-      'Add at least one step, or check that the definition arrived whole',
-    ]);
-  }
-
-  if (flow.order) {
-    for (const id of flow.order) {
-      if (!(id in flow.steps)) {
-        report('order-unknown-step', 'order', [
-          `order names "${id}", which is not a step`,
-          'order lists the default path by step id, and every id in it has to be a key of steps',
-          'Correct the id in order, or add the step it names',
-        ]);
-      }
-    }
-    for (const id of ids) {
-      if (!flow.order.includes(id)) {
-        report('step-not-in-order', `steps.${id}`, [
-          `step "${id}" is not in order`,
-          'next() and back() walk order, so the step is reachable only through a transition or go()',
-          "Add it to order, or lead to it from another step's on.next",
-        ]);
-      }
-    }
-    // One pass, and one report per id however many times it repeats.
-    const once = new Set<string>();
-    const twice = new Set<string>();
-    for (const id of flow.order) (once.has(id) ? twice : once).add(id);
-    for (const id of twice) {
-      report('order-duplicate', 'order', [
-        `order names "${id}" more than once`,
-        'A step has one position in order, and next() and back() find their way from it',
-        `Keep one occurrence of ${id}`,
+  // The shape of one flow: its steps and its order. `at` is empty for the root
+  // and ends in `flow.` for an inline sub-flow, whose order is walked on its own.
+  const checkShape = (f: FlowDefinition, at: string): void => {
+    const ids = Object.keys(f.steps);
+    if (ids.length === 0) {
+      report('flow-no-steps', `${at}steps`, [
+        `flow "${f.id}" has no steps`,
+        'A wizard is its steps, so there is nothing to start on or to finish',
+        'Add at least one step, or check that the definition arrived whole',
       ]);
     }
-  }
+
+    if (f.order) {
+      for (const id of f.order) {
+        if (!(id in f.steps)) {
+          report('order-unknown-step', `${at}order`, [
+            `order names "${id}", which is not a step`,
+            'order lists the default path by step id, and every id in it has to be a key of steps',
+            'Correct the id in order, or add the step it names',
+          ]);
+        }
+      }
+      for (const id of ids) {
+        if (!f.order.includes(id)) {
+          report('step-not-in-order', `${at}steps.${id}`, [
+            `step "${id}" is not in order`,
+            'next() and back() walk order, so the step is reachable only through a transition or go()',
+            "Add it to order, or lead to it from another step's on.next",
+          ]);
+        }
+      }
+      // One pass, and one report per id however many times it repeats.
+      const once = new Set<string>();
+      const twice = new Set<string>();
+      for (const id of f.order) (once.has(id) ? twice : once).add(id);
+      for (const id of twice) {
+        report('order-duplicate', `${at}order`, [
+          `order names "${id}" more than once`,
+          'A step has one position in order, and next() and back() find their way from it',
+          `Keep one occurrence of ${id}`,
+        ]);
+      }
+    }
+  };
+
+  checkShape(flow, '');
 
   const checkExpr = (expr: unknown, path: string): void => {
     if (typeof expr === 'function') {
@@ -145,56 +151,7 @@ export function validateFlow(
     }
   };
 
-  for (const [id, step_] of Object.entries(flow.steps)) {
-    const at = `steps.${id}`;
-    checkExpr(step_, at);
-
-    const targets = step_.on?.next;
-    const list = targets === undefined ? [] : Array.isArray(targets) ? targets : [targets];
-    const unknownTarget = (to: string, path: string): void => {
-      report('target-unknown-step', path, [
-        `unknown target "${to}"`,
-        'A transition leads to a key of steps, or to @end from on.next',
-        'Correct the id, or add the step it names',
-      ]);
-    };
-    for (const target of list) {
-      const to = typeof target === 'string' ? target : target.to;
-      if (to !== '@end' && !(to in flow.steps)) unknownTarget(to, `${at}.on.next`);
-    }
-
-    const back = step_.on?.back;
-    if (back !== undefined && back !== 'auto') {
-      const to = typeof back === 'string' ? back : back.to;
-      if (!(to in flow.steps)) unknownTarget(to, `${at}.on.back`);
-    }
-
-    // A flow from a backend has no types behind it, so the shape is checked here
-    // rather than discovered as a TypeError in the middle of a navigation.
-    const clear = step_.clearOnLeave as unknown;
-    if (
-      clear !== undefined &&
-      clear !== true &&
-      !(Array.isArray(clear) && clear.every((p) => typeof p === 'string'))
-    ) {
-      report('clear-on-leave-invalid', `${at}.clearOnLeave`, [
-        `clearOnLeave of step "${id}" is neither true nor a list of data paths`,
-        'It is read when the step is left, and any other value fails that navigation',
-        'Set it to true, or put the paths in a list',
-      ]);
-    }
-
-    // Both at once is legal and does two things: `when` still decides whether
-    // this step is on the path, and `on.next` only where it leads. A condition
-    // meant to choose the next step is easily written on the step instead.
-    if (step_.when !== undefined && step_.on?.next !== undefined) {
-      report('when-with-next', at, [
-        `step "${id}" has both when and on.next`,
-        'when decides whether the step is on the path, and on.next only where it leads, so a condition on the step never picks the next one',
-        "To pick the next step, move the condition into a transition's when; if both are meant, leave them",
-      ]);
-    }
-  }
+  for (const [id, step_] of Object.entries(flow.steps)) checkExpr(step_, `steps.${id}`);
 
   // Where the engine evaluates an expression, and only there: `ui` is the host's
   // JSON and may carry `$`-keys of its own. The evaluator throws on an object
@@ -244,6 +201,56 @@ export function validateFlow(
     }
   };
 
+  // The shape of one step, against the flow that holds it: a target in an inline
+  // sub-flow names a step of that sub-flow, not of the root.
+  const checkStep = (f: FlowDefinition, id: string, step_: StepDef, at: string): void => {
+    const targets = step_.on?.next;
+    const list = targets === undefined ? [] : Array.isArray(targets) ? targets : [targets];
+    const unknownTarget = (to: string, path: string): void => {
+      report('target-unknown-step', path, [
+        `unknown target "${to}"`,
+        'A transition leads to a key of steps, or to @end from on.next',
+        'Correct the id, or add the step it names',
+      ]);
+    };
+    for (const target of list) {
+      const to = typeof target === 'string' ? target : target.to;
+      if (to !== '@end' && !(to in f.steps)) unknownTarget(to, `${at}.on.next`);
+    }
+
+    const back = step_.on?.back;
+    if (back !== undefined && back !== 'auto') {
+      const to = typeof back === 'string' ? back : back.to;
+      if (!(to in f.steps)) unknownTarget(to, `${at}.on.back`);
+    }
+
+    // A flow from a backend has no types behind it, so the shape is checked here
+    // rather than discovered as a TypeError in the middle of a navigation.
+    const clear = step_.clearOnLeave as unknown;
+    if (
+      clear !== undefined &&
+      clear !== true &&
+      !(Array.isArray(clear) && clear.every((p) => typeof p === 'string'))
+    ) {
+      report('clear-on-leave-invalid', `${at}.clearOnLeave`, [
+        `clearOnLeave of step "${id}" is neither true nor a list of data paths`,
+        'It is read when the step is left, and any other value fails that navigation',
+        'Set it to true, or put the paths in a list',
+      ]);
+    }
+
+    // Both at once is legal and does two things: `when` still decides whether
+    // this step is on the path, and `on.next` only where it leads. A condition
+    // meant to choose the next step is easily written on the step instead.
+    if (step_.when !== undefined && step_.on?.next !== undefined) {
+      report('when-with-next', at, [
+        `step "${id}" has both when and on.next`,
+        'when decides whether the step is on the path, and on.next only where it leads, so a condition on the step never picks the next one',
+        "To pick the next step, move the condition into a transition's when; if both are meant, leave them",
+      ]);
+    }
+  };
+
   // Repeat groups anywhere in the flow, not only among its own steps. A group
   // whose `flow` is an inline definition carries its sub-flow inside this one,
   // so a repeat two levels down is still this flow's to stamp a version for -
@@ -254,9 +261,11 @@ export function validateFlow(
   const scanRepeats = (f: FlowDefinition, path: string, depth: number): boolean => {
     if (depth > MAX_DEPTH || seen.has(f)) return false;
     seen.add(f);
+    if (depth > 0) checkShape(f, path.slice(0, -'steps'.length));
 
     let found = false;
     for (const [id, step_] of Object.entries(f.steps)) {
+      checkStep(f, id, step_, `${path}.${id}`);
       checkExpressions(step_, `${path}.${id}`);
       if (!isGroup(step_)) continue;
       if (step_.repeat !== undefined) {

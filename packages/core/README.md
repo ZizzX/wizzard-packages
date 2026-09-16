@@ -91,15 +91,15 @@ that fails during `destroy()` is reported and the rest still run (`plugin-teardo
 Separate entry points because they are separate budgets. A wizard that never draws itself
 does not carry the code that would.
 
-| Entry            | What it is                                                     |
-| ---------------- | -------------------------------------------------------------- |
-| `/v1`            | the engine: types, expressions, navigation, selectors          |
-| `/graph`         | a flow as `{ nodes, edges }`, for drawing it                   |
-| `/groups`        | traversal for repeated sub-flows                               |
-| `/session`       | a recorded run, and the check that a replay matches it         |
-| `/snapshot`      | serialize a run, and refuse stored JSON that cannot be trusted |
-| `/expr`          | a builder for expressions, if you dislike writing JSON         |
-| `/validate-flow` | checks a flow definition, each problem with a code and a page  |
+| Entry            | What it is                                                                  |
+| ---------------- | --------------------------------------------------------------------------- |
+| `/v1`            | the engine: types, expressions, navigation, selectors                       |
+| `/graph`         | a flow as `{ nodes, edges }`, for drawing it                                |
+| `/groups`        | traversal for repeated sub-flows                                            |
+| `/session`       | a recorded run, and the check that a replay matches it                      |
+| `/snapshot`      | serialize a run, and refuse stored JSON that cannot be trusted              |
+| `/expr`          | a builder for expressions, if you dislike writing JSON                      |
+| `/validate-flow` | checks a flow and its inline sub-flows, each problem with a code and a page |
 
 `.size-limit.js` holds the budget for each, with the measurement that set it.
 

@@ -267,7 +267,12 @@ export default [
     // and fixes are the bytes; `resolver-not-registered` and
     // `expr-unknown-operator` share their sentences with the evaluator through
     // `diagnostic.ts`, so the two wordings cannot drift apart.
-    limit: '2.65 kB',
+    //
+    // 2.65 to 2.7 kB on 2026-09-17, measured 2699 B: an inline sub-flow is
+    // checked like the root - its steps and its `order`, and each step's
+    // targets, `clearOnLeave` and `when` beside `on.next`, with targets read
+    // against that sub-flow's steps - instead of the root alone.
+    limit: '2.7 kB',
     gzip: true,
   },
 

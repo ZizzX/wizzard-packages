@@ -218,6 +218,55 @@ describe('validateFlow, on a repeat group', () => {
     );
   });
 
+  it('checks the steps of an inline sub-flow the way it checks the root', () => {
+    const flow: FlowDefinition = {
+      id: 'booking',
+      order: ['trip'],
+      steps: {
+        trip: {
+          flow: {
+            id: 'leg',
+            order: ['from', 'to'],
+            steps: {
+              from: {
+                when: { $get: 'data.go' },
+                on: { next: 'nowhere', back: 'trip' },
+                clearOnLeave: 'data.x' as unknown as true,
+              },
+              to: { on: { next: '@end' } },
+            },
+          },
+        },
+      },
+    };
+    expect(problems(flow)).toEqual([
+      'steps.trip.flow.steps.from.on.next: unknown target "nowhere"',
+      'steps.trip.flow.steps.from.on.back: unknown target "trip"',
+      'steps.trip.flow.steps.from.clearOnLeave: clearOnLeave of step "from" is neither true nor a list of data paths',
+      'steps.trip.flow.steps.from: step "from" has both when and on.next',
+    ]);
+  });
+
+  it('checks the order of an inline sub-flow, which next() walks on its own', () => {
+    const flow: FlowDefinition = {
+      id: 'booking',
+      order: ['trip'],
+      steps: {
+        trip: {
+          flow: { id: 'leg', order: ['ghost', 'seat', 'seat'], steps: { seat: {}, meal: {} } },
+        },
+        empty: { flow: { id: 'none', steps: {} } },
+      },
+    };
+    expect(problems(flow)).toEqual([
+      'steps.empty: step "empty" is not in order',
+      'steps.trip.flow.order: order names "ghost", which is not a step',
+      'steps.trip.flow.steps.meal: step "meal" is not in order',
+      'steps.trip.flow.order: order names "seat" more than once',
+      'steps.empty.flow.steps: flow "none" has no steps',
+    ]);
+  });
+
   it('cannot see inside a sub-flow named by reference, and does not pretend to', () => {
     // The definition behind a string lives wherever it was written, and is
     // validated there. Reporting this flow for it would be a guess.
