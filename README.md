@@ -210,8 +210,8 @@ full set of rules.
 **No stale async transitions.** Validation, guards and loading are eleven phases of one
 pipeline, and state is written exactly once at the end of it. Every `await` re-checks a
 navigation epoch, so a slow validator that resolves after you pressed Back cannot move you.
-Navigation returns a result — `{ ok: false, reason: 'blocked', by: 'age-check' }` — never a
-bare boolean.
+Navigation returns a result — `{ ok: false, reason: 'blocked', by: 'age-check', code:
+'nav-blocked', url }`, where `url` is the page that explains the refusal — never a bare boolean.
 
 **One engine, two bindings.** `@wizzard-packages/react` is 1.04 kB and `@wizzard-packages/vue`
 is 732 B, against 8.48 kB and 5.07 kB for their 0.x equivalents. Nothing was optimised to get

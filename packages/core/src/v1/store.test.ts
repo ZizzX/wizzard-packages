@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { pageFor } from './diagnostic';
 import type { FlowDefinition } from './flow';
 import type { WizardState } from './state';
 import { createWizard } from './store';
@@ -209,6 +210,8 @@ describe('validation', () => {
     expect(result).toEqual({
       ok: false,
       reason: 'invalid',
+      code: 'nav-invalid',
+      url: pageFor('nav-invalid'),
       by: 'trip',
       errors: { name: 'required' },
     });

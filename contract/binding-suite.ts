@@ -55,6 +55,7 @@ export interface BindingHarness {
  * Test ids a probe must render:
  *   step, progress, can-back, busy, errors, renders
  *   name-input (bound to the `name` field), next, back
+ *   refusal     `<code> <url>` of the last refused `next()`, or ''
  *
  * And, for the repeat group below - all of it read from the engine, never kept
  * beside it, because a binding that remembers which item it is on is the 0.x
@@ -190,6 +191,17 @@ export function describeBindingContract(harness: BindingHarness): void {
 
       expect(probe.text('step')).toBe('one');
       expect(probe.text('errors')).toBe('name: required');
+      probe.unmount();
+    });
+
+    it('returns a refused move with its code and page', async () => {
+      const probe = await mount({});
+      await probe.click('next');
+      await until(() => probe.text('refusal') !== '', 'the refusal');
+
+      expect(probe.text('refusal')).toBe(
+        'nav-invalid https://zizzx.github.io/wizzard-packages/errors/nav-invalid'
+      );
       probe.unmount();
     });
 

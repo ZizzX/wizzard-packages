@@ -1,4 +1,5 @@
 import { add, beginNav, commit, isCurrent } from './commit';
+import { pageFor } from './diagnostic';
 import { testAsync, type AsyncRegistry, type Registry, type Scope } from './expr';
 import { END, type FlowDefinition, type StepDef } from './flow';
 import { unsetPath } from './path';
@@ -38,15 +39,25 @@ export type NavReason =
   | 'aborted'
   | 'not-reachable';
 
+/** A refusal as the pipeline builds it, before `runNav` gives it a code and a page. */
+type Refused = {
+  ok: false;
+  reason: NavReason;
+  /** Which plugin or guard refused. Replaces the goToStepResult probe of 0.x. */
+  by?: string;
+  errors?: Readonly<Record<string, string>>;
+};
+
+type Moved = { ok: true; from: string | null; to: string | typeof END };
+
 export type NavResult =
-  | { ok: true; from: string | null; to: string | typeof END }
-  | {
-      ok: false;
-      reason: NavReason;
-      /** Which plugin or guard refused. Replaces the goToStepResult probe of 0.x. */
-      by?: string;
-      errors?: Readonly<Record<string, string>>;
-    };
+  | Moved
+  | (Refused & {
+      /** `nav-<reason>`: stable, and the slug of the page that explains the refusal. */
+      code: `nav-${NavReason}`;
+      /** The page for `code`. What the developer sees, why, and what to change live there. */
+      url: string;
+    });
 
 export type NavIntent =
   | { type: 'next' }
@@ -233,8 +244,8 @@ function rewind(history: WizardState['history'], target: string): WizardState['h
   return history.slice(0, -1);
 }
 
-const superseded: NavResult = { ok: false, reason: 'superseded' };
-const aborted: NavResult = { ok: false, reason: 'aborted' };
+const superseded: Refused = { ok: false, reason: 'superseded' };
+const aborted: Refused = { ok: false, reason: 'aborted' };
 
 export async function runNav(
   ctx: NavContext,
@@ -242,6 +253,20 @@ export async function runNav(
   intent: NavIntent,
   opts: { validate?: boolean } = {}
 ): Promise<NavResult> {
+  // Every refusal gets its code here, once, rather than at each of the dozen
+  // places below that refuse: the code is the reason, so it cannot disagree.
+  const result = await pipeline(ctx, host, intent, opts);
+  if (result.ok) return result;
+  const code = `nav-${result.reason}` as const;
+  return { ...result, code, url: pageFor(code) };
+}
+
+async function pipeline(
+  ctx: NavContext,
+  host: NavHost,
+  intent: NavIntent,
+  opts: { validate?: boolean }
+): Promise<Moved | Refused> {
   const { flow, groups: traversal, registry, subFlows } = ctx;
 
   // 0. Acquire.
@@ -253,7 +278,7 @@ export async function runNav(
   const stale = (): boolean => !isCurrent(host.read(), token);
 
   /** Releases the lock without touching anything a newer navigation may own. */
-  const fail = (result: NavResult): NavResult => {
+  const fail = (result: Refused): Refused => {
     if (!stale()) host.write(commit(host.read(), { status: 'idle' }));
     return result;
   };

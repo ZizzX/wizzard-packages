@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils';
 import { vi } from 'vitest';
-import { computed, defineComponent, h, nextTick, onMounted, onUpdated } from 'vue';
+import { computed, defineComponent, h, nextTick, onMounted, onUpdated, ref } from 'vue';
 
 import {
   describeBindingContract,
@@ -39,6 +39,7 @@ const ProbeComponent = defineComponent({
     const step = useStep();
     const nav = useNavigation();
     const errors = useErrors();
+    const refusal = ref('');
     const name = useField<string>('name');
 
     // The repeat-group probe, read entirely out of the engine - the same values
@@ -70,6 +71,7 @@ const ProbeComponent = defineComponent({
             .map(([field, message]) => `${field}: ${message}`)
             .join(', ')
         ),
+        h('span', { 'data-testid': 'refusal' }, refusal.value),
         h('span', { 'data-testid': 'name-value' }, name.value ?? ''),
         h('input', {
           'data-testid': 'name-input',
@@ -78,7 +80,17 @@ const ProbeComponent = defineComponent({
             name.value = (event.target as HTMLInputElement).value;
           },
         }),
-        h('button', { 'data-testid': 'next', onClick: () => void nav.next() }, 'next'),
+        h(
+          'button',
+          {
+            'data-testid': 'next',
+            onClick: () =>
+              void nav.next().then((result) => {
+                if (!result.ok) refusal.value = `${result.code} ${result.url}`;
+              }),
+          },
+          'next'
+        ),
         h('button', { 'data-testid': 'back', onClick: () => void nav.back() }, 'back'),
 
         h('span', { 'data-testid': 'item-key' }, itemKey.value),
