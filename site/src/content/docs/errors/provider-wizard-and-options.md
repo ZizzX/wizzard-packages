@@ -5,14 +5,15 @@ description: WizardProvider was given a built wizard and also options it would h
 
 ```
 [wizzard] WizardProvider was given a wizard and also flow, data. The wizard was already built with
-its own options, so these would be ignored. Pass the options to createWizard and only wizard to
+its own options, so any passed beside it are ignored. Pass the options to createWizard and only wizard to
 the provider, or drop wizard and let the provider build one.
 …/errors/provider-wizard-and-options
 ```
 
 Thrown as a `WizardError` with `op: 'WizardProvider'` by `@wizzard-packages/react/v1`, on any
 render where both are set, in development and production builds alike. The message lists every
-option that was passed with a value; a prop set to `undefined` does not count.
+option that was passed with a value; a prop set to `undefined` does not count, and neither does
+a prop that is not an option, such as `data-*` or `ref` forwarded by a wrapper.
 
 `WizardProvider` gets its wizard one of two ways. Given `wizard`, it uses that engine as it is, and
 that engine was configured when `createWizard` built it. Given options instead - `flow`,

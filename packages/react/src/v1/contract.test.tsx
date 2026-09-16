@@ -235,10 +235,12 @@ describe('WizardProvider given a wizard and options', () => {
     expect((caught as WizardError).message).toContain('also data.');
   });
 
-  it('accepts a wizard alone', () => {
+  it('accepts a wizard alone, even with props a wrapper forwards', () => {
     const wizard = createWizard({ flow: { id: 'x', order: ['one'], steps: { one: {} } } });
+    // Not options: a wrapper component may spread these onto the provider.
+    const forwarded = { 'data-testid': 'provider', ref: () => undefined } as object;
     render(
-      <WizardProvider wizard={wizard}>
+      <WizardProvider wizard={wizard} {...forwarded}>
         <span data-testid="ok" />
       </WizardProvider>
     );
