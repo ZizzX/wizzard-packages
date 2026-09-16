@@ -90,7 +90,15 @@ export interface ReadResult {
 const problem = (path: string, what: string, why: string, fix: string): ReadResult => ({
   flow: null,
   graph: null,
-  problems: [{ path, message: `[wizzard] ${what}. ${why}. ${fix}. ${DOCS}` }],
+  problems: [
+    {
+      path,
+      code: 'inspector-paste',
+      fix,
+      url: DOCS,
+      message: `[wizzard] ${what}. ${why}. ${fix}. ${DOCS}`,
+    },
+  ],
   empty: false,
 });
 

@@ -27,10 +27,22 @@ const MAX_CHARS = 100_000;
 
 const DOCS = 'https://zizzx.github.io/wizzard-packages/docs/server-driven/';
 
-/** Problem, cause, fix, link - the shape every message in this library takes. */
+/**
+ * Problem, cause, fix, link - the shape every message in this library takes. The
+ * code is this loader's own, so a caller can tell its refusals from the
+ * validator's; the link is the guide, since the library has no page for it.
+ */
 const fail = (path: string, what: string, why: string, fix: string): LoadResult => ({
   ok: false,
-  problems: [{ path, message: `[wizzard] ${what}. ${why}. ${fix}. ${DOCS}` }],
+  problems: [
+    {
+      path,
+      code: 'flow-not-loaded',
+      fix,
+      url: DOCS,
+      message: `[wizzard] ${what}. ${why}. ${fix}. ${DOCS}`,
+    },
+  ],
 });
 
 const isObject = (value: unknown): value is Record<string, unknown> =>

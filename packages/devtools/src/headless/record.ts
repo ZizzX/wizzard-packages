@@ -212,7 +212,7 @@ export function recordSession(wizard: WizardLike, options: RecordOptions = {}): 
         const problem = checkSession(out.session, out.flow, out.subFlows)[0];
         if (problem !== undefined) {
           throw new Error(
-            `[wizzard] export stopped: redact returned a session checkSession rejects (${problem.path}: ${problem.message}). Nothing was copied. The hook must keep every frame a state of the recorded flow; fix it, or remove it to export unredacted development data. ${DOCS}`
+            `[wizzard] export stopped: redact returned a session checkSession rejects (${problem.path}, ${problem.code}). Nothing was copied. The hook must keep every frame a state of the recorded flow; fix it, or remove it to export unredacted development data. ${DOCS}`
           );
         }
       }

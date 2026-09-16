@@ -1,8 +1,11 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import type { FlowDefinition } from './flow';
 import { checkSession, isStackEntry, type RecordedSession } from './session';
 import { initialState, type WizardState } from './state';
+import { createWizard } from './store';
 import type { FlowProblem } from './validate-flow';
 
 const passenger: FlowDefinition = {
@@ -70,7 +73,7 @@ const withFrame = (index: number, over: Partial<WizardState>): RecordedSession =
 });
 
 const messages = (problems: readonly FlowProblem[]): string =>
-  problems.map((p) => `${p.path}: ${p.message}`).join('\n');
+  problems.map((p) => `${p.path}: ${p.code}: ${p.message}`).join('\n');
 
 describe('a recording that still matches its flow', () => {
   it('reports nothing, repeat iterations and sub-flow frames included', () => {
@@ -89,14 +92,14 @@ describe('drift (E6)', () => {
   it('names a recording made against a different flow', () => {
     const problems = checkSession({ ...clean, flow: 'checkout' }, booking);
     expect(problems).not.toEqual([]);
-    expect(messages(problems)).toContain('this recording does not match this flow');
-    expect(messages(problems)).toContain('checkout');
+    expect(messages(problems)).toContain('flow: session-flow-mismatch');
+    expect(messages(problems)).toContain('"checkout"');
   });
 
   it('names a recording made against an older version of the same flow', () => {
     const problems = checkSession({ ...clean, version: 1 }, booking);
-    expect(messages(problems)).toContain('this recording does not match this flow');
-    expect(messages(problems)).toContain('version 1');
+    expect(messages(problems)).toContain('version: session-flow-mismatch');
+    expect(messages(problems)).toContain('version 1,');
   });
 
   it('stays quiet when either side left the version unstamped', () => {
@@ -117,7 +120,9 @@ describe('drift (E6)', () => {
       withFrame(0, { stack: [{ flow: 'loyalty', step: 'tier' }], visited: ['tier'] }),
       booking
     );
-    expect(messages(problems)).toContain('unknown flow: loyalty');
+    expect(messages(problems)).toContain(
+      'session-unknown-flow: [wizzard] the frame names flow "loyalty"'
+    );
   });
 });
 
@@ -131,7 +136,9 @@ describe('sub-flows by reference', () => {
   };
 
   it('cannot verify a referenced sub-flow without the registry, and says so', () => {
-    expect(messages(checkSession(clean, byRef))).toContain('unknown flow: passenger');
+    expect(messages(checkSession(clean, byRef))).toContain(
+      'session-unknown-flow: [wizzard] the frame names flow "passenger"'
+    );
   });
 
   it('verifies it once the registry supplies it', () => {
@@ -222,7 +229,7 @@ describe('flows that answer to more than one name', () => {
     const emptied: FlowDefinition = { ...alias, order: [], steps: {} };
     expect(
       messages(checkSession(recorded, viaAlias, { alias: emptied, traveller: other }))
-    ).toContain('does not have: seat');
+    ).toContain('session-frame-mismatch: [wizzard] the frame names step "seat"');
   });
 });
 
@@ -240,7 +247,9 @@ describe('stacks the engine could not have built', () => {
       }),
       booking
     );
-    expect(messages(problems)).toContain('is not a group');
+    expect(messages(problems)).toContain(
+      'session-frame-mismatch: [wizzard] the frame encloses another, but "who" is not a group'
+    );
   });
 
   it('rejects a group whose child frame is in a different flow', () => {
@@ -254,7 +263,7 @@ describe('stacks the engine could not have built', () => {
       }),
       booking
     );
-    expect(messages(problems)).toContain('group into passenger');
+    expect(messages(problems)).toContain('is a group into "passenger"');
   });
 
   it('still allows a group as the current step, with nothing below it', () => {
@@ -271,11 +280,15 @@ describe('stacks the engine could not have built', () => {
 
 describe('frames that could not have come from the engine', () => {
   it('rejects a rev that moves backwards', () => {
-    expect(messages(checkSession(withFrame(2, { rev: 1 }), booking))).toContain('frames[2].rev');
+    expect(messages(checkSession(withFrame(2, { rev: 1 }), booking))).toContain(
+      'frames[2].rev: session-frames-reordered'
+    );
   });
 
   it('rejects a nav that moves backwards', () => {
-    expect(messages(checkSession(withFrame(2, { nav: 1 }), booking))).toContain('frames[2].nav');
+    expect(messages(checkSession(withFrame(2, { nav: 1 }), booking))).toContain(
+      'frames[2].nav: session-frames-reordered'
+    );
   });
 
   it('allows a rev that stands still between frames', () => {
@@ -286,23 +299,27 @@ describe('frames that could not have come from the engine', () => {
   // missing from it mis-highlights every frame after it.
   it('rejects a current step missing from visited', () => {
     expect(messages(checkSession(withFrame(3, { visited: ['who'] }), booking))).toContain(
-      'current step'
+      'frames[3].visited: session-frame-corrupt'
     );
   });
 
-  it('rejects an empty stack outside init', () => {
-    expect(messages(checkSession(withFrame(1, { stack: [], visited: [] }), booking))).toContain(
-      'stack'
-    );
+  // A wizard with no reachable step goes from init through busy to done without
+  // ever having a current step, and one whose first step is refused by a guard
+  // or a loader settles in idle with none. All of them are real recordings.
+  it('accepts an empty stack in every status', () => {
+    for (const status of ['init', 'busy', 'idle', 'done'] as const) {
+      expect(checkSession(withFrame(1, { stack: [], visited: [], status }), booking)).toEqual([]);
+    }
   });
 
-  it('accepts an empty stack while the wizard is still initialising', () => {
-    const boot: RecordedSession = {
-      flow: 'booking',
-      version: 2,
-      frames: [initialState(), ...clean.frames],
-    };
-    expect(checkSession(boot, booking)).toEqual([]);
+  it('accepts the recording of a wizard that had no reachable step', async () => {
+    const empty: FlowDefinition = { id: 'empty', order: ['a'], steps: { a: { when: false } } };
+    const wizard = createWizard({ flow: empty });
+    const frames: WizardState[] = [wizard.getState()];
+    wizard.subscribe(() => frames.push(wizard.getState()));
+    await wizard.next();
+    expect(frames[frames.length - 1]?.status).toBe('done');
+    expect(checkSession({ flow: 'empty', frames }, empty)).toEqual([]);
   });
 
   it('rejects an item key on a step that is not a repeat group', () => {
@@ -327,7 +344,9 @@ describe('frames that could not have come from the engine', () => {
 
 describe('recordings that are not recordings', () => {
   it('reports an empty recording rather than replaying nothing', () => {
-    expect(messages(checkSession({ ...clean, frames: [] }, booking))).toContain('no frames');
+    expect(messages(checkSession({ ...clean, frames: [] }, booking))).toContain(
+      'frames: session-no-frames'
+    );
   });
 
   // A recording is JSON off a disk or a wire. It gets to be any shape at all.
@@ -370,5 +389,41 @@ describe('isStackEntry', () => {
   it('rejects a key that is not a string', () => {
     expect(isStackEntry({ flow: 'booking', step: 'passengers', key: 3 })).toBe(false);
     expect(isStackEntry({ flow: 'booking', step: 'passengers', key: null })).toBe(false);
+  });
+});
+
+describe('every problem checkSession reports', () => {
+  // The template every failure takes, thrown or returned, and a page per code.
+  const SITE = 'https://zizzx.github.io/wizzard-packages/errors/';
+  const ROOT = join(__dirname, '..', '..', '..', '..');
+  const sessions: RecordedSession[] = [
+    { ...clean, flow: 'checkout', version: 1, frames: [] },
+    withFrame(2, { rev: 1 }),
+    withFrame(0, { stack: [{ flow: 'loyalty', step: 'tier' }], visited: ['tier'] }),
+    withFrame(0, { stack: [{ flow: 'booking', step: 'who', key: 'p1' }], visited: ['who'] }),
+    { ...clean, frames: [null] } as unknown as RecordedSession,
+  ];
+
+  it('has a code, a fix, its page, and the message template', () => {
+    const codes = new Set<string>();
+    for (const session of sessions) {
+      for (const problem of checkSession(session, booking)) {
+        codes.add(problem.code);
+        expect(problem.url).toBe(SITE + problem.code);
+        expect(problem.message.startsWith('[wizzard] ')).toBe(true);
+        expect(problem.message).toContain(`. ${problem.fix}. `);
+        expect(problem.message.endsWith(` ${problem.url}`)).toBe(true);
+        const page = join(ROOT, 'site', 'src', 'content', 'docs', 'errors', `${problem.code}.md`);
+        expect(existsSync(page), `${problem.code} has no page`).toBe(true);
+      }
+    }
+    expect([...codes].sort()).toEqual([
+      'session-flow-mismatch',
+      'session-frame-corrupt',
+      'session-frame-mismatch',
+      'session-frames-reordered',
+      'session-no-frames',
+      'session-unknown-flow',
+    ]);
   });
 });

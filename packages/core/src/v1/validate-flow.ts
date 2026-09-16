@@ -26,14 +26,13 @@ export interface FlowProblem {
   message: string;
   /**
    * Kebab-case and stable: what a handler switches on, and the slug of the page
-   * that explains the problem. Set on every problem `validateFlow` reports;
-   * `checkSession` shares the type and does not set it, `fix` or `url` yet.
+   * that explains the problem. `validateFlow` and `checkSession` both set it.
    */
-  code?: string;
+  code: string;
   /** What to change. Also the third sentence of `message`. */
-  fix?: string;
+  fix: string;
   /** The page for `code`, built from the code alone. */
-  url?: string;
+  url: string;
 }
 
 const ROOTS = ['data', 'ctx', 'loop', 'step'];
