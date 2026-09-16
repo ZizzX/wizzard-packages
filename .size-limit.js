@@ -148,7 +148,20 @@ export default [
   // registry key colliding with another definition's id cannot make a correct
   // stack read as drift.
 
-  { name: 'core-v1 session', path: 'packages/core/src/v1/session.ts', limit: '1.2 kB', gzip: true },
+  //
+  // 1.2 to 1.75 kB on 2026-09-16, measured 1744 B, for the returned half of
+  // the diagnostic contract (L6-4): a problem `checkSession` returns carries a
+  // code, a fix and a url, and its message takes the template every failure
+  // does - what, why, the fix, the page. Six codes, one per distinct fix, so the
+  // four ways a stack can disagree with the flow share one sentence of why and
+  // one fix; the bytes are those sentences and the template helper this entry
+  // now imports from `diagnostic.ts`.
+  {
+    name: 'core-v1 session',
+    path: 'packages/core/src/v1/session.ts',
+    limit: '1.75 kB',
+    gzip: true,
+  },
 
   // The durable snapshot format. Its own entry because an application that
   // never persists a wizard should not carry the validator that decides whether

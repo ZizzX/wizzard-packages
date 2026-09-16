@@ -1,3 +1,4 @@
+import { explain, pageFor, type Explained } from './diagnostic';
 import { isGroup, type FlowDefinition } from './flow';
 
 import type { Frame, WizardState } from './state';
@@ -204,13 +205,28 @@ export function checkSession(
   subFlows?: Readonly<Record<string, FlowDefinition>>
 ): FlowProblem[] {
   const problems: FlowProblem[] = [];
-  const report = (path: string, message: string): void => {
-    problems.push({ path, message });
+  const report = (code: string, path: string, text: Explained): void => {
+    problems.push({ path, message: explain(code, text), code, fix: text[2], url: pageFor(code) });
   };
-  const drift = 'this recording does not match this flow';
+  const drift =
+    'A replay of another flow still draws every frame, and nothing on screen says it is wrong';
+  const recordAgain = 'Record the run again, or restore the recording from where it was saved';
+  // One code for every frame that names a shape the flow does not have: the
+  // cause and the fix are the same whichever part of the stack disagrees.
+  const mismatch = (path: string, what: string): void => {
+    report('session-frame-mismatch', path, [
+      what,
+      'The frames were recorded against a flow of a different shape than the one they are replayed against',
+      'Replay against the flow the recording was made with, or record the run again',
+    ]);
+  };
 
   if (session.flow !== flow.id) {
-    report('flow', `${drift}: recorded against ${session.flow}, replayed against ${flow.id}`);
+    report('session-flow-mismatch', 'flow', [
+      `this recording was made against flow "${session.flow}", not "${flow.id}"`,
+      drift,
+      'Replay it against the flow it was recorded with',
+    ]);
   }
   // Only when both sides stamped one. An unstamped producer is a gap in the
   // recording, not evidence of drift, and reporting it would train people to
@@ -220,14 +236,19 @@ export function checkSession(
     flow.version !== undefined &&
     session.version !== flow.version
   ) {
-    report(
-      'version',
-      `${drift}: recorded against version ${session.version}, flow is version ${flow.version}`
-    );
+    report('session-flow-mismatch', 'version', [
+      `this recording was made against version ${session.version}, and the flow is version ${flow.version}`,
+      drift,
+      'Replay it against the version it was recorded with, or record the run again',
+    ]);
   }
 
   if (!Array.isArray(session.frames) || session.frames.length === 0) {
-    report('frames', 'recording has no frames');
+    report('session-no-frames', 'frames', [
+      'this recording has no frames',
+      'A replay draws frames, and there is nothing to draw',
+      recordAgain,
+    ]);
     return problems;
   }
 
@@ -236,9 +257,16 @@ export function checkSession(
 
   session.frames.forEach((frame, index) => {
     const at = `frames[${index}]`;
+    const corrupt = (path: string, what: string, why: string): void => {
+      report('session-frame-corrupt', path, [what, why, recordAgain]);
+    };
 
     if (!isFrameShaped(frame)) {
-      report(at, 'is not a wizard state — the recording is truncated or corrupt');
+      corrupt(
+        at,
+        `frame ${index} is not a wizard state`,
+        'The recording is truncated or corrupt, and a replay would draw a state the engine never produced'
+      );
       return;
     }
 
@@ -246,18 +274,25 @@ export function checkSession(
     // that defeats races. Either moving backwards is a state the engine could
     // not have produced, so the frames were reordered or spliced.
     if (previous !== undefined) {
-      if (frame.rev < previous.rev) {
-        report(`${at}.rev`, `moves backwards: ${previous.rev} then ${frame.rev}`);
-      }
-      if (frame.nav < previous.nav) {
-        report(`${at}.nav`, `moves backwards: ${previous.nav} then ${frame.nav}`);
+      for (const counter of ['rev', 'nav'] as const) {
+        if (frame[counter] < previous[counter]) {
+          report('session-frames-reordered', `${at}.${counter}`, [
+            `${counter} moves backwards, from ${previous[counter]} to ${frame[counter]}`,
+            'The engine only ever raises it, so the frames were reordered or spliced',
+            'Replay the frames in the order they were recorded, or record the run again',
+          ]);
+        }
       }
     }
     previous = frame;
 
     if (frame.stack.length === 0) {
       if (frame.status !== 'init') {
-        report(`${at}.stack`, `is empty, but status is ${frame.status}`);
+        corrupt(
+          `${at}.stack`,
+          `frame ${index} has an empty stack, but its status is ${frame.status}`,
+          'Only a wizard that has not started yet has no current step'
+        );
       }
       return;
     }
@@ -268,16 +303,29 @@ export function checkSession(
       const entry = frame.stack[depth] as Frame;
       const path = `${at}.stack[${depth}]`;
       if (problem === 'unknown-flow') {
-        report(path, `names an unknown flow: ${entry.flow}`);
+        report('session-unknown-flow', path, [
+          `the frame names flow "${entry.flow}", which this check was not given`,
+          'A sub-flow named by reference is known only through the sub-flows passed to checkSession',
+          `Pass ${entry.flow} in subFlows, or replay against the flow the recording was made with`,
+        ]);
       } else if (problem === 'unknown-step') {
-        report(path, `names a step ${entry.flow} does not have: ${entry.step}`);
+        mismatch(
+          path,
+          `the frame names step "${entry.step}", which flow "${entry.flow}" does not have`
+        );
       } else if (problem === 'not-a-group') {
-        report(path, `encloses another frame, but ${entry.step} is not a group`);
+        mismatch(path, `the frame encloses another, but "${entry.step}" is not a group`);
       } else if (problem === 'wrong-flow') {
         const child = frame.stack[depth + 1] as Frame;
-        report(path, `is a group into ${into}, but the frame below it is in ${child.flow}`);
+        mismatch(
+          path,
+          `"${entry.step}" is a group into "${into}", but the frame below it is in "${child.flow}"`
+        );
       } else {
-        report(`${path}.key`, `has an item key, but ${entry.step} is not a repeat group`);
+        mismatch(
+          `${path}.key`,
+          `the frame has an item key, but "${entry.step}" is not a repeat group`
+        );
       }
     });
 
@@ -285,7 +333,11 @@ export function checkSession(
     // missing from it mis-highlights this frame and every frame after it.
     const current = frame.stack[frame.stack.length - 1];
     if (current !== undefined && !frame.visited.includes(current.step)) {
-      report(`${at}.visited`, `does not contain the current step: ${current.step}`);
+      corrupt(
+        `${at}.visited`,
+        `visited does not contain the current step "${current.step}"`,
+        'Breadcrumbs are coloured from visited, so this frame and every one after it would be drawn wrong'
+      );
     }
   });
 
