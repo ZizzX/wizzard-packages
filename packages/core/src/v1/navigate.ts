@@ -192,6 +192,10 @@ export interface Traversal {
 export interface NavContext {
   flow: FlowDefinition;
   registry?: AsyncRegistry;
+  /**
+   * The plugins still enabled. Read again before each hook is called, so one
+   * disabled part-way through a move is not called for the rest of it.
+   */
   hooks?: readonly Hooks[];
   /** Returns field errors, or null when the step is valid. */
   validate?: (
@@ -276,6 +280,8 @@ async function pipeline(
   const from = currentOf(locked);
   const forward = intent.type !== 'back';
   const stale = (): boolean => !isCurrent(host.read(), token);
+  /** Whether `h` is still enabled now, not when the move began. */
+  const live = (h: Hooks): boolean => ctx.hooks?.includes(h) === true;
 
   /**
    * Phase 10, for a step and for the exit alike. The move is committed before
@@ -284,6 +290,7 @@ async function pipeline(
    */
   const after = (to: string | typeof END): void => {
     for (const h of ctx.hooks ?? []) {
+      if (!live(h)) continue;
       guard(
         () => h.afterNavigate?.({ from, to, state: host.read() }),
         (error) => {
@@ -313,7 +320,7 @@ async function pipeline(
     // group resolves `next` and skips the frames the move should push or pop.
     let want: NavIntent = intent;
     for (const h of ctx.hooks ?? []) {
-      if (!h.beforeNavigate) continue;
+      if (!h.beforeNavigate || !live(h)) continue;
       const decision = await h.beforeNavigate({
         from,
         to: intent.type === 'go' ? intent.to : null,
@@ -425,7 +432,7 @@ async function pipeline(
       try {
         if (step.deferred === true) {
           for (const h of ctx.hooks ?? []) {
-            if (h.loadStep) await h.loadStep(target, controller.signal);
+            if (h.loadStep && live(h)) await h.loadStep(target, controller.signal);
             if (stale()) return superseded;
           }
         }

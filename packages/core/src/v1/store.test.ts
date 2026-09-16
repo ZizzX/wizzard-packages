@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { pageFor } from './diagnostic';
 import type { FlowDefinition } from './flow';
-import type { Hooks } from './navigate';
+import type { Attempt, Hooks } from './navigate';
 import type { WizardState } from './state';
 import { createWizard } from './store';
 
@@ -643,8 +643,44 @@ describe('the plugin lifecycle', () => {
     await w.start();
     await w.next();
 
-    // One: the first navigation ran beforeNavigate before onCommit disabled it.
-    expect(navHooks).toBe(1);
+    // None: the start's lock write threw in onCommit and disabled the plugin
+    // before its beforeNavigate came up, and the pipeline reads that at the call.
+    expect(navHooks).toBe(0);
+    spy.mockRestore();
+  });
+
+  it('does not call a hook of a plugin disabled while the move was waiting', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const called: string[] = [];
+    const w = createWizard({
+      flow,
+      registry,
+      data: { payer: 'private' },
+      plugins: [
+        {
+          name: 'slow',
+          beforeNavigate: () => new Promise<void>((resolve) => setTimeout(resolve, 0)),
+        },
+        {
+          name: 'rejects',
+          onAttempt: (a: Attempt) =>
+            a.phase === 'start' ? Promise.reject(new Error('x')) : undefined,
+          beforeNavigate: () => {
+            called.push('beforeNavigate');
+          },
+          afterNavigate: () => {
+            called.push('afterNavigate');
+          },
+        } as unknown as Hooks,
+      ],
+    });
+
+    await w.start();
+
+    // The rejection lands while `slow` is awaited; everything after it skips
+    // the disabled plugin.
+    expect(called).toEqual([]);
+    expect(String(spy.mock.calls[0]?.[0])).toContain('/errors/plugin-disabled');
     spy.mockRestore();
   });
 });

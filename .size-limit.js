@@ -116,9 +116,11 @@ export default [
   // its plugin, which is what the list now carries beside each function. The
   // exit move now guards afterNavigate like a step move: a plugin that threw on
   // the last step used to reject next() and undo `done`.
-  // 5.9 to 5.95 kB the same day, measured 5913 B: one `guard` calls every
+  // 5.9 to 5.95 kB the same day, measured 5939 B: one `guard` calls every
   // plugin hook the engine does not await, so an async hook whose promise
   // rejects is reported, or disables the plugin, like one that throws.
+  // The pipeline also asks before each hook whether its plugin is still
+  // enabled, since one can be disabled under an await in the same move.
   { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '5.95 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:

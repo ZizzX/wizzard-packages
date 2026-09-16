@@ -307,8 +307,12 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
     subFlows,
     // Disabled and post-destroy plugins are filtered here too: `fail` must mean
     // the same thing to a navigation hook as it does to `onCommit`, or a plugin
-    // that threw once keeps running half its contract.
-    hooks: destroyed ? [] : plugins.filter((h) => !disabled.has(h.name)),
+    // that threw once keeps running half its contract. A getter, read again
+    // before every call, because a plugin can be disabled in the middle of a
+    // move - by its own lock write, or by an async hook rejecting under an await.
+    get hooks() {
+      return destroyed ? [] : plugins.filter((h) => !disabled.has(h.name));
+    },
     validate: (stepId) => validateStep(stepId),
     load: async (stepId, load, scope) => {
       await resolverFor(
