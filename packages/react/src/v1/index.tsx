@@ -53,6 +53,24 @@ export interface WizardProviderProps extends Partial<WizardOptions> {
 }
 
 export function WizardProvider({ wizard, children, ...options }: WizardProviderProps): ReactNode {
+  // A passed engine was built with its own options, so any given here would be
+  // silently ignored. Development only, as React's own checks are: the mistake
+  // shows on the first render, and every bundler that builds React replaces
+  // this condition, so a production bundle carries none of it.
+  const ignored =
+    process.env.NODE_ENV !== 'production' && wizard !== undefined
+      ? Object.keys(options).filter((key) => options[key as keyof typeof options] !== undefined)
+      : [];
+  if (ignored.length > 0) {
+    throw new WizardError(
+      'provider-wizard-and-options',
+      'WizardProvider',
+      `WizardProvider was given a wizard and also ${ignored.join(', ')}`,
+      'The wizard was already built with its own options, so these would be ignored',
+      'Pass the options to createWizard and only wizard to the provider, or drop wizard and let the provider build one'
+    );
+  }
+
   // Created once. A new engine on every render would restart the wizard.
   const [instance, setInstance] = useState<Wizard>(
     () => wizard ?? createWizard(options as unknown as WizardOptions)

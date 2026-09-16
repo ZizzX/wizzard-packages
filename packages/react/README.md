@@ -27,7 +27,9 @@ rendering and StrictMode's double mount are handled by the store rather than by 
 
 Wrap the wizard, then read it. `WizardProvider` takes either a `wizard` you built with
 `createWizard` or the options to build one — passing `flow` alone is the common case, and the
-provider owns and destroys that instance.
+provider owns and destroys that instance. Passing both throws a `WizardError` with the code
+`provider-wizard-and-options`: a built wizard already has its options, so the extra ones would be
+ignored.
 
 <!-- example:quickstart-react -->
 

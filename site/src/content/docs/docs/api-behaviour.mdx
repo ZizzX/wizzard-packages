@@ -111,7 +111,8 @@ program. [Navigation](../navigation/) lists every reason and what each one means
 ## Failures are one class
 
 What does throw is a mistake in the program: a `$ref` the registry does not hold, a group step
-with no traversal installed, `useWizard` called outside a provider. Every one of them is a
+with no traversal installed, `useWizard` called outside a provider, a `WizardProvider` given both
+a built `wizard` and options it would ignore. Every one of them is a
 `WizardError`, exported from `@wizzard-packages/core/v1`, and every one carries the same fields:
 
 | Field  | What it holds                                                                              |
