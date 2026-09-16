@@ -1,8 +1,11 @@
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { defineFlow, step } from './define';
+import { evaluate } from './expr';
 import type { FlowDefinition } from './flow';
-import { assertFlow, validateFlow } from './validate-flow';
+import { assertFlow, validateFlow, type FlowProblem } from './validate-flow';
 
 const good = defineFlow({
   id: 'booking',
@@ -15,8 +18,12 @@ const good = defineFlow({
   },
 });
 
+/** The first sentence of a problem's message - what went wrong - under its path. */
+const what = (p: FlowProblem): string =>
+  `${p.path}: ${p.message.slice('[wizzard] '.length, p.message.indexOf('. '))}`;
+
 const problems = (flow: FlowDefinition, registry?: Record<string, unknown>): string[] =>
-  validateFlow(flow, registry).map((p) => `${p.path}: ${p.message}`);
+  validateFlow(flow, registry).map(what);
 
 describe('validateFlow', () => {
   it('passes a well-formed flow', () => {
@@ -29,7 +36,7 @@ describe('validateFlow', () => {
       order: ['a'],
       steps: { a: { on: { next: 'nowhere' } } },
     };
-    expect(problems(flow)).toContain('steps.a.on.next: unknown target: nowhere');
+    expect(problems(flow)).toContain('steps.a.on.next: unknown target "nowhere"');
   });
 
   it('accepts @end as a target', () => {
@@ -43,7 +50,9 @@ describe('validateFlow', () => {
       order: ['a'],
       steps: { a: { when: { $get: 'user.name' } } },
     };
-    expect(problems(flow)[0]).toMatch(/\$get must start with data, ctx, loop, step/);
+    expect(problems(flow)[0]).toMatch(
+      /\$get "user.name" does not start with data, ctx, loop, step/
+    );
   });
 
   it('catches a resolver the registry does not define', () => {
@@ -52,7 +61,7 @@ describe('validateFlow', () => {
       order: ['a'],
       steps: { a: { when: { $ref: 'isVip' } } },
     };
-    expect(problems(flow, {})).toContain('steps.a.when: unknown resolver: isVip');
+    expect(problems(flow, {})).toContain('steps.a.when: no resolver is registered as "isVip"');
     expect(validateFlow(flow, { isVip: () => true })).toEqual([]);
   });
 
@@ -74,7 +83,7 @@ describe('validateFlow', () => {
       steps: { a: { when: (() => true) as never } },
     } as unknown as FlowDefinition;
 
-    expect(problems(flow)[0]).toMatch(/cannot be serialized/);
+    expect(problems(flow)[0]).toBe('steps.a.when: steps.a.when is a function');
   });
 
   it('catches a clearOnLeave that is neither true nor a list of paths', () => {
@@ -84,7 +93,7 @@ describe('validateFlow', () => {
     });
     for (const bad of ['company', false, ['vat', 1]]) {
       expect(problems(withClear(bad))).toEqual([
-        'steps.company.clearOnLeave: must be true or a list of data paths',
+        'steps.company.clearOnLeave: clearOnLeave of step "company" is neither true nor a list of data paths',
       ]);
     }
     expect(problems(withClear(true))).toEqual([]);
@@ -93,13 +102,13 @@ describe('validateFlow', () => {
 
   it('catches order problems', () => {
     expect(problems({ id: 'f', order: ['a', 'ghost'], steps: { a: {} } })).toContain(
-      'order: unknown step: ghost'
+      'order: order names "ghost", which is not a step'
     );
-    expect(problems({ id: 'f', order: ['a', 'a'], steps: { a: {} } })).toContain(
-      'order: contains a duplicate'
-    );
+    expect(
+      problems({ id: 'f', order: ['a', 'a', 'b', 'b', 'a'], steps: { a: {}, b: {} } })
+    ).toEqual(['order: order names "a" more than once', 'order: order names "b" more than once']);
     expect(problems({ id: 'f', order: ['a'], steps: { a: {}, b: {} } })).toContain(
-      'steps.b: not in order, so it is reachable only via on.next'
+      'steps.b: step "b" is not in order'
     );
   });
 
@@ -109,11 +118,11 @@ describe('validateFlow', () => {
       order: ['a', 'b'],
       steps: { a: { when: true, on: { next: 'b' } }, b: {} },
     };
-    expect(problems(flow)[0]).toMatch(/on\.next wins, and when is ignored/);
+    expect(problems(flow)[0]).toBe('steps.a: step "a" has both when and on.next');
   });
 
   it('reports an empty flow', () => {
-    expect(problems({ id: 'f', steps: {} })).toContain('steps: flow has no steps');
+    expect(problems({ id: 'f', steps: {} })).toContain('steps: flow "f" has no steps');
   });
 });
 
@@ -133,11 +142,7 @@ describe('validateFlow, on a repeat group', () => {
   it('asks a repeat group to say when it is there at all', () => {
     // Reachability reads `when`, never `over`, so an unguarded repeat over an
     // empty list draws a breadcrumb for a section with nothing in it.
-    expect(problems(grouped())).toContain(
-      'steps.trip: is a repeat group with no when — an empty over is walked past, but the group ' +
-        'still draws a breadcrumb and counts towards progress; guard it with ' +
-        '{ $not: { $empty: <the same expression as over> } }'
-    );
+    expect(problems(grouped())).toContain('steps.trip: repeat group "trip" has no when');
   });
 
   it('is satisfied by the guard it suggests', () => {
@@ -158,8 +163,7 @@ describe('validateFlow, on a repeat group', () => {
   it('asks a flow with a repeat group to stamp a version', () => {
     const flow = grouped({ when: { $not: { $empty: { $get: 'data.passengers' } } } });
     expect(problems({ ...flow, version: undefined })).toEqual([
-      'version: flow has a repeat group but no version, so a snapshot taken inside it cannot be ' +
-        'refused when keyBy changes — stamp a version and bump it with the shape',
+      'version: flow "booking" has a repeat group but no version',
     ]);
   });
 
@@ -193,8 +197,7 @@ describe('validateFlow, on a repeat group', () => {
 
   it('asks for a version when the repeat is two levels down an inline sub-flow', () => {
     expect(problems(nested())).toEqual([
-      'version: flow has a repeat group but no version, so a snapshot taken inside it cannot be ' +
-        'refused when keyBy changes — stamp a version and bump it with the shape',
+      'version: flow "booking" has a repeat group but no version',
     ]);
   });
 
@@ -210,7 +213,9 @@ describe('validateFlow, on a repeat group', () => {
       steps: { trip: { flow: { ...leg, steps: { seats: { flow: 'seat', repeat } } } } },
     };
 
-    expect(problems(unguarded)[0]).toMatch(/^steps\.trip\.flow\.steps\.seats: is a repeat group/);
+    expect(problems(unguarded)[0]).toBe(
+      'steps.trip.flow.steps.seats: repeat group "seats" has no when'
+    );
   });
 
   it('cannot see inside a sub-flow named by reference, and does not pretend to', () => {
@@ -223,6 +228,143 @@ describe('validateFlow, on a repeat group', () => {
     };
     expect(validateFlow(byRef)).toEqual([]);
   });
+});
+
+describe('validateFlow, on an operator the evaluator does not have', () => {
+  const at = (steps: FlowDefinition['steps']): string[] =>
+    validateFlow({ id: 'f', steps })
+      .filter((p) => p.code === 'expr-unknown-operator')
+      .map(what);
+
+  it('reports a typo in a when, at the object that would throw', () => {
+    expect(at({ a: { when: { $equals: [1, 1] } as never } })).toEqual([
+      'steps.a.when: "$equals" is not an operator',
+    ]);
+  });
+
+  it('follows operators down to a nested argument', () => {
+    const when = { $and: [true, { $not: { eq: [1, 1] } }] } as never;
+    expect(at({ a: { when } })).toEqual(['steps.a.when.$and[1].$not: "eq" is not an operator']);
+  });
+
+  it('reads every place an expression is evaluated', () => {
+    const bad = { $regex: 'x' } as never;
+    expect(
+      at({
+        a: {
+          guards: { enter: bad, exit: bad },
+          on: { next: [{ to: 'b', when: bad }, 'b'], back: { to: 'b', when: bad } },
+        },
+        b: { flow: 'leg', repeat: { over: bad }, input: { who: bad } },
+      })
+    ).toEqual([
+      'steps.a.guards.enter: "$regex" is not an operator',
+      'steps.a.guards.exit: "$regex" is not an operator',
+      'steps.a.on.next[0].when: "$regex" is not an operator',
+      'steps.a.on.back.when: "$regex" is not an operator',
+      'steps.b.repeat.over: "$regex" is not an operator',
+      'steps.b.input.who: "$regex" is not an operator',
+    ]);
+  });
+
+  it('reads the when of a single transition, not only of a list', () => {
+    const bad = { $regex: 'x' } as never;
+    expect(at({ a: { on: { next: { to: 'b', when: bad } } }, b: {} })).toEqual([
+      'steps.a.on.next.when: "$regex" is not an operator',
+    ]);
+  });
+
+  it('reads the expressions of an inline sub-flow', () => {
+    const leg: FlowDefinition = { id: 'leg', steps: { seat: { when: { $exists: 'x' } as never } } };
+    expect(at({ a: { flow: leg } })).toEqual([
+      'steps.a.flow.steps.seat.when: "$exists" is not an operator',
+    ]);
+  });
+
+  it('follows every operator of an object that has several, since the evaluators disagree on which runs', () => {
+    // `evaluate` tests `$empty` before `$eq`, and would descend into the typo.
+    const when = { $eq: [1, 1], $empty: { typo: true } } as never;
+    expect(at({ a: { when } })).toEqual(['steps.a.when.$empty: "typo" is not an operator']);
+  });
+
+  it('reports an empty object, which names no operation at all', () => {
+    expect(at({ a: { when: {} as never } })).toEqual(['steps.a.when: "{}" is not an operator']);
+  });
+
+  it('says what the evaluator says when it throws on the same object', () => {
+    for (const e of [{}, { $equals: [1, 1] }]) {
+      const [problem] = validateFlow({ id: 'f', steps: { a: { when: e as never } } });
+      expect(() => evaluate(e as never, { data: {}, ctx: {} })).toThrow(problem?.message);
+    }
+  });
+
+  it('accepts every operator the evaluator has, and a key beside one', () => {
+    const when = {
+      $and: [
+        { $eq: [{ $get: 'data.a' }, 1] },
+        { $ne: [1, 2], note: 'ignored, as the evaluator ignores it' },
+        { $or: [{ $gt: [2, 1] }, { $gte: [2, 2] }, { $lt: [1, 2] }, { $lte: [1, 1] }] },
+        { $in: ['a', 'abc'] },
+        { $not: { $empty: { $get: 'data.list' } } },
+      ],
+    } as never;
+    expect(at({ a: { when } })).toEqual([]);
+  });
+
+  it('does not read the args of a $ref, or the host ui, as expressions', () => {
+    expect(
+      at({
+        a: {
+          when: { $ref: 'isVip', args: { $anything: true } },
+          ui: { $schema: 'https://json-schema.org/draft/2020-12/schema' },
+        },
+      })
+    ).toEqual([]);
+  });
+});
+
+describe('validateFlow codes', () => {
+  // One flow per code, each with exactly that problem. A code is the slug of
+  // the page that explains it, so each one must have that page.
+  const ROOT = join(__dirname, '..', '..', '..', '..');
+  const SITE = 'https://zizzx.github.io/wizzard-packages/errors/';
+  const fixtures: Record<string, [FlowDefinition, Record<string, unknown>?]> = {
+    'flow-no-steps': [{ id: 'f', steps: {} }],
+    'order-unknown-step': [{ id: 'f', order: ['a', 'ghost'], steps: { a: {} } }],
+    'step-not-in-order': [{ id: 'f', order: ['a'], steps: { a: {}, b: { when: false } } }],
+    'order-duplicate': [{ id: 'f', order: ['a', 'a'], steps: { a: {} } }],
+    'get-unknown-root': [{ id: 'f', steps: { a: { when: { $get: 'user.name' } } } }],
+    'resolver-not-registered': [{ id: 'f', steps: { a: { when: { $ref: 'isVip' } } } }, {}],
+    'flow-not-serializable': [
+      { id: 'f', steps: { a: { when: (() => true) as never } } } as unknown as FlowDefinition,
+    ],
+    'target-unknown-step': [{ id: 'f', steps: { a: { on: { back: 'nowhere' } } } }],
+    'clear-on-leave-invalid': [{ id: 'f', steps: { a: { clearOnLeave: 'a' as never } } }],
+    'when-with-next': [{ id: 'f', steps: { a: { when: true, on: { next: '@end' } } } }],
+    'repeat-without-when': [
+      { id: 'f', version: 1, steps: { a: { flow: 'leg', repeat: { over: [] } } } },
+    ],
+    'repeat-without-version': [
+      { id: 'f', steps: { a: { flow: 'leg', when: true, repeat: { over: [] } } } },
+    ],
+    'expr-unknown-operator': [{ id: 'f', steps: { a: { when: { $equals: [1, 1] } as never } } }],
+  };
+
+  for (const [code, [flow, registry]] of Object.entries(fixtures)) {
+    it(code, () => {
+      const found = validateFlow(flow, registry);
+      expect(found.map((p) => p.code)).toEqual([code]);
+      const [problem] = found as [FlowProblem];
+      expect(problem.url).toBe(SITE + code);
+      expect(problem.fix).toBeTruthy();
+      // The template every failure uses, thrown or returned.
+      expect(problem.message.startsWith('[wizzard] ')).toBe(true);
+      expect(problem.message).toContain(`. ${problem.fix ?? ''}. `);
+      expect(problem.message.endsWith(` ${SITE}${code}`)).toBe(true);
+      const page = join(ROOT, 'site', 'src', 'content', 'docs', 'errors', `${code}.md`);
+      expect(existsSync(page), `${code} has no page`).toBe(true);
+    });
+  }
 });
 
 describe('assertFlow', () => {
@@ -240,7 +382,7 @@ describe('assertFlow', () => {
     };
     expect(() => {
       assertFlow(flow);
-    }).toThrow(/order: unknown step: ghost[\s\S]*unknown target: nowhere/);
+    }).toThrow(/order: \[wizzard\] order names "ghost"[\s\S]*unknown target "nowhere"/);
   });
 });
 

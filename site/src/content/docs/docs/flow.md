@@ -106,8 +106,9 @@ default written out: walk `order` backwards and take the first step that is stil
 
 `when` and `on.next` answer different questions, and a step that sets both is usually a
 mistake: `when` decides whether the step exists at all, `on.next` decides where it goes once
-it does. When both appear on the same step, `on.next` wins and `when` is ignored there -
-`validateFlow` reports it rather than letting it pass quietly.
+it does. On the same step they do not interact - the step's `when` still hides it, and never
+chooses where it leads - so `validateFlow` reports the pair, in case a condition meant for the
+transition was written on the step.
 
 The constant `END` marks the exit. `go(END)` finishes the flow, and `on: { next: END }` sends a
 step straight to it.

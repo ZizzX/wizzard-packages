@@ -1,4 +1,4 @@
-import { notRegistered, WizardError } from './diagnostic';
+import { notRegistered, unknownOperatorText, WizardError } from './diagnostic';
 
 /**
  * The expression language.
@@ -51,16 +51,8 @@ export type Resolver = (args: Json | undefined, scope: Scope) => unknown;
 export type Registry = Readonly<Record<string, Resolver>>;
 
 /** An expression object whose first key is not an operator. Both evaluators end in it. */
-const unknownOperator = (e: object, op: string): WizardError => {
-  const key = Object.keys(e)[0];
-  return new WizardError(
-    'expr-unknown-operator',
-    op,
-    `"${key}" is not an operator`,
-    'An expression object names its operation with a key, and none of its keys is an operator',
-    `Replace ${key} with an operator from the expressions guide, or check it for a typo`
-  );
-};
+const unknownOperator = (e: object, op: string): WizardError =>
+  new WizardError('expr-unknown-operator', op, ...unknownOperatorText(Object.keys(e)[0]));
 
 const isNode = (e: Expr): e is Exclude<Expr, null | boolean | number | string | readonly Expr[]> =>
   typeof e === 'object' && e !== null && !Array.isArray(e);

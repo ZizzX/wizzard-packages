@@ -269,12 +269,14 @@ describe('the failure contract', () => {
     }
   });
 
-  it('leaves the engine to word its own problems', () => {
-    // `validateFlow`'s messages are its own and are not rewritten here. They do
-    // not carry the prefix today, which is L6's to fix in core rather than this
-    // page's to paper over.
+  it('leaves the engine to word its own problems, in the same template', () => {
+    // `validateFlow`'s messages are its own and are not rewritten here: they
+    // carry the template and point at their own page, not at inspector-paste.
     const result = readFlow('{"id":"a","order":["ghost"],"steps":{"real":{}}}');
-    expect(result.problems.some((p) => p.message.startsWith('[wizzard]'))).toBe(false);
+    const [first] = result.problems;
+    expect(first?.code).toBe('order-unknown-step');
+    expect(first?.message.startsWith('[wizzard] ')).toBe(true);
+    expect(first?.message.endsWith('/errors/order-unknown-step')).toBe(true);
   });
 });
 

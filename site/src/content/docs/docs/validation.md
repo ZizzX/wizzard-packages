@@ -15,16 +15,28 @@ returns every problem it can find without running it:
 import { validateFlow, assertFlow } from '@wizzard-packages/core/validate-flow';
 
 const problems = validateFlow(signup, registry);
-// [{ path: 'steps.payment.on.next', message: 'unknown target: confrm' }]
+// [{ code: 'target-unknown-step', path: 'steps.payment.on.next', message, fix, url }]
 ```
 
-Each problem is `{ path, message }` - where it is and what is wrong, in prose. There are no
-error codes, because the audience is a developer reading a list, not a handler switching on a
-value.
+Each problem is `{ code, path, message, fix, url }`: a stable code to switch on, where the problem
+is, and the same message a thrown error carries - what went wrong, why, the fix, and the page for
+the code. `fix` is the third sentence on its own, for a list that shows it apart.
+
+```ts
+// {
+//   code: 'target-unknown-step',
+//   path: 'steps.payment.on.next',
+//   message: '[wizzard] unknown target "confrm". A transition leads to a key of steps, or to @end
+//     from on.next. Correct the id, or add the step it names. https://zizzx.github.io/wizzard-packages/errors/target-unknown-step',
+//   fix: 'Correct the id, or add the step it names',
+//   url: 'https://zizzx.github.io/wizzard-packages/errors/target-unknown-step',
+// }
+```
 
 It catches what a type cannot: a target naming a step that does not exist, a `$ref` naming a
-resolver the registry does not hold, an `order` entry with no matching step, a step carrying
-both `when` and `on.next` where only one of them will be honoured.
+resolver the registry does not hold, an expression object whose key is not an operator, an
+`order` entry with no matching step, a step carrying both `when` and `on.next` where only one of
+them will be honoured.
 
 `assertFlow` is the same check that throws instead of returning, with every problem in the
 message of one [`flow-invalid`](../../errors/flow-invalid/) error. Use it where a definition crossing a boundary should stop the program - a backend
