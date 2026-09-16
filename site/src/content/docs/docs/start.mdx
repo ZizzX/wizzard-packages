@@ -31,6 +31,12 @@ Pick the binding you render with. The choice is remembered, here and on every ot
 <Tabs syncKey={FRAMEWORK_SYNC_KEY}>
   <TabItem label={FRAMEWORK_LABELS.react}>
     <Code code={installReact} lang="bash" />
+
+    The binding is a client module: its build opens with `'use client'`, so a React Server
+    Component can render `WizardProvider` directly; the hooks still belong in a client component.
+    Only a Server Components bundler, such as the Next.js App
+    Router, reads that line; in Vite, Remix, webpack or Node it does nothing.
+
   </TabItem>
   <TabItem label={FRAMEWORK_LABELS.vue}>
     <Code code={installVue} lang="bash" />

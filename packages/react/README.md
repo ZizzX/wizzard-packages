@@ -23,6 +23,12 @@ pnpm add @wizzard-packages/core@canary @wizzard-packages/react@canary
 React 18 or newer. The provider subscribes through `useSyncExternalStore`, so concurrent
 rendering and StrictMode's double mount are handled by the store rather than by an effect.
 
+The binding is a client module: its build opens with `'use client'`, so a React Server Component
+can render `WizardProvider` without a wrapper file of your own. The hooks still belong in a client
+component, as any hook does. Only a Server
+Components bundler, such as the Next.js App Router, reads that line. In Vite, Remix, webpack or
+Node it does nothing, and there is nothing to configure.
+
 ## Use
 
 Wrap the wizard, then read it. `WizardProvider` takes either a `wizard` you built with
