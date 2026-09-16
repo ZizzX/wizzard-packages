@@ -4,10 +4,12 @@ description: A flow has an order, and one of its steps is not in it.
 ---
 
 ```
-{ code: 'step-not-in-order', path: 'steps.<id>', message: 'not in order, so it is reachable only via on.next' }
+[wizzard] step "<id>" is not in order. next() and back() walk order, so the step is reachable only
+through a transition or go(). Add it to order, or lead to it from another step's on.next.
+…/errors/step-not-in-order
 ```
 
-Returned by `validateFlow`, once per step, and listed in the message of [`flow-invalid`](../flow-invalid/) by `assertFlow`.
+Returned by `validateFlow` as a problem with `path: steps.<id>`, once per step, and listed in the message of [`flow-invalid`](../flow-invalid/) by `assertFlow`.
 
 It is not reported for a flow without `order`.
 

@@ -8,8 +8,20 @@
  * from the template in `AGENTS.md`: what went wrong, why, the fix, the page.
  */
 
-/** The site's error pages. A code appended to it is the page for that code. */
-export const DOCS = 'https://zizzx.github.io/wizzard-packages/errors/';
+const DOCS = 'https://zizzx.github.io/wizzard-packages/errors/';
+
+/** What went wrong, why, and the fix - the three sentences before the page. */
+export type Explained = readonly [what: string, why: string, fix: string];
+
+/**
+ * The one message template, for a failure that is thrown and for a problem
+ * that is returned alike: `[wizzard] <what>. <why>. <fix>. <page>`.
+ */
+export const explain = (code: string, [what, why, fix]: Explained): string =>
+  `[wizzard] ${what}. ${why}. ${fix}. ${DOCS}${code}`;
+
+/** The page for a code, built from the code alone. */
+export const pageFor = (code: string): string => DOCS + code;
 
 export class WizardError extends Error {
   /** Kebab-case, stable across releases, and the slug of the page that explains it. */
@@ -38,6 +50,8 @@ export class WizardError extends Error {
   }
 
   constructor(code: string, op: string, what: string, why: string, fix: string, path?: string) {
+    // Not `explain`: spelled out here, this is a few bytes smaller in every
+    // runtime entry, which carries the class and never the helper.
     const url = DOCS + code;
     super(`[wizzard] ${what}. ${why}. ${fix}. ${url}`);
     this.name = 'WizardError';
@@ -55,11 +69,18 @@ export class WizardError extends Error {
  * failure with one page rather than three.
  */
 export const notRegistered = (ref: string, op: string, path?: string): WizardError =>
-  new WizardError(
-    'resolver-not-registered',
-    op,
-    `no resolver is registered as "${ref}"`,
-    'The flow names it in a $ref, and the registry it is evaluated against has no entry by that name',
-    `Add ${ref} to the registry, or correct the name in the flow`,
-    path
-  );
+  new WizardError('resolver-not-registered', op, ...notRegisteredText(ref), path);
+
+/** The sentences of `resolver-not-registered`, shared with what `validateFlow` returns. */
+export const notRegisteredText = (ref: string): Explained => [
+  `no resolver is registered as "${ref}"`,
+  'The flow names it in a $ref, and the registry it is evaluated against has no entry by that name',
+  `Add ${ref} to the registry, or correct the name in the flow`,
+];
+
+/** The sentences of `expr-unknown-operator`, shared by both evaluators and `validateFlow`. */
+export const unknownOperatorText = (key: string | undefined): Explained => [
+  `"${key}" is not an operator`,
+  'An expression object names its operation with a key, and none of its keys is an operator',
+  `Replace ${key} with an operator from the expressions guide, or check it for a typo`,
+];

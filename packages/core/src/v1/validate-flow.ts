@@ -1,4 +1,11 @@
-import { DOCS, WizardError } from './diagnostic';
+import {
+  explain,
+  notRegisteredText,
+  pageFor,
+  unknownOperatorText,
+  WizardError,
+  type Explained,
+} from './diagnostic';
 import { isGroup, type FlowDefinition, type StepDef, type Target } from './flow';
 
 /**
@@ -15,13 +22,16 @@ import { isGroup, type FlowDefinition, type StepDef, type Target } from './flow'
  */
 export interface FlowProblem {
   path: string;
+  /** `[wizzard] <what>. <why>. <fix>. <url>` - the template every failure uses. */
   message: string;
   /**
    * Kebab-case and stable: what a handler switches on, and the slug of the page
-   * that explains the problem and its fix. Set on every problem `validateFlow`
-   * reports; `checkSession` shares the type and does not set it yet.
+   * that explains the problem. Set on every problem `validateFlow` reports;
+   * `checkSession` shares the type and does not set it, `fix` or `url` yet.
    */
   code?: string;
+  /** What to change. Also the third sentence of `message`. */
+  fix?: string;
   /** The page for `code`, built from the code alone. */
   url?: string;
 }
@@ -54,37 +64,54 @@ export function validateFlow(
 ): FlowProblem[] {
   const problems: FlowProblem[] = [];
   const ids = Object.keys(flow.steps);
-  const report = (code: string, path: string, message: string): void => {
-    problems.push({ path, message, code, url: DOCS + code });
+  const report = (code: string, path: string, text: Explained): void => {
+    problems.push({ path, message: explain(code, text), code, fix: text[2], url: pageFor(code) });
   };
 
-  if (ids.length === 0) report('flow-no-steps', 'steps', 'flow has no steps');
+  if (ids.length === 0) {
+    report('flow-no-steps', 'steps', [
+      `flow "${flow.id}" has no steps`,
+      'A wizard is its steps, so there is nothing to start on or to finish',
+      'Add at least one step, or check that the definition arrived whole',
+    ]);
+  }
 
   if (flow.order) {
     for (const id of flow.order) {
-      if (!(id in flow.steps)) report('order-unknown-step', 'order', `unknown step: ${id}`);
+      if (!(id in flow.steps)) {
+        report('order-unknown-step', 'order', [
+          `order names "${id}", which is not a step`,
+          'order lists the default path by step id, and every id in it has to be a key of steps',
+          'Correct the id in order, or add the step it names',
+        ]);
+      }
     }
     for (const id of ids) {
       if (!flow.order.includes(id)) {
-        report(
-          'step-not-in-order',
-          `steps.${id}`,
-          'not in order, so it is reachable only via on.next'
-        );
+        report('step-not-in-order', `steps.${id}`, [
+          `step "${id}" is not in order`,
+          'next() and back() walk order, so the step is reachable only through a transition or go()',
+          "Add it to order, or lead to it from another step's on.next",
+        ]);
       }
     }
-    if (new Set(flow.order).size !== flow.order.length) {
-      report('order-duplicate', 'order', 'contains a duplicate');
+    const twice = flow.order.find((id, i) => flow.order?.indexOf(id) !== i);
+    if (twice !== undefined) {
+      report('order-duplicate', 'order', [
+        `order names "${twice}" more than once`,
+        'A step has one position in order, and next() and back() find their way from it',
+        `Keep one occurrence of ${twice}`,
+      ]);
     }
   }
 
   const checkExpr = (expr: unknown, path: string): void => {
     if (typeof expr === 'function') {
-      report(
-        'flow-not-serializable',
-        path,
-        'contains a function, so the flow cannot be serialized'
-      );
+      report('flow-not-serializable', path, [
+        `${path} is a function`,
+        'JSON.stringify drops a function, so the flow would not survive being stored or sent',
+        'Move the function into the registry and name it with a $ref',
+      ]);
       return;
     }
     if (expr === null || typeof expr !== 'object') return;
@@ -98,17 +125,17 @@ export function validateFlow(
       if (key === '$get' && typeof value === 'string') {
         const root = value.split('.')[0] ?? '';
         if (!ROOTS.includes(root)) {
-          report(
-            'get-unknown-root',
-            path,
-            `$get must start with ${ROOTS.join(', ')} — got ${value}`
-          );
+          report('get-unknown-root', path, [
+            `$get "${value}" does not start with ${ROOTS.join(', ')}`,
+            'The first segment names where a path reads from, and any other start evaluates to undefined',
+            `Start the path with the root it belongs to, such as data.${value}`,
+          ]);
         }
         continue;
       }
       if (key === '$ref' && typeof value === 'string') {
         if (registry && !(value in registry)) {
-          report('resolver-not-registered', path, `unknown resolver: ${value}`);
+          report('resolver-not-registered', path, notRegisteredText(value));
         }
         continue;
       }
@@ -122,19 +149,22 @@ export function validateFlow(
 
     const targets = step_.on?.next;
     const list = targets === undefined ? [] : Array.isArray(targets) ? targets : [targets];
+    const unknownTarget = (to: string, path: string): void => {
+      report('target-unknown-step', path, [
+        `unknown target "${to}"`,
+        'A transition leads to a key of steps, or to @end from on.next',
+        'Correct the id, or add the step it names',
+      ]);
+    };
     for (const target of list) {
       const to = typeof target === 'string' ? target : target.to;
-      if (to !== '@end' && !(to in flow.steps)) {
-        report('target-unknown-step', `${at}.on.next`, `unknown target: ${to}`);
-      }
+      if (to !== '@end' && !(to in flow.steps)) unknownTarget(to, `${at}.on.next`);
     }
 
     const back = step_.on?.back;
     if (back !== undefined && back !== 'auto') {
       const to = typeof back === 'string' ? back : back.to;
-      if (!(to in flow.steps)) {
-        report('target-unknown-step', `${at}.on.back`, `unknown target: ${to}`);
-      }
+      if (!(to in flow.steps)) unknownTarget(to, `${at}.on.back`);
     }
 
     // A flow from a backend has no types behind it, so the shape is checked here
@@ -145,21 +175,21 @@ export function validateFlow(
       clear !== true &&
       !(Array.isArray(clear) && clear.every((p) => typeof p === 'string'))
     ) {
-      report(
-        'clear-on-leave-invalid',
-        `${at}.clearOnLeave`,
-        'must be true or a list of data paths'
-      );
+      report('clear-on-leave-invalid', `${at}.clearOnLeave`, [
+        `clearOnLeave of step "${id}" is neither true nor a list of data paths`,
+        'It is read when the step is left, and any other value fails in the middle of that navigation',
+        'Set it to true, or put the paths in a list',
+      ]);
     }
 
     // Both mechanisms at once is legal but almost always a mistake: the branch
     // wins and the reachability rule is silently ignored.
     if (step_.when !== undefined && step_.on?.next !== undefined) {
-      report(
-        'when-with-next',
-        at,
-        'has both when and on.next — on.next wins, and when is ignored here'
-      );
+      report('when-with-next', at, [
+        `step "${id}" has both when and on.next`,
+        'On a step that branches, on.next is followed and its when is never read',
+        "Move the condition into a transition's when, or onto the step it should hide",
+      ]);
     }
   }
 
@@ -180,8 +210,7 @@ export function validateFlow(
     }
     const ops = OPERATORS.filter((key) => key in e);
     if (ops.length === 0) {
-      const key = Object.keys(e)[0] ?? '{}';
-      report('expr-unknown-operator', path, `unknown operator: ${key}`);
+      report('expr-unknown-operator', path, unknownOperatorText(Object.keys(e)[0] ?? '{}'));
     }
     for (const op of ops) {
       if (op !== '$ref') checkOperators((e as Record<string, unknown>)[op], `${path}.${op}`);
@@ -235,13 +264,11 @@ export function validateFlow(
         // `over` would put group code in the entry every flat flow carries, so
         // the fix is the author's, and it is one line.
         if (step_.when === undefined) {
-          report(
-            'repeat-without-when',
-            `${path}.${id}`,
-            'is a repeat group with no when — an empty over is walked past, but the group still ' +
-              'draws a breadcrumb and counts towards progress; guard it with ' +
-              '{ $not: { $empty: <the same expression as over> } }'
-          );
+          report('repeat-without-when', `${path}.${id}`, [
+            `repeat group "${id}" has no when`,
+            'An empty over is walked past, but the group still draws a breadcrumb and counts towards progress',
+            'Guard it with { $not: { $empty: <the same expression as over> } }',
+          ]);
         }
       }
       if (typeof step_.flow !== 'string') {
@@ -258,12 +285,11 @@ export function validateFlow(
   // that does. Unversioned, a snapshot written before `keyBy` changed restores
   // clean and lands on an item that no longer means what it meant.
   if (repeats && flow.version === undefined) {
-    report(
-      'repeat-without-version',
-      'version',
-      'flow has a repeat group but no version, so a snapshot taken inside it cannot be refused ' +
-        'when keyBy changes — stamp a version and bump it with the shape'
-    );
+    report('repeat-without-version', 'version', [
+      `flow "${flow.id}" has a repeat group but no version`,
+      'A snapshot taken inside the group stores an item key, and cannot be refused when keyBy changes',
+      'Stamp a version on the flow, and bump it whenever its shape changes',
+    ]);
   }
 
   return problems;

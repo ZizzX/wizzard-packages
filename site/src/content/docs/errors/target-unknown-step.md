@@ -4,7 +4,8 @@ description: An on.next or on.back transition leads to a step the flow does not 
 ---
 
 ```
-{ code: 'target-unknown-step', path: 'steps.<id>.on.next', message: 'unknown target: <id>' }
+[wizzard] unknown target "<id>". A transition leads to a key of steps, or to @end from on.next.
+Correct the id, or add the step it names. …/errors/target-unknown-step
 ```
 
 Returned by `validateFlow`, once per transition, with `path` ending in `on.next` or `on.back`, and listed in the message of [`flow-invalid`](../flow-invalid/) by `assertFlow`.

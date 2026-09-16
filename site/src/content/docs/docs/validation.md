@@ -15,16 +15,22 @@ returns every problem it can find without running it:
 import { validateFlow, assertFlow } from '@wizzard-packages/core/validate-flow';
 
 const problems = validateFlow(signup, registry);
-// [{ path: 'steps.payment.on.next', message: 'unknown target: confrm' }]
+// [{ code: 'target-unknown-step', path: 'steps.payment.on.next', message, fix, url }]
 ```
 
-Each problem is `{ code, path, message, url }`: a stable code to switch on, where the problem is,
-what is wrong in one sentence, and the page for the code, which explains the cause and the fix.
-The message is written for a list; the page is where to go when the sentence is not enough.
+Each problem is `{ code, path, message, fix, url }`: a stable code to switch on, where the problem
+is, and the same message a thrown error carries - what went wrong, why, the fix, and the page for
+the code. `fix` is the third sentence on its own, for a list that shows it apart.
 
 ```ts
-// { code: 'target-unknown-step', path: 'steps.payment.on.next', message: 'unknown target: confrm',
-//   url: 'https://zizzx.github.io/wizzard-packages/errors/target-unknown-step' }
+// {
+//   code: 'target-unknown-step',
+//   path: 'steps.payment.on.next',
+//   message: '[wizzard] unknown target "confrm". A transition leads to a key of steps, or to @end
+//     from on.next. Correct the id, or add the step it names. https://zizzx.github.io/wizzard-packages/errors/target-unknown-step',
+//   fix: 'Correct the id, or add the step it names',
+//   url: 'https://zizzx.github.io/wizzard-packages/errors/target-unknown-step',
+// }
 ```
 
 It catches what a type cannot: a target naming a step that does not exist, a `$ref` naming a

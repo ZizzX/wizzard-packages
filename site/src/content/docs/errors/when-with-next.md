@@ -4,10 +4,12 @@ description: A step sets both when and on.next, and its when is ignored.
 ---
 
 ```
-{ code: 'when-with-next', path: 'steps.<id>', message: 'has both when and on.next — on.next wins, and when is ignored here' }
+[wizzard] step "<id>" has both when and on.next. On a step that branches, on.next is followed and
+its when is never read. Move the condition into a transition's when, or onto the step it should
+hide. …/errors/when-with-next
 ```
 
-Returned by `validateFlow`, and listed in the message of [`flow-invalid`](../flow-invalid/) by `assertFlow`.
+Returned by `validateFlow` as a problem with `path: steps.<id>`, and listed in the message of [`flow-invalid`](../flow-invalid/) by `assertFlow`.
 
 `when` and `on.next` answer different questions. `when` decides whether a step is on the path at
 all; `on.next` decides where a step goes once someone is on it. On a step that sets both, the

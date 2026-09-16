@@ -4,10 +4,12 @@ description: A flow has a repeat group but no version.
 ---
 
 ```
-{ code: 'repeat-without-version', path: 'version', message: 'flow has a repeat group but no version, …' }
+[wizzard] flow "<flow>" has a repeat group but no version. A snapshot taken inside the group stores
+an item key, and cannot be refused when keyBy changes. Stamp a version on the flow, and bump it
+whenever its shape changes. …/errors/repeat-without-version
 ```
 
-Returned by `validateFlow`, and listed in the message of [`flow-invalid`](../flow-invalid/) by `assertFlow`.
+Returned by `validateFlow` as a problem with `path: version`, and listed in the message of [`flow-invalid`](../flow-invalid/) by `assertFlow`.
 
 A repeat inside an inline sub-flow counts too: a snapshot records the root's version and no other.
 

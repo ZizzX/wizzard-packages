@@ -4,10 +4,12 @@ description: A function was found inside a flow definition.
 ---
 
 ```
-{ code: 'flow-not-serializable', path: 'steps.<id>.<field>', message: 'contains a function, so the flow cannot be serialized' }
+[wizzard] steps.<id>.when is a function. JSON.stringify drops a function, so the flow would not
+survive being stored or sent. Move the function into the registry and name it with a $ref.
+…/errors/flow-not-serializable
 ```
 
-Returned by `validateFlow`, and listed in the message of [`flow-invalid`](../flow-invalid/) by `assertFlow`.
+Returned by `validateFlow` as a problem whose `path` is where the function is, such as `steps.<id>.when`, and listed in the message of [`flow-invalid`](../flow-invalid/) by `assertFlow`.
 
 A flow is JSON, so it can be stored, diffed, sent by a server and drawn by the inspector.
 `JSON.stringify` drops a function without a word, so a flow with one in it stops round-tripping:

@@ -226,9 +226,16 @@ export default [
     // check keeps its own list of the thirteen operators rather than importing
     // one from `expr.ts`, which would pull the evaluator in behind it, and it
     // walks only the fields the engine evaluates, so a `$`-key in `ui` or in a
-    // `$ref`'s `args` is not reported. The fix of each code is on its page, not
-    // in this bundle.
-    limit: '1.9 kB',
+    // `$ref`'s `args` is not reported.
+    //
+    // 1.9 to 2.65 kB the same day, measured 2630 B: a returned problem's message
+    // takes the template a thrown one does - what, why, the fix, the page - as
+    // `AGENTS.md` asks of every failure, so an inspector or an editor rendering
+    // the list shows the fix without sending anyone to the site. Thirteen whys
+    // and fixes are the bytes; `resolver-not-registered` and
+    // `expr-unknown-operator` share their sentences with the evaluator through
+    // `diagnostic.ts`, so the two wordings cannot drift apart.
+    limit: '2.65 kB',
     gzip: true,
   },
 
