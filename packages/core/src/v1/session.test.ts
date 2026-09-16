@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import type { FlowDefinition } from './flow';
 import { checkSession, isStackEntry, type RecordedSession } from './session';
 import { initialState, type WizardState } from './state';
+import { createWizard } from './store';
 import type { FlowProblem } from './validate-flow';
 
 const passenger: FlowDefinition = {
@@ -302,19 +303,23 @@ describe('frames that could not have come from the engine', () => {
     );
   });
 
-  it('rejects an empty stack outside init', () => {
-    expect(messages(checkSession(withFrame(1, { stack: [], visited: [] }), booking))).toContain(
-      'frames[1].stack: session-frame-corrupt'
-    );
+  // A wizard with no reachable step goes from init through busy to done without
+  // ever having a current step, and one whose first step is refused by a guard
+  // or a loader settles in idle with none. All of them are real recordings.
+  it('accepts an empty stack in every status', () => {
+    for (const status of ['init', 'busy', 'idle', 'done'] as const) {
+      expect(checkSession(withFrame(1, { stack: [], visited: [], status }), booking)).toEqual([]);
+    }
   });
 
-  it('accepts an empty stack while the wizard is still initialising', () => {
-    const boot: RecordedSession = {
-      flow: 'booking',
-      version: 2,
-      frames: [initialState(), ...clean.frames],
-    };
-    expect(checkSession(boot, booking)).toEqual([]);
+  it('accepts the recording of a wizard that had no reachable step', async () => {
+    const empty: FlowDefinition = { id: 'empty', order: ['a'], steps: { a: { when: false } } };
+    const wizard = createWizard({ flow: empty });
+    const frames: WizardState[] = [wizard.getState()];
+    wizard.subscribe(() => frames.push(wizard.getState()));
+    await wizard.next();
+    expect(frames[frames.length - 1]?.status).toBe('done');
+    expect(checkSession({ flow: 'empty', frames }, empty)).toEqual([]);
   });
 
   it('rejects an item key on a step that is not a repeat group', () => {
@@ -394,7 +399,6 @@ describe('every problem checkSession reports', () => {
   const sessions: RecordedSession[] = [
     { ...clean, flow: 'checkout', version: 1, frames: [] },
     withFrame(2, { rev: 1 }),
-    withFrame(1, { stack: [], visited: [] }),
     withFrame(0, { stack: [{ flow: 'loyalty', step: 'tier' }], visited: ['tier'] }),
     withFrame(0, { stack: [{ flow: 'booking', step: 'who', key: 'p1' }], visited: ['who'] }),
     { ...clean, frames: [null] } as unknown as RecordedSession,

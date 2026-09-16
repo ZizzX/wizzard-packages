@@ -286,16 +286,11 @@ export function checkSession(
     }
     previous = frame;
 
-    if (frame.stack.length === 0) {
-      if (frame.status !== 'init') {
-        corrupt(
-          `${at}.stack`,
-          `frame ${index} has an empty stack, but its status is ${frame.status}`,
-          'Only a wizard that has not started yet has no current step'
-        );
-      }
-      return;
-    }
+    // No current step is a state the engine produces in every status: before the
+    // first navigation, while it runs, after a guard or a loader refused the
+    // first step, and when no step was reachable and the wizard went straight to
+    // done. There is nothing on an empty stack to check against the flow.
+    if (frame.stack.length === 0) return;
 
     // The sentences are composed here, not in the walk: a recording checker is
     // read by a person, and the decoder that shares the walk prints nothing.

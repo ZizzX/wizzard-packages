@@ -149,7 +149,7 @@ export default [
   // stack read as drift.
 
   //
-  // 1.2 to 1.75 kB on 2026-09-16, measured 1744 B, for the returned half of
+  // 1.2 to 1.7 kB on 2026-09-16, measured 1684 B, for the returned half of
   // the diagnostic contract (L6-4): a problem `checkSession` returns carries a
   // code, a fix and a url, and its message takes the template every failure
   // does - what, why, the fix, the page. Six codes, one per distinct fix, so the
@@ -159,7 +159,7 @@ export default [
   {
     name: 'core-v1 session',
     path: 'packages/core/src/v1/session.ts',
-    limit: '1.75 kB',
+    limit: '1.7 kB',
     gzip: true,
   },
 
