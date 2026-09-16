@@ -95,12 +95,15 @@ export function validateFlow(
         ]);
       }
     }
-    const twice = flow.order.find((id, i) => flow.order?.indexOf(id) !== i);
-    if (twice !== undefined) {
+    // One pass, and one report per id however many times it repeats.
+    const once = new Set<string>();
+    const twice = new Set<string>();
+    for (const id of flow.order) (once.has(id) ? twice : once).add(id);
+    for (const id of twice) {
       report('order-duplicate', 'order', [
-        `order names "${twice}" more than once`,
+        `order names "${id}" more than once`,
         'A step has one position in order, and next() and back() find their way from it',
-        `Keep one occurrence of ${twice}`,
+        `Keep one occurrence of ${id}`,
       ]);
     }
   }
@@ -177,18 +180,19 @@ export function validateFlow(
     ) {
       report('clear-on-leave-invalid', `${at}.clearOnLeave`, [
         `clearOnLeave of step "${id}" is neither true nor a list of data paths`,
-        'It is read when the step is left, and any other value fails in the middle of that navigation',
+        'It is read when the step is left, and any other value fails that navigation',
         'Set it to true, or put the paths in a list',
       ]);
     }
 
-    // Both mechanisms at once is legal but almost always a mistake: the branch
-    // wins and the reachability rule is silently ignored.
+    // Both at once is legal and does two things: `when` still decides whether
+    // this step is on the path, and `on.next` only where it leads. A condition
+    // meant to choose the next step is easily written on the step instead.
     if (step_.when !== undefined && step_.on?.next !== undefined) {
       report('when-with-next', at, [
         `step "${id}" has both when and on.next`,
-        'On a step that branches, on.next is followed and its when is never read',
-        "Move the condition into a transition's when, or onto the step it should hide",
+        'when decides whether the step is on the path, and on.next only where it leads, so a condition on the step never picks the next one',
+        "To pick the next step, move the condition into a transition's when; if both are meant, leave them",
       ]);
     }
   }
@@ -210,7 +214,7 @@ export function validateFlow(
     }
     const ops = OPERATORS.filter((key) => key in e);
     if (ops.length === 0) {
-      report('expr-unknown-operator', path, unknownOperatorText(Object.keys(e)[0] ?? '{}'));
+      report('expr-unknown-operator', path, unknownOperatorText(Object.keys(e)[0]));
     }
     for (const op of ops) {
       if (op !== '$ref') checkOperators((e as Record<string, unknown>)[op], `${path}.${op}`);

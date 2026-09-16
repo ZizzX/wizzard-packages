@@ -5,8 +5,8 @@ description: A step's clearOnLeave is neither true nor a list of data paths.
 
 ```
 [wizzard] clearOnLeave of step "<id>" is neither true nor a list of data paths. It is read when the
-step is left, and any other value fails in the middle of that navigation. Set it to true, or put the
-paths in a list. …/errors/clear-on-leave-invalid
+step is left, and any other value fails that navigation. Set it to true, or put the paths in a list.
+…/errors/clear-on-leave-invalid
 ```
 
 Returned by `validateFlow` as a problem with `path: steps.<id>.clearOnLeave`, and listed in the message of [`flow-invalid`](../flow-invalid/) by `assertFlow`.

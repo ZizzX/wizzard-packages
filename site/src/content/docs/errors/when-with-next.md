@@ -1,23 +1,25 @@
 ---
 title: when-with-next
-description: A step sets both when and on.next, and its when is ignored.
+description: A step sets both when and on.next, which answer different questions.
 ---
 
 ```
-[wizzard] step "<id>" has both when and on.next. On a step that branches, on.next is followed and
-its when is never read. Move the condition into a transition's when, or onto the step it should
-hide. …/errors/when-with-next
+[wizzard] step "<id>" has both when and on.next. when decides whether the step is on the path, and
+on.next only where it leads, so a condition on the step never picks the next one. To pick the next
+step, move the condition into a transition's when; if both are meant, leave them.
+…/errors/when-with-next
 ```
 
 Returned by `validateFlow` as a problem with `path: steps.<id>`, and listed in the message of [`flow-invalid`](../flow-invalid/) by `assertFlow`.
 
-`when` and `on.next` answer different questions. `when` decides whether a step is on the path at
-all; `on.next` decides where a step goes once someone is on it. On a step that sets both, the
-transition is followed and the step's own `when` is not read, so the condition written there has no
-effect.
+`when` and `on.next` answer different questions, and on one step they do not interact. `when`
+decides whether the step is on the path at all: while it is false the step is skipped, left out of
+progress and breadcrumbs, and a transition that leads to it is not taken. `on.next` decides where
+the step goes once someone is on it. A condition written in the step's `when` never chooses the next
+step.
 
-Decide which question the condition answers. If it is whether a step should be shown, it belongs in
-that step's `when`. If it is where to go from here, move it into the transition:
+The report is there because the two are easy to confuse. If the condition was meant to choose where
+to go from here, move it into the transition:
 
 ```json
 {
@@ -29,5 +31,8 @@ that step's `when`. If it is where to go from here, move it into the transition:
   }
 }
 ```
+
+If the step should be hidden under one condition and branch under another, both fields are right,
+and the report can be left.
 
 Both are described in [the flow guide](../../docs/flow/#where-a-step-leads).

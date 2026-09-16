@@ -10,11 +10,17 @@ check it for a typo. …/errors/expr-unknown-operator
 ```
 
 Thrown as a `WizardError` by `evaluate` or `evaluateAsync`, and `op` says which. `<key>` is the
-object's first key.
+object's first key, or `{}` for an empty object.
+
+Not every expression lets it out. In a `when`, a guard or a transition's `when` it stops the
+navigation. In a repeat group's `repeat.over` and in `input` the engine catches it: the group is
+read as having no items, and the input as `undefined`. Nothing is thrown there, so `validateFlow`
+is the only thing that shows the typo.
 
 `validateFlow` finds the same objects before anything is evaluated, in every place the engine reads
 an expression - `when`, `guards`, a transition's `when`, `repeat.over` and `input` - and returns
-each as `{ code: 'expr-unknown-operator', path, message: 'unknown operator: <key>' }`. The `ui` of a
+each as a problem with `code: 'expr-unknown-operator'`, the `path` of the object, and the message
+above. The `ui` of a
 step and the `args` of a `$ref` are data rather than expressions, and are not read.
 
 An expression is JSON: a literal, a list, or an object whose key names the operation - `$get`,

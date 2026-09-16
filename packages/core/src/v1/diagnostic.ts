@@ -79,7 +79,8 @@ export const notRegisteredText = (ref: string): Explained => [
 ];
 
 /** The sentences of `expr-unknown-operator`, shared by both evaluators and `validateFlow`. */
-export const unknownOperatorText = (key: string | undefined): Explained => [
+// `{}` has no first key, and "undefined" would name nothing the author wrote.
+export const unknownOperatorText = (first: string | undefined, key = first ?? '{}'): Explained => [
   `"${key}" is not an operator`,
   'An expression object names its operation with a key, and none of its keys is an operator',
   `Replace ${key} with an operator from the expressions guide, or check it for a typo`,

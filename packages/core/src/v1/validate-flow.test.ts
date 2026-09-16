@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { defineFlow, step } from './define';
+import { evaluate } from './expr';
 import type { FlowDefinition } from './flow';
 import { assertFlow, validateFlow, type FlowProblem } from './validate-flow';
 
@@ -103,9 +104,9 @@ describe('validateFlow', () => {
     expect(problems({ id: 'f', order: ['a', 'ghost'], steps: { a: {} } })).toContain(
       'order: order names "ghost", which is not a step'
     );
-    expect(problems({ id: 'f', order: ['a', 'a'], steps: { a: {} } })).toContain(
-      'order: order names "a" more than once'
-    );
+    expect(
+      problems({ id: 'f', order: ['a', 'a', 'b', 'b', 'a'], steps: { a: {}, b: {} } })
+    ).toEqual(['order: order names "a" more than once', 'order: order names "b" more than once']);
     expect(problems({ id: 'f', order: ['a'], steps: { a: {}, b: {} } })).toContain(
       'steps.b: step "b" is not in order'
     );
@@ -266,6 +267,13 @@ describe('validateFlow, on an operator the evaluator does not have', () => {
     ]);
   });
 
+  it('reads the when of a single transition, not only of a list', () => {
+    const bad = { $regex: 'x' } as never;
+    expect(at({ a: { on: { next: { to: 'b', when: bad } } }, b: {} })).toEqual([
+      'steps.a.on.next.when: "$regex" is not an operator',
+    ]);
+  });
+
   it('reads the expressions of an inline sub-flow', () => {
     const leg: FlowDefinition = { id: 'leg', steps: { seat: { when: { $exists: 'x' } as never } } };
     expect(at({ a: { flow: leg } })).toEqual([
@@ -281,6 +289,13 @@ describe('validateFlow, on an operator the evaluator does not have', () => {
 
   it('reports an empty object, which names no operation at all', () => {
     expect(at({ a: { when: {} as never } })).toEqual(['steps.a.when: "{}" is not an operator']);
+  });
+
+  it('says what the evaluator says when it throws on the same object', () => {
+    for (const e of [{}, { $equals: [1, 1] }]) {
+      const [problem] = validateFlow({ id: 'f', steps: { a: { when: e as never } } });
+      expect(() => evaluate(e as never, { data: {}, ctx: {} })).toThrow(problem?.message);
+    }
   });
 
   it('accepts every operator the evaluator has, and a key beside one', () => {
