@@ -80,6 +80,12 @@ does not hold, a group step with no traversal installed. Every such failure is a
 with `code`, `op`, `path`, `fix` and `url`, where `url` is the page for that code under
 `https://zizzx.github.io/wizzard-packages/errors/`.
 
+A plugin's failure has no caller to throw to, so the engine logs it in the same four sentences
+instead and carries on. A plugin that throws in `init`, or throws or rejects in `onCommit` or
+`onAttempt`, is switched off for good (`plugin-disabled`); one that fails in `afterNavigate` is
+reported and stays on, because the move has already happened (`after-navigate-threw`); a teardown
+that fails during `destroy()` is reported and the rest still run (`plugin-teardown-failed`).
+
 ## Entries
 
 Separate entry points because they are separate budgets. A wizard that never draws itself

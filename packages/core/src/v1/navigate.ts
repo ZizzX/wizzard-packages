@@ -1,5 +1,5 @@
 import { add, beginNav, commit, isCurrent } from './commit';
-import { pageFor } from './diagnostic';
+import { explain, guard, pageFor } from './diagnostic';
 import { testAsync, type AsyncRegistry, type Registry, type Scope } from './expr';
 import { END, type FlowDefinition, type StepDef } from './flow';
 import { unsetPath } from './path';
@@ -192,6 +192,10 @@ export interface Traversal {
 export interface NavContext {
   flow: FlowDefinition;
   registry?: AsyncRegistry;
+  /**
+   * The plugins still enabled. Read again before each hook is called, so one
+   * disabled part-way through a move is not called for the rest of it.
+   */
   hooks?: readonly Hooks[];
   /** Returns field errors, or null when the step is valid. */
   validate?: (
@@ -276,6 +280,32 @@ async function pipeline(
   const from = currentOf(locked);
   const forward = intent.type !== 'back';
   const stale = (): boolean => !isCurrent(host.read(), token);
+  /** Whether `h` is still enabled now, not when the move began. */
+  const live = (h: Hooks): boolean => ctx.hooks?.includes(h) === true;
+
+  /**
+   * Phase 10, for a step and for the exit alike. The move is committed before
+   * this runs, so a plugin that throws cannot fail it: one broken analytics
+   * plugin must not break a checkout, least of all on its last step.
+   */
+  const after = (to: string | typeof END): void => {
+    for (const h of ctx.hooks ?? []) {
+      if (!live(h)) continue;
+      guard(
+        () => h.afterNavigate?.({ from, to, state: host.read() }),
+        (error) => {
+          console.error(
+            explain('after-navigate-threw', [
+              `plugin "${h.name}" threw in afterNavigate`,
+              'The move stands, and the plugin runs again on the next one',
+              'Fix the plugin, or catch inside its afterNavigate',
+            ]),
+            error
+          );
+        }
+      );
+    }
+  };
 
   /** Releases the lock without touching anything a newer navigation may own. */
   const fail = (result: Refused): Refused => {
@@ -290,7 +320,7 @@ async function pipeline(
     // group resolves `next` and skips the frames the move should push or pop.
     let want: NavIntent = intent;
     for (const h of ctx.hooks ?? []) {
-      if (!h.beforeNavigate) continue;
+      if (!h.beforeNavigate || !live(h)) continue;
       const decision = await h.beforeNavigate({
         from,
         to: intent.type === 'go' ? intent.to : null,
@@ -368,7 +398,7 @@ async function pipeline(
           completed: from ? add(state.completed, from) : state.completed,
         })
       );
-      for (const h of ctx.hooks ?? []) h.afterNavigate?.({ from, to: END, state: host.read() });
+      after(END);
       return { ok: true, from, to: END };
     }
 
@@ -402,7 +432,7 @@ async function pipeline(
       try {
         if (step.deferred === true) {
           for (const h of ctx.hooks ?? []) {
-            if (h.loadStep) await h.loadStep(target, controller.signal);
+            if (h.loadStep && live(h)) await h.loadStep(target, controller.signal);
             if (stale()) return superseded;
           }
         }
@@ -474,14 +504,7 @@ async function pipeline(
     );
 
     // 10. afterNavigate. Cannot fail the navigation that already happened.
-    for (const h of ctx.hooks ?? []) {
-      try {
-        h.afterNavigate?.({ from, to: target, state: host.read() });
-      } catch (error) {
-        // One broken analytics plugin must not break a checkout.
-        console.error('[wizzard] afterNavigate threw in ' + h.name, error);
-      }
-    }
+    after(target);
 
     return { ok: true, from, to: target };
   } catch (error) {

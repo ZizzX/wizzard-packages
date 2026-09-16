@@ -108,7 +108,20 @@ export default [
   // reason, so no refusal site grows. The text is on the six `/errors/nav-*`
   // pages rather than in the result: a refusal is an ordinary outcome and
   // four sentences for each would cost every wizard several hundred bytes.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '5.7 kB', gzip: true },
+  //
+  // 5.7 to 5.9 kB on 2026-09-16, measured 5858 B: the three messages this entry
+  // prints to the console - a plugin disabled, a teardown that threw, an
+  // afterNavigate that threw - take the template every failure takes, a why, a
+  // fix and a page, instead of naming the symptom. The teardown message names
+  // its plugin, which is what the list now carries beside each function. The
+  // exit move now guards afterNavigate like a step move: a plugin that threw on
+  // the last step used to reject next() and undo `done`.
+  // 5.9 to 5.95 kB the same day, measured 5939 B: one `guard` calls every
+  // plugin hook the engine does not await, so an async hook whose promise
+  // rejects is reported, or disables the plugin, like one that throws.
+  // The pipeline also asks before each hook whether its plugin is still
+  // enabled, since one can be disabled under an await in the same move.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '5.95 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a
@@ -276,17 +289,23 @@ export default [
   // provider throws a `WizardError` whose why and fix say where the provider
   // goes. The class itself is core's and is not counted here. Vue carries the
   // same message and still measures 797 B, under its 800 B.
+  //
+  // react 1.15 to 1.25 kB and vue 800 to 900 B on 2026-09-16, measured 1211 B and
+  // 887 B: a wizard that cannot start says why, what to do and where the page
+  // is, rather than "could not start". The message is one string literal in
+  // each binding; shared through core it would be a public export for a
+  // console line.
   {
     name: 'react-v1',
     path: 'packages/react/src/v1/index.tsx',
-    limit: '1.15 kB',
+    limit: '1.25 kB',
     gzip: true,
     ignore: ['react', 'react-dom', '@wizzard-packages/core/v1'],
   },
   {
     name: 'vue-v1',
     path: 'packages/vue/src/v1/index.ts',
-    limit: '800 B',
+    limit: '900 B',
     gzip: true,
     ignore: ['vue', '@wizzard-packages/core/v1'],
   },
@@ -357,10 +376,15 @@ export default [
   // name a cause and a fix rather than a symptom. Those are the reason a
   // persistence plugin is worth having rather than fifteen lines of
   // localStorage in an application.
+  //
+  // 1.2 to 1.35 kB on 2026-09-16, measured 1323 B: `onRestore` is the host's
+  // callback, and one that threw inside `init` disabled the whole plugin, so the
+  // session silently stopped being saved. It is now caught and reported once,
+  // and so is an async one whose promise rejects.
   {
     name: 'plugins persist',
     path: 'packages/plugins/src/persist.ts',
-    limit: '1.2 kB',
+    limit: '1.35 kB',
     gzip: true,
     ignore: ['@wizzard-packages/core/v1', '@wizzard-packages/core/snapshot'],
   },

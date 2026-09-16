@@ -209,6 +209,12 @@ describe('onAttempt', () => {
     expect(error).toHaveBeenCalledTimes(2);
     expect(error.mock.calls[0]?.[0]).toContain('"attempt-thrower" threw in onAttempt');
     expect(error.mock.calls[1]?.[0]).toContain('"commit-thrower" threw in onCommit');
+    expect(error.mock.calls[1]?.[0]).toBe(
+      '[wizzard] plugin "commit-thrower" threw in onCommit and was disabled. ' +
+        'A plugin that throws is switched off, so none of its later hooks run. ' +
+        'Fix the plugin, or remove it from options.plugins. ' +
+        'https://zizzx.github.io/wizzard-packages/errors/plugin-disabled'
+    );
     error.mockRestore();
   });
 

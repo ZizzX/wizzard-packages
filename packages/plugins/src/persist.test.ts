@@ -234,6 +234,53 @@ describe('persist', () => {
     warn.mockRestore();
   });
 
+  it('keeps saving when onRestore throws, and says so once', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const storage = fakeStorage();
+    const w = createWizard({
+      flow,
+      plugins: [
+        persist({
+          key: 'signup',
+          storage,
+          onRestore: () => {
+            throw new Error('host bug');
+          },
+        }),
+      ],
+    });
+
+    await w.start();
+    w.set('name', 'Ann');
+    settle();
+
+    expect(storage.getItem('signup')).toContain('Ann');
+    const messages = warn.mock.calls.map((call) => String(call[0]));
+    expect(messages.filter((m) => m.includes('onRestore threw'))).toHaveLength(1);
+    expect(messages.find((m) => m.includes('onRestore threw'))).toContain(
+      'https://zizzx.github.io/wizzard-packages/errors/persist-on-restore-threw'
+    );
+    warn.mockRestore();
+  });
+
+  it('catches an async onRestore that rejects', async () => {
+    vi.useRealTimers();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const storage = fakeStorage();
+    createWizard({
+      flow,
+      plugins: [
+        persist({ key: 'signup', storage, onRestore: () => Promise.reject(new Error('host bug')) }),
+      ],
+    });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const messages = warn.mock.calls.map((call) => String(call[0]));
+    expect(messages.some((m) => m.includes('/errors/persist-on-restore-threw'))).toBe(true);
+    warn.mockRestore();
+  });
+
   it('writes what is pending when the wizard is destroyed', () => {
     const storage = fakeStorage();
     const w = make(storage);

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { pageFor } from './diagnostic';
 import type { FlowDefinition } from './flow';
+import type { Attempt, Hooks } from './navigate';
 import type { WizardState } from './state';
 import { createWizard } from './store';
 
@@ -499,6 +500,89 @@ describe('the plugin lifecycle', () => {
     expect(torn).toBe(1);
   });
 
+  it('names a plugin whose teardown throws, and still tears down the rest', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    let torn = 0;
+    const w = createWizard({
+      flow,
+      registry,
+      plugins: [
+        {
+          name: 'broken',
+          init: () => () => {
+            throw new Error('boom');
+          },
+        },
+        { name: 'cleanup', init: () => () => (torn += 1) },
+      ],
+    });
+
+    w.destroy();
+
+    expect(torn).toBe(1);
+    expect(spy).toHaveBeenCalledOnce();
+    const message = spy.mock.calls[0]?.[0] as string;
+    expect(message).toMatch(
+      /^\[wizzard\] plugin "broken" threw while being torn down\. .+\. .+\. /
+    );
+    expect(message).toContain(
+      'https://zizzx.github.io/wizzard-packages/errors/plugin-teardown-failed'
+    );
+    spy.mockRestore();
+  });
+
+  it('disables a plugin whose async onCommit rejects, and says so once', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    let commits = 0;
+    const w = createWizard({
+      flow,
+      registry,
+      plugins: [
+        {
+          name: 'async',
+          onCommit: () => {
+            commits += 1;
+            return Promise.reject(new Error('commit'));
+          },
+        } as unknown as Hooks,
+      ],
+    });
+
+    // Three writes before the first rejection lands: three pending calls.
+    w.set('name', 'Ann');
+    w.set('name', 'Bo');
+    w.set('name', 'Cy');
+    await Promise.resolve();
+    w.set('name', 'Di');
+
+    expect(commits).toBe(3);
+    const messages = spy.mock.calls.map((call) => String(call[0]));
+    expect(messages.filter((m) => m.includes('/errors/plugin-disabled'))).toHaveLength(1);
+    spy.mockRestore();
+  });
+
+  it('reports a teardown whose promise rejects', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const w = createWizard({
+      flow,
+      registry,
+      plugins: [
+        {
+          name: 'async',
+          init: () => () => Promise.reject(new Error('teardown')),
+        } as unknown as Hooks,
+      ],
+    });
+
+    w.destroy();
+    await Promise.resolve();
+
+    const message = String(spy.mock.calls[0]?.[0]);
+    expect(message).toMatch(/^\[wizzard\] plugin "async" threw while being torn down\. .+\. .+\. /);
+    expect(message).toContain('/errors/plugin-teardown-failed');
+    spy.mockRestore();
+  });
+
   it('delivers nothing to a plugin after destroy', async () => {
     const { seen, plugin } = recorder();
     const w = createWizard({ flow, registry, data: { payer: 'private' }, plugins: [plugin] });
@@ -559,8 +643,44 @@ describe('the plugin lifecycle', () => {
     await w.start();
     await w.next();
 
-    // One: the first navigation ran beforeNavigate before onCommit disabled it.
-    expect(navHooks).toBe(1);
+    // None: the start's lock write threw in onCommit and disabled the plugin
+    // before its beforeNavigate came up, and the pipeline reads that at the call.
+    expect(navHooks).toBe(0);
+    spy.mockRestore();
+  });
+
+  it('does not call a hook of a plugin disabled while the move was waiting', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const called: string[] = [];
+    const w = createWizard({
+      flow,
+      registry,
+      data: { payer: 'private' },
+      plugins: [
+        {
+          name: 'slow',
+          beforeNavigate: () => new Promise<void>((resolve) => setTimeout(resolve, 0)),
+        },
+        {
+          name: 'rejects',
+          onAttempt: (a: Attempt) =>
+            a.phase === 'start' ? Promise.reject(new Error('x')) : undefined,
+          beforeNavigate: () => {
+            called.push('beforeNavigate');
+          },
+          afterNavigate: () => {
+            called.push('afterNavigate');
+          },
+        } as unknown as Hooks,
+      ],
+    });
+
+    await w.start();
+
+    // The rejection lands while `slow` is awaited; everything after it skips
+    // the disabled plugin.
+    expect(called).toEqual([]);
+    expect(String(spy.mock.calls[0]?.[0])).toContain('/errors/plugin-disabled');
     spy.mockRestore();
   });
 });

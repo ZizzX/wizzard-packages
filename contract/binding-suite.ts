@@ -5,7 +5,7 @@ import {
   type SubFlows,
   type Traversal,
 } from '@wizzard-packages/core/v1';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { flowC as tripFlow, subFlowsC } from './fixtures';
 
@@ -136,6 +136,26 @@ export function describeBindingContract(harness: BindingHarness): void {
         url: 'https://zizzx.github.io/wizzard-packages/errors/provider-missing',
       });
       expect((error as WizardError).fix).not.toBe('');
+    });
+
+    it('says why the wizard did not start, with a page', async () => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      const probe = await harness.mount({
+        flow: { id: 'broken', order: ['one'], steps: { one: { load: { $ref: 'fails' } } } },
+        registry: {
+          fails: () => Promise.reject(new Error('network down')),
+        },
+      });
+      // React also reports its own act() warnings here, so find ours by its prefix.
+      const ours = () => spy.mock.calls.find((call) => String(call[0]).startsWith('[wizzard]'));
+      await until(() => ours() !== undefined, 'the start failure');
+
+      const [message, cause] = ours() ?? [];
+      expect(message).toMatch(/^\[wizzard\] the wizard could not start\. .+\. .+\. /);
+      expect(message).toContain('https://zizzx.github.io/wizzard-packages/errors/start-failed');
+      expect(cause).toBeInstanceOf(Error);
+      probe.unmount();
+      spy.mockRestore();
     });
 
     it('is on the first step as soon as it mounts', async () => {

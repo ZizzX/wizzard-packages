@@ -53,7 +53,12 @@ export function provideWizard<F extends FlowDefinition>(
     wizard.start().catch((error: unknown) => {
       // A first step whose loader fails is an ordinary network error. Dropping
       // the promise would turn it into an unhandled rejection instead.
-      console.error('[wizzard] the wizard could not start.', error);
+      console.error(
+        '[wizzard] the wizard could not start. Its first move threw, so no step is shown. ' +
+          'Fix what threw, logged below, and mount the wizard again. ' +
+          'https://zizzx.github.io/wizzard-packages/errors/start-failed',
+        error
+      );
     });
   });
   return wizard;

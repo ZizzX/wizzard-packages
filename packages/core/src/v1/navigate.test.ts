@@ -280,6 +280,42 @@ describe('runNav — plugins', () => {
     expect(order).toEqual(['a', 'b']);
   });
 
+  it('finishes the flow when a plugin throws in afterNavigate on the exit', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const host = makeHost(on('trip'));
+    const last: FlowDefinition = { id: 'last', order: ['trip'], steps: { trip: {} } };
+    const hooks: Hooks[] = [
+      {
+        name: 'analytics',
+        afterNavigate: () => {
+          throw new Error('boom');
+        },
+      },
+    ];
+
+    const result = await runNav({ flow: last, hooks }, host, { type: 'next' });
+
+    expect(result).toEqual({ ok: true, from: 'trip', to: END });
+    expect(host.read().status).toBe('done');
+    expect(String(spy.mock.calls[0]?.[0])).toContain('/errors/after-navigate-threw');
+    spy.mockRestore();
+  });
+
+  it('reports an async afterNavigate that rejects instead of leaving it unhandled', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const host = makeHost(on('trip'));
+    const hooks = [
+      { name: 'analytics', afterNavigate: () => Promise.reject(new Error('boom')) },
+    ] as unknown as Hooks[];
+
+    const result = await runNav({ flow, hooks }, host, { type: 'next' });
+    await Promise.resolve();
+
+    expect(result.ok).toBe(true);
+    expect(String(spy.mock.calls[0]?.[0])).toContain('/errors/after-navigate-threw');
+    spy.mockRestore();
+  });
+
   it('survives a plugin that throws in afterNavigate', async () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const host = makeHost(on('trip'));
@@ -297,6 +333,13 @@ describe('runNav — plugins', () => {
 
     expect(result.ok).toBe(true);
     expect(host.read().stack[0]?.step).toBe('payment');
+    expect(spy).toHaveBeenCalledOnce();
+    const [message, cause] = spy.mock.calls[0] ?? [];
+    expect(message).toMatch(/^\[wizzard\] plugin "analytics" threw in afterNavigate\. .+\. .+\. /);
+    expect(message).toContain(
+      'https://zizzx.github.io/wizzard-packages/errors/after-navigate-threw'
+    );
+    expect(cause).toBeInstanceOf(Error);
     spy.mockRestore();
   });
 });
