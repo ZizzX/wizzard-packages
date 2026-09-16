@@ -1,6 +1,6 @@
 import { commit, restart } from './commit';
 import { type SliceAt, type StepIdOf } from './define';
-import { notRegistered, WizardError } from './diagnostic';
+import { explain, notRegistered, WizardError } from './diagnostic';
 import { END, isGroup, type FlowDefinition, type StepDef } from './flow';
 import {
   runNav,
@@ -199,7 +199,7 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
   let starting: Promise<NavResult> | undefined;
   const plugins: readonly Hooks[] = options.plugins ?? [];
   const disabled = new Set<string>();
-  const teardowns: (() => void)[] = [];
+  const teardowns: [name: string, teardown: () => void][] = [];
   // Set while `init` runs, so a plugin's own restoring commit does not come
   // back to it as `onCommit`.
   let initializing = false;
@@ -251,8 +251,11 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
   const fail = (name: string, at: string, error: unknown): void => {
     disabled.add(name);
     console.error(
-      `[wizzard] plugin "${name}" threw in ${at} and was disabled. ` +
-        `Its later hooks will not run. Fix the plugin or remove it from options.plugins.`,
+      explain('plugin-disabled', [
+        `plugin "${name}" threw in ${at} and was disabled`,
+        'A plugin that throws is switched off, so none of its later hooks run',
+        'Fix the plugin, or remove it from options.plugins',
+      ]),
       error
     );
   };
@@ -350,7 +353,7 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
           write(commit(state, patch));
         },
       });
-      if (teardown !== undefined) teardowns.push(teardown);
+      if (teardown !== undefined) teardowns.push([h.name, teardown]);
     } catch (error) {
       fail(h.name, 'init', error);
     }
@@ -531,11 +534,18 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
       listeners.clear();
       // One teardown that throws must not strand the rest: the list is already
       // spliced, so an early exit would leak every plugin after the failure.
-      for (const t of teardowns.splice(0)) {
+      for (const [name, t] of teardowns.splice(0)) {
         try {
           t();
         } catch (error) {
-          console.error('[wizzard] a plugin threw while being torn down.', error);
+          console.error(
+            explain('plugin-teardown-failed', [
+              `plugin "${name}" threw while being torn down`,
+              'The function its init returned threw, and every other teardown still ran',
+              'Fix that function, or remove the plugin from options.plugins',
+            ]),
+            error
+          );
         }
       }
     },

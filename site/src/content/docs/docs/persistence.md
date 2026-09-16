@@ -91,6 +91,8 @@ createWizard({
 storage at all. Saying which happened is not optional politeness: a form that was half filled in
 and is now empty looks like a bug to the person who filled it, and silence is why they would
 think so. [Restore after reload](../restore-after-reload/) is that turned into a working page.
+A callback that throws is caught: the plugin warns once and keeps saving, as
+[`persist-on-restore-threw`](../../errors/persist-on-restore-threw/) describes.
 
 **Storage is synchronous.** `storage` takes anything with `getItem`, `setItem` and `removeItem`
 returning values rather than promises - `localStorage` and `sessionStorage` both qualify, and so

@@ -297,6 +297,13 @@ describe('runNav — plugins', () => {
 
     expect(result.ok).toBe(true);
     expect(host.read().stack[0]?.step).toBe('payment');
+    expect(spy).toHaveBeenCalledOnce();
+    const [message, cause] = spy.mock.calls[0] ?? [];
+    expect(message).toMatch(/^\[wizzard\] plugin "analytics" threw in afterNavigate\. .+\. .+\. /);
+    expect(message).toContain(
+      'https://zizzx.github.io/wizzard-packages/errors/after-navigate-threw'
+    );
+    expect(cause).toBeInstanceOf(Error);
     spy.mockRestore();
   });
 });

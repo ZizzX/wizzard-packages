@@ -499,6 +499,37 @@ describe('the plugin lifecycle', () => {
     expect(torn).toBe(1);
   });
 
+  it('names a plugin whose teardown throws, and still tears down the rest', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    let torn = 0;
+    const w = createWizard({
+      flow,
+      registry,
+      plugins: [
+        {
+          name: 'broken',
+          init: () => () => {
+            throw new Error('boom');
+          },
+        },
+        { name: 'cleanup', init: () => () => (torn += 1) },
+      ],
+    });
+
+    w.destroy();
+
+    expect(torn).toBe(1);
+    expect(spy).toHaveBeenCalledOnce();
+    const message = spy.mock.calls[0]?.[0] as string;
+    expect(message).toMatch(
+      /^\[wizzard\] plugin "broken" threw while being torn down\. .+\. .+\. /
+    );
+    expect(message).toContain(
+      'https://zizzx.github.io/wizzard-packages/errors/plugin-teardown-failed'
+    );
+    spy.mockRestore();
+  });
+
   it('delivers nothing to a plugin after destroy', async () => {
     const { seen, plugin } = recorder();
     const w = createWizard({ flow, registry, data: { payer: 'private' }, plugins: [plugin] });

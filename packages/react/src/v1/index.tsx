@@ -74,7 +74,12 @@ export function WizardProvider({ wizard, children, ...options }: WizardProviderP
   // an error channel.
   useIsomorphicLayoutEffect(() => {
     engine.start().catch((error: unknown) => {
-      console.error('[wizzard] the wizard could not start.', error);
+      console.error(
+        '[wizzard] the wizard could not start. Its first move threw, so no step is shown. ' +
+          'Fix what threw, logged below, and mount the wizard again. ' +
+          'https://zizzx.github.io/wizzard-packages/errors/start-failed',
+        error
+      );
     });
   }, [engine]);
 

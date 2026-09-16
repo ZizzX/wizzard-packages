@@ -1,5 +1,5 @@
 import { add, beginNav, commit, isCurrent } from './commit';
-import { pageFor } from './diagnostic';
+import { explain, pageFor } from './diagnostic';
 import { testAsync, type AsyncRegistry, type Registry, type Scope } from './expr';
 import { END, type FlowDefinition, type StepDef } from './flow';
 import { unsetPath } from './path';
@@ -479,7 +479,14 @@ async function pipeline(
         h.afterNavigate?.({ from, to: target, state: host.read() });
       } catch (error) {
         // One broken analytics plugin must not break a checkout.
-        console.error('[wizzard] afterNavigate threw in ' + h.name, error);
+        console.error(
+          explain('after-navigate-threw', [
+            `plugin "${h.name}" threw in afterNavigate`,
+            'The move stands, and the plugin runs again on the next one',
+            'Fix the plugin, or catch inside its afterNavigate',
+          ]),
+          error
+        );
       }
     }
 

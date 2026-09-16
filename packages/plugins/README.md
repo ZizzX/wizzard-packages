@@ -38,7 +38,8 @@ than restored into something that looks plausible and is not.
 The plugin never throws. A browser that refuses storage, a quota that fills up, a value that
 was corrupted in place: each means this session is not coming back, and none of them is a
 reason to break the wizard someone is filling in right now. Every failure warns once, names
-its cause, and reaches `onRestore`.
+its cause, and reaches `onRestore`. An `onRestore` that throws is caught the same way, and the
+session is still saved.
 
 Writes are coalesced into one per frame, and whatever is pending is flushed when the wizard
 is destroyed — closing a tab does not wait for a timer.

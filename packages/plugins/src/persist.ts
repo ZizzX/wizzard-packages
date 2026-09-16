@@ -59,7 +59,7 @@ const WRITE_AFTER_MS = 16;
 const DOCS = 'https://zizzx.github.io/wizzard-packages/errors';
 
 export function persist(options: PersistOptions): Hooks {
-  const { key, version, migrate, onRestore } = options;
+  const { key, version, migrate } = options;
   let storage: SyncStorage | undefined;
   let flowOf: (() => FlowDefinition) | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -76,6 +76,24 @@ export function persist(options: PersistOptions): Hooks {
     if (warned.has(code)) return;
     warned.add(code);
     console.warn(`[wizzard] ${problem}. ${cause}. ${fix}. ${DOCS}/${code.replace('/', '-')}`);
+  };
+
+  /**
+   * The host's callback, called so that it cannot take the plugin down: thrown
+   * from inside `init`, it would disable persistence for the whole session.
+   */
+  const onRestore = (outcome: RestoreOutcome): void => {
+    try {
+      options.onRestore?.(outcome);
+    } catch (error) {
+      warn(
+        'persist/on-restore-threw',
+        'onRestore threw',
+        `the outcome was ${outcome.restored ? 'restored' : outcome.reason}, and the session is still saved`,
+        'fix the callback passed to persist()'
+      );
+      console.warn(error);
+    }
   };
 
   const flush = (): void => {
@@ -120,7 +138,7 @@ export function persist(options: PersistOptions): Hooks {
           `the stored session was refused (${reason})`,
           'this is expected after a flow or version change; clear the key to stop the warning'
         );
-        onRestore?.({ restored: false, reason });
+        onRestore({ restored: false, reason });
         return teardown;
       };
 
@@ -132,7 +150,7 @@ export function persist(options: PersistOptions): Hooks {
           'this browser did not allow storage, which private windows commonly do',
           'pass a storage of your own, or accept that this session will not survive a reload'
         );
-        onRestore?.({ restored: false, reason: 'persist/unavailable' });
+        onRestore({ restored: false, reason: 'persist/unavailable' });
         return;
       }
 
@@ -147,7 +165,7 @@ export function persist(options: PersistOptions): Hooks {
           'pass a storage of your own, or accept that this session starts fresh'
         );
         storage = undefined;
-        onRestore?.({ restored: false, reason: 'persist/unavailable' });
+        onRestore({ restored: false, reason: 'persist/unavailable' });
         return;
       }
 
@@ -169,7 +187,7 @@ export function persist(options: PersistOptions): Hooks {
       };
 
       if (raw === null) {
-        onRestore?.({ restored: false, reason: 'persist/nothing-stored' });
+        onRestore({ restored: false, reason: 'persist/nothing-stored' });
         return teardown;
       }
 
@@ -201,7 +219,7 @@ export function persist(options: PersistOptions): Hooks {
       // Through `commit`, like every other write: the restore is a commit, the
       // epoch moves with it, and anything begun before it is superseded.
       host.commit(result.state);
-      onRestore?.({ restored: true });
+      onRestore({ restored: true });
       return teardown;
     },
 

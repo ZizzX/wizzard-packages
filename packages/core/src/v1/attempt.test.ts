@@ -209,6 +209,9 @@ describe('onAttempt', () => {
     expect(error).toHaveBeenCalledTimes(2);
     expect(error.mock.calls[0]?.[0]).toContain('"attempt-thrower" threw in onAttempt');
     expect(error.mock.calls[1]?.[0]).toContain('"commit-thrower" threw in onCommit');
+    expect(error.mock.calls[1]?.[0]).toContain(
+      'https://zizzx.github.io/wizzard-packages/errors/plugin-disabled'
+    );
     error.mockRestore();
   });
 
