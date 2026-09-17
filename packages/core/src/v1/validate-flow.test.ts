@@ -87,6 +87,20 @@ describe('validateFlow', () => {
     expect(problems(flow)[0]).toBe('steps.a.when: steps.a.when is a function');
   });
 
+  it('catches a function or a cycle in a field beside steps', () => {
+    const flow = {
+      id: 'f',
+      steps: { a: {} },
+      validate: { on: 'next', debounceMs: () => 0 },
+      meta: {} as Record<string, unknown>,
+    };
+    flow.meta.self = flow;
+    expect(problems(flow as unknown as FlowDefinition)).toEqual([
+      'validate.debounceMs: validate.debounceMs is a function',
+      'meta.self: meta.self contains itself',
+    ]);
+  });
+
   it('catches a clearOnLeave that is neither true nor a list of paths', () => {
     const withClear = (clearOnLeave: unknown): FlowDefinition => ({
       ...good,

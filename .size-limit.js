@@ -311,7 +311,11 @@ export default [
     // 320 kB document with a problem at every deep leaf used to exhaust 6 GB),
     // and an expression gets one `expr-too-deep` however many branches pass
     // the limit.
-    limit: '3.2 kB',
+    //
+    // 3.2 to 3.25 kB on 2026-09-17, measured 3203 B: the serializability walk
+    // covers every field of the flow - `validate`, `policy`, a host's own -
+    // not only `steps`, and a field pointing back at the flow is one cycle.
+    limit: '3.25 kB',
     gzip: true,
   },
 

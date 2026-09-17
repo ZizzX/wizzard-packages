@@ -200,7 +200,15 @@ export function validateFlow(
     }
   };
 
-  for (const [id, step_] of Object.entries(flow.steps)) checkExpr(step_, `steps.${id}`);
+  // Every field of the flow, not only its steps: `validate`, `policy` or a
+  // host's own field is stored and sent with them. The flow itself is on
+  // `inside`, so a field that points back at it is one cycle, not a second walk.
+  inside.add(flow);
+  for (const [key, value] of Object.entries(flow)) {
+    if (key !== 'steps') checkExpr(value, key);
+    else for (const [id, step_] of Object.entries(flow.steps)) checkExpr(step_, `steps.${id}`);
+  }
+  inside.delete(flow);
 
   // Where the engine evaluates an expression, and only there: `ui` is the host's
   // JSON and may carry `$`-keys of its own. The evaluator throws on an object
