@@ -1,4 +1,10 @@
-import { notRegistered, unknownOperatorText, WizardError } from './diagnostic';
+import {
+  MAX_EXPR_DEPTH,
+  notRegistered,
+  tooDeepText,
+  unknownOperatorText,
+  WizardError,
+} from './diagnostic';
 
 /**
  * The expression language.
@@ -54,6 +60,9 @@ export type Registry = Readonly<Record<string, Resolver>>;
 const unknownOperator = (e: object, op: string): WizardError =>
   new WizardError('expr-unknown-operator', op, ...unknownOperatorText(Object.keys(e)[0]));
 
+/** Past `MAX_EXPR_DEPTH`, counted in objects and lists as `validateFlow` counts them. */
+const tooDeep = (op: string): WizardError => new WizardError('expr-too-deep', op, ...tooDeepText);
+
 const isNode = (e: Expr): e is Exclude<Expr, null | boolean | number | string | readonly Expr[]> =>
   typeof e === 'object' && e !== null && !Array.isArray(e);
 
@@ -102,25 +111,33 @@ function empty(v: unknown): boolean {
  * path and know which steps are reachable before the first paint.
  */
 export function evaluate(e: Expr, scope: Scope, registry?: Registry): unknown {
-  if (!isNode(e)) return Array.isArray(e) ? e.map((x) => evaluate(x, scope, registry)) : e;
+  return run(e, scope, registry, 0);
+}
 
-  const ev = (x: Expr): unknown => evaluate(x, scope, registry);
+// `depth` counts objects and lists, so an operand inside an operator's list is
+// two levels below the operator and the operand of `$not` or `$empty` one.
+function run(e: Expr, scope: Scope, registry: Registry | undefined, depth: number): unknown {
+  if (typeof e !== 'object' || e === null) return e;
+  if (depth >= MAX_EXPR_DEPTH) throw tooDeep('evaluate');
+  const ev = (x: Expr): unknown => run(x, scope, registry, depth + 1);
+  if (!isNode(e)) return e.map(ev);
+  const ev2 = (x: Expr): unknown => run(x, scope, registry, depth + 2);
 
   if ('$get' in e) return read(e.$get, scope);
   if ('$not' in e) return !ev(e.$not);
-  if ('$and' in e) return e.$and.every(ev);
-  if ('$or' in e) return e.$or.some(ev);
+  if ('$and' in e) return e.$and.every(ev2);
+  if ('$or' in e) return e.$or.some(ev2);
   if ('$empty' in e) return empty(ev(e.$empty));
-  if ('$eq' in e) return ev(e.$eq[0]) === ev(e.$eq[1]);
-  if ('$ne' in e) return ev(e.$ne[0]) !== ev(e.$ne[1]);
-  if ('$gt' in e) return (ev(e.$gt[0]) as number) > (ev(e.$gt[1]) as number);
-  if ('$gte' in e) return (ev(e.$gte[0]) as number) >= (ev(e.$gte[1]) as number);
-  if ('$lt' in e) return (ev(e.$lt[0]) as number) < (ev(e.$lt[1]) as number);
-  if ('$lte' in e) return (ev(e.$lte[0]) as number) <= (ev(e.$lte[1]) as number);
+  if ('$eq' in e) return ev2(e.$eq[0]) === ev2(e.$eq[1]);
+  if ('$ne' in e) return ev2(e.$ne[0]) !== ev2(e.$ne[1]);
+  if ('$gt' in e) return (ev2(e.$gt[0]) as number) > (ev2(e.$gt[1]) as number);
+  if ('$gte' in e) return (ev2(e.$gte[0]) as number) >= (ev2(e.$gte[1]) as number);
+  if ('$lt' in e) return (ev2(e.$lt[0]) as number) < (ev2(e.$lt[1]) as number);
+  if ('$lte' in e) return (ev2(e.$lte[0]) as number) <= (ev2(e.$lte[1]) as number);
 
   if ('$in' in e) {
-    const needle = ev(e.$in[0]);
-    const hay = ev(e.$in[1]);
+    const needle = ev2(e.$in[0]);
+    const hay = ev2(e.$in[1]);
     if (typeof hay === 'string') return hay.includes(String(needle));
     return Array.isArray(hay) && hay.includes(needle);
   }
@@ -154,17 +171,24 @@ export function test(e: Expr | undefined, scope: Scope, registry?: Registry): bo
  * before the first paint. Computed once per flow, not per navigation.
  */
 export function isSync(e: Expr | undefined): boolean {
-  if (e === undefined || !isNode(e)) {
-    return !Array.isArray(e) || e.every(isSync);
-  }
+  return e === undefined || sync(e, 0);
+}
+
+// False past the depth limit: the asynchronous path is the one that then
+// refuses the expression, with the same error `evaluate` throws.
+function sync(e: Expr, depth: number): boolean {
+  if (typeof e !== 'object' || e === null) return true;
+  if (depth >= MAX_EXPR_DEPTH) return false;
+  if (!isNode(e)) return e.every((x) => sync(x, depth + 1));
   if ('$ref' in e) return false;
   if ('$get' in e) return true;
-  if ('$not' in e) return isSync(e.$not);
-  if ('$and' in e) return e.$and.every(isSync);
-  if ('$or' in e) return e.$or.every(isSync);
-  if ('$empty' in e) return isSync(e.$empty);
+  const each = (x: Expr): boolean => sync(x, depth + 2);
+  if ('$not' in e) return sync(e.$not, depth + 1);
+  if ('$and' in e) return e.$and.every(each);
+  if ('$or' in e) return e.$or.every(each);
+  if ('$empty' in e) return sync(e.$empty, depth + 1);
   const operands = Object.values(e as Record<string, readonly Expr[]>)[0];
-  return operands === undefined || operands.every(isSync);
+  return operands === undefined || operands.every(each);
 }
 
 /**
@@ -179,11 +203,20 @@ export async function evaluateAsync(
   scope: Scope,
   registry?: AsyncRegistry
 ): Promise<unknown> {
-  if (!isNode(e)) {
-    return Array.isArray(e) ? Promise.all(e.map((x) => evaluateAsync(x, scope, registry))) : e;
-  }
+  return runAsync(e, scope, registry, 0);
+}
 
-  const ev = (x: Expr): Promise<unknown> => evaluateAsync(x, scope, registry);
+async function runAsync(
+  e: Expr,
+  scope: Scope,
+  registry: AsyncRegistry | undefined,
+  depth: number
+): Promise<unknown> {
+  if (typeof e !== 'object' || e === null) return e;
+  if (depth >= MAX_EXPR_DEPTH) throw tooDeep('evaluateAsync');
+  const ev = (x: Expr): Promise<unknown> => runAsync(x, scope, registry, depth + 1);
+  if (!isNode(e)) return Promise.all(e.map(ev));
+  const ev2 = (x: Expr): Promise<unknown> => runAsync(x, scope, registry, depth + 2);
 
   if ('$ref' in e) {
     const fn = registry?.[e.$ref];
@@ -194,21 +227,21 @@ export async function evaluateAsync(
   // Short-circuiting matters more here than anywhere else: a `$ref` behind a
   // false `$and` branch is a request that must not be made.
   if ('$and' in e) {
-    for (const x of e.$and) if (!(await ev(x))) return false;
+    for (const x of e.$and) if (!(await ev2(x))) return false;
     return true;
   }
   if ('$or' in e) {
-    for (const x of e.$or) if (await ev(x)) return true;
+    for (const x of e.$or) if (await ev2(x)) return true;
     return false;
   }
   if ('$not' in e) return !(await ev(e.$not));
 
-  if (isSync(e)) return evaluate(e, scope, registry as Registry);
+  if (sync(e, depth)) return run(e, scope, registry as Registry, depth);
   if ('$get' in e) return read(e.$get, scope);
   if ('$empty' in e) return empty(await ev(e.$empty));
 
   const pair = async (p: readonly [Expr, Expr]): Promise<[unknown, unknown]> =>
-    (await Promise.all([ev(p[0]), ev(p[1])])) as [unknown, unknown];
+    (await Promise.all([ev2(p[0]), ev2(p[1])])) as [unknown, unknown];
 
   if ('$eq' in e) {
     const [a, b] = await pair(e.$eq);

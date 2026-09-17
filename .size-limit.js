@@ -121,7 +121,12 @@ export default [
   // rejects is reported, or disables the plugin, like one that throws.
   // The pipeline also asks before each hook whether its plugin is still
   // enabled, since one can be disabled under an await in the same move.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '5.95 kB', gzip: true },
+  // 5.95 to 6.2 kB on 2026-09-17, measured 6152 B: the evaluator stops at 256 levels of
+  // nesting and throws `expr-too-deep` with its why and fix, instead of letting a
+  // pasted or hostile document overflow the stack with a bare `RangeError`.
+  // The sentences are the smaller part; the rest is the depth each evaluator
+  // threads through its recursion. Taking the public wrappers out saved 5 B.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '6.2 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a
@@ -145,7 +150,11 @@ export default [
   // `core-v1` above and by the same bytes: this entry evaluates expressions, so
   // it carries the evaluator's `WizardError` messages with it. 3.4 to 3.45 kB
   // the same day, measured 3.43 kB, for `Symbol.hasInstance` (see `core-v1`).
-  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '3.45 kB', gzip: true },
+  // 3.45 to 3.65 kB on 2026-09-17, measured 3604 B: the evaluator stops at 256 levels of
+  // nesting and throws `expr-too-deep` with its why and fix, instead of letting a
+  // pasted or hostile document overflow the stack with a bare `RangeError`. The evaluator is
+  // bundled into this entry, so the same bytes land here (see `core-v1`).
+  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '3.65 kB', gzip: true },
 
   // The recorded-session checker. Its own entry because replay is a devtools and
   // documentation concern: an application that only runs a wizard never needs to
@@ -175,10 +184,15 @@ export default [
   // four ways a stack can disagree with the flow share one sentence of why and
   // one fix; the bytes are those sentences and the template helper this entry
   // now imports from `diagnostic.ts`.
+  //
+  // 1.7 to 1.8 kB on 2026-09-17, measured 1794 B: the evaluator stops at 256 levels of
+  // nesting and throws `expr-too-deep` with its why and fix, instead of letting a
+  // pasted or hostile document overflow the stack with a bare `RangeError`. The evaluator is
+  // bundled into this entry, so the same bytes land here (see `core-v1`).
   {
     name: 'core-v1 session',
     path: 'packages/core/src/v1/session.ts',
-    limit: '1.7 kB',
+    limit: '1.8 kB',
     gzip: true,
   },
 
@@ -272,7 +286,12 @@ export default [
     // checked like the root - its steps and its `order`, and each step's
     // targets, `clearOnLeave` and `when` beside `on.next`, with targets read
     // against that sub-flow's steps - instead of the root alone.
-    limit: '2.7 kB',
+    //
+    // 2.7 to 2.85 kB the same day, measured 2830 B: `validateFlow` reports
+    // `expr-too-deep` for exactly the expressions the evaluator refuses, counting
+    // objects and lists the same way, and both of its walks stop at the limit
+    // rather than overflowing the stack on the document they exist to check.
+    limit: '2.85 kB',
     gzip: true,
   },
 

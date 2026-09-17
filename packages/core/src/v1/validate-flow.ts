@@ -1,7 +1,9 @@
 import {
   explain,
+  MAX_EXPR_DEPTH,
   notRegisteredText,
   pageFor,
+  tooDeepText,
   unknownOperatorText,
   WizardError,
   type Explained,
@@ -113,7 +115,10 @@ export function validateFlow(
 
   checkShape(flow, '');
 
-  const checkExpr = (expr: unknown, path: string): void => {
+  // Stops at the depth limit without a word: past it an evaluated field is
+  // reported by `checkOperators`, and `ui` is the host's JSON.
+  // ponytail: a function nested past the limit inside `ui` goes unreported.
+  const checkExpr = (expr: unknown, path: string, depth = 0): void => {
     if (typeof expr === 'function') {
       report('flow-not-serializable', path, [
         `${path} is a function`,
@@ -122,10 +127,10 @@ export function validateFlow(
       ]);
       return;
     }
-    if (expr === null || typeof expr !== 'object') return;
+    if (expr === null || typeof expr !== 'object' || depth >= MAX_EXPR_DEPTH) return;
     if (Array.isArray(expr)) {
       expr.forEach((child, i) => {
-        checkExpr(child, `${path}[${i}]`);
+        checkExpr(child, `${path}[${i}]`, depth + 1);
       });
       return;
     }
@@ -147,7 +152,7 @@ export function validateFlow(
         }
         continue;
       }
-      checkExpr(value, `${path}.${key}`);
+      checkExpr(value, `${path}.${key}`, depth + 1);
     }
   };
 
@@ -160,11 +165,18 @@ export function validateFlow(
   // operator present is followed rather than guessing which one runs. A
   // `$ref`'s `args` are data handed to the resolver, never evaluated, and are
   // not looked inside.
-  const checkOperators = (e: unknown, path: string): void => {
+  // Depth counts objects and lists alike, as the evaluator does, so this reports
+  // exactly the expressions it would refuse - and the walk itself cannot
+  // overflow the stack on a pasted or hostile document.
+  const checkOperators = (e: unknown, path: string, depth = 0): void => {
     if (e === null || typeof e !== 'object') return;
+    if (depth >= MAX_EXPR_DEPTH) {
+      report('expr-too-deep', path, tooDeepText);
+      return;
+    }
     if (Array.isArray(e)) {
       e.forEach((child, i) => {
-        checkOperators(child, `${path}[${i}]`);
+        checkOperators(child, `${path}[${i}]`, depth + 1);
       });
       return;
     }
@@ -173,7 +185,9 @@ export function validateFlow(
       report('expr-unknown-operator', path, unknownOperatorText(Object.keys(e)[0]));
     }
     for (const op of ops) {
-      if (op !== '$ref') checkOperators((e as Record<string, unknown>)[op], `${path}.${op}`);
+      if (op !== '$ref') {
+        checkOperators((e as Record<string, unknown>)[op], `${path}.${op}`, depth + 1);
+      }
     }
   };
 

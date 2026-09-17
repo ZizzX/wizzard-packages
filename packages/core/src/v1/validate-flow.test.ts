@@ -3,7 +3,8 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { defineFlow, step } from './define';
-import { evaluate } from './expr';
+import { MAX_EXPR_DEPTH } from './diagnostic';
+import { evaluate, type Expr } from './expr';
 import type { FlowDefinition } from './flow';
 import { assertFlow, validateFlow, type FlowProblem } from './validate-flow';
 
@@ -397,6 +398,14 @@ describe('validateFlow codes', () => {
       { id: 'f', steps: { a: { flow: 'leg', when: true, repeat: { over: [] } } } },
     ],
     'expr-unknown-operator': [{ id: 'f', steps: { a: { when: { $equals: [1, 1] } as never } } }],
+    'expr-too-deep': [
+      {
+        id: 'f',
+        steps: {
+          a: { when: JSON.parse('['.repeat(MAX_EXPR_DEPTH + 1) + ']'.repeat(MAX_EXPR_DEPTH + 1)) },
+        },
+      },
+    ],
   };
 
   for (const [code, [flow, registry]] of Object.entries(fixtures)) {
@@ -414,6 +423,44 @@ describe('validateFlow codes', () => {
       expect(existsSync(page), `${code} has no page`).toBe(true);
     });
   }
+});
+
+describe('validateFlow and a deeply nested expression', () => {
+  const nested = (levels: number): Expr => {
+    let e: Expr = true;
+    for (let i = 0; i < levels; i++) e = i % 3 === 2 ? [e] : { $not: e };
+    return e;
+  };
+  const flowWith = (when: Expr, ui?: unknown): FlowDefinition => ({
+    id: 'f',
+    steps: { a: { when, ...(ui === undefined ? {} : { ui }) } as never },
+  });
+
+  it('reports exactly the expressions the evaluator refuses', () => {
+    for (let levels = MAX_EXPR_DEPTH - 3; levels <= MAX_EXPR_DEPTH + 3; levels++) {
+      const when = nested(levels);
+      let refused = false;
+      try {
+        evaluate(when, { data: {}, ctx: {} });
+      } catch {
+        refused = true;
+      }
+      const codes = validateFlow(flowWith(when)).map((p) => p.code);
+      expect(codes, `${levels} levels`).toEqual(refused ? ['expr-too-deep'] : []);
+    }
+  });
+
+  it('returns a problem for a pasted document instead of overflowing the stack', () => {
+    const found = validateFlow(flowWith(nested(100_000)));
+    expect(found.map((p) => p.code)).toEqual(['expr-too-deep']);
+    expect(found[0]?.path.startsWith('steps.a.when')).toBe(true);
+  });
+
+  it('walks a deep ui without overflowing and without a problem', () => {
+    let ui: unknown = 'leaf';
+    for (let i = 0; i < 100_000; i++) ui = { child: ui };
+    expect(validateFlow(flowWith(true, ui))).toEqual([]);
+  });
 });
 
 describe('assertFlow', () => {

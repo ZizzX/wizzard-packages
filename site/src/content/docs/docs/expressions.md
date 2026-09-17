@@ -38,6 +38,13 @@ That is the entire language. There is no arithmetic, no string manipulation and 
 define a new operator - anything else is a `$ref` into code you control, which keeps the
 untrusted half of a definition small enough to reason about.
 
+An expression nests at most 256 levels, counting every object and every list on the way down:
+`{ $not: e }` is one level above `e`, and `{ $and: [e] }` two, the object and its list. Nothing
+written by hand or by a generator comes near that. The limit is there for a pasted or hostile
+document, which would otherwise overflow the call stack with a bare `RangeError`; past it,
+`evaluate` and `evaluateAsync` throw [`expr-too-deep`](../../errors/expr-too-deep/) and
+`validateFlow` reports the same code, for exactly the same expressions.
+
 ## The scope
 
 Paths read from three roots and nothing else:

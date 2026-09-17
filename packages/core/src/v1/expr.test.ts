@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { WizardError } from './diagnostic';
-import { evaluate, isSync, test as truthy, type Expr, type Scope } from './expr';
+import { MAX_EXPR_DEPTH, WizardError } from './diagnostic';
+import {
+  evaluate,
+  evaluateAsync,
+  isSync,
+  testAsync,
+  test as truthy,
+  type Expr,
+  type Scope,
+} from './expr';
 
 const scope: Scope = {
   data: {
@@ -133,5 +141,61 @@ describe('isSync', () => {
     expect(isSync({ $and: [true, { $or: [{ $ref: 'x' }] }] })).toBe(false);
     expect(isSync({ $eq: [{ $get: 'a' }, { $ref: 'x' }] })).toBe(false);
     expect(isSync({ $not: { $ref: 'x' } })).toBe(false);
+  });
+});
+
+describe('the depth limit', () => {
+  /** `levels` objects and lists deep, counted the way the limit counts them. */
+  const nots = (levels: number, leaf: Expr = true): Expr => {
+    let e = leaf;
+    for (let i = 0; i < levels; i++) e = { $not: e };
+    return e;
+  };
+  // Each `$and` is two levels, the object and its list.
+  const ands = (levels: number): Expr => {
+    let e: Expr = true;
+    for (let i = 0; i < levels / 2; i++) e = { $and: [e] };
+    return e;
+  };
+  const lists = (levels: number): Expr => {
+    let e: Expr = 1;
+    for (let i = 0; i < levels; i++) e = [e];
+    return e;
+  };
+  const tooDeep = { code: 'expr-too-deep' };
+
+  it('evaluates an expression exactly at the limit', async () => {
+    expect(evaluate(nots(MAX_EXPR_DEPTH), scope)).toBe(true);
+    expect(evaluate(ands(MAX_EXPR_DEPTH), scope)).toBe(true);
+    expect(evaluate(lists(MAX_EXPR_DEPTH), scope)).toEqual(lists(MAX_EXPR_DEPTH));
+    expect(isSync(nots(MAX_EXPR_DEPTH))).toBe(true);
+    const ref = { seats: async () => true };
+    await expect(
+      evaluateAsync(nots(MAX_EXPR_DEPTH - 1, { $ref: 'seats' }), scope, ref)
+    ).resolves.toBe(false);
+  });
+
+  it('refuses one level more with expr-too-deep, not a RangeError', async () => {
+    const over = MAX_EXPR_DEPTH + 1;
+    expect(() => evaluate(nots(over), scope)).toThrow(expect.objectContaining(tooDeep));
+    expect(() => evaluate(ands(over + 1), scope)).toThrow(expect.objectContaining(tooDeep));
+    expect(() => evaluate(lists(over), scope)).toThrow(expect.objectContaining(tooDeep));
+    await expect(evaluateAsync(nots(over), scope)).rejects.toMatchObject(tooDeep);
+  });
+
+  // The document a paste or a hostile backend produces: deep enough to overflow
+  // any stack the recursion used to run on.
+  it('refuses a pasted document far past the limit', async () => {
+    const huge = nots(100_000);
+    expect(() => evaluate(huge, scope)).toThrow(expect.objectContaining(tooDeep));
+    expect(isSync(huge)).toBe(false);
+    await expect(testAsync(huge, scope)).rejects.toMatchObject({
+      code: 'expr-too-deep',
+      op: 'evaluateAsync',
+    });
+    await expect(
+      evaluateAsync(nots(100_000, { $ref: 'x' }), scope, { x: () => true })
+    ).rejects.toMatchObject(tooDeep);
+    expect(() => evaluate(lists(100_000), scope)).toThrow(expect.objectContaining(tooDeep));
   });
 });
