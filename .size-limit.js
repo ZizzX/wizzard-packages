@@ -311,7 +311,14 @@ export default [
     // 320 kB document with a problem at every deep leaf used to exhaust 6 GB),
     // and an expression gets one `expr-too-deep` however many branches pass
     // the limit.
-    limit: '3.2 kB',
+    //
+    // 3.2 to 3.3 kB on 2026-09-17, measured 3261 B: the serializability walk
+    // covers every field of the flow - `validate`, `policy`, a host's own -
+    // not only `steps`, and a field pointing back at the flow is one cycle. It
+    // is one walk that knows a flow from a step, so a `$ref` or `$get` beside
+    // the `steps` of the root or of an inline sub-flow is read as host data
+    // rather than checked as a resolver or a path.
+    limit: '3.3 kB',
     gzip: true,
   },
 

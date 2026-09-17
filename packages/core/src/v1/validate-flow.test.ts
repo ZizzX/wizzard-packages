@@ -87,6 +87,62 @@ describe('validateFlow', () => {
     expect(problems(flow)[0]).toBe('steps.a.when: steps.a.when is a function');
   });
 
+  it('catches a function or a cycle in a field beside steps', () => {
+    const flow = {
+      id: 'f',
+      steps: { a: {} },
+      validate: { on: 'next', debounceMs: () => 0 },
+      meta: {} as Record<string, unknown>,
+    };
+    flow.meta.self = flow;
+    expect(problems(flow as unknown as FlowDefinition)).toEqual([
+      'validate.debounceMs: validate.debounceMs is a function',
+      'meta.self: meta.self contains itself',
+    ]);
+  });
+
+  it('reads a $ref or $get beside steps as the host data it is', () => {
+    const flow = {
+      id: 'f',
+      steps: { a: {} },
+      schema: { $ref: '#/definitions/user', items: { $get: 'user.name' } },
+    };
+    expect(problems(flow as unknown as FlowDefinition, {})).toEqual([]);
+  });
+
+  it('reads a $ref or $get beside the steps of an inline sub-flow as host data too', () => {
+    const flow = {
+      id: 'f',
+      steps: {
+        a: {
+          flow: {
+            id: 'leg',
+            steps: { s: { when: { $ref: 'isVip' } } },
+            schema: { $ref: '#/definitions/user', items: { $get: 'user.name' } },
+          },
+        },
+      },
+    };
+    expect(problems(flow as unknown as FlowDefinition, {})).toEqual([
+      'steps.a.flow.steps.s.when: no resolver is registered as "isVip"',
+    ]);
+  });
+
+  it('reports a reference back to the flow once, and an object used twice not at all', () => {
+    const shared = { label: 'x' };
+    const flow = {
+      id: 'f',
+      steps: { a: { ui: { root: {}, shared } }, b: { flow: {} } },
+      meta: shared,
+    };
+    flow.steps.a.ui.root = flow;
+    flow.steps.b.flow = flow;
+    expect(problems(flow as unknown as FlowDefinition)).toEqual([
+      'steps.a.ui.root: steps.a.ui.root contains itself',
+      'steps.b.flow: steps.b.flow contains itself',
+    ]);
+  });
+
   it('catches a clearOnLeave that is neither true nor a list of paths', () => {
     const withClear = (clearOnLeave: unknown): FlowDefinition => ({
       ...good,
