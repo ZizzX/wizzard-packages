@@ -288,7 +288,7 @@ export default [
     // against that sub-flow's steps - instead of the root alone.
     //
     // 2.7 to 2.85 kB the same day, measured 2830 B: `validateFlow` reports
-    // `expr-too-deep` for every branch the evaluator could refuse, counting
+    // `expr-too-deep` for an expression the evaluator could refuse, counting
     // objects and lists the same way, and both of its walks stop at the limit
     // rather than overflowing the stack on the document they exist to check.
     //
@@ -304,7 +304,14 @@ export default [
     // operands is not counted as a value of its own, as the evaluator never
     // walks it, so a list of literals at the limit is not reported while it
     // still evaluates. One byte under 3.1 kB is not a budget.
-    limit: '3.15 kB',
+    // 3.15 to 3.2 kB the same day, measured 3173 B: the serializability walk
+    // keeps one frame per open object with the index of its next child, so
+    // memory follows depth rather than width (a 500 000-item list used to
+    // exhaust a 64 MB heap), a reported path keeps its last 512 characters (a
+    // 320 kB document with a problem at every deep leaf used to exhaust 6 GB),
+    // and an expression gets one `expr-too-deep` however many branches pass
+    // the limit.
+    limit: '3.2 kB',
     gzip: true,
   },
 

@@ -495,6 +495,36 @@ describe('validateFlow and a deeply nested expression', () => {
     ]);
   });
 
+  it('reports one expr-too-deep for an expression with many branches past the limit', () => {
+    let when: Expr = Array.from({ length: 10_000 }, () => ({ $not: true }));
+    for (let i = 0; i < MAX_EXPR_DEPTH - 1; i++) when = [when];
+    expect(validateFlow(flowWith(when)).map((p) => p.code)).toEqual(['expr-too-deep']);
+  });
+
+  it('walks a wide list one child at a time', () => {
+    expect(validateFlow(flowWith(true, Array(500_000).fill(0)))).toEqual([]);
+  });
+
+  // Each problem's path is joined from the frames above it, so without a cap a
+  // deep document with a problem at every leaf costs depth times width.
+  it('keeps the end of a path deeper than its cap', () => {
+    let ui: unknown = Array.from({ length: 3 }, () => ({ $get: 'zz' }));
+    for (let i = 0; i < 20_000; i++) ui = [ui];
+    const found = validateFlow(flowWith(true, ui));
+    expect(found.map((p) => p.code)).toEqual(Array(3).fill('get-unknown-root'));
+    for (const p of found) {
+      expect(p.path.startsWith('...')).toBe(true);
+      expect(p.path.length).toBeLessThanOrEqual(515);
+      expect(p.path).toMatch(/\[0\]\[0\]\[\d\]$/);
+    }
+  });
+
+  it('does not walk into the value of a $get, which is never evaluated', () => {
+    let deep: unknown = { $bad: 1 };
+    for (let i = 0; i < 300; i++) deep = [deep];
+    expect(validateFlow(flowWith({ $get: deep } as never))).toEqual([]);
+  });
+
   it('reports a cycle in an expression once, not also as too deep', () => {
     const when: { $not?: unknown } = {};
     when.$not = when;

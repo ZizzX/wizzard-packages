@@ -44,8 +44,8 @@ written by hand or by a generator comes near that. The limit is there for a past
 document, which would otherwise overflow the call stack with a bare `RangeError`; past it,
 `evaluate` and `evaluateAsync` throw [`expr-too-deep`](../../errors/expr-too-deep/) and
 `validateFlow` reports the same code. The evaluator throws only for a branch it reaches, since
-`$and` and `$or` stop early; `validateFlow` reads the structure and reports every branch past the
-limit, whatever the data.
+`$and` and `$or` stop early; `validateFlow` reads the structure and reports an expression past the
+limit whatever the data.
 
 ## The scope
 

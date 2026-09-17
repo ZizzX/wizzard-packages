@@ -4,9 +4,8 @@ description: An expression nests deeper than the 256 levels the evaluator walks.
 ---
 
 ```
-[wizzard] an expression nests deeper than 256 levels. Each level is evaluated by a call on the
-stack, and past the limit it would overflow instead of failing with a reason. Flatten it: $and
-and $or take any number of operands, so a long chain of them needs only one level.
+[wizzard] an expression nests deeper than 256 levels. Each level is a call on the stack, and a
+deeper one would overflow it. Flatten it: $and and $or take any number of operands.
 …/errors/expr-too-deep
 ```
 
@@ -26,14 +25,16 @@ Where it surfaces is the same as for
 `when` it stops the navigation, and in `repeat.over` or `input` the engine catches it and reads the
 group as having no items, or the input as `undefined`.
 
-`validateFlow` counts the same way and returns a problem with `code: 'expr-too-deep'` and the
-`path` of the first object or list past the limit. It does not look further down that branch.
+`validateFlow` counts the same way and returns one problem with `code: 'expr-too-deep'` for each
+expression past the limit, with the `path` of the first object or list it found there. The fix is
+the same for every branch, so a document with ten thousand of them gets one problem, not ten
+thousand. A path longer than 512 characters keeps its end and starts with `...`.
 
 The evaluator refuses a branch only when it reaches it. `$and` stops at the first operand that is
 false and `$or` at the first that is true, so a branch past the limit behind one of those is never
 walked, and the same expression throws for some data and not for other. `validateFlow` reads the
-structure rather than the data and reports every such branch, which is the reason to run it on a
-flow that arrives from outside. `expr-unknown-operator` behaves the same way. The `ui` of a step is not an expression and is
+structure rather than the data and reports the expression whichever branch the data would take,
+which is the reason to run it on a flow that arrives from outside. `expr-unknown-operator` behaves the same way. The `ui` of a step is not an expression and is
 never reported, however deep; a function inside it is still found at any depth, as
 [`flow-not-serializable`](../flow-not-serializable/).
 
