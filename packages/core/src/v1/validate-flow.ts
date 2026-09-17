@@ -195,8 +195,10 @@ export function validateFlow(
   // operator present is followed rather than guessing which one runs. A
   // `$ref`'s `args` are data handed to the resolver, never evaluated, and are
   // not looked inside.
-  // Depth counts objects and lists alike, as the evaluator does, so this reports
-  // exactly the expressions it would refuse - and the walk itself cannot
+  // Depth counts objects and lists alike, as the evaluator does. The evaluator
+  // refuses a branch only when it reaches it - `$and` and `$or` short-circuit,
+  // as they do for an unknown operator - so this reports every branch it could
+  // refuse, before the data decides which ones run. The walk itself cannot
   // overflow the stack on a pasted or hostile document.
   const checkOperators = (e: unknown, path: string, depth = 0): void => {
     if (e === null || typeof e !== 'object') return;

@@ -288,7 +288,7 @@ export default [
     // against that sub-flow's steps - instead of the root alone.
     //
     // 2.7 to 2.85 kB the same day, measured 2830 B: `validateFlow` reports
-    // `expr-too-deep` for exactly the expressions the evaluator refuses, counting
+    // `expr-too-deep` for every branch the evaluator could refuse, counting
     // objects and lists the same way, and both of its walks stop at the limit
     // rather than overflowing the stack on the document they exist to check.
     //

@@ -436,7 +436,7 @@ describe('validateFlow and a deeply nested expression', () => {
     steps: { a: { when, ...(ui === undefined ? {} : { ui }) } as never },
   });
 
-  it('reports exactly the expressions the evaluator refuses', () => {
+  it('reports where the evaluator refuses, counting levels the same way', () => {
     for (let levels = MAX_EXPR_DEPTH - 3; levels <= MAX_EXPR_DEPTH + 3; levels++) {
       const when = nested(levels);
       let refused = false;

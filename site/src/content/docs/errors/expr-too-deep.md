@@ -24,8 +24,13 @@ Where it surfaces is the same as for
 group as having no items, or the input as `undefined`.
 
 `validateFlow` counts the same way and returns a problem with `code: 'expr-too-deep'` and the
-`path` of the first object or list past the limit, for exactly the expressions the evaluator would
-refuse. It does not look further down that branch. The `ui` of a step is not an expression and is
+`path` of the first object or list past the limit. It does not look further down that branch.
+
+The evaluator refuses a branch only when it reaches it. `$and` stops at the first operand that is
+false and `$or` at the first that is true, so a branch past the limit behind one of those is never
+walked, and the same expression throws for some data and not for other. `validateFlow` reads the
+structure rather than the data and reports every such branch, which is the reason to run it on a
+flow that arrives from outside. `expr-unknown-operator` behaves the same way. The `ui` of a step is not an expression and is
 never reported, however deep; a function inside it is still found at any depth, as
 [`flow-not-serializable`](../flow-not-serializable/).
 
