@@ -101,6 +101,15 @@ describe('validateFlow', () => {
     ]);
   });
 
+  it('reads a $ref or $get beside steps as the host data it is', () => {
+    const flow = {
+      id: 'f',
+      steps: { a: {} },
+      schema: { $ref: '#/definitions/user', items: { $get: 'user.name' } },
+    };
+    expect(problems(flow as unknown as FlowDefinition, {})).toEqual([]);
+  });
+
   it('catches a clearOnLeave that is neither true nor a list of paths', () => {
     const withClear = (clearOnLeave: unknown): FlowDefinition => ({
       ...good,

@@ -139,7 +139,7 @@ export function validateFlow(
     return parent ? `...${path.slice(-MAX_PATH)}` : path;
   };
   const inside = new Set<object>();
-  const checkExpr = (root: unknown, at: string): void => {
+  const checkExpr = (root: unknown, at: string, refs = true): void => {
     const stack: Frame[] = [];
     const visit = (value: unknown, part: string, parent: Frame | undefined): void => {
       if (typeof value === 'function') {
@@ -181,7 +181,7 @@ export function validateFlow(
       }
       const key = keys[next] as string;
       const child = (value as Record<string, unknown>)[key];
-      if (key === '$get' && typeof child === 'string') {
+      if (refs && key === '$get' && typeof child === 'string') {
         const root = child.split('.')[0] ?? '';
         if (!ROOTS.includes(root)) {
           report('get-unknown-root', pathOf(top[2], top[1]), [
@@ -190,7 +190,7 @@ export function validateFlow(
             `Start the path with the root it belongs to, such as data.${child}`,
           ]);
         }
-      } else if (key === '$ref' && typeof child === 'string') {
+      } else if (refs && key === '$ref' && typeof child === 'string') {
         if (registry && !(child in registry)) {
           report('resolver-not-registered', pathOf(top[2], top[1]), notRegisteredText(child));
         }
@@ -201,11 +201,13 @@ export function validateFlow(
   };
 
   // Every field of the flow, not only its steps: `validate`, `policy` or a
-  // host's own field is stored and sent with them. The flow itself is on
+  // host's own field is stored and sent with them. Beside `steps` nothing is
+  // evaluated, so a `$ref` or `$get` there is the host's data - a JSON Schema's
+  // `$ref`, say - and only a function or a cycle is looked for. The flow itself is on
   // `inside`, so a field that points back at it is one cycle, not a second walk.
   inside.add(flow);
   for (const [key, value] of Object.entries(flow)) {
-    if (key !== 'steps') checkExpr(value, key);
+    if (key !== 'steps') checkExpr(value, key, false);
     else for (const [id, step_] of Object.entries(flow.steps)) checkExpr(step_, `steps.${id}`);
   }
   inside.delete(flow);
