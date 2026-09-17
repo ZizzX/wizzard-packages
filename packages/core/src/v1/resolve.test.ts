@@ -125,49 +125,65 @@ describe('reachable', () => {
 describe('a when that throws', () => {
   // `$and: null` is what `validateFlow` reports as `expr-invalid-operand`; a
   // flow that was never validated reaches the evaluator with it.
-  const broken = (id: string): FlowDefinition => ({
+  const broken = (when: unknown = { $and: null }): FlowDefinition => ({
     id: 'f',
-    order: ['a', id, 'z'],
-    steps: { a: {}, [id]: { when: { $and: null } as never }, z: {} },
+    order: ['a', 'b', 'z'],
+    steps: { a: {}, b: { when: when as never }, z: {} },
   });
   const scope: Scope = { data: {}, ctx: {} };
-  const quiet = (run: () => unknown): unknown[] => {
+  const quiet = <T>(run: () => T): [T, string[]] => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     try {
-      run();
-      return error.mock.calls[0] ?? [];
+      const out = run();
+      return [out, error.mock.calls.map((call) => String(call[0]))];
     } finally {
       error.mockRestore();
     }
   };
 
   it('leaves the step out instead of throwing, and says so once', () => {
-    const flow = broken('b1');
-    const [message] = quiet(() => {
-      expect(reachable(flow, scope)).toEqual(['a', 'z']);
-      expect(reachable(flow, scope)).toEqual(['a', 'z']);
-    }) as [string];
-    expect(message).toContain('[wizzard] the when of step "b1" threw');
-    expect(message).toContain('errors/when-threw');
+    const flow = broken();
+    const [active, said] = quiet(() => {
+      reachable(flow, scope);
+      return reachable(flow, scope);
+    });
+    expect(active).toEqual(['a', 'z']);
+    expect(said).toHaveLength(1);
+    expect(said[0]).toContain('[wizzard] the when of step "b" threw, so it is read as false');
+    expect(said[0]).toContain('errors/when-threw');
+  });
+
+  it('says it again for another flow, and for another error in the same step', () => {
+    const [, said] = quiet(() => {
+      reachable(broken(), scope);
+      // A second wizard with the same step ids is not a repeat of the first.
+      reachable(broken(), scope);
+      // Nor is a different failure in the same place, which a fix can uncover.
+      reachable(broken({ $nope: 1 }), scope);
+    });
+    expect(said).toHaveLength(3);
   });
 
   it('does not stop the moves around it', () => {
-    const flow = broken('b2');
+    const flow = broken();
     quiet(() => {
       expect(resolveNext(flow, at('a'), scope)).toBe('z');
       expect(resolveBack(flow, at('z'), scope)).toBe('a');
     });
   });
 
-  it("is read the same way in a transition's when", () => {
+  it('names the transition it skipped, rather than a step', () => {
     const flow: FlowDefinition = {
       id: 'f',
-      order: ['a', 'b3'],
-      steps: { a: { on: { next: [{ to: 'b3', when: { $and: null } as never }, 'b3'] } }, b3: {} },
+      order: ['a', 'b'],
+      steps: {
+        a: { on: { next: [{ to: 'b', when: { $and: null } as never }, 'b'] } },
+        b: {},
+      },
     };
-    quiet(() => {
-      expect(resolveNext(flow, at('a'), scope)).toBe('b3');
-    });
+    const [to, said] = quiet(() => resolveNext(flow, at('a'), scope));
+    expect(to).toBe('b');
+    expect(said[0]).toContain('the when of the transition of step "a" to "b" threw');
   });
 });
 

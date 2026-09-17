@@ -167,9 +167,9 @@ export default [
   // 3.65 to 3.9 kB on 2026-09-17, measured 3856 B: the evaluator refuses an operand
   // of the wrong shape with `expr-invalid-operand` (see `core-v1`), and is bundled
   // into this entry.
-  // 3.9 to 4.1 kB on 2026-09-17, measured 4073 B: a `when` that throws is read as
+  // 3.9 to 4.15 kB on 2026-09-17, measured 4118 B: a `when` that throws is read as
   // false and logged as `when-threw` (see `core-v1`); reachability is bundled here.
-  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '4.1 kB', gzip: true },
+  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '4.15 kB', gzip: true },
 
   // The recorded-session checker. Its own entry because replay is a devtools and
   // documentation concern: an application that only runs a wizard never needs to

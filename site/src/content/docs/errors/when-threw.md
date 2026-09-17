@@ -1,17 +1,24 @@
 ---
 title: when-threw
-description: A step's when threw while the engine worked out which steps are reachable, so the step is read as not reachable.
+description: A step's when threw while the engine worked out which steps are reachable, so it is read as false and the step is left out.
 ---
 
 ```
-[wizzard] the when of step "<id>" threw, so it is read as not reachable. A when says whether a
-step is there, and one that throws would otherwise stop every move. Fix the expression, or run
+[wizzard] the when of step "<id>" threw, so it is read as false. A when says whether a step is
+there, and one that throws would otherwise stop every move. Fix the expression, or run
 validateFlow on the flow before the wizard is created. …/errors/when-threw
 ```
 
-Logged to `console.error` with the error beside it, once for each step or transition, and nothing
-is thrown. The step is left out of `activeSteps`, of `progress` and of the breadcrumbs, exactly as
-a `when` that evaluated to `false` would be.
+Logged to `console.error` with the error beside it, and nothing is thrown. The step is left out of
+`active`, of `progress` and of the breadcrumbs, exactly as a `when` that evaluated to `false`
+would be. A transition's `when` that throws is skipped, and the line names the transition and where
+it leads.
+
+One line for each flow, place and error: reachability runs on every commit, so a keystroke would
+otherwise print it again. A second wizard, a flow from `patchFlow` and another request each report
+their own, and a later, different error in the same step is not swallowed as a repeat. A flow with
+repeat groups can print it twice, since the group traversal is its own entry with its own copy of
+the engine.
 
 Reachability is not one step's business. The engine reads the `when` of every step in `order` on
 every `start()`, `next()`, `back()` and `go()`, and again on every snapshot the host reads. One
@@ -26,6 +33,11 @@ This is how the engine already reads the other expressions it evaluates outside 
 A guard is the opposite case and is unchanged: `guards.enter` and `guards.exit` decide one move,
 the caller is waiting for it, and an error there rejects that move rather than being read as
 `false`.
+
+`go()` to such a step answers `nav-not-reachable`, as it does for a step whose `when` is false, and
+`force` does not override it. A flow where every step's `when` throws starts and finishes at once -
+`start()` answers `ok` with `status: 'done'` and no active steps - which is what a flow with no
+reachable step does however its `when`s got there. The console line is what tells the two apart.
 
 The causes are the ones `validateFlow` reports before anything runs:
 [`expr-invalid-operand`](../expr-invalid-operand/),
