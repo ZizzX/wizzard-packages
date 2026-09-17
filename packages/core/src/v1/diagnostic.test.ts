@@ -1,3 +1,4 @@
+import fc from 'fast-check';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
@@ -5,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { WizardError } from './diagnostic';
 import { evaluate, evaluateAsync, type Expr, type Scope } from './expr';
 import { createWizard } from './store';
-import { assertFlow } from './validate-flow';
+import { assertFlow, validateFlow } from './validate-flow';
 
 import type { FlowDefinition } from './flow';
 
@@ -95,6 +96,117 @@ describe('resolver-is-async', () => {
     const error = thrown(() => evaluate({ $ref: 'lookup' }, scope, { lookup: async () => true }));
     keepsTheContract(error, 'resolver-is-async', 'evaluate');
     expect(error.fix).toContain('lookup');
+  });
+});
+
+describe('expr-invalid-operand', () => {
+  // The shapes the expressions guide writes, stated here on their own so the
+  // evaluators and validateFlow are held to the guide rather than to each other.
+  const OPERATORS = [
+    '$get',
+    '$ref',
+    '$not',
+    '$and',
+    '$or',
+    '$eq',
+    '$ne',
+    '$gt',
+    '$gte',
+    '$lt',
+    '$lte',
+    '$in',
+    '$empty',
+  ];
+  const takes = (op: string, v: unknown): boolean =>
+    op === '$get' || op === '$ref'
+      ? typeof v === 'string'
+      : op === '$and' || op === '$or'
+        ? Array.isArray(v)
+        : op === '$not' || op === '$empty' || (Array.isArray(v) && v.length === 2);
+
+  // An operand is a literal, a resolver call, or a list of those. A `$ref`
+  // resolves asynchronously, so a list holding one sends `evaluateAsync` down
+  // its asynchronous branches.
+  const item = fc.oneof(
+    fc.constantFrom(null, true, 'data.x', ''),
+    fc.integer(),
+    fc.constant({ $ref: 'r' })
+  );
+  const operand = fc.oneof(item, fc.array(item, { maxLength: 4 }), fc.constant(undefined));
+  const registry = { r: async () => 1 };
+
+  const code = (run: () => unknown): string | undefined => {
+    try {
+      run();
+    } catch (error) {
+      return (error as WizardError).code;
+    }
+    return undefined;
+  };
+  const codeAsync = async (run: () => Promise<unknown>): Promise<string | undefined> => {
+    try {
+      await run();
+    } catch (error) {
+      return (error as WizardError).code;
+    }
+    return undefined;
+  };
+
+  it('is thrown by both evaluators and reported by validateFlow for exactly the same operands', async () => {
+    await fc.assert(
+      fc.asyncProperty(fc.constantFrom(...OPERATORS), operand, async (op, v) => {
+        const e = { [op]: v } as unknown as Expr;
+        const invalid = !takes(op, v);
+        expect(code(() => evaluate(e, scope, registry as never)) === 'expr-invalid-operand').toBe(
+          invalid
+        );
+        expect(
+          (await codeAsync(() => evaluateAsync(e, scope, registry))) === 'expr-invalid-operand'
+        ).toBe(invalid);
+        const reported = validateFlow({ id: 'f', steps: { a: { when: e } } })
+          .filter((p) => p.code === 'expr-invalid-operand')
+          .map((p) => p.path);
+        expect(reported).toEqual(invalid ? [`steps.a.when.${op}`] : []);
+      })
+    );
+  });
+
+  // Each operator with the one operand shape it cannot read.
+  const bad: [Expr, string][] = [
+    [{ $and: null }, '$and takes a list, not null'],
+    [{ $or: 'abc' }, '$or takes a list, not a string'],
+    [{ $eq: null }, '$eq takes a list of two operands, not null'],
+    [{ $in: [1] }, '$in takes a list of two operands, not a list of 1'],
+    [{ $get: 123 }, '$get takes a string, not a number'],
+    [{ $ref: {} }, '$ref takes a string, not an object'],
+  ] as unknown as [Expr, string][];
+
+  it('is thrown by evaluate for each operator, instead of a TypeError', () => {
+    for (const [e, what] of bad) {
+      const error = thrown(() => evaluate(e, scope, {}));
+      keepsTheContract(error, 'expr-invalid-operand', 'evaluate');
+      expect(error.message).toContain(`[wizzard] ${what}. `);
+    }
+  });
+
+  it('is thrown by evaluateAsync where it does not delegate', async () => {
+    const pairs = [{ $eq: [{ $ref: 'r' }] }, { $in: [{ $ref: 'r' }, 1, 2] }];
+    for (const e of [{ $and: null }, { $or: 1 }, { $ref: 5 }, ...pairs] as unknown as Expr[]) {
+      keepsTheContract(
+        await rejected(() => evaluateAsync(e, scope, {})),
+        'expr-invalid-operand',
+        'evaluateAsync'
+      );
+    }
+  });
+
+  it('is reported by evaluate when evaluateAsync delegates', async () => {
+    const e = { $eq: 'ab' } as unknown as Expr;
+    keepsTheContract(
+      await rejected(() => evaluateAsync(e, scope)),
+      'expr-invalid-operand',
+      'evaluate'
+    );
   });
 });
 

@@ -128,6 +128,29 @@ describe('test', () => {
 });
 
 describe('isSync', () => {
+  it("reads the operator's operand, not the object's first value", () => {
+    expect(isSync({ x: 1, $eq: [1, 1] } as unknown as Expr)).toBe(true);
+    expect(isSync({ x: [], $eq: [{ $ref: 'r' }, 1] } as unknown as Expr)).toBe(false);
+  });
+
+  it('finds a $ref under an object with no operator, at any value', () => {
+    expect(isSync({ $bad: { $ref: 'r' } } as unknown as Expr)).toBe(false);
+    expect(isSync({ $bad: [{ $ref: 'r' }] } as unknown as Expr)).toBe(false);
+    expect(isSync({ $bad: { $eq: [1, 1] } } as unknown as Expr)).toBe(true);
+  });
+
+  it('reads an object with two operators by the one the evaluator picks', async () => {
+    const e = { $and: [{ $ref: 'r' }], $empty: null } as unknown as Expr;
+    expect(isSync(e)).toBe(false);
+    await expect(testAsync(e, scope, { r: async () => true })).resolves.toBe(true);
+  });
+
+  it('does not throw on an operand of the wrong shape, which evaluate refuses', () => {
+    for (const e of [{ $and: null }, { $or: 'abc' }, { $eq: null }, { $not: null }]) {
+      expect(() => isSync(e as unknown as Expr)).not.toThrow();
+    }
+  });
+
   it('accepts a flow with no $ref', () => {
     expect(isSync({ $and: [{ $eq: [{ $get: 'data.a' }, 1] }, { $not: { $empty: 'x' } }] })).toBe(
       true

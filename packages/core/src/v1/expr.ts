@@ -1,4 +1,5 @@
 import {
+  invalidOperandText,
   MAX_EXPR_DEPTH,
   notRegistered,
   tooDeepText,
@@ -59,6 +60,31 @@ export type Registry = Readonly<Record<string, Resolver>>;
 /** An expression object whose first key is not an operator. Both evaluators end in it. */
 const unknownOperator = (e: object, op: string): WizardError =>
   new WizardError('expr-unknown-operator', op, ...unknownOperatorText(Object.keys(e)[0]));
+
+/** The operand of `op`, refused with `expr-invalid-operand` when it is not a shape the evaluator reads. */
+const operand = <T>(e: object, op: string, where: string): T => {
+  const v = (e as Record<string, unknown>)[op];
+  const text = invalidOperandText(op, v);
+  if (text) throw new WizardError('expr-invalid-operand', where, ...text);
+  return v as T;
+};
+
+type Pair = readonly [Expr, Expr];
+
+/** The operators that take a pair, in the order both evaluators test them. */
+const PAIRS = ['$eq', '$ne', '$gt', '$gte', '$lt', '$lte', '$in'];
+
+/** A pair operator applied to its evaluated operands, the same for both evaluators. */
+function compare(op: string, a: unknown, b: unknown): boolean {
+  if (op === '$eq') return a === b;
+  if (op === '$ne') return a !== b;
+  if (op === '$gt') return (a as number) > (b as number);
+  if (op === '$gte') return (a as number) >= (b as number);
+  if (op === '$lt') return (a as number) < (b as number);
+  if (op === '$lte') return (a as number) <= (b as number);
+  if (typeof b === 'string') return b.includes(String(a));
+  return Array.isArray(b) && b.includes(a);
+}
 
 /** Past `MAX_EXPR_DEPTH`, counted in objects and lists as `validateFlow` counts them. */
 const tooDeep = (op: string): WizardError => new WizardError('expr-too-deep', op, ...tooDeepText);
@@ -123,36 +149,31 @@ function run(e: Expr, scope: Scope, registry: Registry | undefined, depth: numbe
   if (!isNode(e)) return e.map(ev);
   const ev2 = (x: Expr): unknown => run(x, scope, registry, depth + 2);
 
-  if ('$get' in e) return read(e.$get, scope);
+  if ('$get' in e) return read(operand<string>(e, '$get', 'evaluate'), scope);
   if ('$not' in e) return !ev(e.$not);
-  if ('$and' in e) return e.$and.every(ev2);
-  if ('$or' in e) return e.$or.some(ev2);
+  if ('$and' in e) return operand<readonly Expr[]>(e, '$and', 'evaluate').every(ev2);
+  if ('$or' in e) return operand<readonly Expr[]>(e, '$or', 'evaluate').some(ev2);
   if ('$empty' in e) return empty(ev(e.$empty));
-  if ('$eq' in e) return ev2(e.$eq[0]) === ev2(e.$eq[1]);
-  if ('$ne' in e) return ev2(e.$ne[0]) !== ev2(e.$ne[1]);
-  if ('$gt' in e) return (ev2(e.$gt[0]) as number) > (ev2(e.$gt[1]) as number);
-  if ('$gte' in e) return (ev2(e.$gte[0]) as number) >= (ev2(e.$gte[1]) as number);
-  if ('$lt' in e) return (ev2(e.$lt[0]) as number) < (ev2(e.$lt[1]) as number);
-  if ('$lte' in e) return (ev2(e.$lte[0]) as number) <= (ev2(e.$lte[1]) as number);
 
-  if ('$in' in e) {
-    const needle = ev2(e.$in[0]);
-    const hay = ev2(e.$in[1]);
-    if (typeof hay === 'string') return hay.includes(String(needle));
-    return Array.isArray(hay) && hay.includes(needle);
+  const op = PAIRS.find((k) => k in e);
+  if (op) {
+    const [a, b] = operand<Pair>(e, op, 'evaluate');
+    const left = ev2(a);
+    return compare(op, left, ev2(b));
   }
 
   if ('$ref' in e) {
-    const fn = registry?.[e.$ref];
-    if (!fn) throw notRegistered(e.$ref, 'evaluate');
+    const name = operand<string>(e, '$ref', 'evaluate');
+    const fn = registry?.[name];
+    if (!fn) throw notRegistered(name, 'evaluate');
     const out = fn(e.args, scope);
     if (out instanceof Promise) {
       throw new WizardError(
         'resolver-is-async',
         'evaluate',
-        `resolver "${e.$ref}" returned a promise`,
+        `resolver "${name}" returned a promise`,
         'This expression is evaluated synchronously - a when, a transition guard or a repeat source - and cannot wait for it',
-        `Make ${e.$ref} synchronous, or move the asynchronous work into the step's validate or load`
+        `Make ${name} synchronous, or move the asynchronous work into the step's validate or load`
       );
     }
     return out;
@@ -182,13 +203,21 @@ function sync(e: Expr, depth: number): boolean {
   if (!isNode(e)) return e.every((x) => sync(x, depth + 1));
   if ('$ref' in e) return false;
   if ('$get' in e) return true;
-  const each = (x: Expr): boolean => sync(x, depth + 2);
   if ('$not' in e) return sync(e.$not, depth + 1);
-  if ('$and' in e) return e.$and.every(each);
-  if ('$or' in e) return e.$or.every(each);
+  // An operand the evaluator cannot read counts as synchronous: `evaluate` is
+  // then the one that refuses it. An object with no operator is read through
+  // all its values, so a `$ref` inside it still takes the asynchronous path.
+  // The operators are tried in the evaluator's order, so an object carrying
+  // two is read by the one `evaluate` would pick.
+  const list = (v: unknown): boolean =>
+    !Array.isArray(v) || v.every((x: Expr) => sync(x, depth + 2));
+  if ('$and' in e) return list(e.$and);
+  if ('$or' in e) return list(e.$or);
   if ('$empty' in e) return sync(e.$empty, depth + 1);
-  const operands = Object.values(e as Record<string, readonly Expr[]>)[0];
-  return operands === undefined || operands.every(each);
+  const op = PAIRS.find((k) => k in e);
+  return op
+    ? list((e as Record<string, unknown>)[op])
+    : Object.values(e).every((v) => (Array.isArray(v) ? list(v) : sync(v as Expr, depth + 1)));
 }
 
 /**
@@ -219,19 +248,22 @@ async function runAsync(
   const ev2 = (x: Expr): Promise<unknown> => runAsync(x, scope, registry, depth + 2);
 
   if ('$ref' in e) {
-    const fn = registry?.[e.$ref];
-    if (!fn) throw notRegistered(e.$ref, 'evaluateAsync');
+    const name = operand<string>(e, '$ref', 'evaluateAsync');
+    const fn = registry?.[name];
+    if (!fn) throw notRegistered(name, 'evaluateAsync');
     return await fn(e.args, scope);
   }
 
   // Short-circuiting matters more here than anywhere else: a `$ref` behind a
   // false `$and` branch is a request that must not be made.
   if ('$and' in e) {
-    for (const x of e.$and) if (!(await ev2(x))) return false;
+    for (const x of operand<readonly Expr[]>(e, '$and', 'evaluateAsync'))
+      if (!(await ev2(x))) return false;
     return true;
   }
   if ('$or' in e) {
-    for (const x of e.$or) if (await ev2(x)) return true;
+    for (const x of operand<readonly Expr[]>(e, '$or', 'evaluateAsync'))
+      if (await ev2(x)) return true;
     return false;
   }
   if ('$not' in e) return !(await ev(e.$not));
@@ -240,37 +272,13 @@ async function runAsync(
   if ('$get' in e) return read(e.$get, scope);
   if ('$empty' in e) return empty(await ev(e.$empty));
 
-  const pair = async (p: readonly [Expr, Expr]): Promise<[unknown, unknown]> =>
-    (await Promise.all([ev2(p[0]), ev2(p[1])])) as [unknown, unknown];
-
-  if ('$eq' in e) {
-    const [a, b] = await pair(e.$eq);
-    return a === b;
-  }
-  if ('$ne' in e) {
-    const [a, b] = await pair(e.$ne);
-    return a !== b;
-  }
-  if ('$gt' in e) {
-    const [a, b] = await pair(e.$gt);
-    return (a as number) > (b as number);
-  }
-  if ('$gte' in e) {
-    const [a, b] = await pair(e.$gte);
-    return (a as number) >= (b as number);
-  }
-  if ('$lt' in e) {
-    const [a, b] = await pair(e.$lt);
-    return (a as number) < (b as number);
-  }
-  if ('$lte' in e) {
-    const [a, b] = await pair(e.$lte);
-    return (a as number) <= (b as number);
-  }
-  if ('$in' in e) {
-    const [needle, hay] = await pair(e.$in);
-    if (typeof hay === 'string') return hay.includes(String(needle));
-    return Array.isArray(hay) && hay.includes(needle);
+  // `sync` passes a list of any length that holds a `$ref`, so the pair is
+  // checked here as `evaluate` checks it.
+  const op = PAIRS.find((k) => k in e);
+  if (op) {
+    const [a, b] = operand<Pair>(e, op, 'evaluateAsync');
+    const [left, right] = await Promise.all([ev2(a), ev2(b)]);
+    return compare(op, left, right);
   }
 
   throw unknownOperator(e, 'evaluateAsync');

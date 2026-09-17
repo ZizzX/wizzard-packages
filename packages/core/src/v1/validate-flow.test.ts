@@ -336,6 +336,48 @@ describe('validateFlow, on a repeat group', () => {
   });
 });
 
+describe('validateFlow, on an operand the evaluator cannot read', () => {
+  const at = (when: unknown): string[] =>
+    validateFlow({ id: 'f', steps: { a: { when: when as never } } })
+      .filter((p) => p.code === 'expr-invalid-operand')
+      .map(what);
+
+  it('reports the operand, in the same words evaluate throws', () => {
+    expect(at({ $and: [true, { $eq: null }, { $get: 7 }, { $ref: [] }] })).toEqual([
+      'steps.a.when.$and[1].$eq: $eq takes a list of two operands, not null',
+      'steps.a.when.$and[2].$get: $get takes a string, not a number',
+      'steps.a.when.$and[3].$ref: $ref takes a string, not a list of 0',
+    ]);
+  });
+
+  it('does not read what an operand of the wrong shape holds', () => {
+    const problems = (when: unknown): string[] =>
+      validateFlow({ id: 'f', steps: { a: { when: when as never } } }, {}).map((p) => p.code);
+    expect(problems({ $eq: [{ $ref: 'ghost' }] })).toEqual(['expr-invalid-operand']);
+    expect(problems({ $get: { $ref: 'ghost' } })).toEqual(['expr-invalid-operand']);
+    // A function there is still a function the flow cannot carry.
+    expect(problems({ $get: { fn: () => 1 } })).toEqual([
+      'flow-not-serializable',
+      'expr-invalid-operand',
+    ]);
+    expect(problems({ $eq: [{ $ref: 'ghost' }, 1] })).toEqual(['resolver-not-registered']);
+  });
+
+  it('passes every operand shape the expressions guide writes', () => {
+    expect(
+      at({
+        $or: [
+          { $not: null },
+          { $empty: [] },
+          { $in: ['a', { $get: 'data.x' }] },
+          { $ref: 'r', args: { any: 1 } },
+          { $lte: [1, 2] },
+        ],
+      })
+    ).toEqual([]);
+  });
+});
+
 describe('validateFlow, on an operator the evaluator does not have', () => {
   const at = (steps: FlowDefinition['steps']): string[] =>
     validateFlow({ id: 'f', steps })
@@ -454,6 +496,7 @@ describe('validateFlow codes', () => {
       { id: 'f', steps: { a: { flow: 'leg', when: true, repeat: { over: [] } } } },
     ],
     'expr-unknown-operator': [{ id: 'f', steps: { a: { when: { $equals: [1, 1] } as never } } }],
+    'expr-invalid-operand': [{ id: 'f', steps: { a: { when: { $and: null } as never } } }],
     'expr-too-deep': [
       {
         id: 'f',
@@ -578,7 +621,9 @@ describe('validateFlow and a deeply nested expression', () => {
   it('does not walk into the value of a $get, which is never evaluated', () => {
     let deep: unknown = { $bad: 1 };
     for (let i = 0; i < 300; i++) deep = [deep];
-    expect(validateFlow(flowWith({ $get: deep } as never))).toEqual([]);
+    expect(validateFlow(flowWith({ $get: deep } as never)).map((p) => p.code)).toEqual([
+      'expr-invalid-operand',
+    ]);
   });
 
   it('reports a cycle in an expression once, not also as too deep', () => {

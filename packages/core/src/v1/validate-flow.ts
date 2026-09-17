@@ -1,5 +1,6 @@
 import {
   explain,
+  invalidOperandText,
   MAX_EXPR_DEPTH,
   notRegisteredText,
   pageFor,
@@ -209,6 +210,10 @@ export function validateFlow(
         report('resolver-not-registered', pathOf(parent, part), notRegisteredText(child));
       }
     } else {
+      // An operand the evaluator refuses for its shape is data from here down:
+      // it stops at the shape and never reads what the operand holds, so a
+      // `$ref` inside one is not a resolver it would look up.
+      const inExpr = role === Role.Expr || role === Role.Step;
       visit(
         child,
         parent ? `.${key}` : key,
@@ -219,11 +224,13 @@ export function validateFlow(
             : Role.Data
           : role === Role.Steps
             ? Role.Step
-            : role === Role.Step
-              ? key === 'flow'
-                ? Role.Flow
-                : Role.Expr
-              : role
+            : inExpr && OPERATORS.includes(key) && invalidOperandText(key, child)
+              ? Role.Data
+              : role === Role.Step
+                ? key === 'flow'
+                  ? Role.Flow
+                  : Role.Expr
+                : role
       );
     }
   }
@@ -267,6 +274,11 @@ export function validateFlow(
       }
       for (const op of ops) {
         const value = (e as Record<string, unknown>)[op];
+        const invalid = invalidOperandText(op, value);
+        if (invalid) {
+          report('expr-invalid-operand', `${path}.${op}`, invalid);
+          continue;
+        }
         // An operator's list of operands is never walked as a value, only its
         // items are, two levels down - so a list of literals right at the limit
         // evaluates, and is not reported. `$not` and `$empty` take one operand,

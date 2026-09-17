@@ -109,6 +109,38 @@ export const tooDeepText: Explained = [
   'Flatten it: $and and $or take any number of operands',
 ];
 
+/**
+ * The sentences of `expr-invalid-operand` when an operator's operand is not the
+ * shape the evaluator reads, or `undefined` when it is. `$not` and `$empty` take
+ * any expression. Shared by both evaluators and `validateFlow`, so what one
+ * refuses the other reports.
+ */
+export const invalidOperandText = (op: string, v: unknown): Explained | undefined => {
+  const want =
+    op === '$get' || op === '$ref'
+      ? typeof v === 'string' || 'a string'
+      : op === '$and' || op === '$or'
+        ? Array.isArray(v) || 'a list'
+        : op === '$not' ||
+          op === '$empty' ||
+          (Array.isArray(v) && v.length === 2) ||
+          'a list of two operands';
+  if (want === true) return undefined;
+  const got =
+    v == null
+      ? String(v)
+      : Array.isArray(v)
+        ? `a list of ${v.length}`
+        : typeof v === 'object'
+          ? 'an object'
+          : `a ${typeof v}`;
+  return [
+    `${op} takes ${want}, not ${got}`,
+    'Any other shape fails inside the evaluator with no reason given',
+    `Give ${op} ${want}`,
+  ];
+};
+
 /** The sentences of `expr-unknown-operator`, shared by both evaluators and `validateFlow`. */
 // `{}` has no first key, and "undefined" would name nothing the author wrote.
 export const unknownOperatorText = (first: string | undefined, key = first ?? '{}'): Explained => [

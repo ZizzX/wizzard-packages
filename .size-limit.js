@@ -126,7 +126,13 @@ export default [
   // pasted or hostile document overflow the stack with a bare `RangeError`.
   // The sentences are the smaller part; the rest is the depth each evaluator
   // threads through its recursion. Taking the public wrappers out saved 5 B.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '6.2 kB', gzip: true },
+  // 6.2 to 6.4 kB on 2026-09-17, measured 6354 B: both evaluators refuse an
+  // operand of the wrong shape - `{ $and: null }`, `{ $get: 123 }` - with
+  // `expr-invalid-operand` and its why and fix, instead of failing inside with a
+  // bare `TypeError`, and `isSync` reads the operator's operand rather than the
+  // object's first value. Shortening the sentences saved 20 B; the rest is the
+  // shape check and the operand lookup it goes through.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '6.4 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a
@@ -154,7 +160,10 @@ export default [
   // nesting and throws `expr-too-deep` with its why and fix, instead of letting a
   // pasted or hostile document overflow the stack with a bare `RangeError`. The evaluator is
   // bundled into this entry, so the same bytes land here (see `core-v1`).
-  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '3.65 kB', gzip: true },
+  // 3.65 to 3.9 kB on 2026-09-17, measured 3856 B: the evaluator refuses an operand
+  // of the wrong shape with `expr-invalid-operand` (see `core-v1`), and is bundled
+  // into this entry.
+  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '3.9 kB', gzip: true },
 
   // The recorded-session checker. Its own entry because replay is a devtools and
   // documentation concern: an application that only runs a wizard never needs to
@@ -318,7 +327,11 @@ export default [
     // is one walk that knows a flow from a step, so a `$ref` or `$get` beside
     // the `steps` of the root or of an inline sub-flow is read as host data
     // rather than checked as a resolver or a path.
-    limit: '3.3 kB',
+    //
+    // 3.3 to 3.5 kB the same day, measured 3455 B: every operator's operand is
+    // checked for the shape the evaluator reads and reported as
+    // `expr-invalid-operand`, with the sentences the evaluator throws.
+    limit: '3.5 kB',
     gzip: true,
   },
 
