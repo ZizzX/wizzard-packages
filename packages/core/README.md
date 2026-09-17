@@ -83,8 +83,8 @@ with `code`, `op`, `path`, `fix` and `url`, where `url` is the page for that cod
 An expression that nests deeper than 256 levels, counting every object and list, throws
 `expr-too-deep` when the evaluator reaches it, instead of overflowing the call stack. Nothing
 written by hand comes near that; it is for a document that was pasted or sent from outside, and
-`validateFlow` reports it before anything runs, together with a function or a cycle anywhere in
-the flow.
+`validateFlow` reports it before anything runs, together with a function or a cycle at any depth
+inside a step.
 
 A plugin's failure has no caller to throw to, so the engine logs it in the same four sentences
 instead and carries on. A plugin that throws in `init`, or throws or rejects in `onCommit` or

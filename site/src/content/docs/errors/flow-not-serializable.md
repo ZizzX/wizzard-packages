@@ -35,8 +35,9 @@ The same code is returned for an object that contains itself, with the message
 cannot be stored or sent at all; replace the reference with a copy of the value. An object used in
 two places is not a cycle and is not reported.
 
-Both are found at any depth, in `ui` and in a `$ref`'s `args` as much as in an expression: this
-check has no nesting limit, unlike the [`expr-too-deep`](../expr-too-deep/) one.
+Both are found at any depth inside a step - in `ui` and in a `$ref`'s `args` as much as in an
+expression - because this check, unlike the [`expr-too-deep`](../expr-too-deep/) one, has no
+nesting limit. Only `steps` is walked: a field beside it on the flow itself is not checked.
 
 A condition that only compares values needs no resolver; write it with the operators in
 [the expressions guide](../../docs/expressions/).
