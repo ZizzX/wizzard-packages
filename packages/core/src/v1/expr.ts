@@ -266,10 +266,11 @@ async function runAsync(
   if ('$get' in e) return read(e.$get, scope);
   if ('$empty' in e) return empty(await ev(e.$empty));
 
-  // Past `sync`, so the pair operator found here has a list of two.
+  // `sync` passes a list of any length that holds a `$ref`, so the pair is
+  // checked here as `evaluate` checks it.
   const op = PAIRS.find((k) => k in e);
   if (op) {
-    const [a, b] = (e as Record<string, unknown>)[op] as Pair;
+    const [a, b] = operand<Pair>(e, op, 'evaluateAsync');
     const [left, right] = await Promise.all([ev2(a), ev2(b)]);
     return compare(op, left, right);
   }

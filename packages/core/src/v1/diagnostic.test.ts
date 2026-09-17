@@ -118,7 +118,8 @@ describe('expr-invalid-operand', () => {
   });
 
   it('is thrown by evaluateAsync where it does not delegate', async () => {
-    for (const e of [{ $and: null }, { $or: 1 }, { $ref: 5 }] as unknown as Expr[]) {
+    const pairs = [{ $eq: [{ $ref: 'r' }] }, { $in: [{ $ref: 'r' }, 1, 2] }];
+    for (const e of [{ $and: null }, { $or: 1 }, { $ref: 5 }, ...pairs] as unknown as Expr[]) {
       keepsTheContract(
         await rejected(() => evaluateAsync(e, scope, {})),
         'expr-invalid-operand',
