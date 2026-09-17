@@ -338,10 +338,11 @@ export default [
     // checked for the shape the evaluator reads and reported as
     // `expr-invalid-operand`, with the sentences the evaluator throws.
     //
-    // 3.5 to 3.65 kB on 2026-09-18, measured 3608 B: a getter that throws is
-    // returned as `flow-unreadable` with what was found before it, rather than
-    // thrown out of the function whose answer is a list of problems.
-    limit: '3.65 kB',
+    // 3.5 to 3.75 kB on 2026-09-18, measured 3698 B: a read that throws - a
+    // payload that is not a flow, or a getter - is returned as
+    // `flow-unreadable` with what was found before it, rather than thrown out
+    // of the function whose answer is a list of problems.
+    limit: '3.75 kB',
     gzip: true,
   },
 
