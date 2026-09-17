@@ -12,10 +12,11 @@ check it for a typo. …/errors/expr-unknown-operator
 Thrown as a `WizardError` by `evaluate` or `evaluateAsync`, and `op` says which. `<key>` is the
 object's first key, or `{}` for an empty object.
 
-Not every expression lets it out. In a `when`, a guard or a transition's `when` it stops the
-navigation. In a repeat group's `repeat.over` and in `input` the engine catches it: the group is
-read as having no items, and the input as `undefined`. Nothing is thrown there, so `validateFlow`
-is the only thing that shows the typo.
+Not every expression lets it out. In a `when` or a transition's `when` the engine catches it: the step is read as not reachable and
+the line is logged as [`when-threw`](../when-threw/). In a guard it stops the navigation, since a
+guard decides one move and its caller is waiting. In a repeat group's `repeat.over` and in `input`
+it is caught too: the group is read as having no items, and the input as `undefined`.
+Only a guard throws to a caller, so `validateFlow` is what shows the typo everywhere else.
 
 `validateFlow` finds the same objects before anything is evaluated, in every place the engine reads
 an expression - `when`, `guards`, a transition's `when`, `repeat.over` and `input` - and returns

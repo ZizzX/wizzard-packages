@@ -44,6 +44,12 @@ comparisons and `$in` a list of two, and `$not` and `$empty` any expression. Giv
 [`expr-invalid-operand`](../../errors/expr-invalid-operand/) instead of failing inside with a bare
 `TypeError`, and `validateFlow` reports the same code before the flow runs.
 
+Where an expression throws decides what the engine does with it. A `when`, a step's or a
+transition's, is read as `false` and the step is left out, with [`when-threw`](../../errors/when-threw/)
+logged once - reachability runs over every step on every move and on every snapshot, so one that
+threw would otherwise stop the whole wizard. A guard throws to the caller of the move it decides.
+A `repeat.over` is read as no items and an `input` as `undefined`.
+
 An expression nests at most 256 levels, counting every object and every list on the way down:
 `{ $not: e }` is one level above `e`, and `{ $and: [e] }` two, the object and its list. Nothing
 written by hand or by a generator comes near that. The limit is there for a pasted or hostile

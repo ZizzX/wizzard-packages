@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { add, beginNav, commit, isCurrent, remove } from './commit';
 import type { Scope } from './expr';
@@ -119,6 +119,55 @@ describe('reachable', () => {
   it('reflects the data, and changes when the data changes', () => {
     expect(reachable(flow, scopeFor('private'))).toEqual(['trip', 'payment', 'review']);
     expect(reachable(flow, scopeFor('business'))).toEqual(['trip', 'company', 'payment', 'review']);
+  });
+});
+
+describe('a when that throws', () => {
+  // `$and: null` is what `validateFlow` reports as `expr-invalid-operand`; a
+  // flow that was never validated reaches the evaluator with it.
+  const broken = (id: string): FlowDefinition => ({
+    id: 'f',
+    order: ['a', id, 'z'],
+    steps: { a: {}, [id]: { when: { $and: null } as never }, z: {} },
+  });
+  const scope: Scope = { data: {}, ctx: {} };
+  const quiet = (run: () => unknown): unknown[] => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      run();
+      return error.mock.calls[0] ?? [];
+    } finally {
+      error.mockRestore();
+    }
+  };
+
+  it('leaves the step out instead of throwing, and says so once', () => {
+    const flow = broken('b1');
+    const [message] = quiet(() => {
+      expect(reachable(flow, scope)).toEqual(['a', 'z']);
+      expect(reachable(flow, scope)).toEqual(['a', 'z']);
+    }) as [string];
+    expect(message).toContain('[wizzard] the when of step "b1" threw');
+    expect(message).toContain('errors/when-threw');
+  });
+
+  it('does not stop the moves around it', () => {
+    const flow = broken('b2');
+    quiet(() => {
+      expect(resolveNext(flow, at('a'), scope)).toBe('z');
+      expect(resolveBack(flow, at('z'), scope)).toBe('a');
+    });
+  });
+
+  it("is read the same way in a transition's when", () => {
+    const flow: FlowDefinition = {
+      id: 'f',
+      order: ['a', 'b3'],
+      steps: { a: { on: { next: [{ to: 'b3', when: { $and: null } as never }, 'b3'] } }, b3: {} },
+    };
+    quiet(() => {
+      expect(resolveNext(flow, at('a'), scope)).toBe('b3');
+    });
   });
 });
 
