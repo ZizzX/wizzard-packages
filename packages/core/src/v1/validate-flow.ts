@@ -210,6 +210,10 @@ export function validateFlow(
         report('resolver-not-registered', pathOf(parent, part), notRegisteredText(child));
       }
     } else {
+      // An operand the evaluator refuses for its shape is data from here down:
+      // it stops at the shape and never reads what the operand holds, so a
+      // `$ref` inside one is not a resolver it would look up.
+      const inExpr = role === Role.Expr || role === Role.Step;
       visit(
         child,
         parent ? `.${key}` : key,
@@ -220,11 +224,13 @@ export function validateFlow(
             : Role.Data
           : role === Role.Steps
             ? Role.Step
-            : role === Role.Step
-              ? key === 'flow'
-                ? Role.Flow
-                : Role.Expr
-              : role
+            : inExpr && OPERATORS.includes(key) && invalidOperandText(key, child)
+              ? Role.Data
+              : role === Role.Step
+                ? key === 'flow'
+                  ? Role.Flow
+                  : Role.Expr
+                : role
       );
     }
   }

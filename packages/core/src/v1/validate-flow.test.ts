@@ -350,6 +350,19 @@ describe('validateFlow, on an operand the evaluator cannot read', () => {
     ]);
   });
 
+  it('does not read what an operand of the wrong shape holds', () => {
+    const problems = (when: unknown): string[] =>
+      validateFlow({ id: 'f', steps: { a: { when: when as never } } }, {}).map((p) => p.code);
+    expect(problems({ $eq: [{ $ref: 'ghost' }] })).toEqual(['expr-invalid-operand']);
+    expect(problems({ $get: { $ref: 'ghost' } })).toEqual(['expr-invalid-operand']);
+    // A function there is still a function the flow cannot carry.
+    expect(problems({ $get: { fn: () => 1 } })).toEqual([
+      'flow-not-serializable',
+      'expr-invalid-operand',
+    ]);
+    expect(problems({ $eq: [{ $ref: 'ghost' }, 1] })).toEqual(['resolver-not-registered']);
+  });
+
   it('passes every operand shape the expressions guide writes', () => {
     expect(
       at({
