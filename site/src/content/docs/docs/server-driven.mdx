@@ -84,8 +84,10 @@ shape a flow has, and only then the flow's own rules.
 
 The shape check is not politeness. `validateFlow` is typed for a `FlowDefinition` and reads
 fields off it without guarding them, so an ordinary malformed payload - a string where `steps`
-should be, `order` holding a number - throws out of the validator rather than being reported by
-it. Checking `id` and `steps` yourself first is what turns that into a list of problems.
+should be, `order` holding a number - makes one of those reads throw. The validator returns that
+as [`flow-unreadable`](../../errors/flow-unreadable/) rather than throwing, but the problem it
+returns names a read, not the field a service got wrong. Checking `id` and `steps` yourself first
+is what turns the common cases into problems that say what to fix.
 
 Every failure is a value here, which is what lets a page render the problems instead of
 disappearing behind a stack trace. [Validation](../validation/) is what `validateFlow` reports

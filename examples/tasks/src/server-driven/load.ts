@@ -10,13 +10,13 @@ import { validateFlow, type FlowProblem } from '@wizzard-packages/core/validate-
  *
  * The shape check is not politeness. `validateFlow` is typed for a
  * `FlowDefinition` and reads fields off it without guarding them: `order: 1`
- * reaches `for (const id of flow.order)` and throws, and a step of `null`
- * reaches a property read. Both are ordinary things for a broken service to
- * send, and a thrown `TypeError` is not a list of problems anyone can act on.
+ * reaches `for (const id of flow.order)`, and a step of `null` reaches a
+ * property read. Both are ordinary things for a broken service to send, and
+ * `flow-unreadable` - which is what the validator returns for them - names the
+ * read that failed rather than the field the service got wrong.
  *
- * The `try` around the validator is the belt to that pair of braces: this file
- * enumerates what is known to throw today, and a payload is exactly the input
- * that finds what it missed.
+ * The `try` around the validator is the belt to that pair of braces: it is what
+ * catches a value the validator cannot even print.
  */
 export type LoadResult =
   | { ok: true; flow: FlowDefinition }

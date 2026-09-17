@@ -68,8 +68,57 @@ export function validateFlow(
   registry?: Readonly<Record<string, unknown>>
 ): FlowProblem[] {
   const problems: FlowProblem[] = [];
+  // This function is typed for a flow and reads its fields without guarding
+  // each one, so a payload that is not a flow at all - `steps` holding a string,
+  // a step of `null`, an inline sub-flow with no `steps` - makes one of those
+  // reads throw, and so does a getter on a flow built in code. Either way the
+  // caller asked what is wrong with the flow, and an error thrown out of the
+  // function that answers that is not an answer: it comes back as the last
+  // problem, after whatever was found before it.
+  try {
+    collect(flow, registry, problems);
+  } catch (error) {
+    problems.push(
+      problem('flow-unreadable', '', [
+        `the flow could not be read: ${describe(error)}`,
+        'A read inside it threw, so the rest of it was not checked: a field is not the shape a flow has, or a getter threw',
+        'Check the field the error names against the shape of a flow, and replace a getter with the value it returns',
+      ])
+    );
+  }
+  return problems;
+}
+
+/**
+ * The first line of what was thrown, printed without throwing again: the value
+ * is the one this flow's author chose, and it can be an object with no
+ * `toString`, or one whose `toString` throws.
+ */
+const describe = (error: unknown): string => {
+  try {
+    const text = error instanceof Error ? error.message : String(error);
+    return text.split('\n')[0] ?? '';
+  } catch {
+    return 'a value that cannot be printed';
+  }
+};
+
+/** One problem, in the shape every code keeps. */
+const problem = (code: string, path: string, text: Explained): FlowProblem => ({
+  path,
+  message: explain(code, text),
+  code,
+  fix: text[2],
+  url: pageFor(code),
+});
+
+function collect(
+  flow: FlowDefinition,
+  registry: Readonly<Record<string, unknown>> | undefined,
+  problems: FlowProblem[]
+): void {
   const report = (code: string, path: string, text: Explained): void => {
-    problems.push({ path, message: explain(code, text), code, fix: text[2], url: pageFor(code) });
+    problems.push(problem(code, path, text));
   };
 
   // The shape of one flow: its steps and its order. `at` is empty for the root
@@ -423,8 +472,6 @@ export function validateFlow(
       'Stamp a version on the flow, and bump it whenever its shape changes',
     ]);
   }
-
-  return problems;
 }
 
 /** Convenience for a dev-time assertion. */
@@ -434,11 +481,11 @@ export function assertFlow(
 ): void {
   const problems = validateFlow(flow, registry);
   if (problems.length === 0) return;
-  const lines = problems.map((p) => `\n  ${p.path}: ${p.message}`).join('');
+  const lines = problems.map((p) => `\n  ${p.path ? `${p.path}: ` : ''}${p.message}`).join('');
   throw new WizardError(
     'flow-invalid',
     'assertFlow',
-    `flow "${flow.id}" failed validation:${lines}`,
+    `flow "${describe(flow.id)}" failed validation:${lines}`,
     'assertFlow throws when validateFlow reports anything',
     'Fix each problem listed, or call validateFlow to render them instead'
   );

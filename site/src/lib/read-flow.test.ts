@@ -191,11 +191,12 @@ describe('shapes that throw out of validateFlow', () => {
 
   it('catches a shape it has not learned about yet', () => {
     // A group whose inline flow has no `steps` reaches `validateFlow`, which
-    // calls `Object.entries` on undefined. The shape check does not name this
-    // case; the net is what stops it being a crash.
+    // calls `Object.keys` on undefined. The shape check does not name this
+    // case; `validateFlow` answers with `flow-unreadable` and names what threw.
     const result = readFlow('{"id":"x","steps":{"one":{"flow":{"id":"y"}}}}');
     expect(result.flow).toBeNull();
-    expect(result.problems[0]?.message).toContain('could not be checked');
+    expect(result.problems[0]?.code).toBe('flow-unreadable');
+    expect(result.problems[0]?.message).toContain('undefined or null');
   });
 });
 
@@ -249,11 +250,11 @@ describe('the shape check inside an inline sub-flow', () => {
 });
 
 describe('the failure contract', () => {
-  const failing = [
-    '"'.padEnd(MAX_CHARS + 1, 'x'),
-    '{ nope',
-    '[1,2,3]',
-    flowOf(MAX_NODES + 1),
+  const failing = ['"'.padEnd(MAX_CHARS + 1, 'x'), '{ nope', '[1,2,3]', flowOf(MAX_NODES + 1)];
+
+  // Shapes the page's own check does not name: `validateFlow` reads a field
+  // that is not there and answers with its own problem, which is shown as it is.
+  const engineReads = [
     '{"id":"x","steps":{"one":null}}',
     '{"id":"x","order":5,"steps":{"one":{}}}',
     '{"id":"x","steps":{"one":{"flow":{"id":"y"}}}}',
@@ -266,6 +267,15 @@ describe('the failure contract', () => {
       expect(message).toContain('/errors/inspector-paste');
       // What went wrong, why, the fix, the url: four sentences.
       expect(message.split('. ').length).toBeGreaterThanOrEqual(4);
+    }
+  });
+
+  it('leaves a shape it does not name to the engine, in the same template', () => {
+    for (const text of engineReads) {
+      const [first] = readFlow(text).problems;
+      expect(first?.message.startsWith('[wizzard] ')).toBe(true);
+      expect(first?.message.split('. ').length).toBeGreaterThanOrEqual(4);
+      expect(first?.url.startsWith('https://zizzx.github.io/wizzard-packages/errors/')).toBe(true);
     }
   });
 

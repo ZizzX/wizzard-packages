@@ -104,6 +104,7 @@ export default defineConfig({
             { label: 'when-threw', link: '/errors/when-threw/' },
             { label: 'expr-too-deep', link: '/errors/expr-too-deep/' },
             { label: 'flow-invalid', link: '/errors/flow-invalid/' },
+            { label: 'flow-unreadable', link: '/errors/flow-unreadable/' },
             { label: 'flow-no-steps', link: '/errors/flow-no-steps/' },
             { label: 'order-unknown-step', link: '/errors/order-unknown-step/' },
             { label: 'step-not-in-order', link: '/errors/step-not-in-order/' },

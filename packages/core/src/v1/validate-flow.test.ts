@@ -178,6 +178,80 @@ describe('validateFlow', () => {
     expect(problems(flow)[0]).toBe('steps.a: step "a" has both when and on.next');
   });
 
+  it('returns what it found when a property of the flow throws, rather than throwing', () => {
+    // Only a flow built in code can do this; JSON.parse never makes a getter.
+    const flow = {
+      id: 'f',
+      order: ['a', 'ghost'],
+      steps: {
+        a: {
+          get ui(): never {
+            throw new Error('boom');
+          },
+        },
+      },
+    } as unknown as FlowDefinition;
+
+    // The shape is checked before the walk, so its problem survives the read.
+    const found = validateFlow(flow);
+    expect(found.map((p) => p.code)).toEqual(['order-unknown-step', 'flow-unreadable']);
+    expect(found[1]?.message).toContain('the flow could not be read: boom');
+  });
+
+  it('answers for a payload that is not a flow, and for a value it cannot print', () => {
+    const codes = (parsed: unknown): string[] =>
+      validateFlow(parsed as FlowDefinition).map((p) => p.code);
+    // What a broken service sends, which is the common way to reach this.
+    expect(codes({ id: 'x', steps: { one: null } })).toEqual(['flow-unreadable']);
+    expect(codes({ id: 'x', order: 5, steps: { one: {} } })).toEqual(['flow-unreadable']);
+
+    const hostile = {
+      id: 'x',
+      steps: {
+        get a(): never {
+          throw {
+            toString(): never {
+              throw new Error('inner');
+            },
+          };
+        },
+      },
+    };
+    expect(validateFlow(hostile as unknown as FlowDefinition)[0]?.message).toContain(
+      'a value that cannot be printed'
+    );
+  });
+
+  it('carries a getter in a sub-flow, and throws it out of assertFlow with no empty path', () => {
+    const flow = {
+      id: 'f',
+      order: ['a'],
+      steps: {
+        a: {
+          flow: {
+            id: 'leg',
+            order: ['s'],
+            steps: {
+              s: {
+                get when(): never {
+                  throw new Error('boom');
+                },
+              },
+            },
+          },
+        },
+      },
+    } as unknown as FlowDefinition;
+
+    expect(validateFlow(flow).map((p) => p.code)).toContain('flow-unreadable');
+    expect(() => assertFlow(flow)).toThrow(/flow-invalid$/);
+    try {
+      assertFlow(flow);
+    } catch (error) {
+      expect((error as Error).message).not.toContain('\n  : ');
+    }
+  });
+
   it('reports an empty flow', () => {
     expect(problems({ id: 'f', steps: {} })).toContain('steps: flow "f" has no steps');
   });
@@ -497,6 +571,19 @@ describe('validateFlow codes', () => {
     ],
     'expr-unknown-operator': [{ id: 'f', steps: { a: { when: { $equals: [1, 1] } as never } } }],
     'expr-invalid-operand': [{ id: 'f', steps: { a: { when: { $and: null } as never } } }],
+    'flow-unreadable': [
+      {
+        id: 'f',
+        order: ['a'],
+        steps: {
+          a: {
+            get ui(): never {
+              throw new Error('boom');
+            },
+          },
+        },
+      } as unknown as FlowDefinition,
+    ],
     'expr-too-deep': [
       {
         id: 'f',

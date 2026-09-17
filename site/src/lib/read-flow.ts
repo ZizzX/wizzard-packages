@@ -345,8 +345,10 @@ export function readFlow(text: string): ReadResult {
   if (shaped !== null) return shaped;
 
   // The net. `validateFlow` is typed for a definition it trusts, so a shape
-  // this file has not learned about yet lands here as a sentence rather than
-  // as a crashed island.
+  // this file has not learned about yet reads a field that is not there. The
+  // validator answers that with `flow-unreadable`, which is a problem like any
+  // other and is shown as it is; the `catch` stays for the value it cannot
+  // print at all, so neither ends as a crashed island.
   let problems: FlowProblem[];
   try {
     problems = validateFlow(parsed as FlowDefinition);
