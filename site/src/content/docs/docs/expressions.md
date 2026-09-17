@@ -38,6 +38,12 @@ That is the entire language. There is no arithmetic, no string manipulation and 
 define a new operator - anything else is a `$ref` into code you control, which keeps the
 untrusted half of a definition small enough to reason about.
 
+Each operand has the shape in the table: `$get` and `$ref` a string, `$and` and `$or` a list, the
+comparisons and `$in` a list of two, and `$not` and `$empty` any expression. Given anything else -
+`{ $and: null }`, `{ $eq: [1] }`, `{ $get: 123 }` - `evaluate` and `evaluateAsync` throw
+[`expr-invalid-operand`](../../errors/expr-invalid-operand/) instead of failing inside with a bare
+`TypeError`, and `validateFlow` reports the same code before the flow runs.
+
 An expression nests at most 256 levels, counting every object and every list on the way down:
 `{ $not: e }` is one level above `e`, and `{ $and: [e] }` two, the object and its list. Nothing
 written by hand or by a generator comes near that. The limit is there for a pasted or hostile

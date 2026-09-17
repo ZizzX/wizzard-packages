@@ -84,7 +84,8 @@ An expression that nests deeper than 256 levels, counting every object and list,
 `expr-too-deep` when the evaluator reaches it, instead of overflowing the call stack. Nothing
 written by hand comes near that; it is for a document that was pasted or sent from outside, and
 `validateFlow` reports it before anything runs, together with a function or a cycle at any depth
-anywhere in the flow.
+anywhere in the flow. An operand of the wrong shape, such as `{ $and: null }` or `{ $get: 123 }`,
+throws `expr-invalid-operand` rather than a bare `TypeError`, and `validateFlow` reports that too.
 
 A plugin's failure has no caller to throw to, so the engine logs it in the same four sentences
 instead and carries on. A plugin that throws in `init`, or throws or rejects in `onCommit` or

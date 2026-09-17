@@ -98,6 +98,45 @@ describe('resolver-is-async', () => {
   });
 });
 
+describe('expr-invalid-operand', () => {
+  // Each operator with the one operand shape it cannot read.
+  const bad: [Expr, string][] = [
+    [{ $and: null }, '$and takes a list, not null'],
+    [{ $or: 'abc' }, '$or takes a list, not a string'],
+    [{ $eq: null }, '$eq takes a list of two operands, not null'],
+    [{ $in: [1] }, '$in takes a list of two operands, not a list of 1'],
+    [{ $get: 123 }, '$get takes a string, not a number'],
+    [{ $ref: {} }, '$ref takes a string, not an object'],
+  ] as unknown as [Expr, string][];
+
+  it('is thrown by evaluate for each operator, instead of a TypeError', () => {
+    for (const [e, what] of bad) {
+      const error = thrown(() => evaluate(e, scope, {}));
+      keepsTheContract(error, 'expr-invalid-operand', 'evaluate');
+      expect(error.message).toContain(`[wizzard] ${what}. `);
+    }
+  });
+
+  it('is thrown by evaluateAsync where it does not delegate', async () => {
+    for (const e of [{ $and: null }, { $or: 1 }, { $ref: 5 }] as unknown as Expr[]) {
+      keepsTheContract(
+        await rejected(() => evaluateAsync(e, scope, {})),
+        'expr-invalid-operand',
+        'evaluateAsync'
+      );
+    }
+  });
+
+  it('is reported by evaluate when evaluateAsync delegates', async () => {
+    const e = { $eq: 'ab' } as unknown as Expr;
+    keepsTheContract(
+      await rejected(() => evaluateAsync(e, scope)),
+      'expr-invalid-operand',
+      'evaluate'
+    );
+  });
+});
+
 describe('expr-unknown-operator', () => {
   const bad = { $between: [1, 3] } as unknown as Expr;
 

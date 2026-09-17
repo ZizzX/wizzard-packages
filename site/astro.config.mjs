@@ -100,6 +100,7 @@ export default defineConfig({
             { label: 'resolver-not-registered', link: '/errors/resolver-not-registered/' },
             { label: 'resolver-is-async', link: '/errors/resolver-is-async/' },
             { label: 'expr-unknown-operator', link: '/errors/expr-unknown-operator/' },
+            { label: 'expr-invalid-operand', link: '/errors/expr-invalid-operand/' },
             { label: 'expr-too-deep', link: '/errors/expr-too-deep/' },
             { label: 'flow-invalid', link: '/errors/flow-invalid/' },
             { label: 'flow-no-steps', link: '/errors/flow-no-steps/' },

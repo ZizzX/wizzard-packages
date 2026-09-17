@@ -1,5 +1,6 @@
 import {
   explain,
+  invalidOperandText,
   MAX_EXPR_DEPTH,
   notRegisteredText,
   pageFor,
@@ -267,6 +268,11 @@ export function validateFlow(
       }
       for (const op of ops) {
         const value = (e as Record<string, unknown>)[op];
+        const invalid = invalidOperandText(op, value);
+        if (invalid) {
+          report('expr-invalid-operand', `${path}.${op}`, invalid);
+          continue;
+        }
         // An operator's list of operands is never walked as a value, only its
         // items are, two levels down - so a list of literals right at the limit
         // evaluates, and is not reported. `$not` and `$empty` take one operand,
