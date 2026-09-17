@@ -200,27 +200,32 @@ export function validateFlow(
   // as they do for an unknown operator - so this reports every branch it could
   // refuse, before the data decides which ones run. The walk itself cannot
   // overflow the stack on a pasted or hostile document.
+  // An object already on the way down is a cycle, which `checkExpr` reports;
+  // following it would add a second, wrong problem at the depth limit.
+  const above = new Set<object>();
   const checkOperators = (e: unknown, path: string, depth = 0): void => {
-    if (e === null || typeof e !== 'object') return;
+    if (e === null || typeof e !== 'object' || above.has(e)) return;
     if (depth >= MAX_EXPR_DEPTH) {
       report('expr-too-deep', path, tooDeepText);
       return;
     }
+    above.add(e);
     if (Array.isArray(e)) {
       e.forEach((child, i) => {
         checkOperators(child, `${path}[${i}]`, depth + 1);
       });
-      return;
-    }
-    const ops = OPERATORS.filter((key) => key in e);
-    if (ops.length === 0) {
-      report('expr-unknown-operator', path, unknownOperatorText(Object.keys(e)[0]));
-    }
-    for (const op of ops) {
-      if (op !== '$ref') {
-        checkOperators((e as Record<string, unknown>)[op], `${path}.${op}`, depth + 1);
+    } else {
+      const ops = OPERATORS.filter((key) => key in e);
+      if (ops.length === 0) {
+        report('expr-unknown-operator', path, unknownOperatorText(Object.keys(e)[0]));
+      }
+      for (const op of ops) {
+        if (op !== '$ref') {
+          checkOperators((e as Record<string, unknown>)[op], `${path}.${op}`, depth + 1);
+        }
       }
     }
+    above.delete(e);
   };
 
   const targetWhen = (target: Target | 'auto' | undefined, path: string): void => {

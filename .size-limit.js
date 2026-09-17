@@ -297,7 +297,10 @@ export default [
     // data of any depth and a depth limit there let a deep function through. It
     // keeps parent links to build a path only for a report, and it reports a
     // cycle - the one input an unbounded walk would otherwise never leave.
-    limit: '3.05 kB',
+    // 3.05 to 3.1 kB the same day, measured 3060 B: the operator walk skips an
+    // object already above it, so a cycle inside an expression is reported once,
+    // as `flow-not-serializable`, and not a second time as `expr-too-deep`.
+    limit: '3.1 kB',
     gzip: true,
   },
 

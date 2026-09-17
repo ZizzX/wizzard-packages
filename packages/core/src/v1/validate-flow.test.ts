@@ -472,6 +472,14 @@ describe('validateFlow and a deeply nested expression', () => {
       'steps.a.ui.self: steps.a.ui.self contains itself',
     ]);
   });
+
+  it('reports a cycle in an expression once, not also as too deep', () => {
+    const when: { $not?: unknown } = {};
+    when.$not = when;
+    expect(validateFlow(flowWith(when as Expr)).map(what)).toEqual([
+      'steps.a.when.$not: steps.a.when.$not contains itself',
+    ]);
+  });
 });
 
 describe('assertFlow', () => {
