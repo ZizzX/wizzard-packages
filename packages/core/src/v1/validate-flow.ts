@@ -118,20 +118,34 @@ export function validateFlow(
 
   checkShape(flow, '');
 
-  // Iterative and without a depth limit: `ui` and a `$ref`'s `args` are the
-  // host's data, and a function at any depth is one `JSON.stringify` drops.
-  // Each frame on the stack is one open object or list and the index of its
-  // next child, so memory follows the depth of the document and not the width
-  // of its lists. The path is joined from the frames only for a report, and
-  // keeps its last `MAX_PATH` characters, so a deep document with many problems
-  // costs a bounded string for each. An object is on `inside` while its subtree
-  // is walked, which is what finds a cycle.
+  // One walk over the whole flow, iterative and without a depth limit: `ui`
+  // and a `$ref`'s `args` are the host's data, and a function at any depth is
+  // one `JSON.stringify` drops. Each frame on the stack is one open object or
+  // list and the index of its next child, so memory follows the depth of the
+  // document and not the width of its lists. The path is joined from the
+  // frames only for a report, and keeps its last `MAX_PATH` characters, so a
+  // deep document with many problems costs a bounded string for each. An object
+  // is on `inside` while its subtree is walked, which is what finds a cycle.
+  //
+  // A frame also knows what it is. Inside a step a `$ref` names a resolver and
+  // a `$get` a path. Beside a flow's `steps` - the root's or an inline
+  // sub-flow's - nothing is evaluated, so a `$ref` or `$get` there is the
+  // host's data, a JSON Schema's `$ref` say, and only a function or a cycle is
+  // looked for.
+  const enum Role {
+    Data,
+    Expr,
+    Flow,
+    Steps,
+    Step,
+  }
   type Frame = [
     value: object,
     part: string,
     parent: Frame | undefined,
     keys: string[],
     next: number,
+    role: Role,
   ];
   const pathOf = (parent: Frame | undefined, part: string): string => {
     let path = part;
@@ -139,78 +153,80 @@ export function validateFlow(
     return parent ? `...${path.slice(-MAX_PATH)}` : path;
   };
   const inside = new Set<object>();
-  const checkExpr = (root: unknown, at: string, refs = true): void => {
-    const stack: Frame[] = [];
-    const visit = (value: unknown, part: string, parent: Frame | undefined): void => {
-      if (typeof value === 'function') {
-        const path = pathOf(parent, part);
-        report('flow-not-serializable', path, [
-          `${path} is a function`,
-          'JSON.stringify drops a function, so the flow would not survive being stored or sent',
-          'Move the function into the registry and name it with a $ref',
-        ]);
-        return;
-      }
-      if (value === null || typeof value !== 'object') return;
-      if (inside.has(value)) {
-        const path = pathOf(parent, part);
-        report('flow-not-serializable', path, [
-          `${path} contains itself`,
-          'JSON.stringify throws on a cycle, so the flow could not be stored or sent',
-          'Replace the reference with a copy of the value',
-        ]);
-        return;
-      }
-      inside.add(value);
-      stack.push([value, part, parent, Array.isArray(value) ? [] : Object.keys(value), 0]);
-    };
-
-    visit(root, at, undefined);
-    for (let top = stack[stack.length - 1]; top; top = stack[stack.length - 1]) {
-      const [value, , , keys, next] = top;
-      const list = Array.isArray(value) ? (value as unknown[]) : undefined;
-      if (next >= (list ?? keys).length) {
-        stack.pop();
-        inside.delete(value);
-        continue;
-      }
-      top[4] = next + 1;
-      if (list) {
-        visit(list[next], `[${next}]`, top);
-        continue;
-      }
-      const key = keys[next] as string;
-      const child = (value as Record<string, unknown>)[key];
-      if (refs && key === '$get' && typeof child === 'string') {
-        const root = child.split('.')[0] ?? '';
-        if (!ROOTS.includes(root)) {
-          report('get-unknown-root', pathOf(top[2], top[1]), [
-            `$get "${child}" does not start with ${ROOTS.join(', ')}`,
-            'The first segment names where a path reads from, and any other start evaluates to undefined',
-            `Start the path with the root it belongs to, such as data.${child}`,
-          ]);
-        }
-      } else if (refs && key === '$ref' && typeof child === 'string') {
-        if (registry && !(child in registry)) {
-          report('resolver-not-registered', pathOf(top[2], top[1]), notRegisteredText(child));
-        }
-      } else {
-        visit(child, `.${key}`, top);
-      }
+  const stack: Frame[] = [];
+  const visit = (value: unknown, part: string, parent: Frame | undefined, role: Role): void => {
+    if (typeof value === 'function') {
+      const path = pathOf(parent, part);
+      report('flow-not-serializable', path, [
+        `${path} is a function`,
+        'JSON.stringify drops a function, so the flow would not survive being stored or sent',
+        'Move the function into the registry and name it with a $ref',
+      ]);
+      return;
     }
+    if (value === null || typeof value !== 'object') return;
+    if (inside.has(value)) {
+      const path = pathOf(parent, part);
+      report('flow-not-serializable', path, [
+        `${path} contains itself`,
+        'JSON.stringify throws on a cycle, so the flow could not be stored or sent',
+        'Replace the reference with a copy of the value',
+      ]);
+      return;
+    }
+    inside.add(value);
+    stack.push([value, part, parent, Array.isArray(value) ? [] : Object.keys(value), 0, role]);
   };
 
-  // Every field of the flow, not only its steps: `validate`, `policy` or a
-  // host's own field is stored and sent with them. Beside `steps` nothing is
-  // evaluated, so a `$ref` or `$get` there is the host's data - a JSON Schema's
-  // `$ref`, say - and only a function or a cycle is looked for. The flow itself is on
-  // `inside`, so a field that points back at it is one cycle, not a second walk.
-  inside.add(flow);
-  for (const [key, value] of Object.entries(flow)) {
-    if (key !== 'steps') checkExpr(value, key, false);
-    else for (const [id, step_] of Object.entries(flow.steps)) checkExpr(step_, `steps.${id}`);
+  visit(flow, '', undefined, Role.Flow);
+  for (let top = stack[stack.length - 1]; top; top = stack[stack.length - 1]) {
+    const [value, part, parent, keys, next, role] = top;
+    const list = Array.isArray(value) ? (value as unknown[]) : undefined;
+    if (next >= (list ?? keys).length) {
+      stack.pop();
+      inside.delete(value);
+      continue;
+    }
+    top[4] = next + 1;
+    if (list) {
+      visit(list[next], `[${next}]`, top, role === Role.Data ? Role.Data : Role.Expr);
+      continue;
+    }
+    const key = keys[next] as string;
+    const child = (value as Record<string, unknown>)[key];
+    const refs = role === Role.Expr || role === Role.Step;
+    if (refs && key === '$get' && typeof child === 'string') {
+      const root = child.split('.')[0] ?? '';
+      if (!ROOTS.includes(root)) {
+        report('get-unknown-root', pathOf(parent, part), [
+          `$get "${child}" does not start with ${ROOTS.join(', ')}`,
+          'The first segment names where a path reads from, and any other start evaluates to undefined',
+          `Start the path with the root it belongs to, such as data.${child}`,
+        ]);
+      }
+    } else if (refs && key === '$ref' && typeof child === 'string') {
+      if (registry && !(child in registry)) {
+        report('resolver-not-registered', pathOf(parent, part), notRegisteredText(child));
+      }
+    } else {
+      visit(
+        child,
+        parent ? `.${key}` : key,
+        top,
+        role === Role.Flow
+          ? key === 'steps'
+            ? Role.Steps
+            : Role.Data
+          : role === Role.Steps
+            ? Role.Step
+            : role === Role.Step
+              ? key === 'flow'
+                ? Role.Flow
+                : Role.Expr
+              : role
+      );
+    }
   }
-  inside.delete(flow);
 
   // Where the engine evaluates an expression, and only there: `ui` is the host's
   // JSON and may carry `$`-keys of its own. The evaluator throws on an object
