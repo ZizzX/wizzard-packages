@@ -300,7 +300,11 @@ export default [
     // 3.05 to 3.1 kB the same day, measured 3060 B: the operator walk skips an
     // object already above it, so a cycle inside an expression is reported once,
     // as `flow-not-serializable`, and not a second time as `expr-too-deep`.
-    limit: '3.1 kB',
+    // 3.1 to 3.15 kB the same day, measured 3099 B: an operator's list of
+    // operands is not counted as a value of its own, as the evaluator never
+    // walks it, so a list of literals at the limit is not reported while it
+    // still evaluates. One byte under 3.1 kB is not a budget.
+    limit: '3.15 kB',
     gzip: true,
   },
 

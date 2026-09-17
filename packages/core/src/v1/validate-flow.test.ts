@@ -436,9 +436,31 @@ describe('validateFlow and a deeply nested expression', () => {
     steps: { a: { when, ...(ui === undefined ? {} : { ui }) } as never },
   });
 
+  // A leaf wrapped in `$not`s, so the leaf's own shape lands on every level
+  // around the limit: an operand list of literals, a literal list, an empty one.
+  const leaves: Expr[] = [
+    true,
+    [1],
+    { $and: [true] },
+    { $or: [] },
+    { $eq: [1, 1] },
+    { $in: [1, [1]] },
+    { $not: [true] },
+  ];
+  const wrapped = (leaf: Expr, levels: number): Expr => {
+    let e = leaf;
+    for (let i = 0; i < levels; i++) e = { $not: e };
+    return e;
+  };
+
   it('reports where the evaluator refuses, counting levels the same way', () => {
-    for (let levels = MAX_EXPR_DEPTH - 3; levels <= MAX_EXPR_DEPTH + 3; levels++) {
-      const when = nested(levels);
+    const shapes = [
+      ...Array.from({ length: 7 }, (_, i) => nested(MAX_EXPR_DEPTH - 3 + i)),
+      ...leaves.flatMap((leaf) =>
+        Array.from({ length: 5 }, (_, i) => wrapped(leaf, MAX_EXPR_DEPTH - 4 + i))
+      ),
+    ];
+    for (const when of shapes) {
       let refused = false;
       try {
         evaluate(when, { data: {}, ctx: {} });
@@ -446,7 +468,7 @@ describe('validateFlow and a deeply nested expression', () => {
         refused = true;
       }
       const codes = validateFlow(flowWith(when)).map((p) => p.code);
-      expect(codes, `${levels} levels`).toEqual(refused ? ['expr-too-deep'] : []);
+      expect(codes, JSON.stringify(when).slice(-40)).toEqual(refused ? ['expr-too-deep'] : []);
     }
   });
 

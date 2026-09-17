@@ -220,8 +220,18 @@ export function validateFlow(
         report('expr-unknown-operator', path, unknownOperatorText(Object.keys(e)[0]));
       }
       for (const op of ops) {
-        if (op !== '$ref') {
-          checkOperators((e as Record<string, unknown>)[op], `${path}.${op}`, depth + 1);
+        const value = (e as Record<string, unknown>)[op];
+        // An operator's list of operands is never walked as a value, only its
+        // items are, two levels down - so a list of literals right at the limit
+        // evaluates, and is not reported. `$not` and `$empty` take one operand,
+        // and a list there is a literal like any other.
+        if (op === '$ref') continue;
+        if (Array.isArray(value) && op !== '$not' && op !== '$empty') {
+          value.forEach((item, i) => {
+            checkOperators(item, `${path}.${op}[${i}]`, depth + 2);
+          });
+        } else {
+          checkOperators(value, `${path}.${op}`, depth + 1);
         }
       }
     }

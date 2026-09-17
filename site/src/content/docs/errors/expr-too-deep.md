@@ -16,7 +16,10 @@ expression to then refuses it.
 
 Depth counts every object and every list on the way down from the expression itself. `{ $not: e }`
 is one level above `e`; `{ $and: [e] }` is two, the object and its list; a literal `[[1]]` is two.
-An expression of 256 levels evaluates, and one of 257 is refused.
+An expression of 256 levels evaluates, and one of 257 is refused. The list of operands after
+`$and`, `$or`, `$eq` and the other comparisons is the one list that is only a step on the way to
+its items: it is never evaluated as a value, so it is not refused on its own, and
+`{ $and: [true] }` whose object is at the 256th level still evaluates.
 
 Where it surfaces is the same as for
 [`expr-unknown-operator`](../expr-unknown-operator/): in a `when`, a guard or a transition's
