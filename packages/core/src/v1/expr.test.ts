@@ -133,6 +133,12 @@ describe('isSync', () => {
     expect(isSync({ x: [], $eq: [{ $ref: 'r' }, 1] } as unknown as Expr)).toBe(false);
   });
 
+  it('finds a $ref under an object with no operator, at any value', () => {
+    expect(isSync({ $bad: { $ref: 'r' } } as unknown as Expr)).toBe(false);
+    expect(isSync({ $bad: [{ $ref: 'r' }] } as unknown as Expr)).toBe(false);
+    expect(isSync({ $bad: { $eq: [1, 1] } } as unknown as Expr)).toBe(true);
+  });
+
   it('reads an object with two operators by the one the evaluator picks', async () => {
     const e = { $and: [{ $ref: 'r' }], $empty: null } as unknown as Expr;
     expect(isSync(e)).toBe(false);

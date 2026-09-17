@@ -215,7 +215,9 @@ function sync(e: Expr, depth: number): boolean {
   if ('$or' in e) return list(e.$or);
   if ('$empty' in e) return sync(e.$empty, depth + 1);
   const op = PAIRS.find((k) => k in e);
-  return op ? list((e as Record<string, unknown>)[op]) : Object.values(e).every(list);
+  return op
+    ? list((e as Record<string, unknown>)[op])
+    : Object.values(e).every((v) => (Array.isArray(v) ? list(v) : sync(v as Expr, depth + 1)));
 }
 
 /**
