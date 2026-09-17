@@ -178,6 +178,26 @@ describe('validateFlow', () => {
     expect(problems(flow)[0]).toBe('steps.a: step "a" has both when and on.next');
   });
 
+  it('returns what it found when a property of the flow throws, rather than throwing', () => {
+    // Only a flow built in code can do this; JSON.parse never makes a getter.
+    const flow = {
+      id: 'f',
+      order: ['a', 'ghost'],
+      steps: {
+        a: {
+          get ui(): never {
+            throw new Error('boom');
+          },
+        },
+      },
+    } as unknown as FlowDefinition;
+
+    // The shape is checked before the walk, so its problem survives the read.
+    const found = validateFlow(flow);
+    expect(found.map((p) => p.code)).toEqual(['order-unknown-step', 'flow-unreadable']);
+    expect(found[1]?.message).toContain('the flow could not be read: Error: boom');
+  });
+
   it('reports an empty flow', () => {
     expect(problems({ id: 'f', steps: {} })).toContain('steps: flow "f" has no steps');
   });
@@ -497,6 +517,19 @@ describe('validateFlow codes', () => {
     ],
     'expr-unknown-operator': [{ id: 'f', steps: { a: { when: { $equals: [1, 1] } as never } } }],
     'expr-invalid-operand': [{ id: 'f', steps: { a: { when: { $and: null } as never } } }],
+    'flow-unreadable': [
+      {
+        id: 'f',
+        order: ['a'],
+        steps: {
+          a: {
+            get ui(): never {
+              throw new Error('boom');
+            },
+          },
+        },
+      } as unknown as FlowDefinition,
+    ],
     'expr-too-deep': [
       {
         id: 'f',

@@ -43,6 +43,10 @@ its steps - and its transitions are read against its own `steps`: inside a sub-f
 sub-flow. A sub-flow named by a string is a definition `validateFlow` was not handed, so it is
 checked where it is defined.
 
+`validateFlow` answers in problems, never by throwing. A flow built in code can carry a getter
+that throws when it is read, and that arrives as a last problem,
+[`flow-unreadable`](../../errors/flow-unreadable/), with whatever was found before it.
+
 `assertFlow` is the same check that throws instead of returning, with every problem in the
 message of one [`flow-invalid`](../../errors/flow-invalid/) error. Use it where a definition crossing a boundary should stop the program - a backend
 response in development, a fixture in a test - and use `validateFlow` where the problems are

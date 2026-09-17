@@ -345,19 +345,24 @@ export function readFlow(text: string): ReadResult {
   if (shaped !== null) return shaped;
 
   // The net. `validateFlow` is typed for a definition it trusts, so a shape
-  // this file has not learned about yet lands here as a sentence rather than
-  // as a crashed island.
+  // this file has not learned about yet reads a field that is not there. It
+  // answers with `flow-unreadable` where it can and throws where it cannot;
+  // either way this page says the same sentence rather than crashing the island.
   let problems: FlowProblem[];
-  try {
-    problems = validateFlow(parsed as FlowDefinition);
-  } catch (error) {
-    return problem(
+  const unreadable = (what: string): ReadResult =>
+    problem(
       'flow',
-      `this flow could not be checked: ${(error as Error).message}`,
+      `this flow could not be checked: ${what}`,
       'It is malformed in a way this page does not name yet, and the validator reads a field that is not there',
       'Compare it against the example flow, which the Load example button puts in the box'
     );
+  try {
+    problems = validateFlow(parsed as FlowDefinition);
+  } catch (error) {
+    return unreadable((error as Error).message);
   }
+  const unread = problems.find((p) => p.code === 'flow-unreadable');
+  if (unread !== undefined) return unreadable(unread.fix);
 
   if (problems.length > 0) return { flow: null, graph: null, problems, empty: false };
 

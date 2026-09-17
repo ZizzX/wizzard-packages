@@ -68,8 +68,41 @@ export function validateFlow(
   registry?: Readonly<Record<string, unknown>>
 ): FlowProblem[] {
   const problems: FlowProblem[] = [];
+  // A flow is data, and reading data does not throw - unless it was built in
+  // code rather than parsed from JSON, where a getter can. Whatever was found
+  // before that is still worth returning, with the read itself as the last
+  // problem: the caller asked what is wrong with the flow, and a thrown error
+  // from the function that answers that is not an answer.
+  try {
+    collect(flow, registry, problems);
+  } catch (error) {
+    problems.push(
+      problem('flow-unreadable', '', [
+        `the flow could not be read: ${String(error)}`,
+        'A property of a flow threw when it was read, so the rest of it was not checked',
+        'A flow is JSON: replace the getter with the value it returns',
+      ])
+    );
+  }
+  return problems;
+}
+
+/** One problem, in the shape every code keeps. */
+const problem = (code: string, path: string, text: Explained): FlowProblem => ({
+  path,
+  message: explain(code, text),
+  code,
+  fix: text[2],
+  url: pageFor(code),
+});
+
+function collect(
+  flow: FlowDefinition,
+  registry: Readonly<Record<string, unknown>> | undefined,
+  problems: FlowProblem[]
+): void {
   const report = (code: string, path: string, text: Explained): void => {
-    problems.push({ path, message: explain(code, text), code, fix: text[2], url: pageFor(code) });
+    problems.push(problem(code, path, text));
   };
 
   // The shape of one flow: its steps and its order. `at` is empty for the root
@@ -423,8 +456,6 @@ export function validateFlow(
       'Stamp a version on the flow, and bump it whenever its shape changes',
     ]);
   }
-
-  return problems;
 }
 
 /** Convenience for a dev-time assertion. */
