@@ -3,7 +3,8 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { defineFlow, step } from './define';
-import { evaluate } from './expr';
+import { MAX_EXPR_DEPTH } from './diagnostic';
+import { evaluate, type Expr } from './expr';
 import type { FlowDefinition } from './flow';
 import { assertFlow, validateFlow, type FlowProblem } from './validate-flow';
 
@@ -397,6 +398,14 @@ describe('validateFlow codes', () => {
       { id: 'f', steps: { a: { flow: 'leg', when: true, repeat: { over: [] } } } },
     ],
     'expr-unknown-operator': [{ id: 'f', steps: { a: { when: { $equals: [1, 1] } as never } } }],
+    'expr-too-deep': [
+      {
+        id: 'f',
+        steps: {
+          a: { when: JSON.parse('['.repeat(MAX_EXPR_DEPTH + 1) + ']'.repeat(MAX_EXPR_DEPTH + 1)) },
+        },
+      },
+    ],
   };
 
   for (const [code, [flow, registry]] of Object.entries(fixtures)) {
@@ -414,6 +423,115 @@ describe('validateFlow codes', () => {
       expect(existsSync(page), `${code} has no page`).toBe(true);
     });
   }
+});
+
+describe('validateFlow and a deeply nested expression', () => {
+  const nested = (levels: number): Expr => {
+    let e: Expr = true;
+    for (let i = 0; i < levels; i++) e = i % 3 === 2 ? [e] : { $not: e };
+    return e;
+  };
+  const flowWith = (when: Expr, ui?: unknown): FlowDefinition => ({
+    id: 'f',
+    steps: { a: { when, ...(ui === undefined ? {} : { ui }) } as never },
+  });
+
+  // A leaf wrapped in `$not`s, so the leaf's own shape lands on every level
+  // around the limit: an operand list of literals, a literal list, an empty one.
+  const leaves: Expr[] = [
+    true,
+    [1],
+    { $and: [true] },
+    { $or: [] },
+    { $eq: [1, 1] },
+    { $in: [1, [1]] },
+    { $not: [true] },
+  ];
+  const wrapped = (leaf: Expr, levels: number): Expr => {
+    let e = leaf;
+    for (let i = 0; i < levels; i++) e = { $not: e };
+    return e;
+  };
+
+  it('reports where the evaluator refuses, counting levels the same way', () => {
+    const shapes = [
+      ...Array.from({ length: 7 }, (_, i) => nested(MAX_EXPR_DEPTH - 3 + i)),
+      ...leaves.flatMap((leaf) =>
+        Array.from({ length: 5 }, (_, i) => wrapped(leaf, MAX_EXPR_DEPTH - 4 + i))
+      ),
+    ];
+    for (const when of shapes) {
+      let refused = false;
+      try {
+        evaluate(when, { data: {}, ctx: {} });
+      } catch {
+        refused = true;
+      }
+      const codes = validateFlow(flowWith(when)).map((p) => p.code);
+      expect(codes, JSON.stringify(when).slice(-40)).toEqual(refused ? ['expr-too-deep'] : []);
+    }
+  });
+
+  it('returns a problem for a pasted document instead of overflowing the stack', () => {
+    const found = validateFlow(flowWith(nested(100_000)));
+    expect(found.map((p) => p.code)).toEqual(['expr-too-deep']);
+    expect(found[0]?.path.startsWith('steps.a.when')).toBe(true);
+  });
+
+  it('finds a function nested past the limit in ui, and does not overflow', () => {
+    let ui: unknown = { render: () => null };
+    for (let i = 0; i < 100_000; i++) ui = i % 2 ? { child: ui } : [ui];
+    const found = validateFlow(flowWith(true, ui));
+    expect(found.map((p) => p.code)).toEqual(['flow-not-serializable']);
+    expect(found[0]?.path.endsWith('.render')).toBe(true);
+  });
+
+  it('reports a cycle instead of looping or overflowing', () => {
+    const ui: { self?: unknown; shared: unknown[]; again: unknown[] } = { shared: [], again: [] };
+    ui.self = ui;
+    ui.again = ui.shared;
+    expect(problems(flowWith(true, ui))).toEqual([
+      'steps.a.ui.self: steps.a.ui.self contains itself',
+    ]);
+  });
+
+  it('reports one expr-too-deep for an expression with many branches past the limit', () => {
+    let when: Expr = Array.from({ length: 10_000 }, () => ({ $not: true }));
+    for (let i = 0; i < MAX_EXPR_DEPTH - 1; i++) when = [when];
+    expect(validateFlow(flowWith(when)).map((p) => p.code)).toEqual(['expr-too-deep']);
+  });
+
+  it('walks a wide list one child at a time', () => {
+    expect(validateFlow(flowWith(true, Array(500_000).fill(0)))).toEqual([]);
+  });
+
+  // Each problem's path is joined from the frames above it, so without a cap a
+  // deep document with a problem at every leaf costs depth times width.
+  it('keeps the end of a path deeper than its cap', () => {
+    let ui: unknown = Array.from({ length: 3 }, () => ({ $get: 'zz' }));
+    for (let i = 0; i < 20_000; i++) ui = [ui];
+    const found = validateFlow(flowWith(true, ui));
+    expect(found.map((p) => p.code)).toEqual(Array(3).fill('get-unknown-root'));
+    for (const p of found) {
+      expect(p.path.startsWith('...')).toBe(true);
+      expect(p.path.length).toBeLessThanOrEqual(515);
+      expect(p.path).toMatch(/\[0\]\[0\]\[\d\]$/);
+    }
+  });
+
+  it('does not walk into the value of a $get, which is never evaluated', () => {
+    let deep: unknown = { $bad: 1 };
+    for (let i = 0; i < 300; i++) deep = [deep];
+    expect(validateFlow(flowWith({ $get: deep } as never))).toEqual([]);
+  });
+
+  it('reports a cycle in an expression once, not also as too deep', () => {
+    const when: { $not?: unknown } = {};
+    when.$not = when;
+    expect(validateFlow(flowWith(when as Expr)).map(what)).toEqual([
+      'steps.a.when.$not: steps.a.when.$not contains itself',
+    ]);
+  });
 });
 
 describe('assertFlow', () => {

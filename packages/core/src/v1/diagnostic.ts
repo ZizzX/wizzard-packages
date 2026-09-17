@@ -94,6 +94,21 @@ export const notRegisteredText = (ref: string): Explained => [
   `Add ${ref} to the registry, or correct the name in the flow`,
 ];
 
+/**
+ * How deep an expression may nest, counting every object and list on the way
+ * down. No condition written by hand or generated comes near it, and it is far
+ * short of the call stack, which a pasted or hostile document would otherwise
+ * overflow with a bare `RangeError`.
+ */
+export const MAX_EXPR_DEPTH = 256;
+
+/** The sentences of `expr-too-deep`, shared by both evaluators and `validateFlow`. */
+export const tooDeepText: Explained = [
+  `an expression nests deeper than ${MAX_EXPR_DEPTH} levels`,
+  'Each level is a call on the stack, and a deeper one would overflow it',
+  'Flatten it: $and and $or take any number of operands',
+];
+
 /** The sentences of `expr-unknown-operator`, shared by both evaluators and `validateFlow`. */
 // `{}` has no first key, and "undefined" would name nothing the author wrote.
 export const unknownOperatorText = (first: string | undefined, key = first ?? '{}'): Explained => [

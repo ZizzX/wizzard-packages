@@ -1,7 +1,9 @@
 import {
   explain,
+  MAX_EXPR_DEPTH,
   notRegisteredText,
   pageFor,
+  tooDeepText,
   unknownOperatorText,
   WizardError,
   type Explained,
@@ -56,6 +58,9 @@ const OPERATORS = [
 
 /** Same cap as `graph.ts` and `session.ts`: thirty-two flows deep is not nesting. */
 const MAX_DEPTH = 32;
+
+/** The characters of a path a problem keeps, from its end, when the document is deeper than that. */
+const MAX_PATH = 512;
 
 export function validateFlow(
   flow: FlowDefinition,
@@ -113,41 +118,85 @@ export function validateFlow(
 
   checkShape(flow, '');
 
-  const checkExpr = (expr: unknown, path: string): void => {
-    if (typeof expr === 'function') {
-      report('flow-not-serializable', path, [
-        `${path} is a function`,
-        'JSON.stringify drops a function, so the flow would not survive being stored or sent',
-        'Move the function into the registry and name it with a $ref',
-      ]);
-      return;
-    }
-    if (expr === null || typeof expr !== 'object') return;
-    if (Array.isArray(expr)) {
-      expr.forEach((child, i) => {
-        checkExpr(child, `${path}[${i}]`);
-      });
-      return;
-    }
-    for (const [key, value] of Object.entries(expr)) {
-      if (key === '$get' && typeof value === 'string') {
-        const root = value.split('.')[0] ?? '';
+  // Iterative and without a depth limit: `ui` and a `$ref`'s `args` are the
+  // host's data, and a function at any depth is one `JSON.stringify` drops.
+  // Each frame on the stack is one open object or list and the index of its
+  // next child, so memory follows the depth of the document and not the width
+  // of its lists. The path is joined from the frames only for a report, and
+  // keeps its last `MAX_PATH` characters, so a deep document with many problems
+  // costs a bounded string for each. An object is on `inside` while its subtree
+  // is walked, which is what finds a cycle.
+  type Frame = [
+    value: object,
+    part: string,
+    parent: Frame | undefined,
+    keys: string[],
+    next: number,
+  ];
+  const pathOf = (parent: Frame | undefined, part: string): string => {
+    let path = part;
+    for (; parent && path.length < MAX_PATH; parent = parent[2]) path = parent[1] + path;
+    return parent ? `...${path.slice(-MAX_PATH)}` : path;
+  };
+  const inside = new Set<object>();
+  const checkExpr = (root: unknown, at: string): void => {
+    const stack: Frame[] = [];
+    const visit = (value: unknown, part: string, parent: Frame | undefined): void => {
+      if (typeof value === 'function') {
+        const path = pathOf(parent, part);
+        report('flow-not-serializable', path, [
+          `${path} is a function`,
+          'JSON.stringify drops a function, so the flow would not survive being stored or sent',
+          'Move the function into the registry and name it with a $ref',
+        ]);
+        return;
+      }
+      if (value === null || typeof value !== 'object') return;
+      if (inside.has(value)) {
+        const path = pathOf(parent, part);
+        report('flow-not-serializable', path, [
+          `${path} contains itself`,
+          'JSON.stringify throws on a cycle, so the flow could not be stored or sent',
+          'Replace the reference with a copy of the value',
+        ]);
+        return;
+      }
+      inside.add(value);
+      stack.push([value, part, parent, Array.isArray(value) ? [] : Object.keys(value), 0]);
+    };
+
+    visit(root, at, undefined);
+    for (let top = stack[stack.length - 1]; top; top = stack[stack.length - 1]) {
+      const [value, , , keys, next] = top;
+      const list = Array.isArray(value) ? (value as unknown[]) : undefined;
+      if (next >= (list ?? keys).length) {
+        stack.pop();
+        inside.delete(value);
+        continue;
+      }
+      top[4] = next + 1;
+      if (list) {
+        visit(list[next], `[${next}]`, top);
+        continue;
+      }
+      const key = keys[next] as string;
+      const child = (value as Record<string, unknown>)[key];
+      if (key === '$get' && typeof child === 'string') {
+        const root = child.split('.')[0] ?? '';
         if (!ROOTS.includes(root)) {
-          report('get-unknown-root', path, [
-            `$get "${value}" does not start with ${ROOTS.join(', ')}`,
+          report('get-unknown-root', pathOf(top[2], top[1]), [
+            `$get "${child}" does not start with ${ROOTS.join(', ')}`,
             'The first segment names where a path reads from, and any other start evaluates to undefined',
-            `Start the path with the root it belongs to, such as data.${value}`,
+            `Start the path with the root it belongs to, such as data.${child}`,
           ]);
         }
-        continue;
-      }
-      if (key === '$ref' && typeof value === 'string') {
-        if (registry && !(value in registry)) {
-          report('resolver-not-registered', path, notRegisteredText(value));
+      } else if (key === '$ref' && typeof child === 'string') {
+        if (registry && !(child in registry)) {
+          report('resolver-not-registered', pathOf(top[2], top[1]), notRegisteredText(child));
         }
-        continue;
+      } else {
+        visit(child, `.${key}`, top);
       }
-      checkExpr(value, `${path}.${key}`);
     }
   };
 
@@ -160,21 +209,54 @@ export function validateFlow(
   // operator present is followed rather than guessing which one runs. A
   // `$ref`'s `args` are data handed to the resolver, never evaluated, and are
   // not looked inside.
-  const checkOperators = (e: unknown, path: string): void => {
-    if (e === null || typeof e !== 'object') return;
-    if (Array.isArray(e)) {
-      e.forEach((child, i) => {
-        checkOperators(child, `${path}[${i}]`);
-      });
+  // Depth counts objects and lists alike, as the evaluator does. The evaluator
+  // refuses a branch only when it reaches it - `$and` and `$or` short-circuit,
+  // as they do for an unknown operator - so this reports every branch it could
+  // refuse, before the data decides which ones run. The walk itself cannot
+  // overflow the stack on a pasted or hostile document.
+  // An object already on the way down is a cycle, which `checkExpr` reports;
+  // following it would add a second, wrong problem at the depth limit.
+  const above = new Set<object>();
+  // One `expr-too-deep` for each expression, at the first branch past the
+  // limit: its fix is the same for every branch, and a problem for each of ten
+  // thousand siblings would cost more than the document that carried them.
+  let tooDeep = false;
+  const checkOperators = (e: unknown, path: string, depth = 0): void => {
+    if (depth === 0) tooDeep = false;
+    if (e === null || typeof e !== 'object' || above.has(e)) return;
+    if (depth >= MAX_EXPR_DEPTH) {
+      if (!tooDeep) report('expr-too-deep', path, tooDeepText);
+      tooDeep = true;
       return;
     }
-    const ops = OPERATORS.filter((key) => key in e);
-    if (ops.length === 0) {
-      report('expr-unknown-operator', path, unknownOperatorText(Object.keys(e)[0]));
+    above.add(e);
+    if (Array.isArray(e)) {
+      e.forEach((child, i) => {
+        checkOperators(child, `${path}[${i}]`, depth + 1);
+      });
+    } else {
+      const ops = OPERATORS.filter((key) => key in e);
+      if (ops.length === 0) {
+        report('expr-unknown-operator', path, unknownOperatorText(Object.keys(e)[0]));
+      }
+      for (const op of ops) {
+        const value = (e as Record<string, unknown>)[op];
+        // An operator's list of operands is never walked as a value, only its
+        // items are, two levels down - so a list of literals right at the limit
+        // evaluates, and is not reported. `$not` and `$empty` take one operand,
+        // and a list there is a literal like any other.
+        // A `$get` names a path and is read, never evaluated, like a `$ref`'s `args`.
+        if (op === '$ref' || op === '$get') continue;
+        if (Array.isArray(value) && op !== '$not' && op !== '$empty') {
+          value.forEach((item, i) => {
+            checkOperators(item, `${path}.${op}[${i}]`, depth + 2);
+          });
+        } else {
+          checkOperators(value, `${path}.${op}`, depth + 1);
+        }
+      }
     }
-    for (const op of ops) {
-      if (op !== '$ref') checkOperators((e as Record<string, unknown>)[op], `${path}.${op}`);
-    }
+    above.delete(e);
   };
 
   const targetWhen = (target: Target | 'auto' | undefined, path: string): void => {

@@ -121,6 +121,24 @@ describe('expr-unknown-operator', () => {
   });
 });
 
+describe('expr-too-deep', () => {
+  let deep: Expr = true;
+  for (let i = 0; i < 1000; i++) deep = { $not: deep };
+
+  it('is thrown by evaluate', () => {
+    keepsTheContract(
+      thrown(() => evaluate(deep, scope)),
+      'expr-too-deep',
+      'evaluate'
+    );
+  });
+
+  it('is thrown by evaluateAsync', async () => {
+    const error = await rejected(() => evaluateAsync(deep, scope));
+    keepsTheContract(error, 'expr-too-deep', 'evaluateAsync');
+  });
+});
+
 describe('groups-not-installed', () => {
   it('is thrown by createWizard, at the group step', () => {
     const error = thrown(() => createWizard({ flow: group }));
