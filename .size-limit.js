@@ -132,7 +132,11 @@ export default [
   // bare `TypeError`, and `isSync` reads the operator's operand rather than the
   // object's first value. Shortening the sentences saved 20 B; the rest is the
   // shape check and the operand lookup it goes through.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '6.4 kB', gzip: true },
+  // 6.4 to 6.6 kB on 2026-09-17, measured 6532 B: a `when` that throws is read
+  // as false and logged once as `when-threw`, with its why and fix, instead of
+  // stopping every move and throwing again on every snapshot - which in React
+  // is a render that cannot recover.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '6.6 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a
@@ -163,7 +167,9 @@ export default [
   // 3.65 to 3.9 kB on 2026-09-17, measured 3856 B: the evaluator refuses an operand
   // of the wrong shape with `expr-invalid-operand` (see `core-v1`), and is bundled
   // into this entry.
-  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '3.9 kB', gzip: true },
+  // 3.9 to 4.15 kB on 2026-09-17, measured 4118 B: a `when` that throws is read as
+  // false and logged as `when-threw` (see `core-v1`); reachability is bundled here.
+  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '4.15 kB', gzip: true },
 
   // The recorded-session checker. Its own entry because replay is a devtools and
   // documentation concern: an application that only runs a wizard never needs to

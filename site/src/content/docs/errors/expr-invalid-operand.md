@@ -23,9 +23,10 @@ So `{ $and: null }`, `{ $eq: [1] }` and `{ $get: 123 }` are each refused, and `{
 not. Without the check the evaluator would call `.every` on `null` or split a number as a path, and
 the failure would be a bare `TypeError` that names no expression and no fix.
 
-Where it surfaces is the same as for `expr-unknown-operator`: in a `when`, a guard or a
-transition's `when` it stops the navigation, and in `repeat.over` or `input` the engine catches it
-and reads the group as having no items, or the input as `undefined`.
+Where it surfaces is the same as for `expr-unknown-operator`. In a `when` or a transition's `when` the engine catches it: the step is read as not reachable and
+the line is logged as [`when-threw`](../when-threw/). In a guard it stops the navigation, since a
+guard decides one move and its caller is waiting. In a repeat group's `repeat.over` and in `input`
+it is caught too: the group is read as having no items, and the input as `undefined`.
 
 `validateFlow` checks every operator in every place the engine evaluates an expression, and returns
 each operand of the wrong shape as a problem with `code: 'expr-invalid-operand'`, the `path` of the

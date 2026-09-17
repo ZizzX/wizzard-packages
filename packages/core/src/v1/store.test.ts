@@ -64,6 +64,46 @@ describe('snapshots', () => {
   });
 });
 
+describe('a step whose when throws', () => {
+  // The reason `resolve.ts` reads it as false: a snapshot is read on every
+  // render, and one that throws is a render nothing can recover from.
+  const broken: FlowDefinition = {
+    id: 'booking',
+    order: ['trip', 'company', 'payment'],
+    steps: { trip: {}, company: { when: { $ref: 'gone' } }, payment: {} },
+  };
+
+  it('leaves the wizard usable, snapshot after snapshot', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      const w = createWizard({ flow: broken, registry: {} });
+      await w.start();
+      expect(w.getSnapshot().active).toEqual(['trip', 'payment']);
+      expect(w.getSnapshot().current).toBe('trip');
+      await w.next();
+      expect(w.getSnapshot().current).toBe('payment');
+      expect(
+        error.mock.calls
+          .map((call) => String(call[0]))
+          .filter((line) => line.includes('when-threw'))
+      ).toHaveLength(1);
+    } finally {
+      error.mockRestore();
+    }
+  });
+
+  it('still refuses the move when a guard throws, which has a caller waiting', async () => {
+    const guarded: FlowDefinition = {
+      id: 'booking',
+      order: ['trip', 'payment'],
+      steps: { trip: { guards: { exit: { $ref: 'gone' } } }, payment: {} },
+    };
+    const w = createWizard({ flow: guarded, registry: {} });
+    await w.start();
+    await expect(w.next()).rejects.toMatchObject({ code: 'resolver-not-registered' });
+  });
+});
+
 describe('subscriptions', () => {
   it('notifies once per change', () => {
     const w = make();

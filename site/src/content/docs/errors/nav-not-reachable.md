@@ -11,7 +11,8 @@ Returned, not thrown, by `next()`, `back()` and `go()`. Nothing is written, and 
 target.
 
 The target exists, but the flow does not include it at the moment. Its `when` is false for the
-current data, so progress, breadcrumbs and `next()` all leave it out, and a move that lands on it
+current data - or it threw and was read as false, which the console line
+[`when-threw`](../when-threw/) names - so progress, breadcrumbs and `next()` all leave it out, and a move that lands on it
 anyway is refused. `force: true` does not change that: `force` skips the navigation policy, and a
 step the flow says is not there is not a matter of policy. A group whose own `when` is false is
 refused the same way.

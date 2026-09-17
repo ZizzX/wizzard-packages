@@ -21,9 +21,10 @@ its items: it is never evaluated as a value, so it is not refused on its own, an
 `{ $and: [true] }` whose object is at the 256th level still evaluates.
 
 Where it surfaces is the same as for
-[`expr-unknown-operator`](../expr-unknown-operator/): in a `when`, a guard or a transition's
-`when` it stops the navigation, and in `repeat.over` or `input` the engine catches it and reads the
-group as having no items, or the input as `undefined`.
+[`expr-unknown-operator`](../expr-unknown-operator/). In a `when` or a transition's `when` the engine catches it: the step is read as not reachable and
+the line is logged as [`when-threw`](../when-threw/). In a guard it stops the navigation, since a
+guard decides one move and its caller is waiting. In a repeat group's `repeat.over` and in `input`
+it is caught too: the group is read as having no items, and the input as `undefined`.
 
 `validateFlow` counts the same way and returns one problem with `code: 'expr-too-deep'` for each
 expression past the limit, with the `path` of the first object or list it found there. The fix is
