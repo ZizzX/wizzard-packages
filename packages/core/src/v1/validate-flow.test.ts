@@ -456,10 +456,21 @@ describe('validateFlow and a deeply nested expression', () => {
     expect(found[0]?.path.startsWith('steps.a.when')).toBe(true);
   });
 
-  it('walks a deep ui without overflowing and without a problem', () => {
-    let ui: unknown = 'leaf';
-    for (let i = 0; i < 100_000; i++) ui = { child: ui };
-    expect(validateFlow(flowWith(true, ui))).toEqual([]);
+  it('finds a function nested past the limit in ui, and does not overflow', () => {
+    let ui: unknown = { render: () => null };
+    for (let i = 0; i < 100_000; i++) ui = i % 2 ? { child: ui } : [ui];
+    const found = validateFlow(flowWith(true, ui));
+    expect(found.map((p) => p.code)).toEqual(['flow-not-serializable']);
+    expect(found[0]?.path.endsWith('.render')).toBe(true);
+  });
+
+  it('reports a cycle instead of looping or overflowing', () => {
+    const ui: { self?: unknown; shared: unknown[]; again: unknown[] } = { shared: [], again: [] };
+    ui.self = ui;
+    ui.again = ui.shared;
+    expect(problems(flowWith(true, ui))).toEqual([
+      'steps.a.ui.self: steps.a.ui.self contains itself',
+    ]);
   });
 });
 

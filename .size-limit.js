@@ -291,7 +291,13 @@ export default [
     // `expr-too-deep` for exactly the expressions the evaluator refuses, counting
     // objects and lists the same way, and both of its walks stop at the limit
     // rather than overflowing the stack on the document they exist to check.
-    limit: '2.85 kB',
+    //
+    // 2.85 to 3.05 kB the same day, measured 3043 B: the walk that finds a
+    // function became iterative, because `ui` and a `$ref`'s `args` are host
+    // data of any depth and a depth limit there let a deep function through. It
+    // keeps parent links to build a path only for a report, and it reports a
+    // cycle - the one input an unbounded walk would otherwise never leave.
+    limit: '3.05 kB',
     gzip: true,
   },
 

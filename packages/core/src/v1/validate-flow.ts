@@ -115,44 +115,74 @@ export function validateFlow(
 
   checkShape(flow, '');
 
-  // Stops at the depth limit without a word: past it an evaluated field is
-  // reported by `checkOperators`, and `ui` is the host's JSON.
-  // ponytail: a function nested past the limit inside `ui` goes unreported.
-  const checkExpr = (expr: unknown, path: string, depth = 0): void => {
-    if (typeof expr === 'function') {
-      report('flow-not-serializable', path, [
-        `${path} is a function`,
-        'JSON.stringify drops a function, so the flow would not survive being stored or sent',
-        'Move the function into the registry and name it with a $ref',
-      ]);
-      return;
-    }
-    if (expr === null || typeof expr !== 'object' || depth >= MAX_EXPR_DEPTH) return;
-    if (Array.isArray(expr)) {
-      expr.forEach((child, i) => {
-        checkExpr(child, `${path}[${i}]`, depth + 1);
-      });
-      return;
-    }
-    for (const [key, value] of Object.entries(expr)) {
-      if (key === '$get' && typeof value === 'string') {
-        const root = value.split('.')[0] ?? '';
-        if (!ROOTS.includes(root)) {
-          report('get-unknown-root', path, [
-            `$get "${value}" does not start with ${ROOTS.join(', ')}`,
-            'The first segment names where a path reads from, and any other start evaluates to undefined',
-            `Start the path with the root it belongs to, such as data.${value}`,
-          ]);
-        }
+  // Iterative and without a depth limit: `ui` and a `$ref`'s `args` are the
+  // host's data, and a function at any depth is one `JSON.stringify` drops. A
+  // visit links to its parent and the path is joined only for a report, so a
+  // deep document costs a tuple per level rather than a string per level. An
+  // object is on `inside` while its subtree is walked, which is what finds a
+  // cycle - the recursion this replaced overflowed on one.
+  type Visit = [value: unknown, part: string, parent: Visit | undefined, leaving?: true];
+  const pathOf = (visit: Visit | undefined): string => {
+    let path = '';
+    for (; visit; visit = visit[2]) path = visit[1] + path;
+    return path;
+  };
+  const inside = new Set<object>();
+  const checkExpr = (root: unknown, at: string): void => {
+    const stack: Visit[] = [[root, at, undefined]];
+    for (let visit = stack.pop(); visit; visit = stack.pop()) {
+      const value = visit[0];
+      if (visit[3]) {
+        inside.delete(value as object);
         continue;
       }
-      if (key === '$ref' && typeof value === 'string') {
-        if (registry && !(value in registry)) {
-          report('resolver-not-registered', path, notRegisteredText(value));
-        }
+      if (typeof value === 'function') {
+        const path = pathOf(visit);
+        report('flow-not-serializable', path, [
+          `${path} is a function`,
+          'JSON.stringify drops a function, so the flow would not survive being stored or sent',
+          'Move the function into the registry and name it with a $ref',
+        ]);
         continue;
       }
-      checkExpr(value, `${path}.${key}`, depth + 1);
+      if (value === null || typeof value !== 'object') continue;
+      if (inside.has(value)) {
+        const path = pathOf(visit);
+        report('flow-not-serializable', path, [
+          `${path} contains itself`,
+          'JSON.stringify throws on a cycle, so the flow could not be stored or sent',
+          'Replace the reference with a copy of the value',
+        ]);
+        continue;
+      }
+      inside.add(value);
+      stack.push([value, '', undefined, true]);
+      const children: Visit[] = [];
+      if (Array.isArray(value)) {
+        value.forEach((child, i) => children.push([child, `[${i}]`, visit]));
+      } else {
+        for (const [key, child] of Object.entries(value)) {
+          if (key === '$get' && typeof child === 'string') {
+            const root = child.split('.')[0] ?? '';
+            if (!ROOTS.includes(root)) {
+              report('get-unknown-root', pathOf(visit), [
+                `$get "${child}" does not start with ${ROOTS.join(', ')}`,
+                'The first segment names where a path reads from, and any other start evaluates to undefined',
+                `Start the path with the root it belongs to, such as data.${child}`,
+              ]);
+            }
+          } else if (key === '$ref' && typeof child === 'string') {
+            if (registry && !(child in registry)) {
+              report('resolver-not-registered', pathOf(visit), notRegisteredText(child));
+            }
+          } else {
+            children.push([child, `.${key}`, visit]);
+          }
+        }
+      }
+      // Reversed, so the walk reports in the order the recursion did. Not a
+      // spread: a list of a hundred thousand items is past the argument limit.
+      for (let i = children.length - 1; i >= 0; i--) stack.push(children[i] as Visit);
     }
   };
 

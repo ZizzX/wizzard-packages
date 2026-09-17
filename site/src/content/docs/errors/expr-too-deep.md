@@ -26,7 +26,8 @@ group as having no items, or the input as `undefined`.
 `validateFlow` counts the same way and returns a problem with `code: 'expr-too-deep'` and the
 `path` of the first object or list past the limit, for exactly the expressions the evaluator would
 refuse. It does not look further down that branch. The `ui` of a step is not an expression and is
-never reported, however deep.
+never reported, however deep; a function inside it is still found at any depth, as
+[`flow-not-serializable`](../flow-not-serializable/).
 
 No condition written by hand or by a generator reaches this depth. A long chain of `$and` or `$or`
 flattens into one operator with every operand in its list, and a chain of `$not` into one or none.

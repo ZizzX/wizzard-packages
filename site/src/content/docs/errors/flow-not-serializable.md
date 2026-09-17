@@ -30,5 +30,13 @@ const wizard = createWizard({
 });
 ```
 
+The same code is returned for an object that contains itself, with the message
+`<path> contains itself`. `JSON.stringify` throws on a cycle rather than dropping it, so such a flow
+cannot be stored or sent at all; replace the reference with a copy of the value. An object used in
+two places is not a cycle and is not reported.
+
+Both are found at any depth, in `ui` and in a `$ref`'s `args` as much as in an expression: this
+check has no nesting limit, unlike the [`expr-too-deep`](../expr-too-deep/) one.
+
 A condition that only compares values needs no resolver; write it with the operators in
 [the expressions guide](../../docs/expressions/).
