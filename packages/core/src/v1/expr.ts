@@ -204,13 +204,17 @@ function sync(e: Expr, depth: number): boolean {
   if ('$ref' in e) return false;
   if ('$get' in e) return true;
   if ('$not' in e) return sync(e.$not, depth + 1);
-  if ('$empty' in e) return sync(e.$empty, depth + 1);
   // An operand the evaluator cannot read counts as synchronous: `evaluate` is
   // then the one that refuses it. An object with no operator is read through
   // all its values, so a `$ref` inside it still takes the asynchronous path.
+  // The operators are tried in the evaluator's order, so an object carrying
+  // two is read by the one `evaluate` would pick.
   const list = (v: unknown): boolean =>
     !Array.isArray(v) || v.every((x: Expr) => sync(x, depth + 2));
-  const op = ['$and', '$or', ...PAIRS].find((k) => k in e);
+  if ('$and' in e) return list(e.$and);
+  if ('$or' in e) return list(e.$or);
+  if ('$empty' in e) return sync(e.$empty, depth + 1);
+  const op = PAIRS.find((k) => k in e);
   return op ? list((e as Record<string, unknown>)[op]) : Object.values(e).every(list);
 }
 
