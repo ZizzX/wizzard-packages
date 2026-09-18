@@ -1,7 +1,7 @@
-import { reachableOnPath, resolveBack } from './resolve';
+import { END, type FlowDefinition } from './flow';
+import { reachableOnPath, resolveBack, resolveNext } from './resolve';
 
 import type { AsyncRegistry, Registry, Scope } from './expr';
-import type { FlowDefinition } from './flow';
 import type { WizardState } from './state';
 
 /**
@@ -36,6 +36,7 @@ export interface Derived {
   /** Position of the current step among the active ones, or -1. */
   index: number;
   isFirst: boolean;
+  /** Whether `next()` from the current step finishes: not the end of `active`. */
   isLast: boolean;
   /** 0 to 100, over the active steps rather than all of them. */
   progress: number;
@@ -86,7 +87,10 @@ function derive(state: WizardState, at: ActiveAt, registry?: Registry): Derived 
     current,
     index,
     isFirst: index === 0,
-    isLast: index === active.length - 1 && active.length > 0,
+    // Where next() goes, not where the step sits: a branch with no `on.next`
+    // finishes with steps of `order` still ahead in `active`, and a step sent
+    // to '@end' finishes from the middle of it.
+    isLast: current !== null && resolveNext(owner, state, scope, registry) === END,
     // Progress counts steps left behind, not the current one, so a wizard shows
     // 0% on the first step and 100% only once the last is finished.
     progress: active.length === 0 ? 0 : Math.round((Math.max(index, 0) / active.length) * 100),

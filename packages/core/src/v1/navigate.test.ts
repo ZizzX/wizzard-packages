@@ -276,6 +276,37 @@ describe('runNav — refusals carry a reason', () => {
         });
       });
 
+      // isLast answers whether next() finishes, not where the step sits: a
+      // branch with no on.next ends the wizard with steps of order still drawn.
+      it('reads isLast on a branch whose next() finishes', async () => {
+        const open: FlowDefinition = {
+          ...long,
+          steps: { ...long.steps, company: { on: { back: 'trip' } } },
+        };
+        const host = makeHost(on('trip'));
+        await runNav({ flow: open }, host, { type: 'next' });
+        expect(createSelector(() => open)(host.read())).toMatchObject({
+          active: ['trip', 'company', 'payment'],
+          index: 1,
+          isLast: true,
+        });
+        expect(await runNav({ flow: open }, host, { type: 'next' })).toMatchObject({
+          ok: true,
+          to: END,
+        });
+      });
+
+      it('reads isLast on a step of order sent to @end', () => {
+        const ending: FlowDefinition = {
+          ...long,
+          steps: { ...long.steps, trip: { on: { next: END } } },
+        };
+        expect(createSelector(() => ending)({ ...initialState(), ...on('trip') })).toMatchObject({
+          index: 0,
+          isLast: true,
+        });
+      });
+
       it('drops a branch backed out of', async () => {
         const host = await walk(1);
         await runNav({ flow: long }, host, { type: 'back' });

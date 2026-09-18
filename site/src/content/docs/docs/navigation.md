@@ -106,3 +106,8 @@ const { next, back, canBack, isBusy, isLast } = useNavigation();
 
 `isBusy` is true while a move is in flight, which is what a submit button should be disabled
 by - not a local flag, which cannot know about a move started elsewhere.
+
+`isLast` is true when `next()` from the current step would finish the wizard, which is where a
+Next button usually turns into a Submit. It follows `on.next`, not the step's place in `order`:
+a branch with no `on.next` finishes, and so does a step sent to `'@end'`
+([Flow](../flow/) has the rules).
