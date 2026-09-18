@@ -108,7 +108,8 @@ A step does not have to be in `order` to be entered. One left out of it is a bra
 or a `go()` that names it lands on it whenever its `when` holds, and `next()` and `back()` never
 walk into it on their own. Because it has no place in `order`, it also has no neighbours there -
 `next()` from it without an `on.next` finishes the wizard, and `back()` without an `on.back`
-answers `no-target` - so a branch usually sets both.
+answers `no-target` - so a branch usually sets both. The same holds for a group. Progress and
+breadcrumbs are built from `order` too, so a branch is not counted among them.
 
 `when` and `on.next` answer different questions, and a step that sets both is usually a
 mistake: `when` decides whether the step exists at all, `on.next` decides where it goes once
