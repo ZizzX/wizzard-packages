@@ -718,6 +718,25 @@ describe('5.1 the active flow and scope', () => {
     expect(snapshot.canBack).toBe(true);
   });
 
+  // isLast answers whether next() finishes the wizard, so it asks the
+  // traversal: the end of one item's sub-flow leads to the next item, and the
+  // end of the last one to the step after the group.
+  it('reads isLast from where the traversal goes next', async () => {
+    const wizard = await enterGroup();
+    await wizard.next();
+    expect(stepOf(wizard)).toBe('meal');
+    expect(wizard.getSnapshot().isLast).toBe(false);
+    await wizard.next();
+    await wizard.next();
+    await wizard.next();
+    await wizard.next();
+    expect([keyOf(wizard), stepOf(wizard)]).toEqual(['p3', 'meal']);
+    expect(wizard.getSnapshot().isLast).toBe(false);
+    await wizard.next();
+    expect(stepOf(wizard)).toBe('review');
+    expect(wizard.getSnapshot().isLast).toBe(true);
+  });
+
   // A branch is placed from the history of its own item: another passenger
   // walks the same sub-flow, but not the same path.
   it('places a branch of the sub-flow only in the item that took it', async () => {

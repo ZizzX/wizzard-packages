@@ -144,7 +144,11 @@ export default [
   // the wizard took is placed in `active`, progress and breadcrumbs after the
   // step it was entered from, instead of reading as index -1, 0% and no crumb,
   // and the `sequential` policy counts neighbours on that same list.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '6.85 kB', gzip: true },
+  // 6.85 to 6.9 kB on 2026-09-19, measured 6870 B: `isLast` says whether
+  // `next()` finishes the wizard, asking the traversal inside a group as
+  // `canBack` does, instead of reading the end of `active` - false on a branch
+  // that finishes, true on the last step of an item that leads to the next one.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '6.9 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a

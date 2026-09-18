@@ -59,6 +59,7 @@ export interface WizardOptions<F extends FlowDefinition = FlowDefinition> {
 }
 
 const BACK: NavIntent = { type: 'back' };
+const NEXT: NavIntent = { type: 'next' };
 
 /**
  * A group step with no traversal installed is a configuration error, not a
@@ -185,10 +186,14 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
     registry,
     (s) => {
       const active: ActiveAt = at(s);
-      // Only a traversal can answer this once the stack is deeper than one frame;
+      // Only a traversal can answer these once the stack is deeper than one frame;
       // left absent, `select.ts` falls back to the order walk it always used.
       if (traversal !== undefined) {
         active.canBack = traversal.step(flow, s, BACK, registry, subFlows) !== null;
+        // The end of a child flow is the next item or the step after the group;
+        // only the traversal knows whether next() finishes the wizard.
+        const move = traversal.step(flow, s, NEXT, registry, subFlows);
+        active.isLast = move !== null && !('ok' in move) && move.to === END;
       }
       return active;
     }

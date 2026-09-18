@@ -127,6 +127,13 @@ before it, or when its own `when` turns false. One never taken is not counted, a
 counts neighbours on the same list, so it never lets a `go()` into a branch not yet taken without
 `force`, and allows one to a taken branch next to the current step.
 
+`isLast` is the one derived value that is not a position on that list. It says whether `next()`
+from the current step finishes the wizard, so it is true on a branch with no `on.next`, even with
+steps of `order` still drawn after it, and on a step whose `on.next` is `'@end'`, wherever it
+sits. It is false on a last step whose `on.next` leads back into the flow. Inside a `repeat`
+group it is false on the last step of every item but the last, whose `next()` goes on to the next
+item, and true there only when the group is the last step of the wizard.
+
 `when` and `on.next` answer different questions, and a step that sets both is usually a
 mistake: `when` decides whether the step exists at all, `on.next` decides where it goes once
 it does. On the same step they do not interact - the step's `when` still hides it, and never
