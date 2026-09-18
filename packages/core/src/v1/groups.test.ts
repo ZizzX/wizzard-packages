@@ -717,6 +717,30 @@ describe('5.1 the active flow and scope', () => {
     expect(snapshot.breadcrumbs.map((b) => b.id)).toEqual(['seat', 'meal']);
     expect(snapshot.canBack).toBe(true);
   });
+
+  // A branch is placed from the history of its own item: another passenger
+  // walks the same sub-flow, but not the same path.
+  it('places a branch of the sub-flow only in the item that took it', async () => {
+    const branched: FlowDefinition = {
+      ...passenger,
+      steps: { seat: { on: { next: 'extra' } }, extra: { on: { next: 'meal' } }, meal: {} },
+    };
+    const flow: FlowDefinition = {
+      ...booking(),
+      steps: {
+        ...booking().steps,
+        each: { flow: branched, repeat: { over: { $get: 'data.passengers' }, keyBy: 'id' } },
+      },
+    };
+    const wizard = await enterGroup(flow);
+    await wizard.next(); // p1/extra
+    expect(wizard.getSnapshot()).toMatchObject({ active: ['seat', 'extra', 'meal'], index: 1 });
+
+    await wizard.next(); // p1/meal
+    await wizard.next(); // p2/seat
+    expect(keyOf(wizard)).toBe('p2');
+    expect(wizard.getSnapshot()).toMatchObject({ active: ['seat', 'meal'], index: 0 });
+  });
 });
 
 describe('5.2 the guard', () => {

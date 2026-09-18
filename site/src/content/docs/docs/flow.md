@@ -27,7 +27,7 @@ pass is the object the engine reads, and nothing is added to it.
 
 The `policy` values differ in which jumps they permit. `sequential` allows a move to an adjacent
 step and no further - the one before or the one after, counted among the steps currently
-reachable. `visited` allows any step the user has already been to. `free` allows any step at all.
+reachable and the branches taken, the same list the breadcrumbs draw. `visited` allows any step the user has already been to. `free` allows any step at all.
 
 A flow that omits `policy` gets `visited`: someone may return to anything they have seen and
 cannot skip ahead into a step whose prerequisites never ran.
@@ -113,14 +113,19 @@ case, end the array with `'@end'`; to fall through to the next step, name it.
 
 A step does not have to be in `order` to be entered. One left out of it is a branch: an `on.next`
 that names it lands on it whenever its `when` holds, and so does a `go()` the navigation policy
-allows - `sequential` never allows one without `force`, since a branch has no place in `order` to
-be next to. `next()` and `back()` never walk into it on their own. Having no place in `order`, it
+allows. `next()` and `back()` never walk into it on their own. Having no place in `order`, it
 also has no neighbours there: `next()` from it without an `on.next` finishes the wizard, and
 `back()` without an `on.back` answers `no-target`, so a branch usually sets both. The same holds
-for a group. Progress and breadcrumbs are built from `order` too, with each branch the wizard took
-placed right after the step it was entered from: standing on one, or anywhere past it, counts it
-as a step and draws its breadcrumb. `history` is the path, so a branch left by `back()` drops out
-again, and one never taken is not counted.
+for a group.
+
+The derived values - `active`, `index`, `isFirst`, `isLast`, `progress` and the breadcrumbs - are
+built from `order`, with each branch the wizard took placed right after the step it was entered
+from: standing on one, or anywhere past it, counts it as a step and draws its breadcrumb. The path
+is `history`, so a branch drops out again when `back()` leaves it, when a `go()` returns to a step
+before it, or when its own `when` turns false. One never taken is not counted, and a step of
+`order` whose `when` turns false while it is the current one reads as `index` -1. `sequential`
+counts neighbours on the same list, so it never lets a `go()` into a branch not yet taken without
+`force`, and allows one to a taken branch next to the current step.
 
 `when` and `on.next` answer different questions, and a step that sets both is usually a
 mistake: `when` decides whether the step exists at all, `on.next` decides where it goes once

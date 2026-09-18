@@ -3,7 +3,7 @@ import { explain, guard, pageFor } from './diagnostic';
 import { testAsync, type AsyncRegistry, type Registry, type Scope } from './expr';
 import { END, type FlowDefinition, type StepDef } from './flow';
 import { unsetPath } from './path';
-import { allowedByPolicy, enterable, reachable, resolveBack, resolveNext } from './resolve';
+import { allowedByPolicy, enterable, reachableOnPath, resolveBack, resolveNext } from './resolve';
 
 import type { Frame, WizardState } from './state';
 
@@ -413,7 +413,7 @@ async function pipeline(
     if (!enterable(where.flow, target, where.scope, registry)) {
       return fail({ ok: false, reason: 'not-reachable', by: target });
     }
-    const active = reachable(where.flow, where.scope, registry);
+    const active = reachableOnPath(where.flow, state, where.scope, registry);
 
     if (
       intent.type === 'go' &&

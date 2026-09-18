@@ -210,7 +210,7 @@ describe('runNav — refusals carry a reason', () => {
     });
 
     // Without `force`, a jump still answers to the policy: `free` lets it in,
-    // and `sequential` cannot place a step that has no position in `order`.
+    // and `sequential` has no place for a branch the wizard has not taken yet.
     it('is entered by an unforced go() the policy allows, and only then', async () => {
       const free: NavContext = { flow: { ...branched, policy: 'free' } };
       expect(await runNav(free, makeHost(on('trip')), { type: 'go', to: 'company' })).toEqual({
@@ -280,6 +280,26 @@ describe('runNav — refusals carry a reason', () => {
         const host = await walk(1);
         await runNav({ flow: long }, host, { type: 'back' });
         expect(derived(host)).toMatchObject({ active: ['trip', 'payment'], index: 0 });
+      });
+
+      // go() is a forward move and grows history; coming back to a step erases
+      // the loop, so the branch it passed no longer claims a place ahead.
+      it('forgets a branch left by go() back to a step before it', async () => {
+        const host = await walk(3);
+        await runNav({ flow: { ...long, policy: 'free' } }, host, { type: 'go', to: 'trip' });
+        expect(derived(host)).toMatchObject({ active: ['trip', 'payment'], index: 0 });
+      });
+
+      // The policy counts neighbours on the same list the breadcrumbs draw.
+      it('gives sequential the same neighbours the breadcrumbs show', async () => {
+        const sequential: NavContext = { flow: { ...long, policy: 'sequential' } };
+        expect(
+          await runNav(sequential, await walk(1), { type: 'go', to: 'payment' })
+        ).toMatchObject({ ok: true, to: 'payment' });
+        expect(await runNav(sequential, await walk(1), { type: 'go', to: 'vat' })).toMatchObject({
+          ok: false,
+          reason: 'blocked',
+        });
       });
 
       // As for a step of `order`: -1 is how a binding sees the route closed under it.
