@@ -87,9 +87,10 @@ export function resolveNext(
     }
     // A transition that names only steps whose own `when` is false is a flow
     // bug, not a silent skip: the first one named is answered, and the move
-    // refuses it as `not-reachable` rather than finishing the wizard past
-    // every step still ahead.
-    return closed ?? END;
+    // refuses it as `not-reachable`. One where no entry applies at all has
+    // nowhere to go, `no-target`. Neither finishes the wizard past every step
+    // still ahead; finishing is `'@end'`, written out.
+    return closed ?? null;
   }
 
   const order = effectiveOrder(flow);

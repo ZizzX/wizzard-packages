@@ -83,6 +83,21 @@ describe('resolveNext', () => {
     expect(resolveNext(jump, at('a'), scopeFor('x'))).toBe('b');
   });
 
+  // Nothing matched, so there is no target to name: the move has nowhere to go
+  // rather than finishing the wizard.
+  it("answers null when no transition's when holds", () => {
+    const guarded: FlowDefinition = {
+      id: 'j',
+      order: ['a', 'b', 'c'],
+      steps: {
+        a: { on: { next: [{ to: 'b', when: { $eq: [{ $get: 'data.tier' }, 'gold'] } }] } },
+        b: {},
+        c: {},
+      },
+    };
+    expect(resolveNext(guarded, at('a'), { data: { tier: 'bronze' }, ctx: {} })).toBeNull();
+  });
+
   it('prefers a later open target to an earlier closed one', () => {
     const jump: FlowDefinition = {
       id: 'j',
