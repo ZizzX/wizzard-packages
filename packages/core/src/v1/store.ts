@@ -1,6 +1,6 @@
 import { commit, restart } from './commit';
 import { type SliceAt, type StepIdOf } from './define';
-import { explain, guard, notRegistered, WizardError } from './diagnostic';
+import { explain, guard, notRegistered, pageFor, WizardError } from './diagnostic';
 import { END, isGroup, type FlowDefinition, type StepDef } from './flow';
 import {
   runNav,
@@ -153,6 +153,7 @@ export interface Wizard<F extends FlowDefinition = FlowDefinition> {
 }
 
 const strictEquals = <T>(a: T, b: T): boolean => a === b;
+const settled = (): void => undefined;
 
 export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>): Wizard<F> {
   // Widened on purpose: `patchFlow` replaces it with something that is no longer `F`.
@@ -197,6 +198,9 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
   let dirtyWhileBatching = false;
   let controller: AbortController | undefined;
   let starting: Promise<NavResult> | undefined;
+  // The latest move, whoever made it. `start()` waits on it rather than
+  // stepping over a move that has not landed yet.
+  let moving: Promise<NavResult> | undefined;
   const plugins: readonly Hooks[] = options.plugins ?? [];
   const disabled = new Set<string>();
   const teardowns: [name: string, teardown: () => void][] = [];
@@ -327,10 +331,10 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
   });
 
   let attempts = 0;
-  const navigate = async (
+  const attempt = async (
     intent: NavIntent,
-    opts?: { validate?: boolean },
-    source: 'call' | 'start' = 'call'
+    opts: { validate?: boolean } | undefined,
+    source: 'call' | 'start'
   ): Promise<NavResult> => {
     controller = new AbortController();
     const id = ++attempts;
@@ -346,6 +350,56 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
       report({ phase: 'error', error });
       throw error;
     }
+  };
+  const navigate = (
+    intent: NavIntent,
+    opts?: { validate?: boolean },
+    source: 'call' | 'start' = 'call'
+  ): Promise<NavResult> => (moving = attempt(intent, opts, source));
+
+  const start = (): Promise<NavResult> => {
+    // `next` from an empty stack resolves to the first reachable step, which
+    // is exactly what starting means; the guard is only here so that calling
+    // it twice - two mounts of the same wizard, say - is not a step forward.
+    //
+    // The in-flight check comes first. Phase 0 of the pipeline bumps the
+    // epoch synchronously, so by the time a second mount calls in, `status`
+    // already says busy while the first attempt has committed nothing yet -
+    // answering from `status` there would report a finished flow. Two mounts
+    // of one engine share one attempt, so an enter guard or a deferred step's
+    // loader runs once, not twice.
+    if (starting !== undefined) return starting;
+
+    // Started means a step is current, or the flow finished - one whose
+    // every step is unreachable ends on the first start with the stack
+    // empty, and a second call must not walk it again. Not `status`: a
+    // first move that threw or was refused leaves `idle` and an empty
+    // stack, and answering ok there would leave the wizard on no step for
+    // good. That start is simply tried again.
+    const current = state.stack[state.stack.length - 1]?.step ?? null;
+    if (current !== null || state.status === 'done') {
+      return Promise.resolve({ ok: true, from: current, to: current ?? END });
+    }
+
+    // A `next()` or `go()` from the empty stack is already on its way. A
+    // start now would supersede it, and answering ok would claim a step that
+    // move may never land on. Wait for it, then ask again: it either placed
+    // the wizard somewhere, or left it unstarted and the first move runs.
+    const pending = state.status === 'busy' ? moving : undefined;
+    starting = (
+      pending
+        ? pending.catch(settled).then((): Promise<NavResult> | NavResult => {
+            starting = undefined;
+            // Destroyed while it waited: nothing may move a dead engine.
+            return destroyed
+              ? { ok: false, reason: 'aborted', code: 'nav-aborted', url: pageFor('nav-aborted') }
+              : start();
+          })
+        : navigate({ type: 'next' }, { validate: false }, 'start')
+    ).finally(() => {
+      starting = undefined;
+    });
+    return starting;
   };
 
   // Plugins are initialised before the engine is handed out, so a restored
@@ -402,36 +456,7 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
       return () => listeners.delete(wrapped);
     },
 
-    start() {
-      // `next` from an empty stack resolves to the first reachable step, which
-      // is exactly what starting means; the guard is only here so that calling
-      // it twice - two mounts of the same wizard, say - is not a step forward.
-      //
-      // The in-flight check comes first. Phase 0 of the pipeline bumps the
-      // epoch synchronously, so by the time a second mount calls in, `status`
-      // already says busy while the first attempt has committed nothing yet -
-      // answering from `status` there would report a finished flow. Two mounts
-      // of one engine share one attempt, so an enter guard or a deferred step's
-      // loader runs once, not twice.
-      if (starting !== undefined) return starting;
-
-      // Started means a step is current, or the flow finished - one whose
-      // every step is unreachable ends on the first start with the stack
-      // empty, and a second call must not walk it again. Not `status`: a
-      // first move that threw or was refused leaves `idle` and an empty
-      // stack, and answering ok there would leave the wizard on no step for
-      // good. That start is simply tried again. `busy` is a `next()` or
-      // `go()` already on its way, and a start would supersede it.
-      const current = state.stack[state.stack.length - 1]?.step ?? null;
-      if (current !== null || state.status === 'done' || state.status === 'busy') {
-        return Promise.resolve({ ok: true, from: current, to: current ?? END });
-      }
-
-      starting = navigate({ type: 'next' }, { validate: false }, 'start').finally(() => {
-        starting = undefined;
-      });
-      return starting;
-    },
+    start,
     next: (opts) => navigate({ type: 'next' }, opts),
     back: () => navigate({ type: 'back' }),
     go: (to, opts) => navigate({ type: 'go', to, force: opts?.force }, opts),

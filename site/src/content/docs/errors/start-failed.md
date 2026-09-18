@@ -5,7 +5,7 @@ description: A provider started the wizard, and its first move threw, so no step
 
 ```
 [wizzard] the wizard could not start. Its first move threw, so no step is shown. Fix what threw,
-logged below, and mount the wizard again. …/errors/start-failed
+logged below, and call start() again or mount the wizard again. …/errors/start-failed
 ```
 
 Printed with `console.error` by `WizardProvider` from `@wizzard-packages/react/v1` and by

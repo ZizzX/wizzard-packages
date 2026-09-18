@@ -458,6 +458,65 @@ describe('start under concurrency', () => {
     expect(w.getSnapshot().current).toBe('trip');
   });
 
+  // A move from the empty stack that then fails leaves the wizard unstarted.
+  // A start that arrived meanwhile waits for it, and then starts.
+  it('starts once a go() it waited on was refused', async () => {
+    const w = createWizard({
+      flow: { ...flow, policy: 'visited' },
+      registry,
+      data: { payer: 'private', name: 'Ann' },
+      plugins: [{ name: 'slow', beforeNavigate: () => Promise.resolve() }],
+    });
+    const jump = w.go('payment');
+    const started = w.start();
+
+    expect(await jump).toMatchObject({ ok: false, reason: 'blocked', by: 'payment' });
+    expect(await started).toEqual({ ok: true, from: null, to: 'trip' });
+    expect(w.getSnapshot().current).toBe('trip');
+  });
+
+  it('starts once a move it waited on threw', async () => {
+    let fail = true;
+    const w = createWizard({
+      flow,
+      registry,
+      data: { payer: 'private', name: 'Ann' },
+      plugins: [
+        {
+          name: 'flaky',
+          beforeNavigate: async () => {
+            await Promise.resolve();
+            if (fail) {
+              fail = false;
+              throw new Error('offline');
+            }
+          },
+        },
+      ],
+    });
+    const moving = w.next();
+    const started = w.start();
+
+    await expect(moving).rejects.toThrow('offline');
+    expect(await started).toEqual({ ok: true, from: null, to: 'trip' });
+  });
+
+  it('does not start a wizard destroyed while it waited', async () => {
+    const w = createWizard({
+      flow: { ...flow, policy: 'visited' },
+      registry,
+      data: { payer: 'private', name: 'Ann' },
+      plugins: [{ name: 'slow', beforeNavigate: () => Promise.resolve() }],
+    });
+    const jump = w.go('payment');
+    const started = w.start();
+    w.destroy();
+
+    await jump;
+    expect(await started).toMatchObject({ ok: false, reason: 'aborted', code: 'nav-aborted' });
+    expect(w.getState().stack).toEqual([]);
+  });
+
   it('runs the pipeline once when two mounts race', async () => {
     let entered = 0;
     const w = createWizard({

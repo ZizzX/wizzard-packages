@@ -55,7 +55,7 @@ export function provideWizard<F extends FlowDefinition>(
       // the promise would turn it into an unhandled rejection instead.
       console.error(
         '[wizzard] the wizard could not start. Its first move threw, so no step is shown. ' +
-          'Fix what threw, logged below, and mount the wizard again. ' +
+          'Fix what threw, logged below, and call start() again or mount the wizard again. ' +
           'https://zizzx.github.io/wizzard-packages/errors/start-failed',
         error
       );
