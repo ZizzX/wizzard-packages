@@ -3,7 +3,7 @@ import { explain, guard, pageFor } from './diagnostic';
 import { testAsync, type AsyncRegistry, type Registry, type Scope } from './expr';
 import { END, type FlowDefinition, type StepDef } from './flow';
 import { unsetPath } from './path';
-import { allowedByPolicy, reachable, resolveBack, resolveNext } from './resolve';
+import { allowedByPolicy, enterable, reachable, resolveBack, resolveNext } from './resolve';
 
 import type { Frame, WizardState } from './state';
 
@@ -403,13 +403,17 @@ async function pipeline(
     }
 
     // 5. Reachability, then policy. Inside a group both are the sub-flow's
-    // question: `reachable` on the root would not contain a child step at all.
+    // question: the root does not contain a child step at all. Reachable means
+    // the target's `when` holds, not that it is in `order`: a step outside
+    // `order` is a branch, entered by `on.next` or `go()`.
     const where = move ?? at;
     const step = where.flow.steps[target];
     if (!step) return fail({ ok: false, reason: 'no-target' });
 
+    if (!enterable(where.flow, target, where.scope, registry)) {
+      return fail({ ok: false, reason: 'not-reachable', by: target });
+    }
     const active = reachable(where.flow, where.scope, registry);
-    if (!active.includes(target)) return fail({ ok: false, reason: 'not-reachable', by: target });
 
     if (
       intent.type === 'go' &&

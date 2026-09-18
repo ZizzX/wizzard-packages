@@ -379,6 +379,29 @@ describe('4.7 go() into a group, and out of one', () => {
     ]);
   });
 
+  // A group outside `order` is a branch like any other step: entered by name.
+  it('enters a group outside order through the on.next or go() that names it', async () => {
+    const flow: FlowDefinition = {
+      ...booking(),
+      order: ['who', 'review'],
+      steps: { ...booking().steps, who: { on: { next: 'each' } } },
+    };
+    const inside = [
+      { flow: 'booking', step: 'each', key: 'p1' },
+      { flow: 'passenger', step: 'seat' },
+    ];
+
+    const byNext = build(flow);
+    await byNext.start();
+    await byNext.next();
+    expect(at(byNext)).toEqual(inside);
+
+    const byGo = build(flow);
+    await byGo.start();
+    await byGo.go('each', { force: true });
+    expect(at(byGo)).toEqual(inside);
+  });
+
   it('compares a `sequential` policy against the sub-flow`s active steps', async () => {
     const strict: FlowDefinition = { ...passenger, policy: 'sequential' };
     const flow: FlowDefinition = {

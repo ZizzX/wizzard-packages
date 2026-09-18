@@ -1,7 +1,7 @@
 import { evaluate, type Registry, type Scope } from './expr';
 import { END, isGroup, type FlowDefinition, type GroupStep } from './flow';
 import { getPath } from './path';
-import { reachable, resolveBack, resolveNext } from './resolve';
+import { enterable, resolveBack, resolveNext } from './resolve';
 
 import type { NavIntent, SubFlows, Traversal } from './navigate';
 import type { Frame, WizardState } from './state';
@@ -325,7 +325,7 @@ function enter(
   // already filters by it, but `go` does not: without this a forced jump enters
   // a section the flow says is not there, and phase 5 would only ever check the
   // child step it landed on.
-  if (!reachable(level.flow, level.scope, registry).includes(id)) return { kind: 'hidden' };
+  if (!enterable(level.flow, id, level.scope, registry)) return { kind: 'hidden' };
 
   const sub = subFlowOf(step, subFlows);
   if (sub === undefined) return { kind: 'past' };
