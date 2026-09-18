@@ -74,6 +74,8 @@ export interface ActiveAt {
   scope: Scope;
   /** What `back()` would answer. Only a traversal can say, once inside a group. */
   canBack?: boolean;
+  /** Whether `next()` finishes the wizard. Likewise a traversal's question. */
+  isLast?: boolean;
 }
 
 function derive(state: WizardState, at: ActiveAt, registry?: Registry): Derived {
@@ -90,7 +92,7 @@ function derive(state: WizardState, at: ActiveAt, registry?: Registry): Derived 
     // Where next() goes, not where the step sits: a branch with no `on.next`
     // finishes with steps of `order` still ahead in `active`, and a step sent
     // to '@end' finishes from the middle of it.
-    isLast: current !== null && resolveNext(owner, state, scope, registry) === END,
+    isLast: current !== null && (at.isLast ?? resolveNext(owner, state, scope, registry) === END),
     // Progress counts steps left behind, not the current one, so a wizard shows
     // 0% on the first step and 100% only once the last is finished.
     progress: active.length === 0 ? 0 : Math.round((Math.max(index, 0) / active.length) * 100),
