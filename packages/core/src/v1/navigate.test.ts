@@ -209,6 +209,21 @@ describe('runNav — refusals carry a reason', () => {
       });
     });
 
+    // Without `force`, a jump still answers to the policy: `free` lets it in,
+    // and `sequential` cannot place a step that has no position in `order`.
+    it('is entered by an unforced go() the policy allows, and only then', async () => {
+      const free: NavContext = { flow: { ...branched, policy: 'free' } };
+      expect(await runNav(free, makeHost(on('trip')), { type: 'go', to: 'company' })).toEqual({
+        ok: true,
+        from: 'trip',
+        to: 'company',
+      });
+      const sequential: NavContext = { flow: { ...branched, policy: 'sequential' } };
+      expect(
+        await runNav(sequential, makeHost(on('trip')), { type: 'go', to: 'company' })
+      ).toMatchObject({ ok: false, reason: 'blocked', by: 'company' });
+    });
+
     // It has no neighbours in `order`, so leaving it is its own transitions' job.
     it('finishes on next() and has nowhere to go back to, without transitions', async () => {
       expect(await runNav(ctx, makeHost(on('company')), { type: 'next' })).toMatchObject({

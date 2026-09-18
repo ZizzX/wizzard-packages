@@ -113,8 +113,9 @@ component rendered both inside and outside a wizard needs.
 
 The provider starts the wizard when it mounts. If that first move throws - a first step whose
 loader rejects is the usual case - there is no caller to throw to, so the provider logs
-`start-failed` with the cause and renders no current step. Fix what threw and mount the provider
-again; one given options creates a new engine each time it mounts.
+`start-failed` with the cause and renders no current step. The wizard has not started, so once
+what threw is fixed, `useWizard().start()` runs the first move again - from a retry button, say -
+and so does mounting the provider again.
 
 Navigation is async and returns a result, not a boolean: `await next()` gives
 `{ ok: false, reason: 'blocked', by: 'age-check' }` when a guard refuses. Every `await` inside

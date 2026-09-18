@@ -105,11 +105,13 @@ whose `when` holds is taken. `on.back` accepts the same, plus the literal `'auto
 default written out: walk `order` backwards and take the first step that is still reachable.
 
 A step does not have to be in `order` to be entered. One left out of it is a branch: an `on.next`
-or a `go()` that names it lands on it whenever its `when` holds, and `next()` and `back()` never
-walk into it on their own. Because it has no place in `order`, it also has no neighbours there -
-`next()` from it without an `on.next` finishes the wizard, and `back()` without an `on.back`
-answers `no-target` - so a branch usually sets both. The same holds for a group. Progress and
-breadcrumbs are built from `order` too, so a branch is not counted among them.
+that names it lands on it whenever its `when` holds, and so does a `go()` the navigation policy
+allows - `sequential` never allows one without `force`, since a branch has no place in `order` to
+be next to. `next()` and `back()` never walk into it on their own. Having no place in `order`, it
+also has no neighbours there: `next()` from it without an `on.next` finishes the wizard, and
+`back()` without an `on.back` answers `no-target`, so a branch usually sets both. The same holds
+for a group. Progress and breadcrumbs are built from `order` too, so a branch is not counted among
+them.
 
 `when` and `on.next` answer different questions, and a step that sets both is usually a
 mistake: `when` decides whether the step exists at all, `on.next` decides where it goes once

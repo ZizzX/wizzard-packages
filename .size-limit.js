@@ -136,7 +136,11 @@ export default [
   // as false and logged once as `when-threw`, with its why and fix, instead of
   // stopping every move and throwing again on every snapshot - which in React
   // is a render that cannot recover.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '6.6 kB', gzip: true },
+  // 6.6 to 6.7 kB on 2026-09-19, measured 6651 B: `start()` called while a
+  // `next()` or `go()` from the empty stack is on its way waits for that move
+  // and then starts, instead of answering ok for a move that may be refused
+  // and leaving the wizard on no step for good.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '6.7 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a

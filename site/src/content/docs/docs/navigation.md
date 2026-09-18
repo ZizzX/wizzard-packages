@@ -37,7 +37,9 @@ and an option that switched it off would make it advice rather than a rule.
 `start()` is `next()` from an empty stack. Once it has landed - a step is current, or a flow
 with no reachable step has finished - calling it again is not a move: it answers where the wizard
 already is. Until then it is not, so a first move that threw or was refused leaves the wizard
-unstarted, and the next `start()` tries again.
+unstarted, and the next `start()` tries again. A `start()` called while a `next()` or `go()` from
+the empty stack is still on its way does not step over it: it waits for that move, then answers
+from wherever the move left the wizard, running the first move itself if it left it unstarted.
 
 `back()` resolves its target from the definition rather than from where the user has been. A step
 with `on.back` goes there. Otherwise the resolver walks `order` backwards and takes the first step
