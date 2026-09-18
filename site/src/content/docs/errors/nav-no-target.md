@@ -15,9 +15,12 @@ The engine could not name a step to move to. The causes are:
   Back button disabled by it never produces this.
 - `go(id)` with an id that is not a key of `steps`, most often a typo.
 - `back()` from a step whose `on.back` names a step that does not exist.
+- `next()` from a step whose `on.next` is a list of `{ to, when }` entries and no entry's `when`
+  holds. The transition decides where the step leads, so the engine does not guess: add an entry
+  without a `when` as the last one - the step to go to otherwise, or `'@end'` to finish.
 
-`next()` on the last step is not one of them: it finishes the wizard, answers `{ ok: true, to:
-'@end' }` and sets `status` to `done`.
+`next()` on the last step of `order`, with no `on.next`, is not one of them: it finishes the
+wizard, answers `{ ok: true, to: '@end' }` and sets `status` to `done`.
 
 Disable Back with `canBack` rather than handling this result. For an id, correct it or add the
 step; `validateFlow` reports an `on.back` to a missing step as

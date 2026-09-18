@@ -74,18 +74,23 @@ export function resolveNext(
   const explicit = step.on?.next;
   if (explicit !== undefined) {
     const targets: readonly Target[] = Array.isArray(explicit) ? explicit : [explicit as Target];
+    let closed: string | undefined;
     for (const t of targets) {
       const to = typeof t === 'string' ? t : t.to;
       const guard = typeof t === 'string' ? undefined : t.when;
       if (!holds(flow, guard, scope, registry, `the transition of step "${current}" to "${to}"`))
         continue;
       if (to === END) return END;
-      // An explicit target still has to be reachable; a branch pointing at a
-      // step whose own `when` is false is a flow bug, not a silent skip.
       if (flow.steps[to] && holds(flow, flow.steps[to].when, scope, registry, `step "${to}"`))
         return to;
+      closed ??= to;
     }
-    return END;
+    // A transition that names only steps whose own `when` is false is a flow
+    // bug, not a silent skip: the first one named is answered, and the move
+    // refuses it as `not-reachable`. One where no entry applies at all has
+    // nowhere to go, `no-target`. Neither finishes the wizard past every step
+    // still ahead; finishing is `'@end'`, written out.
+    return closed ?? null;
   }
 
   const order = effectiveOrder(flow);

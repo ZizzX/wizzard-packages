@@ -2,7 +2,7 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
 import type { Expr, Scope } from './expr';
-import { END, type FlowDefinition, type StepDef } from './flow';
+import { END, type FlowDefinition, type StepDef, type Target } from './flow';
 import { reachable, resolveBack, resolveNext } from './resolve';
 import { beginNav } from './commit';
 import { initialState, type WizardState } from './state';
@@ -123,14 +123,20 @@ describe('the generators themselves', () => {
 });
 
 describe('resolveNext — properties', () => {
-  it('always returns END, null, or a step that is reachable right now', () => {
+  // The one exception is a closed step the current step names in `on.next`:
+  // it is answered so the move refuses it, rather than skipped to END.
+  it('always returns END, null, a reachable step, or a closed step on.next names', () => {
     fc.assert(
       fc.property(arbBranchingFlow, ({ flow, scope }) => {
         const active = reachable(flow, scope);
         for (const start of [null, ...(flow.order ?? [])]) {
           const target = resolveNext(flow, stateAt(start), scope);
-          if (target === END || target === null) continue;
-          expect(active).toContain(target);
+          if (target === END || target === null || active.includes(target)) continue;
+          const next = start === null ? undefined : flow.steps[start]?.on?.next;
+          const named = (Array.isArray(next) ? next : next === undefined ? [] : [next]).map(
+            (t: Target) => (typeof t === 'string' ? t : t.to)
+          );
+          expect(named).toContain(target);
         }
       }),
       { numRuns: 300 }
