@@ -403,7 +403,61 @@ describe('start', () => {
   });
 });
 
+// A first move that threw or was refused leaves the stack empty. The wizard has
+// not started, so a second call must try again rather than report success.
+describe('start after a failed start', () => {
+  it('tries again after the first move threw', async () => {
+    let fail = true;
+    const w = createWizard({
+      flow,
+      registry,
+      data: { payer: 'private', name: 'Ann' },
+      plugins: [
+        {
+          name: 'flaky',
+          beforeNavigate: () => {
+            if (fail) throw new Error('offline');
+          },
+        },
+      ],
+    });
+
+    await expect(w.start()).rejects.toThrow('offline');
+    expect(w.getSnapshot().current).toBeNull();
+
+    fail = false;
+    expect(await w.start()).toEqual({ ok: true, from: null, to: 'trip' });
+    expect(w.getSnapshot().current).toBe('trip');
+  });
+
+  it('tries again after the first move was refused, and answers with the refusal', async () => {
+    let open = false;
+    const w = createWizard({
+      flow: { ...flow, steps: { ...flow.steps, trip: { guards: { enter: { $ref: 'open' } } } } },
+      registry: { ...registry, open: () => open },
+      data: { payer: 'private', name: 'Ann' },
+    });
+
+    expect(await w.start()).toMatchObject({ ok: false, reason: 'blocked', by: 'trip' });
+    expect(await w.start()).toMatchObject({ ok: false, reason: 'blocked', by: 'trip' });
+
+    open = true;
+    expect(await w.start()).toEqual({ ok: true, from: null, to: 'trip' });
+  });
+});
+
 describe('start under concurrency', () => {
+  // A move already under way owns the wizard; a start beside it would bump
+  // the epoch and turn that move into `superseded`.
+  it('leaves a next() that is already moving alone', async () => {
+    const w = make();
+    const moving = w.next();
+    await w.start();
+
+    expect(await moving).toEqual({ ok: true, from: null, to: 'trip' });
+    expect(w.getSnapshot().current).toBe('trip');
+  });
+
   it('runs the pipeline once when two mounts race', async () => {
     let entered = 0;
     const w = createWizard({
