@@ -136,7 +136,7 @@ export default [
   // as false and logged once as `when-threw`, with its why and fix, instead of
   // stopping every move and throwing again on every snapshot - which in React
   // is a render that cannot recover.
-  // 6.6 to 6.7 kB on 2026-09-19, measured 6651 B: `start()` called while a
+  // 6.6 to 6.7 kB on 2026-09-19, measured 6665 B: `start()` called while a
   // `next()` or `go()` from the empty stack is on its way waits for that move
   // and then starts, instead of answering ok for a move that may be refused
   // and leaving the wizard on no step for good.

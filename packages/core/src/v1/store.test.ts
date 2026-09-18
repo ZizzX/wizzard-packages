@@ -501,6 +501,22 @@ describe('start under concurrency', () => {
     expect(await started).toEqual({ ok: true, from: null, to: 'trip' });
   });
 
+  it('does not start a wizard destroyed while it waited', async () => {
+    const w = createWizard({
+      flow: { ...flow, policy: 'visited' },
+      registry,
+      data: { payer: 'private', name: 'Ann' },
+      plugins: [{ name: 'slow', beforeNavigate: () => Promise.resolve() }],
+    });
+    const jump = w.go('payment');
+    const started = w.start();
+    w.destroy();
+
+    await jump;
+    expect(await started).toMatchObject({ ok: false, reason: 'aborted', code: 'nav-aborted' });
+    expect(w.getState().stack).toEqual([]);
+  });
+
   it('runs the pipeline once when two mounts race', async () => {
     let entered = 0;
     const w = createWizard({

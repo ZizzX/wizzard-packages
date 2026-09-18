@@ -1,6 +1,6 @@
 import { commit, restart } from './commit';
 import { type SliceAt, type StepIdOf } from './define';
-import { explain, guard, notRegistered, WizardError } from './diagnostic';
+import { explain, guard, notRegistered, pageFor, WizardError } from './diagnostic';
 import { END, isGroup, type FlowDefinition, type StepDef } from './flow';
 import {
   runNav,
@@ -388,9 +388,12 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
     const pending = state.status === 'busy' ? moving : undefined;
     starting = (
       pending
-        ? pending.catch(settled).then(() => {
+        ? pending.catch(settled).then((): Promise<NavResult> | NavResult => {
             starting = undefined;
-            return start();
+            // Destroyed while it waited: nothing may move a dead engine.
+            return destroyed
+              ? { ok: false, reason: 'aborted', code: 'nav-aborted', url: pageFor('nav-aborted') }
+              : start();
           })
         : navigate({ type: 'next' }, { validate: false }, 'start')
     ).finally(() => {
