@@ -19,5 +19,6 @@ component that renders the current step renders nothing.
 
 The wizard does not try again on its own. Read the error logged beside the message and fix what
 threw; for a loader that can fail in normal use, catch inside it and let the step show the failure.
-Then mount the wizard again: a provider given options creates a new engine each time it mounts. One
-given a `wizard` it did not create reuses that engine, so create a new one before mounting again.
+Then start it again. The wizard has not started, so `start()` on the same engine runs the first
+move again rather than answering that it already did - from a retry button through
+`useWizard().start()`, or by mounting the provider again, which calls it on mount.

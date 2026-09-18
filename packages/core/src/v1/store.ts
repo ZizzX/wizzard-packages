@@ -407,9 +407,6 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
       // is exactly what starting means; the guard is only here so that calling
       // it twice - two mounts of the same wizard, say - is not a step forward.
       //
-      // The guard reads `status`, not the stack: a flow whose every step is
-      // unreachable finishes on the first start and leaves the stack empty
-      // again, and a second call must not walk it a second time.
       // The in-flight check comes first. Phase 0 of the pipeline bumps the
       // epoch synchronously, so by the time a second mount calls in, `status`
       // already says busy while the first attempt has committed nothing yet -
@@ -418,11 +415,14 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
       // loader runs once, not twice.
       if (starting !== undefined) return starting;
 
-      // Read `status`, not the stack: a flow whose every step is unreachable
-      // finishes on the first start and leaves the stack empty again, and a
-      // second call must not walk it a second time.
+      // Started means a step is current, or the flow finished - one whose
+      // every step is unreachable ends on the first start with the stack
+      // empty, and a second call must not walk it again. Not `status`: a
+      // first move that threw or was refused leaves `idle` and an empty
+      // stack, and answering ok there would leave the wizard on no step for
+      // good. That start is simply tried again.
       const current = state.stack[state.stack.length - 1]?.step ?? null;
-      if (state.status !== 'init') {
+      if (current !== null || state.status === 'done') {
         return Promise.resolve({ ok: true, from: current, to: current ?? END });
       }
 
