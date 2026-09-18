@@ -4,9 +4,9 @@ description: A $get path starts with something the evaluator cannot read from.
 ---
 
 ```
-[wizzard] $get "<path>" does not start with data, ctx, loop, step. The first segment names where a
-path reads from, and any other start evaluates to undefined. Start the path with the root it belongs
-to, such as data.<path>. …/errors/get-unknown-root
+[wizzard] $get "<path>" does not start with data, ctx, loop. The first segment names where a path
+reads from, and any other start evaluates to undefined. Start the path with the root it belongs to,
+such as data.<path>. …/errors/get-unknown-root
 ```
 
 Returned by `validateFlow` as a problem whose `path` is the object holding the `$get`, such as
