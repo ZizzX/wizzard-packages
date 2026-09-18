@@ -302,6 +302,18 @@ describe('runNav — refusals carry a reason', () => {
         });
       });
 
+      // A record of another flow at the same depth - a sub-flow step, with the
+      // item since removed - is not this flow's path, whatever its step is named.
+      it('reads only history of the flow it derives', () => {
+        const named: FlowDefinition = { ...long, steps: { ...long.steps, extra: {} } };
+        const state: WizardState = {
+          ...initialState(),
+          ...on('trip'),
+          history: [[{ flow: 'passenger', step: 'extra' }]],
+        };
+        expect(createSelector(() => named)(state).active).toEqual(['trip', 'payment']);
+      });
+
       // As for a step of `order`: -1 is how a binding sees the route closed under it.
       it('leaves out a branch whose when closed while it is stood on', async () => {
         const host = await walk(1);
