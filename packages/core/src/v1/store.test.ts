@@ -447,6 +447,17 @@ describe('start after a failed start', () => {
 });
 
 describe('start under concurrency', () => {
+  // A move already under way owns the wizard; a start beside it would bump
+  // the epoch and turn that move into `superseded`.
+  it('leaves a next() that is already moving alone', async () => {
+    const w = make();
+    const moving = w.next();
+    await w.start();
+
+    expect(await moving).toEqual({ ok: true, from: null, to: 'trip' });
+    expect(w.getSnapshot().current).toBe('trip');
+  });
+
   it('runs the pipeline once when two mounts race', async () => {
     let entered = 0;
     const w = createWizard({

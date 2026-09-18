@@ -420,9 +420,10 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
       // empty, and a second call must not walk it again. Not `status`: a
       // first move that threw or was refused leaves `idle` and an empty
       // stack, and answering ok there would leave the wizard on no step for
-      // good. That start is simply tried again.
+      // good. That start is simply tried again. `busy` is a `next()` or
+      // `go()` already on its way, and a start would supersede it.
       const current = state.stack[state.stack.length - 1]?.step ?? null;
-      if (current !== null || state.status === 'done') {
+      if (current !== null || state.status === 'done' || state.status === 'busy') {
         return Promise.resolve({ ok: true, from: current, to: current ?? END });
       }
 
