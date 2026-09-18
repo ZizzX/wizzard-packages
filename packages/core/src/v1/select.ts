@@ -1,4 +1,4 @@
-import { reachable, resolveBack } from './resolve';
+import { reachableOnPath, resolveBack } from './resolve';
 
 import type { AsyncRegistry, Registry, Scope } from './expr';
 import type { FlowDefinition } from './flow';
@@ -27,7 +27,10 @@ export interface Breadcrumb {
 }
 
 export interface Derived {
-  /** Steps whose `when` passes right now, in order. */
+  /**
+   * Steps whose `when` passes right now, in order, with any branch taken placed
+   * after the step that led to it.
+   */
   active: readonly string[];
   current: string | null;
   /** Position of the current step among the active ones, or -1. */
@@ -74,7 +77,7 @@ export interface ActiveAt {
 
 function derive(state: WizardState, at: ActiveAt, registry?: Registry): Derived {
   const { flow: owner, scope } = at;
-  const active = reachable(owner, scope, registry);
+  const active = reachableOnPath(owner, state, scope, registry);
   const current = state.stack[state.stack.length - 1]?.step ?? null;
   const index = current === null ? -1 : active.indexOf(current);
 

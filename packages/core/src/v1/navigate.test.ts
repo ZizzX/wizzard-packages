@@ -210,7 +210,7 @@ describe('runNav — refusals carry a reason', () => {
     });
 
     // Without `force`, a jump still answers to the policy: `free` lets it in,
-    // and `sequential` cannot place a step that has no position in `order`.
+    // and `sequential` has no place for a branch the wizard has not taken yet.
     it('is entered by an unforced go() the policy allows, and only then', async () => {
       const free: NavContext = { flow: { ...branched, policy: 'free' } };
       expect(await runNav(free, makeHost(on('trip')), { type: 'go', to: 'company' })).toEqual({
@@ -233,6 +233,99 @@ describe('runNav — refusals carry a reason', () => {
       expect(await runNav(ctx, makeHost(on('company')), { type: 'back' })).toMatchObject({
         ok: false,
         reason: 'no-target',
+      });
+    });
+
+    // Selectors place it where the path put it, after the step it was entered
+    // from, rather than reading -1, 0% and no breadcrumb.
+    describe('in the derived values', () => {
+      const long: FlowDefinition = {
+        id: 'booking',
+        order: ['trip', 'payment'],
+        steps: {
+          trip: { on: { next: 'company' } },
+          company: { on: { next: 'vat', back: 'trip' } },
+          vat: { on: { next: 'payment' } },
+          payment: {},
+        },
+      };
+      const walk = async (moves: number) => {
+        const host = makeHost(on('trip'));
+        for (let i = 0; i < moves; i++) await runNav({ flow: long }, host, { type: 'next' });
+        return host;
+      };
+      const derived = (host: TestHost) => createSelector(() => long)(host.read());
+
+      it('counts the branch it stands on after the step that led to it', async () => {
+        const d = derived(await walk(1));
+        expect(d.active).toEqual(['trip', 'company', 'payment']);
+        expect(d).toMatchObject({ index: 1, progress: 33, isFirst: false, isLast: false });
+        expect(d.breadcrumbs.map((b) => [b.id, b.status])).toEqual([
+          ['trip', 'completed'],
+          ['company', 'current'],
+          ['payment', 'upcoming'],
+        ]);
+      });
+
+      it('keeps every step of the branch taken, in the order it was taken', async () => {
+        expect(derived(await walk(2)).active).toEqual(['trip', 'company', 'vat', 'payment']);
+        expect(derived(await walk(3))).toMatchObject({
+          active: ['trip', 'company', 'vat', 'payment'],
+          index: 3,
+          isLast: true,
+        });
+      });
+
+      it('drops a branch backed out of', async () => {
+        const host = await walk(1);
+        await runNav({ flow: long }, host, { type: 'back' });
+        expect(derived(host)).toMatchObject({ active: ['trip', 'payment'], index: 0 });
+      });
+
+      // go() is a forward move and grows history; coming back to a step erases
+      // the loop, so the branch it passed no longer claims a place ahead.
+      it('forgets a branch left by go() back to a step before it', async () => {
+        const host = await walk(3);
+        await runNav({ flow: { ...long, policy: 'free' } }, host, { type: 'go', to: 'trip' });
+        expect(derived(host)).toMatchObject({ active: ['trip', 'payment'], index: 0 });
+      });
+
+      // The policy counts neighbours on the same list the breadcrumbs draw.
+      it('gives sequential the same neighbours the breadcrumbs show', async () => {
+        const sequential: NavContext = { flow: { ...long, policy: 'sequential' } };
+        expect(
+          await runNav(sequential, await walk(1), { type: 'go', to: 'payment' })
+        ).toMatchObject({ ok: true, to: 'payment' });
+        expect(await runNav(sequential, await walk(1), { type: 'go', to: 'vat' })).toMatchObject({
+          ok: false,
+          reason: 'blocked',
+        });
+      });
+
+      // A record of another flow at the same depth - a sub-flow step, with the
+      // item since removed - is not this flow's path, whatever its step is named.
+      it('reads only history of the flow it derives', () => {
+        const named: FlowDefinition = { ...long, steps: { ...long.steps, extra: {} } };
+        const state: WizardState = {
+          ...initialState(),
+          ...on('trip'),
+          history: [[{ flow: 'passenger', step: 'extra' }]],
+        };
+        expect(createSelector(() => named)(state).active).toEqual(['trip', 'payment']);
+      });
+
+      // As for a step of `order`: -1 is how a binding sees the route closed under it.
+      it('leaves out a branch whose when closed while it is stood on', async () => {
+        const host = await walk(1);
+        const closing: FlowDefinition = {
+          ...long,
+          steps: { ...long.steps, company: { ...long.steps.company, when: { $get: 'data.open' } } },
+        };
+        const state = { ...host.read(), data: { open: false } };
+        expect(createSelector(() => closing)(state)).toMatchObject({
+          active: ['trip', 'payment'],
+          index: -1,
+        });
       });
     });
 

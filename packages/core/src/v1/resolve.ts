@@ -162,6 +162,49 @@ export function reachable(
 }
 
 /**
+ * `reachable`, with each branch the wizard took placed right after the step it
+ * was entered from. The basis of `active`, and of the `sequential` policy, so a
+ * breadcrumb and a jump agree on who is a neighbour.
+ *
+ * A step outside `order` has no position of its own; without this, standing on
+ * one read as index -1, 0% and no breadcrumb. A step of `order` that is not
+ * reachable stays out even when it is the current one: `index` of -1 is how a
+ * binding sees the route closed under it.
+ */
+export function reachableOnPath(
+  flow: FlowDefinition,
+  state: WizardState,
+  scope: Scope,
+  registry?: Registry
+): readonly string[] {
+  const { stack } = state;
+  // The route at this level - this flow, the same enclosing frames - with its
+  // loops erased: a step met again means the wizard came back to it, by go()
+  // or by a cycle, and what followed its first visit is no longer the way on.
+  // `back()` needs no such care; it pops `history`.
+  const level = JSON.stringify(stack.slice(0, -1));
+  const route: string[] = [];
+  for (const frames of [...state.history, stack]) {
+    const top = frames[frames.length - 1];
+    if (top?.flow !== flow.id || JSON.stringify(frames.slice(0, -1)) !== level) continue;
+    const seen = route.indexOf(top.step);
+    if (seen === -1) route.push(top.step);
+    else route.length = seen + 1;
+  }
+
+  const order = effectiveOrder(flow);
+  const placed = [...reachable(flow, scope, registry)];
+  let at = -1;
+  for (const id of route) {
+    if (!order.includes(id) && !placed.includes(id) && enterable(flow, id, scope, registry))
+      placed.splice(at + 1, 0, id);
+    const i = placed.indexOf(id);
+    if (i !== -1) at = i;
+  }
+  return placed;
+}
+
+/**
  * Whether a move may land on `id`: the step exists and its `when` holds.
  * Unlike `reachable`, not limited to `order` - a step outside it is a branch
  * that `on.next` or `go()` enters by name.
