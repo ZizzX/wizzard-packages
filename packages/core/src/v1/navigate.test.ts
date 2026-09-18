@@ -176,6 +176,61 @@ describe('runNav — refusals carry a reason', () => {
     });
   });
 
+  // `order` is the walk next() and back() take, not the list of steps that
+  // exist: a step left out of it is a branch, entered by name.
+  describe('a step outside order', () => {
+    const branched: FlowDefinition = {
+      id: 'booking',
+      order: ['trip', 'payment'],
+      steps: {
+        trip: { on: { next: 'company' } },
+        payment: {},
+        company: {},
+        closed: { when: false },
+      },
+    };
+    const ctx: NavContext = { flow: branched };
+
+    it('is entered by the on.next that names it', async () => {
+      const host = makeHost(on('trip'));
+      expect(await runNav(ctx, host, { type: 'next' })).toEqual({
+        ok: true,
+        from: 'trip',
+        to: 'company',
+      });
+    });
+
+    it('is entered by go()', async () => {
+      const host = makeHost(on('trip'));
+      expect(await runNav(ctx, host, { type: 'go', to: 'company', force: true })).toEqual({
+        ok: true,
+        from: 'trip',
+        to: 'company',
+      });
+    });
+
+    // It has no neighbours in `order`, so leaving it is its own transitions' job.
+    it('finishes on next() and has nowhere to go back to, without transitions', async () => {
+      expect(await runNav(ctx, makeHost(on('company')), { type: 'next' })).toMatchObject({
+        ok: true,
+        to: END,
+      });
+      expect(await runNav(ctx, makeHost(on('company')), { type: 'back' })).toMatchObject({
+        ok: false,
+        reason: 'no-target',
+      });
+    });
+
+    it('is still refused while its when is false', async () => {
+      const host = makeHost(on('trip'));
+      expect(await runNav(ctx, host, { type: 'go', to: 'closed', force: true })).toMatchObject({
+        ok: false,
+        reason: 'not-reachable',
+        by: 'closed',
+      });
+    });
+  });
+
   it('reports no-target for a step that is not in the flow', async () => {
     const host = makeHost(on('trip'));
     const result = await runNav(base, host, { type: 'go', to: 'ghost' });

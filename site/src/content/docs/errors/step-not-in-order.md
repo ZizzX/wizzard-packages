@@ -24,5 +24,7 @@ If the step belongs on the main path, add it to `order` where it goes:
 { "order": ["account", "profile", "review"] }
 ```
 
-If it is a branch, check that some step's `on.next` leads to it. A flow built that way on purpose
-can leave the report as a note of how the step is reached.
+If it is a branch, check that some step's `on.next` leads to it, and give the branch its own way
+out: from a step outside `order`, `next()` without an `on.next` finishes the wizard, and `back()`
+without an `on.back` has nowhere to go and answers [`no-target`](../nav-no-target/). A flow built
+that way on purpose can leave the report as a note of how the step is reached.

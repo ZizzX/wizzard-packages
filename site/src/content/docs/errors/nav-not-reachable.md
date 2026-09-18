@@ -17,9 +17,9 @@ anyway is refused. `force: true` does not change that: `force` skips the navigat
 step the flow says is not there is not a matter of policy. A group whose own `when` is false is
 refused the same way.
 
-A step that is not in `order` is refused with this reason too, whether the move is a `go()` or an
-`on.next` that names it.
+Membership in `order` is not part of the question. A step outside `order` is a branch, and a
+`go()` or an `on.next` that names it lands on it whenever its `when` holds; see
+[`step-not-in-order`](../step-not-in-order/).
 
 Change the data the `when` reads before moving, or correct the condition if it should be true
-here. For a step outside `order`, add it to `order`; `validateFlow` lists such a step as
-[`step-not-in-order`](../step-not-in-order/).
+here.

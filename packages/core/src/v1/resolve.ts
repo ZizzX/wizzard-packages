@@ -153,10 +153,22 @@ export function reachable(
   registry?: Registry
 ): readonly string[] {
   const order = effectiveOrder(flow);
-  return order.filter((id) => {
-    const step = flow.steps[id];
-    return step !== undefined && holds(flow, step.when, scope, registry, `step "${id}"`);
-  });
+  return order.filter((id) => enterable(flow, id, scope, registry));
+}
+
+/**
+ * Whether a move may land on `id`: the step exists and its `when` holds.
+ * Unlike `reachable`, not limited to `order` - a step outside it is a branch
+ * that `on.next` or `go()` enters by name.
+ */
+export function enterable(
+  flow: FlowDefinition,
+  id: string,
+  scope: Scope,
+  registry?: Registry
+): boolean {
+  const step = flow.steps[id];
+  return step !== undefined && holds(flow, step.when, scope, registry, `step "${id}"`);
 }
 
 /** Whether `policy` permits jumping straight to `to`. */
