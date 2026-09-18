@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Bundle budgets, in gzipped bytes.
  *
  * The 0.x entries are a ratchet, not a target: each limit sits just above what
@@ -140,7 +140,10 @@ export default [
   // `next()` or `go()` from the empty stack is on its way waits for that move
   // and then starts, instead of answering ok for a move that may be refused
   // and leaving the wizard on no step for good.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '6.7 kB', gzip: true },
+  // 6.7 to 6.85 kB on 2026-09-19, measured 6810 B: a step outside `order` that
+  // the wizard took is placed in `active`, progress and breadcrumbs after the
+  // step it was entered from, instead of reading as index -1, 0% and no crumb.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '6.85 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a

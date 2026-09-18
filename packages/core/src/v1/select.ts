@@ -1,4 +1,4 @@
-import { reachable, resolveBack } from './resolve';
+﻿import { enterable, reachable, resolveBack } from './resolve';
 
 import type { AsyncRegistry, Registry, Scope } from './expr';
 import type { FlowDefinition } from './flow';
@@ -27,7 +27,10 @@ export interface Breadcrumb {
 }
 
 export interface Derived {
-  /** Steps whose `when` passes right now, in order. */
+  /**
+   * Steps whose `when` passes right now, in order, with any branch taken placed
+   * after the step that led to it.
+   */
   active: readonly string[];
   current: string | null;
   /** Position of the current step among the active ones, or -1. */
@@ -72,9 +75,45 @@ export interface ActiveAt {
   canBack?: boolean;
 }
 
+/**
+ * The reachable steps of `order`, with the branches the wizard took spliced in.
+ *
+ * A step outside `order` has no position of its own, so it is placed where the
+ * path put it: right after the step it was entered from. Without this, standing
+ * on one read as index -1, 0% and no breadcrumb. The path is `history`, which
+ * holds only forward moves - `back()` pops it - so a branch backed out of is no
+ * longer shown. Only history at the current level counts: the same depth, in
+ * the same group item.
+ */
+function withPath(
+  active: readonly string[],
+  state: WizardState,
+  owner: FlowDefinition,
+  scope: Scope,
+  registry?: Registry
+): readonly string[] {
+  const { stack } = state;
+  // The enclosing frames name the level: the same depth, in the same group item.
+  const level = JSON.stringify(stack.slice(0, -1));
+  // A step of `order` that is not reachable stays out, even the one stood on:
+  // `index` of -1 is how a binding sees that the route closed under it.
+  const order = owner.order ?? Object.keys(owner.steps);
+  const placed = [...active];
+  let at = -1;
+  for (const frames of [...state.history, stack]) {
+    if (frames.length !== stack.length || JSON.stringify(frames.slice(0, -1)) !== level) continue;
+    const id = frames[frames.length - 1]?.step ?? '';
+    if (!order.includes(id) && !placed.includes(id) && enterable(owner, id, scope, registry))
+      placed.splice(at + 1, 0, id);
+    const i = placed.indexOf(id);
+    if (i !== -1) at = i;
+  }
+  return placed;
+}
+
 function derive(state: WizardState, at: ActiveAt, registry?: Registry): Derived {
   const { flow: owner, scope } = at;
-  const active = reachable(owner, scope, registry);
+  const active = withPath(reachable(owner, scope, registry), state, owner, scope, registry);
   const current = state.stack[state.stack.length - 1]?.step ?? null;
   const index = current === null ? -1 : active.indexOf(current);
 

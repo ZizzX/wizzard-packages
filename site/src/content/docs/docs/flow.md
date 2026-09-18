@@ -117,8 +117,10 @@ allows - `sequential` never allows one without `force`, since a branch has no pl
 be next to. `next()` and `back()` never walk into it on their own. Having no place in `order`, it
 also has no neighbours there: `next()` from it without an `on.next` finishes the wizard, and
 `back()` without an `on.back` answers `no-target`, so a branch usually sets both. The same holds
-for a group. Progress and breadcrumbs are built from `order` too, so a branch is not counted among
-them.
+for a group. Progress and breadcrumbs are built from `order` too, with each branch the wizard took
+placed right after the step it was entered from: standing on one, or anywhere past it, counts it
+as a step and draws its breadcrumb. `history` is the path, so a branch left by `back()` drops out
+again, and one never taken is not counted.
 
 `when` and `on.next` answer different questions, and a step that sets both is usually a
 mistake: `when` decides whether the step exists at all, `on.next` decides where it goes once
