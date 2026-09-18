@@ -17,6 +17,11 @@ anyway is refused. `force: true` does not change that: `force` skips the navigat
 step the flow says is not there is not a matter of policy. A group whose own `when` is false is
 refused the same way.
 
+From `next()` it means the current step's `on.next` names this step and no open one: every entry
+it could take leads to a step whose `when` is false, and `by` is the first of them. The move is
+refused rather than skipped past, because the transition names where to go. Open the condition,
+or add an entry for the case it is closed - another step, or `'@end'` to finish the wizard.
+
 Membership in `order` is not part of the question. A step outside `order` is a branch, and a
 `go()` or an `on.next` that names it lands on it whenever its `when` holds; see
 [`step-not-in-order`](../step-not-in-order/).

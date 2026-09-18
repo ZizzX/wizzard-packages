@@ -72,13 +72,24 @@ describe('resolveNext', () => {
     expect(resolveNext(jump, at('a'), scopeFor('x'))).toBe('c');
   });
 
-  it('does not jump to an explicit target that is itself unreachable', () => {
+  // The author named the target, so the move goes there or is refused there:
+  // answering END would finish the wizard past every step still ahead.
+  it('answers a closed explicit target, for the move to refuse, rather than END', () => {
     const jump: FlowDefinition = {
       id: 'j',
-      order: ['a', 'b'],
-      steps: { a: { on: { next: 'b' } }, b: { when: false } },
+      order: ['a', 'b', 'c'],
+      steps: { a: { on: { next: 'b' } }, b: { when: false }, c: {} },
     };
-    expect(resolveNext(jump, at('a'), scopeFor('x'))).toBe(END);
+    expect(resolveNext(jump, at('a'), scopeFor('x'))).toBe('b');
+  });
+
+  it('prefers a later open target to an earlier closed one', () => {
+    const jump: FlowDefinition = {
+      id: 'j',
+      order: ['a', 'b', 'c'],
+      steps: { a: { on: { next: ['b', 'c'] } }, b: { when: false }, c: {} },
+    };
+    expect(resolveNext(jump, at('a'), scopeFor('x'))).toBe('c');
   });
 
   it('returns null for a step that is not in the flow', () => {

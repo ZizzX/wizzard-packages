@@ -101,8 +101,13 @@ reverse is also legal: a step names a validator and the flow leaves the default 
 ## Where a step leads
 
 `on.next` accepts a step id, an object `{ to, when }`, or an array of those - the first entry
-whose `when` holds is taken. `on.back` accepts the same, plus the literal `'auto'`, which is the
-default written out: walk `order` backwards and take the first step that is still reachable.
+whose `when` holds, leading to a step whose own `when` holds, is taken. A transition that can only
+lead to steps that are switched off is not skipped: `next()` refuses with
+[`not-reachable`](../../errors/nav-not-reachable/), naming the first of them, and the user stays
+where they are. To finish the wizard instead, end the array with `'@end'`.
+
+`on.back` accepts the same, plus the literal `'auto'`, which is the default written out: walk
+`order` backwards and take the first step that is still reachable.
 
 A step does not have to be in `order` to be entered. One left out of it is a branch: an `on.next`
 that names it lands on it whenever its `when` holds, and so does a `go()` the navigation policy

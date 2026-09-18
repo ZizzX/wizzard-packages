@@ -246,6 +246,25 @@ describe('runNav — refusals carry a reason', () => {
     });
   });
 
+  it('refuses a next() whose on.next names only closed steps, and stays put', async () => {
+    const closed: FlowDefinition = {
+      id: 'booking',
+      order: ['trip', 'company', 'payment'],
+      steps: { trip: { on: { next: 'company' } }, company: { when: false }, payment: {} },
+    };
+    const host = makeHost(on('trip'));
+
+    expect(await runNav({ flow: closed }, host, { type: 'next' })).toEqual({
+      ok: false,
+      reason: 'not-reachable',
+      code: 'nav-not-reachable',
+      url: pageFor('nav-not-reachable'),
+      by: 'company',
+    });
+    expect(host.read().stack[0]?.step).toBe('trip');
+    expect(host.read().status).toBe('idle');
+  });
+
   it('reports no-target for a step that is not in the flow', async () => {
     const host = makeHost(on('trip'));
     const result = await runNav(base, host, { type: 'go', to: 'ghost' });
