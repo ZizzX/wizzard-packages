@@ -51,9 +51,16 @@ describe('validateFlow', () => {
       order: ['a'],
       steps: { a: { when: { $get: 'user.name' } } },
     };
-    expect(problems(flow)[0]).toMatch(
-      /\$get "user.name" does not start with data, ctx, loop, step/
-    );
+    expect(problems(flow)[0]).toMatch(/\$get "user.name" does not start with data, ctx, loop$/);
+  });
+
+  // The evaluator has no `step` root, so a path under it reads undefined and
+  // the validator must refuse it rather than pass a flow that cannot work.
+  it('refuses a step root, which the evaluator cannot read', () => {
+    const when: Expr = { $get: 'step.x' };
+    expect(evaluate(when, { data: { x: 1 }, ctx: { x: 1 } })).toBeUndefined();
+    const flow: FlowDefinition = { id: 'f', order: ['a'], steps: { a: { when } } };
+    expect(validateFlow(flow).map((p) => p.code)).toEqual(['get-unknown-root']);
   });
 
   it('catches a resolver the registry does not define', () => {

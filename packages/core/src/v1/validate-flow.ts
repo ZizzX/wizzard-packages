@@ -38,7 +38,8 @@ export interface FlowProblem {
   url: string;
 }
 
-const ROOTS = ['data', 'ctx', 'loop', 'step'];
+// The roots `read` in expr.ts resolves; a path under any other reads undefined.
+const ROOTS = ['data', 'ctx', 'loop'];
 
 /** Every operator `expr.ts` evaluates. An expression object with none of them throws there. */
 const OPERATORS = [
