@@ -1,0 +1,39 @@
+---
+/**
+ * The site's four destinations. The top bar carries them on every page; on a
+ * phone the documentation's bar has no room, so they open with its menu
+ * instead (`DocsSidebar.astro`).
+ */
+interface Props {
+  /** Which entry is the page being read. The documentation is always "docs". */
+  current?: 'examples' | 'inspector' | 'docs' | undefined;
+  class?: string;
+}
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+// Starlight's getter throws outside its own pages rather than returning nothing.
+const inDocs = (() => {
+  try {
+    return Boolean(Astro.locals.starlightRoute);
+  } catch {
+    return false;
+  }
+})();
+const current = Astro.props.current ?? (inDocs ? 'docs' : undefined);
+const links = [
+  { href: `${base}/examples/`, label: 'Examples', key: 'examples' },
+  { href: `${base}/inspector/`, label: 'Inspector', key: 'inspector' },
+  { href: `${base}/docs/start/`, label: 'Docs', key: 'docs' },
+  { href: 'https://github.com/ZizzX/wizzard-packages', label: 'GitHub' },
+];
+---
+
+<nav class:list={['site-nav', Astro.props.class]} aria-label="Site">
+  {
+    links.map(({ href, label, key }) => (
+      <a href={href} aria-current={key && key === current ? 'page' : undefined}>
+        {label}
+      </a>
+    ))
+  }
+</nav>

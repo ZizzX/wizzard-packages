@@ -125,20 +125,43 @@ body {
 }
 
 .topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--space-3) var(--space-6);
-  min-height: 60px;
   padding: var(--space-3) 0;
   border-bottom: var(--border) solid var(--line);
 }
 
-/* Four entries do not fit beside the wordmark on a 390px screen, and a bar
-   that overflows takes the whole page with it. It wraps instead: the gap is
-   the row gap too, so a wrapped second line is spaced, not stacked. */
-.topbar nav {
+/* --- the top bar, on every page (D-015) -------------------------------------
+   One component, `SiteHeader.astro`, in two frames: the pages' own `.topbar`,
+   which scrolls with the page, and Starlight's fixed `.header`. On a phone the
+   four links do not fit beside the wordmark, search and theme: the pages give
+   them a second row, and the documentation, whose bar is fixed and would keep
+   that row on screen for the whole read, moves them into its menu instead.
+   ------------------------------------------------------------------------- */
+.site-header {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas: 'mark tools' 'nav nav';
+  align-items: center;
+  gap: var(--space-3) var(--space-6);
+  min-height: 36px;
+}
+
+.site-header .wordmark {
+  grid-area: mark;
+}
+
+.site-header .site-nav {
+  grid-area: nav;
+}
+
+.site-tools {
+  grid-area: tools;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.site-nav {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3) var(--space-6);
@@ -146,13 +169,49 @@ body {
   font-size: var(--text-sm);
 }
 
-.topbar a {
+.site-nav a {
   color: var(--fg-muted);
   text-decoration: none;
 }
 
-.topbar a:hover {
+.site-nav a:hover,
+.site-nav a[aria-current='page'] {
   color: var(--fg);
+}
+
+.header .site-header {
+  height: 100%;
+  grid-template-areas: 'mark tools';
+}
+
+.header .site-header .site-nav,
+.header .site-theme {
+  display: none;
+}
+
+/* The same links, opened with the documentation's menu on a phone. */
+.sidebar-content .site-nav {
+  padding-bottom: var(--space-4);
+  border-bottom: var(--border) solid var(--line);
+}
+
+@media (min-width: 50rem) {
+  .site-header,
+  .header .site-header {
+    grid-template-columns: auto auto 1fr;
+    grid-template-areas: 'mark nav tools';
+    column-gap: var(--space-8);
+  }
+
+  .header .site-header .site-nav,
+  .header .site-theme {
+    display: flex;
+  }
+
+  /* Starlight's `md:sl-hidden` is layered, so `.site-nav` above outranks it. */
+  .sidebar-content .site-nav {
+    display: none;
+  }
 }
 
 /* The footer had a class and no rule, so three inline children ran together:
@@ -1520,12 +1579,18 @@ svg.interactive .node {
    navigation of the site sitting under the minimum.
    ------------------------------------------------------------------------- */
 @media (pointer: coarse) {
-  .topbar a,
+  .site-nav a,
   .site-footer a,
   .rows a {
     display: inline-flex;
     align-items: center;
     min-height: var(--target-min);
+  }
+
+  /* "Docs" is four characters of mono: 36px wide at its natural size. */
+  .site-nav a {
+    justify-content: center;
+    min-width: var(--target-min);
   }
 
   /* The graph's own control, compact on purpose beside a mouse. */
@@ -1538,7 +1603,8 @@ svg.interactive .node {
      every code block 40x40, and the rows of the sidebar and the page contents
      34px. The quickstart's own buttons, which carry no class, were 33px. Same
      floor, same condition. */
-  .site-title,
+  .wordmark,
+  starlight-theme-select select,
   button[data-open-modal],
   .expressive-code .copy button,
   .sidebar-content a,

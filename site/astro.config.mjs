@@ -49,9 +49,13 @@ export default defineConfig({
     starlight({
       title: 'wizzard',
       description: 'Headless multi-step flows for React and Vue. The flow is JSON.',
-      social: [
-        { icon: 'github', label: 'GitHub', href: 'https://github.com/ZizzX/wizzard-packages' },
-      ],
+      // One top bar for the whole site (D-015): the pages outside Starlight
+      // render the same component. GitHub is one of its links, so there is no
+      // `social` entry to draw it a second time as an icon.
+      components: {
+        Header: './src/components/SiteHeader.astro',
+        Sidebar: './src/components/DocsSidebar.astro',
+      },
       customCss: [
         '@fontsource-variable/inter-tight',
         '@fontsource-variable/jetbrains-mono',

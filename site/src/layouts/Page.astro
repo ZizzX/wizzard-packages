@@ -3,6 +3,14 @@ import '@fontsource-variable/inter-tight';
 import '@fontsource-variable/jetbrains-mono';
 import '../styles/tokens.css';
 import '../styles/site.css';
+// The top bar carries Starlight's search and theme picker, which read
+// Starlight's custom properties and utility classes. The documentation loads
+// both itself; these pages load them here. Neither file styles an element, and
+// the package exports neither, hence the path.
+import '../../node_modules/@astrojs/starlight/dist/style/props.css';
+import '../../node_modules/@astrojs/starlight/dist/style/util.css';
+import ThemeProvider from '@astrojs/starlight/components/ThemeProvider.astro';
+import SiteHeader from '../components/SiteHeader.astro';
 
 /**
  * The chrome every hand-written page wears: the document head, the top bar and
@@ -32,26 +40,12 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
+    <ThemeProvider />
   </head>
   <body>
     <div class="shell">
       <header class="topbar">
-        <a class="wordmark" href={`${base}/`}>wizzard</a>
-        <nav>
-          <a href={`${base}/examples/`} aria-current={current === 'examples' ? 'page' : undefined}>
-            Examples
-          </a>
-          <a
-            href={`${base}/inspector/`}
-            aria-current={current === 'inspector' ? 'page' : undefined}
-          >
-            Inspector
-          </a>
-          <a href={`${base}/docs/start/`} aria-current={current === 'docs' ? 'page' : undefined}>
-            Docs
-          </a>
-          <a href="https://github.com/ZizzX/wizzard-packages">GitHub</a>
-        </nav>
+        <SiteHeader current={current} />
       </header>
 
       <main>

@@ -114,7 +114,7 @@ for (const theme of ['dark', 'light'] as const) {
      */
     test('the current sidebar entry is readable on its fill', async ({ page }) => {
       await page.goto('docs/flow/');
-      const current = page.locator('#starlight__sidebar a[aria-current="page"]');
+      const current = page.locator('#starlight__sidebar ul a[aria-current="page"]');
       await expect(current).toHaveText('The flow');
 
       const { color, background } = await current.evaluate((node) => {

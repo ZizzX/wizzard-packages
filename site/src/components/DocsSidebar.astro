@@ -1,0 +1,12 @@
+---
+import Default from '@astrojs/starlight/components/Sidebar.astro';
+import SiteNav from './SiteNav.astro';
+
+/**
+ * Starlight's sidebar, with the site's own destinations above it on a phone,
+ * where the top bar keeps only the wordmark, search and the menu button.
+ */
+---
+
+<SiteNav class="md:sl-hidden" />
+<Default />
