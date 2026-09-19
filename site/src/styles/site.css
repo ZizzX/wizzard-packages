@@ -124,14 +124,17 @@ body {
   padding: 0 var(--space-6);
 }
 
+/* The top bar spans the window with Starlight's own insets, so the wordmark
+   and the links stand where the documentation's fixed bar puts them (D-016). */
 .topbar {
-  padding: var(--space-3) 0;
+  padding: var(--space-3) var(--sl-nav-pad-x);
   border-bottom: var(--border) solid var(--line);
+  background: var(--bg);
 }
 
 /* --- the top bar, on every page (D-015) -------------------------------------
    One component, `SiteHeader.astro`, in two frames: the pages' own `.topbar`,
-   which scrolls with the page, and Starlight's fixed `.header`. On a phone the
+   sticky above 50rem, and Starlight's fixed `.header`. On a phone the
    four links do not fit beside the wordmark, search and theme, so they take a
    second row - except in the documentation that has a menu: its bar is fixed
    and would hold that row on screen for the whole read, so the links and the
@@ -218,6 +221,26 @@ body {
 }
 
 @media (min-width: 50rem) {
+  /* Sticky from here up, where the bar is one row. Below it the links take a
+     second row, and a bar that tall held on screen would cost a phone a sixth
+     of its height for the whole read. */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: var(--sl-z-index-navbar);
+    height: var(--sl-nav-height);
+    padding-block: var(--sl-nav-pad-y);
+  }
+
+  .topbar .site-header {
+    height: 100%;
+    align-content: center;
+  }
+
+  html:has(> body > .topbar) {
+    scroll-padding-top: var(--sl-nav-height);
+  }
+
   .site-header,
   [data-has-sidebar] .header .site-header {
     grid-template-columns: auto auto 1fr;
