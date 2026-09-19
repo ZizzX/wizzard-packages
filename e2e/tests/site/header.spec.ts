@@ -7,12 +7,21 @@ import { expect, test } from '@playwright/test';
  * now, and these tests hold every page to it.
  */
 
+const LINKS = ['Examples', 'Inspector', 'Docs', 'GitHub'];
+
+/**
+ * The entry that is marked, and how: `page` when the link is the page being
+ * read, `true` when the page is inside that entry's section.
+ */
 const PAGES = [
   ['', undefined],
-  ['examples/', 'Examples'],
-  ['inspector/', 'Inspector'],
-  ['docs/start/', 'Docs'],
-  ['errors/nav-blocked/', 'Docs'],
+  ['examples/', ['Examples', 'page']],
+  ['examples/onboarding/', ['Examples', 'true']],
+  ['inspector/', ['Inspector', 'page']],
+  ['docs/start/', ['Docs', 'page']],
+  ['docs/flow/', ['Docs', 'true']],
+  ['errors/nav-blocked/', ['Docs', 'true']],
+  ['404', undefined],
 ] as const;
 
 test.describe('the top bar', () => {
@@ -24,25 +33,33 @@ test.describe('the top bar', () => {
       const bar = page.locator('.site-header');
 
       await expect(bar.locator('.wordmark')).toHaveText('wizzard');
-      await expect(bar.locator('.site-nav a')).toHaveText([
-        'Examples',
-        'Inspector',
-        'Docs',
-        'GitHub',
-      ]);
+      await expect(bar.locator('.site-nav a')).toHaveText(LINKS);
+      await expect(bar.locator('.site-nav')).toBeVisible();
       await expect(bar.locator('button[data-open-modal]')).toBeVisible();
       await expect(bar.locator('starlight-theme-select select')).toBeVisible();
 
-      const marked = bar.locator('.site-nav a[aria-current="page"]');
-      if (current) await expect(marked).toHaveText(current);
-      else await expect(marked).toHaveCount(0);
+      const marked = bar.locator('.site-nav a[aria-current]');
+      if (current) {
+        await expect(marked).toHaveText(current[0]);
+        await expect(marked).toHaveAttribute('aria-current', current[1]);
+      } else {
+        await expect(marked).toHaveCount(0);
+      }
     });
   }
+
+  test('the menu copy of the links stays out of the documentation sidebar', async ({ page }) => {
+    await page.goto('docs/start/');
+    await expect(page.locator('.sidebar-content .site-nav')).toBeHidden();
+    await expect(page.locator('nav[aria-label="Site"]')).toHaveCount(1);
+  });
 
   test('search opens from a page outside the documentation', async ({ page }) => {
     await page.goto('');
     await page.locator('.site-header button[data-open-modal]').click();
-    await page.keyboard.type('persist');
+    // Pagefind builds its field on an idle callback after load: `fill` waits
+    // for it, where typing at once would land in the empty dialog.
+    await page.locator('.pagefind-ui__search-input').fill('persist');
     await expect(page.locator('.pagefind-ui__result').first()).toBeVisible();
   });
 
@@ -56,6 +73,18 @@ test.describe('the top bar', () => {
     await page.goto('inspector/');
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
     await expect(page.locator('.site-header starlight-theme-select select')).toHaveValue('light');
+  });
+
+  test('a theme chosen on the other pages is the one the documentation opens in', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ colorScheme: 'light' });
+    await page.goto('inspector/');
+    await page.locator('.site-header starlight-theme-select select').selectOption('dark');
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+
+    await page.goto('docs/start/');
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   });
 });
 
@@ -89,13 +118,24 @@ test.describe('the top bar on a touch screen', () => {
   }) => {
     await page.goto('docs/start/');
     await expect(page.locator('.header .site-nav')).toBeHidden();
+    const bar = await page.locator('.page > .header').boundingBox();
+    const mark = await page.locator('.header .wordmark').boundingBox();
+    expect(mark!.y + mark!.height).toBeLessThanOrEqual(bar!.y + bar!.height);
 
     await page.locator('.sl-menu-button').click();
-    await expect(page.locator('.sidebar-content .site-nav a')).toHaveText([
-      'Examples',
-      'Inspector',
-      'Docs',
-      'GitHub',
-    ]);
+    const links = page.locator('.sidebar-content .site-nav a');
+    await expect(links).toHaveText(LINKS);
+    for (const link of await links.all()) await expect(link).toBeVisible();
+  });
+
+  /** The not-found page is Starlight's but has no menu to open the links with. */
+  test('the not-found page keeps the links in the bar', async ({ page }) => {
+    await page.goto('404');
+    for (const link of await page.locator('.header .site-nav a').all()) {
+      await expect(link).toBeVisible();
+    }
+    const bar = await page.locator('.page > .header').boundingBox();
+    const nav = await page.locator('.header .site-nav').boundingBox();
+    expect(nav!.y + nav!.height).toBeLessThanOrEqual(bar!.y + bar!.height);
   });
 });

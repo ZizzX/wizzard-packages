@@ -132,9 +132,14 @@ body {
 /* --- the top bar, on every page (D-015) -------------------------------------
    One component, `SiteHeader.astro`, in two frames: the pages' own `.topbar`,
    which scrolls with the page, and Starlight's fixed `.header`. On a phone the
-   four links do not fit beside the wordmark, search and theme: the pages give
-   them a second row, and the documentation, whose bar is fixed and would keep
-   that row on screen for the whole read, moves them into its menu instead.
+   four links do not fit beside the wordmark, search and theme, so they take a
+   second row - except in the documentation that has a menu: its bar is fixed
+   and would hold that row on screen for the whole read, so the links and the
+   theme open with the menu instead. The not-found page is Starlight's too but
+   has no menu, and keeps the second row.
+
+   50rem is Starlight's `md` breakpoint (`util.css`, `PageFrame.astro`): the menu
+   button leaves at that width, so the links have to arrive in the bar there.
    ------------------------------------------------------------------------- */
 .site-header {
   display: grid;
@@ -142,6 +147,8 @@ body {
   grid-template-areas: 'mark tools' 'nav nav';
   align-items: center;
   gap: var(--space-3) var(--space-6);
+  /* The height of the search button and the theme select beside a mouse, so
+     the bar does not jump when they arrive after the wordmark. */
   min-height: 36px;
 }
 
@@ -175,17 +182,24 @@ body {
 }
 
 .site-nav a:hover,
-.site-nav a[aria-current='page'] {
+.site-nav a[aria-current] {
   color: var(--fg);
 }
 
+/* The fixed bar is a set height, and its one row can be taller than that - the
+   theme select is 47px, the touch floor 44px. Centred, the row overflows evenly
+   and lines up with Starlight's menu button, which is centred on the bar. */
 .header .site-header {
   height: 100%;
+  align-content: center;
+}
+
+[data-has-sidebar] .header .site-header {
   grid-template-areas: 'mark tools';
 }
 
-.header .site-header .site-nav,
-.header .site-theme {
+[data-has-sidebar] .header .site-header .site-nav,
+[data-has-sidebar] .header .site-theme {
   display: none;
 }
 
@@ -195,29 +209,43 @@ body {
   border-bottom: var(--border) solid var(--line);
 }
 
+@media (max-width: 49.99rem) {
+  /* A Starlight page without a menu keeps the links in a second row, and the
+     fixed bar has to be tall enough to hold it. */
+  :root:not([data-has-sidebar]) {
+    --sl-nav-height: 8rem;
+  }
+}
+
 @media (min-width: 50rem) {
   .site-header,
-  .header .site-header {
+  [data-has-sidebar] .header .site-header {
     grid-template-columns: auto auto 1fr;
     grid-template-areas: 'mark nav tools';
     column-gap: var(--space-8);
   }
 
-  .header .site-header .site-nav,
-  .header .site-theme {
+  [data-has-sidebar] .header .site-header .site-nav,
+  [data-has-sidebar] .header .site-theme {
     display: flex;
   }
 
-  /* Starlight's `md:sl-hidden` is layered, so `.site-nav` above outranks it. */
   .sidebar-content .site-nav {
     display: none;
   }
 }
 
+/* A printed page keeps the wordmark: the controls do nothing on paper. */
+@media print {
+  .site-header .site-nav,
+  .site-tools {
+    display: none;
+  }
+}
+
 /* The footer had a class and no rule, so three inline children ran together:
-   "MIT licensedSourceDocumentation". It is the topbar the other way up - the
-   same row, the same gap, the same muted links - with the licence held left
-   and the links pushed right. */
+   "MIT licensedSourceDocumentation". A row of muted mono links like the top
+   bar's, with the licence held left and the links pushed right. */
 .site-footer {
   display: flex;
   flex-wrap: wrap;

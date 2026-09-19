@@ -3,6 +3,19 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import react from '@astrojs/react';
 import vue from '@astrojs/vue';
+import { fileURLToPath } from 'node:url';
+
+/**
+ * Starlight's search and theme picker read its custom properties and utility
+ * classes, which its own pages load and the site's hand-written pages do not.
+ * The package exports neither stylesheet, so they are reached through the
+ * package's resolved location - wherever the installer put it - rather than a
+ * `node_modules` path. `Page.astro` imports `starlight-style/props.css` and
+ * `starlight-style/util.css`; on a Starlight upgrade, check both still exist.
+ */
+const starlightStyle = fileURLToPath(
+  new URL('./style/', import.meta.resolve('@astrojs/starlight'))
+);
 
 /**
  * `@vitejs/plugin-vue` (6.0.8 and 6.0.9) compiles a `lang="ts"` script with the
@@ -42,7 +55,11 @@ export default defineConfig({
   output: 'static',
   // The reference flows live in the repository's `contract/` directory, outside
   // this package, so the dev server has to be allowed to read one level up.
-  vite: { server: { fs: { allow: ['..'] } }, plugins: [vueWithoutReactRefresh] },
+  vite: {
+    server: { fs: { allow: ['..'] } },
+    plugins: [vueWithoutReactRefresh],
+    resolve: { alias: { 'starlight-style': starlightStyle } },
+  },
   integrations: [
     react(),
     vue(),

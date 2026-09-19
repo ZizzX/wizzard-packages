@@ -3,12 +3,10 @@ import '@fontsource-variable/inter-tight';
 import '@fontsource-variable/jetbrains-mono';
 import '../styles/tokens.css';
 import '../styles/site.css';
-// The top bar carries Starlight's search and theme picker, which read
-// Starlight's custom properties and utility classes. The documentation loads
-// both itself; these pages load them here. Neither file styles an element, and
-// the package exports neither, hence the path.
-import '../../node_modules/@astrojs/starlight/dist/style/props.css';
-import '../../node_modules/@astrojs/starlight/dist/style/util.css';
+// The top bar's search and theme picker need Starlight's custom properties and
+// utility classes; neither file styles an element. See `astro.config.mjs`.
+import 'starlight-style/props.css';
+import 'starlight-style/util.css';
 import ThemeProvider from '@astrojs/starlight/components/ThemeProvider.astro';
 import SiteHeader from '../components/SiteHeader.astro';
 

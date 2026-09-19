@@ -7,14 +7,19 @@
 interface Props {
   /** Which entry is the page being read. The documentation is always "docs". */
   current?: 'examples' | 'inspector' | 'docs' | undefined;
-  class?: string;
+  /**
+   * A `<nav>` of its own. Off inside the documentation's menu, which is already
+   * Starlight's "Main" navigation: a landmark inside a landmark is noise.
+   */
+  landmark?: boolean;
 }
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
-// Starlight's getter throws outside its own pages rather than returning nothing.
+// Starlight's getter throws outside its own pages rather than returning nothing,
+// and the not-found page is one of its routes but not part of the documentation.
 const inDocs = (() => {
   try {
-    return Boolean(Astro.locals.starlightRoute);
+    return Astro.locals.starlightRoute.entry.id !== '404';
   } catch {
     return false;
   }
@@ -26,14 +31,20 @@ const links = [
   { href: `${base}/docs/start/`, label: 'Docs', key: 'docs' },
   { href: 'https://github.com/ZizzX/wizzard-packages', label: 'GitHub' },
 ];
+const Tag = Astro.props.landmark === false ? 'div' : 'nav';
 ---
 
-<nav class:list={['site-nav', Astro.props.class]} aria-label="Site">
+<Tag class="site-nav" aria-label={Tag === 'nav' ? 'Site' : undefined}>
   {
     links.map(({ href, label, key }) => (
-      <a href={href} aria-current={key && key === current ? 'page' : undefined}>
+      <a
+        href={href}
+        aria-current={
+          key && key === current ? (Astro.url.pathname === href ? 'page' : 'true') : undefined
+        }
+      >
         {label}
       </a>
     ))
   }
-</nav>
+</Tag>
