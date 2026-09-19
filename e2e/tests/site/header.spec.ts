@@ -48,6 +48,26 @@ test.describe('the top bar', () => {
     });
   }
 
+  /**
+   * The pages' own bar sat in the 1120px column and scrolled away, so at 1440
+   * the wordmark moved 160px sideways between the site and the documentation
+   * and was gone as soon as the page moved (D-016).
+   */
+  test('stands where the documentation puts it, and stays on scroll', async ({ page }) => {
+    await page.goto('docs/start/');
+    const docs = await page.locator('.site-header .wordmark').boundingBox();
+
+    await page.goto('');
+    const mark = page.locator('.site-header .wordmark');
+    const home = await mark.boundingBox();
+    expect(home!.x).toBeCloseTo(docs!.x, 0);
+    expect(home!.y).toBeCloseTo(docs!.y, 0);
+
+    await page.mouse.wheel(0, 1200);
+    await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(600);
+    expect((await mark.boundingBox())!.y).toBeCloseTo(home!.y, 0);
+  });
+
   test('the menu copy of the links stays out of the documentation sidebar', async ({ page }) => {
     await page.goto('docs/start/');
     await expect(page.locator('.sidebar-content .site-nav')).toBeHidden();
@@ -126,6 +146,14 @@ test.describe('the top bar on a touch screen', () => {
     const links = page.locator('.sidebar-content .site-nav a');
     await expect(links).toHaveText(LINKS);
     for (const link of await links.all()) await expect(link).toBeVisible();
+  });
+
+  /** Two rows held on screen would cost a phone a sixth of its height. */
+  test('the bar on the pages outside the documentation scrolls away', async ({ page }) => {
+    await page.goto('');
+    await page.evaluate(() => scrollTo(0, 1200));
+    const bar = await page.locator('.topbar').boundingBox();
+    expect(bar!.y + bar!.height).toBeLessThanOrEqual(0);
   });
 
   /** The not-found page is Starlight's but has no menu to open the links with. */
