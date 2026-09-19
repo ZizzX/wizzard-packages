@@ -1,0 +1,28 @@
+---
+import Search from '@astrojs/starlight/components/Search.astro';
+import ThemeSelect from '@astrojs/starlight/components/ThemeSelect.astro';
+import SiteNav from './SiteNav.astro';
+
+/**
+ * The top bar of every page on the site: the hand-written pages render it
+ * through `Page.astro`, and the documentation renders it in place of
+ * Starlight's own header. Two bars had grown apart - the pages had Examples and
+ * Inspector but no search or theme, the documentation the other way round - and
+ * a reader crossing between them lost half the navigation either way.
+ *
+ * Search and the theme picker are Starlight's components, so the choice made on
+ * one page is the one every page reads: both keep it under the same key.
+ */
+interface Props {
+  current?: 'examples' | 'inspector' | 'docs' | undefined;
+}
+---
+
+<div class="site-header">
+  <a class="wordmark" href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/`}>wizzard</a>
+  <SiteNav current={Astro.props.current} />
+  <div class="site-tools">
+    <Search />
+    <div class="site-theme"><ThemeSelect /></div>
+  </div>
+</div>

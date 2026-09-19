@@ -435,8 +435,10 @@ hairline, a mono label where something needs naming, state on the border.
 7. **flow row** — a claim on the left and the flow that makes it true on the right, drawn by
    the engine from a reference definition rather than illustrated. It ships no JavaScript.
 8. **page header** — the one top shared by custom pages and documentation: wordmark,
-   navigation, the framework mode, the theme control. Sticky, one hairline beneath it, no
-   shadow, and it never grows a second row on scroll.
+   navigation, search, the framework mode, the theme control. One component,
+   `SiteHeader.astro`, draws it in both. Sticky, one hairline beneath it, no shadow, and it
+   never grows a second row on scroll. On a phone the custom pages give the navigation a
+   second row; the documentation's bar is fixed, so there the navigation opens with the menu.
 9. **code block** — `--surface` ground, a hairline, a mono tag naming the language and, where
    it differs by binding, the binding. Scrolls horizontally inside itself and never widens the
    page. Carries a compact copy control that reports success by changing its own label, not by
@@ -471,8 +473,8 @@ those states come from the table under **Interaction states** rather than from t
 ### What is built and what is specified
 
 This list is a contract, and part of it is still ahead of the code. Built today: the graph node,
-the node condition, the table mirror, the instrument, the flow row, and the parts of the page
-header the homepage uses. Specified here and built with the surfaces that need them: the
+the node condition, the table mirror, the instrument, the flow row, and the page header on
+every page, all but its framework mode and, on the custom pages, its stickiness. Specified here and built with the surfaces that need them: the
 scrubber and state-diff panel with the inspector, and the code block, install line, framework
 mode, example frame, spec table, callout, docs rail, search and evidence strip with the
 documentation and examples pages.

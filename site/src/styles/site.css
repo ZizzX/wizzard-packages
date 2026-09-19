@@ -125,20 +125,50 @@ body {
 }
 
 .topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--space-3) var(--space-6);
-  min-height: 60px;
   padding: var(--space-3) 0;
   border-bottom: var(--border) solid var(--line);
 }
 
-/* Four entries do not fit beside the wordmark on a 390px screen, and a bar
-   that overflows takes the whole page with it. It wraps instead: the gap is
-   the row gap too, so a wrapped second line is spaced, not stacked. */
-.topbar nav {
+/* --- the top bar, on every page (D-015) -------------------------------------
+   One component, `SiteHeader.astro`, in two frames: the pages' own `.topbar`,
+   which scrolls with the page, and Starlight's fixed `.header`. On a phone the
+   four links do not fit beside the wordmark, search and theme, so they take a
+   second row - except in the documentation that has a menu: its bar is fixed
+   and would hold that row on screen for the whole read, so the links and the
+   theme open with the menu instead. The not-found page is Starlight's too but
+   has no menu, and keeps the second row.
+
+   50rem is Starlight's `md` breakpoint (`util.css`, `PageFrame.astro`): the menu
+   button leaves at that width, so the links have to arrive in the bar there.
+   ------------------------------------------------------------------------- */
+.site-header {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas: 'mark tools' 'nav nav';
+  align-items: center;
+  gap: var(--space-3) var(--space-6);
+  /* The height of the search button and the theme select beside a mouse, so
+     the bar does not jump when they arrive after the wordmark. */
+  min-height: 36px;
+}
+
+.site-header .wordmark {
+  grid-area: mark;
+}
+
+.site-header .site-nav {
+  grid-area: nav;
+}
+
+.site-tools {
+  grid-area: tools;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.site-nav {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3) var(--space-6);
@@ -146,19 +176,76 @@ body {
   font-size: var(--text-sm);
 }
 
-.topbar a {
+.site-nav a {
   color: var(--fg-muted);
   text-decoration: none;
 }
 
-.topbar a:hover {
+.site-nav a:hover,
+.site-nav a[aria-current] {
   color: var(--fg);
 }
 
+/* The fixed bar is a set height, and its one row can be taller than that - the
+   theme select is 47px, the touch floor 44px. Centred, the row overflows evenly
+   and lines up with Starlight's menu button, which is centred on the bar. */
+.header .site-header {
+  height: 100%;
+  align-content: center;
+}
+
+[data-has-sidebar] .header .site-header {
+  grid-template-areas: 'mark tools';
+}
+
+[data-has-sidebar] .header .site-header .site-nav,
+[data-has-sidebar] .header .site-theme {
+  display: none;
+}
+
+/* The same links, opened with the documentation's menu on a phone. */
+.sidebar-content .site-nav {
+  padding-bottom: var(--space-4);
+  border-bottom: var(--border) solid var(--line);
+}
+
+@media (max-width: 49.99rem) {
+  /* A Starlight page without a menu keeps the links in a second row, and the
+     fixed bar has to be tall enough to hold it. */
+  :root:not([data-has-sidebar]) {
+    --sl-nav-height: 8rem;
+  }
+}
+
+@media (min-width: 50rem) {
+  .site-header,
+  [data-has-sidebar] .header .site-header {
+    grid-template-columns: auto auto 1fr;
+    grid-template-areas: 'mark nav tools';
+    column-gap: var(--space-8);
+  }
+
+  [data-has-sidebar] .header .site-header .site-nav,
+  [data-has-sidebar] .header .site-theme {
+    display: flex;
+  }
+
+  .sidebar-content .site-nav {
+    display: none;
+  }
+}
+
+/* A printed page keeps the wordmark: the controls do nothing on paper. */
+@media print {
+  .site-header .site-nav,
+  .site-tools {
+    display: none;
+  }
+}
+
 /* The footer had a class and no rule, so three inline children ran together:
-   "MIT licensedSourceDocumentation". It is the topbar the other way up - the
-   same row, the same gap, the same muted links - with the licence held left
-   and the links pushed right. */
+   "MIT licensedSourceDocumentation". A row of muted mono links like the top
+   bar's, with the licence held left and the links pushed right. */
 .site-footer {
   display: flex;
   flex-wrap: wrap;
@@ -1520,12 +1607,18 @@ svg.interactive .node {
    navigation of the site sitting under the minimum.
    ------------------------------------------------------------------------- */
 @media (pointer: coarse) {
-  .topbar a,
+  .site-nav a,
   .site-footer a,
   .rows a {
     display: inline-flex;
     align-items: center;
     min-height: var(--target-min);
+  }
+
+  /* "Docs" is four characters of mono: 36px wide at its natural size. */
+  .site-nav a {
+    justify-content: center;
+    min-width: var(--target-min);
   }
 
   /* The graph's own control, compact on purpose beside a mouse. */
@@ -1538,7 +1631,8 @@ svg.interactive .node {
      every code block 40x40, and the rows of the sidebar and the page contents
      34px. The quickstart's own buttons, which carry no class, were 33px. Same
      floor, same condition. */
-  .site-title,
+  .wordmark,
+  starlight-theme-select select,
   button[data-open-modal],
   .expressive-code .copy button,
   .sidebar-content a,
