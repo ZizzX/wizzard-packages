@@ -35,12 +35,7 @@ const jump = async (force: boolean): Promise<void> => {
   <form @submit.prevent>
     <p>
       <label :for="choiceId">Your plan</label>
-      <input
-        :id="choiceId"
-        v-model="choice"
-        :disabled="starting"
-        placeholder="leave it empty to see the guard refuse"
-      />
+      <input :id="choiceId" v-model="choice" :disabled="starting" placeholder="leave it empty" />
     </p>
 
     <!-- Two buttons, one difference: the second passes `force`. Neither of them

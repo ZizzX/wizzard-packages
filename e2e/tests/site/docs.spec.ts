@@ -137,3 +137,38 @@ for (const theme of ['dark', 'light'] as const) {
     });
   });
 }
+
+/**
+ * `--target-min` is 44px under `pointer: coarse`, and it had been applied to the
+ * marketing chrome only: on a phone the documentation's menu button was 32x32,
+ * search 29x40, the copy button on every code block 40x40 and the sidebar rows
+ * 34px. Measured with real touch emulation, because the rule is keyed on the
+ * pointer and a narrow desktop viewport never matches it. Prose links and the
+ * heading anchors are left out: they sit inline in text, where the size of a
+ * line is the size of the target, and the anchors clear the 24px AA floor.
+ */
+test.describe('on a touch screen', () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+
+  for (const path of ['', 'examples/', 'docs/start/', 'docs/flow/', 'errors/nav-blocked/']) {
+    test(`every control on /${path} is at least 44px tall`, async ({ page }) => {
+      await page.goto(path);
+      const menu = page.locator('.sl-menu-button');
+      if (await menu.isVisible()) await menu.click();
+
+      const small = await page.evaluate(() =>
+        [...document.querySelectorAll<HTMLElement>('a[href], button, summary')]
+          .filter((node) => {
+            const box = node.getBoundingClientRect();
+            if (box.width === 0 || box.height === 0) return false;
+            if (getComputedStyle(node).visibility === 'hidden') return false;
+            if (node.matches('.sl-skip-link, .sl-anchor-link')) return false;
+            if (node.closest('.sl-markdown-content :is(p, li, td), .hero p')) return false;
+            return box.height < 44;
+          })
+          .map((node) => `${node.tagName} "${node.textContent?.trim().slice(0, 30)}"`)
+      );
+      expect(small).toEqual([]);
+    });
+  }
+});

@@ -1521,9 +1521,37 @@ svg.interactive .node {
    ------------------------------------------------------------------------- */
 @media (pointer: coarse) {
   .topbar a,
-  .site-footer a {
+  .site-footer a,
+  .rows a {
     display: inline-flex;
     align-items: center;
     min-height: var(--target-min);
+  }
+
+  /* The graph's own control, compact on purpose beside a mouse. */
+  .instrument-graph .rebuild {
+    min-height: var(--target-min);
+  }
+
+  /* The documentation chrome is Starlight's, and it measured the same way: the
+     menu button 32x32, search 29x40, the site title 71x32, the copy button on
+     every code block 40x40, and the rows of the sidebar and the page contents
+     34px. The quickstart's own buttons, which carry no class, were 33px. Same
+     floor, same condition. */
+  .site-title,
+  .sl-menu-button,
+  button[data-open-modal],
+  .expressive-code .copy button,
+  .sidebar-content a,
+  .sidebar-content summary,
+  mobile-starlight-toc a,
+  .example-stage button {
+    min-height: var(--target-min);
+  }
+
+  .sl-menu-button,
+  button[data-open-modal],
+  .expressive-code .copy button {
+    min-width: var(--target-min);
   }
 }
