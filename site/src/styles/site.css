@@ -1521,9 +1521,49 @@ svg.interactive .node {
    ------------------------------------------------------------------------- */
 @media (pointer: coarse) {
   .topbar a,
-  .site-footer a {
+  .site-footer a,
+  .rows a {
     display: inline-flex;
     align-items: center;
     min-height: var(--target-min);
+  }
+
+  /* The graph's own control, compact on purpose beside a mouse. */
+  .instrument-graph .rebuild {
+    min-height: var(--target-min);
+  }
+
+  /* The documentation chrome is Starlight's, and it measured the same way: the
+     menu button 32x32, search 29x40, the site title 71x32, the copy button on
+     every code block 40x40, and the rows of the sidebar and the page contents
+     34px. The quickstart's own buttons, which carry no class, were 33px. Same
+     floor, same condition. */
+  .site-title,
+  button[data-open-modal],
+  .expressive-code .copy button,
+  .sidebar-content a,
+  .sidebar-content summary,
+  mobile-starlight-toc a,
+  .example-stage button {
+    min-height: var(--target-min);
+  }
+
+  button[data-open-modal],
+  .expressive-code .copy button {
+    min-width: var(--target-min);
+  }
+
+  /* Starlight sizes the menu button and centres it in the bar from this one
+     property; growing the button any other way leaves it offset downwards. */
+  :root {
+    --sl-menu-button-size: var(--target-min);
+  }
+
+  /* The copy button sits 0.4rem below the top of the code, and a one-line
+     block is shorter than the button plus that spacing on both sides: at 44px
+     it hung 4px below the frame. Not `--button-spacing`, which on a titled or
+     terminal frame also counts the title bar above the code. */
+  .expressive-code pre {
+    min-height: calc(var(--target-min) + 0.8rem);
   }
 }

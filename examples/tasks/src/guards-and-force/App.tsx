@@ -56,7 +56,7 @@ export function Wizard() {
           value={choice ?? ''}
           onChange={(e) => setChoice(e.target.value)}
           disabled={starting}
-          placeholder="leave it empty to see the guard refuse"
+          placeholder="leave it empty"
         />
       </p>
 
