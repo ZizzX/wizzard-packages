@@ -1,3 +1,9 @@
+/**
+ * Expressions written as typed function calls instead of JSON.
+ *
+ * @module @wizzard-packages/core/expr
+ */
+
 import type { Expr, Json } from './expr';
 
 /**

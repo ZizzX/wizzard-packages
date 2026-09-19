@@ -1,3 +1,9 @@
+/**
+ * The Vue binding.
+ *
+ * @module @wizzard-packages/vue/v1
+ */
+
 import {
   createWizard,
   getPath,

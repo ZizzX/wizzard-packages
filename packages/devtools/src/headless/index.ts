@@ -7,6 +7,8 @@
  * Stability: `devtools`, `recordSession` and the bundle types are public API
  * under semver. `layoutGraph`, `formatExpr` and `diffState` are exported for the
  * docs site and may change in a minor.
+ *
+ * @module @wizzard-packages/devtools/headless
  */
 export { devtools, toOutcomeError } from './plugin';
 export type { DevtoolsOptions, DevtoolsPlugin, Outcome, OutcomeError, Pending } from './plugin';

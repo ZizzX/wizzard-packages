@@ -1,5 +1,3 @@
-'use client';
-
 /**
  * `@wizzard-packages/devtools`: the React panel, plus the headless pieces a
  * React host would otherwise import from a second entry.
@@ -9,7 +7,11 @@
  *
  * The directive sits here rather than only on the component: a bundler reads
  * the entry it is given, and this is that file.
+ *
+ * @module @wizzard-packages/devtools
  */
+'use client';
+
 export { WizardDevtools } from './WizardDevtools';
 export type { Tab, WizardDevtoolsProps } from './WizardDevtools';
 export { EDGE_DRAW_CAP, FlowGraphView } from './FlowGraphView';

@@ -33,6 +33,13 @@ const DOCS = [
   ['Persistence', 'docs/persistence/'],
   ['Devtools', 'docs/devtools/'],
   ['Server-driven flows', 'docs/server-driven/'],
+  // The API reference is generated, one page per export, so it is sampled rather than listed:
+  // the index, a module, and one page of each shape typedoc writes.
+  ['API reference', 'docs/api/'],
+  ['core/v1', 'docs/api/wizzard-packages/core/v1/'],
+  ['createWizard', 'docs/api/wizzard-packages/core/v1/functions/createwizard/'],
+  ['Wizard', 'docs/api/wizzard-packages/core/v1/interfaces/wizard/'],
+  ['WizardError', 'docs/api/wizzard-packages/core/v1/classes/wizarderror/'],
   // One page per error code, read from disk: every code the library gains adds a page, and a
   // hand-kept list here would be the one place that forgets it.
   ...readdirSync(fileURLToPath(new URL('../../../site/src/content/docs/errors/', import.meta.url)))

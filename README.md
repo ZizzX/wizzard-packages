@@ -251,6 +251,10 @@ definition that comes from somewhere other than your bundle. When a `useReducer`
 Separate entries because they are separate budgets: a wizard that never draws itself does not
 carry the code that would.
 
+Every export of every entry, with its signature, is in the
+[API reference](https://zizzx.github.io/wizzard-packages/docs/api/), generated from the source on
+each build of the site.
+
 ## Supported
 
 Node 20.11+, TypeScript 5+, React 18+, Vue 3.3+. ESM and CJS, types for both.

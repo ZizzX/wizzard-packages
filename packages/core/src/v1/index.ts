@@ -1,3 +1,10 @@
+/**
+ * The engine: a flow definition, the wizard created from it, and the
+ * selectors that read its state.
+ *
+ * @module @wizzard-packages/core/v1
+ */
+
 export * from './commit';
 export * from './define';
 export { WizardError } from './diagnostic';

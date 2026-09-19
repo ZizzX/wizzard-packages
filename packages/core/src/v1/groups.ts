@@ -1,3 +1,9 @@
+/**
+ * Sub-flows: the traversal a wizard is handed when its flow has a group step.
+ *
+ * @module @wizzard-packages/core/groups
+ */
+
 import { evaluate, type Registry, type Scope } from './expr';
 import { END, isGroup, type FlowDefinition, type GroupStep } from './flow';
 import { getPath } from './path';
