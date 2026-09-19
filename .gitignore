@@ -35,3 +35,6 @@ next-env.d.ts
 # impeccable working artifacts (screenshots, comps); the design docs live in site/
 .impeccable/review/
 .impeccable/mocks/
+
+# The API reference: typedoc writes it on every site build, from the packages' source
+site/src/content/docs/docs/api/

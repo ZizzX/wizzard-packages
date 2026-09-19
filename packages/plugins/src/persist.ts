@@ -1,3 +1,9 @@
+/**
+ * Keeps a wizard across a reload.
+ *
+ * @module @wizzard-packages/plugins/persist
+ */
+
 import { decodeSnapshot, toSnapshot, type RestoreReason } from '@wizzard-packages/core/snapshot';
 
 import type { FlowDefinition, Hooks } from '@wizzard-packages/core/v1';

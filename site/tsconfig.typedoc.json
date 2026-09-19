@@ -1,0 +1,14 @@
+// What typedoc compiles for the API reference: the published v1 sources, not the site.
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": { "noUnusedLocals": false, "noUnusedParameters": false },
+  "include": [
+    "../packages/core/src/v1/**/*",
+    "../packages/react/src/v1/**/*",
+    "../packages/vue/src/v1/**/*",
+    "../packages/validate/src/**/*",
+    "../packages/plugins/src/**/*",
+    "../packages/devtools/src/**/*"
+  ],
+  "exclude": ["../**/*.test.ts", "../**/*.test.tsx"]
+}

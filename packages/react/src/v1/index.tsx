@@ -1,3 +1,9 @@
+/**
+ * The React binding.
+ *
+ * @module @wizzard-packages/react/v1
+ */
+
 // Read by React Server Components bundlers from `dist`; inert everywhere else.
 // `directive.test.ts` checks it survives the build.
 'use client';

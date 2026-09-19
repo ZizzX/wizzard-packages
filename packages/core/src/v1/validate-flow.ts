@@ -1,3 +1,10 @@
+/**
+ * Checks a flow definition before it runs, and reports every problem at once
+ * rather than the first one reached.
+ *
+ * @module @wizzard-packages/core/validate-flow
+ */
+
 import {
   explain,
   invalidOperandText,

@@ -1,3 +1,9 @@
+/**
+ * Checks a recorded session against the flow it claims to come from.
+ *
+ * @module @wizzard-packages/core/session
+ */
+
 import { explain, pageFor, type Explained } from './diagnostic';
 import { isGroup, type FlowDefinition } from './flow';
 

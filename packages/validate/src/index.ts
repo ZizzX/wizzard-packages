@@ -9,6 +9,8 @@
  *
  * The output is what the engine's validator contract asks for: a flat map from
  * dot-path to message, or `null` when the value is good.
+ *
+ * @module @wizzard-packages/validate
  */
 
 import { getPath, type AsyncResolver } from '@wizzard-packages/core/v1';

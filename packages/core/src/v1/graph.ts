@@ -1,3 +1,9 @@
+/**
+ * A flow definition as nodes and edges, for drawing it.
+ *
+ * @module @wizzard-packages/core/graph
+ */
+
 import {
   END,
   isGroup,

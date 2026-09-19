@@ -3,6 +3,7 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import react from '@astrojs/react';
 import vue from '@astrojs/vue';
+import starlightTypeDoc, { typeDocSidebarGroup } from 'starlight-typedoc';
 import { fileURLToPath } from 'node:url';
 
 /**
@@ -173,6 +174,37 @@ export default defineConfig({
             { label: 'inspector-paste', link: '/errors/inspector-paste/' },
           ],
         },
+        typeDocSidebarGroup,
+      ],
+      // The API reference is typedoc's markdown, written into the content
+      // collection before Starlight reads it, so it is one more section of this
+      // site rather than a second deploy. One entry point per `exports` key a
+      // user can import; each file's `@module` tag is the import path it shows.
+      plugins: [
+        starlightTypeDoc({
+          entryPoints: [
+            '../packages/core/src/v1/index.ts',
+            '../packages/core/src/v1/validate-flow.ts',
+            '../packages/core/src/v1/graph.ts',
+            '../packages/core/src/v1/groups.ts',
+            '../packages/core/src/v1/session.ts',
+            '../packages/core/src/v1/snapshot.ts',
+            '../packages/core/src/v1/expr-builder.ts',
+            '../packages/react/src/v1/index.tsx',
+            '../packages/vue/src/v1/index.ts',
+            '../packages/validate/src/index.ts',
+            '../packages/plugins/src/persist.ts',
+            '../packages/devtools/src/index.ts',
+            '../packages/devtools/src/headless/index.ts',
+          ],
+          tsconfig: './tsconfig.typedoc.json',
+          // `index`, not typedoc's `README`: the plugin drops every module page
+          // named README when no readme is configured, and the index it writes
+          // still links to them. As `index` each lands on its folder's URL.
+          typeDoc: { entryFileName: 'index' },
+          output: 'docs/api',
+          sidebar: { label: 'API reference', collapsed: true },
+        }),
       ],
       credits: false,
     }),

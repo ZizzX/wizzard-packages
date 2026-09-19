@@ -70,8 +70,11 @@ test.describe('Getting started', () => {
     await expect(react.getByLabel('Your name')).toBeVisible();
     await expect(react.getByLabel('Your name')).toBeDisabled();
     await expect(react.getByRole('button', { name: 'Next' })).toBeDisabled();
-    // And the source is there without any JavaScript at all.
-    await expect(still.getByText('defineFlow', { exact: false }).first()).toBeVisible();
+    // And the source is there without any JavaScript at all. Looked for in the
+    // page body: the sidebar's API reference names `defineFlow` too, collapsed.
+    await expect(
+      still.getByRole('main').getByText('defineFlow', { exact: false }).first()
+    ).toBeVisible();
 
     await context.close();
   });

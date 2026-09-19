@@ -1,3 +1,9 @@
+/**
+ * The durable part of a wizard's state, and the checked way back from it.
+ *
+ * @module @wizzard-packages/core/snapshot
+ */
+
 import { checkFrames, isStackEntry, knownFlows, type FrameProblem } from './session';
 
 import type { FlowDefinition } from './flow';
