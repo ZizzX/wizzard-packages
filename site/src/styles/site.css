@@ -1539,7 +1539,6 @@ svg.interactive .node {
      34px. The quickstart's own buttons, which carry no class, were 33px. Same
      floor, same condition. */
   .site-title,
-  .sl-menu-button,
   button[data-open-modal],
   .expressive-code .copy button,
   .sidebar-content a,
@@ -1549,9 +1548,22 @@ svg.interactive .node {
     min-height: var(--target-min);
   }
 
-  .sl-menu-button,
   button[data-open-modal],
   .expressive-code .copy button {
     min-width: var(--target-min);
+  }
+
+  /* Starlight sizes the menu button and centres it in the bar from this one
+     property; growing the button any other way leaves it offset downwards. */
+  :root {
+    --sl-menu-button-size: var(--target-min);
+  }
+
+  /* The copy button sits 0.4rem below the top of the code, and a one-line
+     block is shorter than the button plus that spacing on both sides: at 44px
+     it hung 4px below the frame. Not `--button-spacing`, which on a titled or
+     terminal frame also counts the title bar above the code. */
+  .expressive-code pre {
+    min-height: calc(var(--target-min) + 0.8rem);
   }
 }

@@ -171,4 +171,30 @@ test.describe('on a touch screen', () => {
       expect(small).toEqual([]);
     });
   }
+
+  /**
+   * Growing a control can move it. The menu button grown by `min-height` sat 6px
+   * below the centre of the bar, because Starlight centres it from its own size
+   * property; the copy button grown to 44px hung 4px below every one-line code
+   * block, because the block was shorter than the button and its spacing.
+   */
+  test('the grown controls stay where they were drawn', async ({ page }) => {
+    await page.goto('docs/start/');
+    const layout = await page.evaluate(() => {
+      const centre = (selector: string): number => {
+        const box = document.querySelector(selector)!.getBoundingClientRect();
+        return box.top + box.height / 2;
+      };
+      const overhang = [...document.querySelectorAll('.expressive-code .frame')].map((frame) => {
+        const button = frame.querySelector('.copy button')!.getBoundingClientRect();
+        return button.bottom - frame.querySelector('pre')!.getBoundingClientRect().bottom;
+      });
+      return {
+        offCentre: Math.abs(centre('.sl-menu-button') - centre('.header')),
+        overhang: Math.max(...overhang),
+      };
+    });
+    expect(layout.offCentre).toBeLessThanOrEqual(1);
+    expect(layout.overhang).toBeLessThanOrEqual(0);
+  });
 });
