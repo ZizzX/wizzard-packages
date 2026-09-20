@@ -202,8 +202,9 @@ const wizard = createWizard({ flow: trip, groups, subFlows: { passenger } });
 `keyBy` names the field that identifies an item. The stack stores that key and nothing else, so
 reordering the list moves the person with their item and removing one they are not on leaves
 them where they are. Inside the sub-flow, `{ $get: 'loop.item' }`, `loop.index` and `loop.key`
-are in scope for guards, conditions and validators. `docs/designs/group-traversal.md` is the
-full set of rules.
+are in scope for guards, conditions and validators.
+[Groups, repeat and sub-flows](https://zizzx.github.io/wizzard-packages/docs/groups/) is the
+guide; `docs/designs/group-traversal.md` is the full set of rules.
 
 ## Why this and not something else
 
