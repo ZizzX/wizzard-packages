@@ -87,7 +87,11 @@ export default defineConfig({
       sidebar: [
         {
           label: 'Start here',
-          items: [{ label: 'Getting started', link: '/docs/start/' }],
+          items: [
+            { label: 'Getting started', link: '/docs/start/' },
+            { label: 'Concepts and glossary', link: '/docs/concepts/' },
+            { label: 'What you can build', link: '/docs/showcase/' },
+          ],
         },
         {
           // Titled by the phrase a person would search for, because that is how

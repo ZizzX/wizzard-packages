@@ -1,0 +1,12 @@
+at: trip
+at: people[a1] / who
+at: people[a1] / meal
+at: people[c1] / who
+at: seats
+seat map loaded: 11, 12, 14
+restored at: seats
+restored answer: PA-118
+at: visa
+at: payment
+refused: invalid
+at: review

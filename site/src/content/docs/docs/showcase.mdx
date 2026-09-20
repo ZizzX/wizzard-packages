@@ -1,0 +1,82 @@
+---
+title: What you can build
+description: Branching, a repeat over a list, a sub-flow, a step that loads, a validator and a guard - one definition, and a run of it printed line by line.
+---
+
+import { Code } from '@astrojs/starlight/components';
+import flowSource from '@examples/tasks/src/showcase/flow.ts?raw';
+import registrySource from '@examples/tasks/src/showcase/registry.ts?raw';
+import headlessSource from '@examples/tasks/src/showcase/headless.ts?raw';
+import headlessOutput from '@examples/tasks/src/showcase/headless.out.txt?raw';
+
+The quickstart is two steps and a field, which is the wrong size for deciding whether an engine
+can hold your flow. This page is the other end: a booking that branches on an answer, runs a
+sub-flow once per traveller, skips a step for children, waits on a seat map it does not have,
+refuses to leave a step whose card is wrong, and refuses to enter the last step until the card
+exists - and survives being written to disk halfway through and read back into a different
+engine.
+
+None of that is code you write. It is six steps of one JSON object.
+
+## The definition
+
+<Code code={flowSource} lang="ts" title="flow.ts" />
+
+Six fields are doing the work. `when` on `visa` is a branch on an answer given four steps
+earlier. `repeat` on `people` turns one sub-flow into one pass per traveller, and `keyBy` is
+what makes that survive the list being edited. `input` hands each pass its own traveller, which
+is what lets the sub-flow's own `when` skip `meal` for a child without knowing it is in a
+repeat. `load` on `seats` makes entering the step wait. `validate` refuses to leave `payment`,
+and `guards.enter` refuses to enter `review` - two different rules that are often mistaken for
+one switch.
+
+The definition names both functions rather than holding them, which is what keeps it JSON:
+
+<Code code={registrySource} lang="ts" title="registry.ts" />
+
+## The run
+
+Driven by hand, so every one of those claims is a line of output rather than a promise. A
+binding makes these same calls for you.
+
+<Code code={headlessSource} lang="ts" title="headless.ts" />
+
+<Code code={headlessOutput} lang="text" title="Output" />
+
+A test in the repository asserts those exact lines, so it is not a transcript of a good run.
+
+## What each line proves
+
+| Line                                                | What it is                                                                                                   |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `at: people[a1] / who`                              | position is a stack, not a step: the group is one frame and the sub-flow's step is the next                  |
+| `at: people[a1] / meal` then `at: people[c1] / who` | the adult gets the meal step and the child does not - a branch inside the repeat                             |
+| `at: seats`                                         | the second traveller's pass ended and the group did, both decided by the traversal rather than by the caller |
+| `seat map loaded: 11, 12, 14`                       | the move waited for `load` before the step became current                                                    |
+| `restored at: seats`                                | a snapshot encodes the whole stack, so a restore lands inside the group as readily as at the root            |
+| `restored answer: PA-118`                           | and the answers keyed by traveller came back with it                                                         |
+| `at: visa`                                          | the branch on `destination`, taken long after the answer                                                     |
+| `refused: invalid`                                  | the validator refused the move and the flow stayed put - a result, never a thrown error                      |
+| `at: review`                                        | the guard let the step be entered once the card existed                                                      |
+
+## What is not in it
+
+Two things this example leaves out on purpose, because both are about where the definition
+comes from rather than what it can say.
+
+A flow can change shape while it runs: `patchFlow` replaces steps on a live wizard, which is how
+a backend drives the wizard step by step. [Server-driven flows](../server-driven/) is that page.
+
+A flow can be persisted automatically rather than by hand. The run above calls `toSnapshot` and
+`decodeSnapshot` itself to keep the script honest about what is happening;
+[Persistence](../persistence/) is the plugin that does it on every commit, and the refusals that
+matter when the flow has changed since.
+
+## Where each piece is explained
+
+[Groups, repeat and sub-flows](../groups/) covers `people`, its `repeat` and its `input`.
+[Expressions](../expressions/) is the language `when` and `guards` are written in.
+[Loading a step](../async-steps/) covers `load` and the step that arrives late.
+[Validation](../validation/) separates checking the definition from checking the answers.
+[Navigation](../navigation/) covers the moves and the refusals they return.
+[Concepts and glossary](../concepts/) defines every word used here.
