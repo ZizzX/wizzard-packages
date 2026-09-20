@@ -13,10 +13,13 @@ The quickstart is two steps and a field, which is the wrong size for deciding wh
 can hold your flow. This page is the other end: a booking that branches on an answer, runs a
 sub-flow once per traveller, skips a step for children, waits on a seat map it does not have,
 refuses to leave a step whose card is wrong, and refuses to enter the last step until the card
-exists - and survives being written to disk halfway through and read back into a different
-engine.
+exists - and survives being written out two frames deep and read back into a different engine.
 
-None of that is code you write. It is six steps of one JSON object.
+The orchestration is not code you write: the branches, the repeat, the waiting and the two
+refusals are fields of one JSON object, six steps long. What the object cannot hold, it names -
+the sub-flow each traveller runs is a second definition of exactly the same kind, and the
+loader and the validator are two functions in a registry. Those three are yours to write; the
+order they run in is not.
 
 ## The definition
 
@@ -47,17 +50,17 @@ A test in the repository asserts those exact lines, so it is not a transcript of
 
 ## What each line proves
 
-| Line                                                | What it is                                                                                                   |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `at: people[a1] / who`                              | position is a stack, not a step: the group is one frame and the sub-flow's step is the next                  |
-| `at: people[a1] / meal` then `at: people[c1] / who` | the adult gets the meal step and the child does not - a branch inside the repeat                             |
-| `at: seats`                                         | the second traveller's pass ended and the group did, both decided by the traversal rather than by the caller |
-| `seat map loaded: ...`                              | the move waited for `load` before the step became current                                                    |
-| `restored at: seats`                                | a snapshot encodes the whole stack, so a restore lands inside the group as readily as at the root            |
-| `restored answer: PA-118`                           | and the answers keyed by traveller came back with it                                                         |
-| `at: visa`                                          | the branch on `destination`, taken long after the answer                                                     |
-| `refused: invalid`                                  | the validator refused the move and the flow stayed put - a result, never a thrown error                      |
-| `at: review`                                        | the guard let the step be entered once the card existed                                                      |
+| Line                                                | What it is                                                                                                                                    |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `at: people[a1] / who`                              | position is a stack, not a step: the group is one frame and the sub-flow’s step is the next                                                   |
+| `at: people[a1] / meal` then `at: people[c1] / who` | the adult gets the meal step and the child does not - a branch inside the repeat                                                              |
+| `restored at: people[c1] / who`                     | the snapshot was written two frames deep, and the restore came back to the same place - the group, the traveller’s key and the step inside it |
+| `restored answer: PA-118`                           | the answers keyed by traveller came back with it, into an engine that had never seen them                                                     |
+| `at: seats`                                         | the last traveller’s pass ended and so did the group, both decided by the traversal rather than by the caller                                 |
+| `seat map loaded: ...`                              | the move waited for `load` before the step became current                                                                                     |
+| `at: visa`                                          | the branch on `destination`, taken long after the answer                                                                                      |
+| `refused: invalid`                                  | the validator refused the move and the flow stayed put - a result, never a thrown error                                                       |
+| `at: review`                                        | the guard let the step be entered once the card existed                                                                                       |
 
 ## What is not in it
 

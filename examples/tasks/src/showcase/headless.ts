@@ -54,17 +54,21 @@ console.log(`at: ${where()}`);
 // The child skips `meal`, because the branch is inside the repeat.
 await wizard.next();
 console.log(`at: ${where()}`);
-await wizard.next();
-console.log(`at: ${where()}`);
-console.log(`seat map loaded: ${seatsByRow.join(', ')}`);
 
-// Halfway through, the session is written out and read back into a new engine.
+// Written out and read back while the wizard stands two frames deep, which is
+// the case a flat snapshot cannot express: the group, its key and the step
+// inside it all have to survive.
 const saved = JSON.parse(JSON.stringify(toSnapshot(wizard.getState(), booking))) as unknown;
 const restored = decodeSnapshot(booking, saved, { subFlows: { passenger } });
 if (!restored.restored) throw new Error(restored.reason);
 wizard = open(restored.state);
 console.log(`restored at: ${where()}`);
 console.log(`restored answer: ${String(wizard.get('people.a1.passport'))}`);
+
+// Out of the group and into the step that loads before it is shown.
+await wizard.next();
+console.log(`at: ${where()}`);
+console.log(`seat map loaded: ${seatsByRow.join(', ')}`);
 
 // A branch on an answer given four steps earlier.
 await wizard.next();
