@@ -108,6 +108,18 @@ const ProbeComponent = defineComponent({
           },
           'go first'
         ),
+        h(
+          'button',
+          {
+            'data-testid': 'go-missing',
+            onClick: () => {
+              void nav.go('no-such-step').then((result) => {
+                if (!result.ok) refusal.value = `${result.code} ${result.url}`;
+              });
+            },
+          },
+          'go missing'
+        ),
 
         h('span', { 'data-testid': 'item-key' }, itemKey.value),
         h(

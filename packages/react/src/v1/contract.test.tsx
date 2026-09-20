@@ -97,6 +97,16 @@ function Probe(): ReactElement {
       >
         go first
       </button>
+      <button
+        data-testid="go-missing"
+        onClick={() => {
+          void nav.go('no-such-step').then((result) => {
+            if (!result.ok) setRefusal(`${result.code} ${result.url}`);
+          });
+        }}
+      >
+        go missing
+      </button>
 
       <span data-testid="item-key">{itemKey}</span>
       <span data-testid="item-index">{itemIndex < 0 ? '' : String(itemIndex)}</span>

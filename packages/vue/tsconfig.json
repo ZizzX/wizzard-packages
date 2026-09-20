@@ -14,7 +14,6 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@wizzard-packages/core": ["../core/src/index.ts"],
       "@wizzard-packages/core": ["../core/src/v1/index.ts"]
     },
     "types": ["vitest/globals"]

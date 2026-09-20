@@ -42,3 +42,4 @@
 - [Prose drifts from the engine](prose-drifts-from-the-engine.md) — eight documented rules the engine does not have, and the only two things that found them.
 - [Vue plugin takes React's refresh](vue-plugin-takes-react-refresh.md) — dev-only `$RefreshSig$` 500 on Vue islands; the astro.config.mjs plugin and the dev-server spec.
 - [A watch can report green early](a-watch-can-report-green-early.md) — `--watch` exits 0 mid-run; a verify run beside e2e fails a healthy test.
+- [Root typedoc deps are load-bearing](root-typedoc-deps-are-load-bearing.md) — they look dead; removing them breaks the site build only.

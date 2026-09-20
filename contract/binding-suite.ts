@@ -56,6 +56,7 @@ export interface BindingHarness {
  *   step, progress, can-back, busy, errors, renders
  *   name-input (bound to the `name` field), next, back
  *   go-first    jumps to `breadcrumbs[0]`, the step a crumb would name
+ *   go-missing  jumps at a step the flow does not have, for the refused case
  *   refusal     `<code> <url>` of the last refused `next()`, or ''
  *
  * And, for the repeat group below - all of it read from the engine, never kept
@@ -218,6 +219,25 @@ export function describeBindingContract(harness: BindingHarness): void {
       expect(probe.text('step')).toBe('one');
       expect(probe.text('name-value')).toBe('Ann');
       expect(probe.text('refusal')).toBe('');
+      probe.unmount();
+    });
+
+    // The other half of the same wiring: a refused jump has to come back as a
+    // result with a code and a page, the way a refused `next()` does. A binding
+    // that forwards `go` but drops what it returns passes the case above.
+    it('returns a refused jump with its code and page', async () => {
+      const probe = await mount({ name: 'Ann', wantsTwo: false });
+
+      await probe.click('go-missing');
+      // Polled, not asserted straight after the click: a refused jump resolves
+      // a turn later than a refused `next()`, and Vue's harness only flushes
+      // microtasks between the two.
+      await until(() => probe.text('refusal') !== '', 'the refused jump');
+
+      expect(probe.text('step')).toBe('one');
+      expect(probe.text('refusal')).toMatch(
+        /^\S+ https:\/\/zizzx\.github\.io\/wizzard-packages\/errors\/\S+$/
+      );
       probe.unmount();
     });
 

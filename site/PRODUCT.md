@@ -75,10 +75,11 @@ invented.
 Supported: Node 20.11+, TypeScript 5+, React 18+, Vue 3.3+. ESM and CJS, types for both.
 
 Examples that exist: `examples/quickstart` (the reference example, embedded in the README,
-run by CI on both bindings) and `examples/next-app` (the devtools panel in Next.js, plus a
-headless route that proves the layer works without React). `examples/demo`,
-`examples/vue-demo` and `examples/shadcn-ui-connector` are 0.x artifacts; the plan
-rewrites the last as a site page about using a design system.
+run by CI on both bindings), `examples/next-app` (the devtools panel in Next.js, plus a
+headless route that proves the layer works without React), `examples/reference` and
+`examples/tasks`, which the site draws its reference applications and task pages from. The
+0.x demos went with 0.x; using the library with a design system is a site page still to
+write.
 
 `@wizzard-packages/devtools` is a docked panel answering one question: why is the wizard
 where it is. It draws the flow it is standing in, the state it committed, and what it did
