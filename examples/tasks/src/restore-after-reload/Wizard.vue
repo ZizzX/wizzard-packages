@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { RestoreOutcome } from '@wizzard-packages/plugins/persist';
-import { useField, useNavigation, useStep } from '@wizzard-packages/vue/v1';
+import { useField, useNavigation, useStep } from '@wizzard-packages/vue';
 import { computed, onMounted, ref } from 'vue';
 
 import { describeRestore } from './outcome';

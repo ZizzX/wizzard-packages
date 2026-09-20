@@ -12,7 +12,6 @@
     "e2e/**/*.ts",
     "packages/*/tsup.config.ts",
     "packages/*/vitest.config.ts",
-    "packages/ui/vite.config.ts",
     "packages/*/src/**/*.test.ts",
     "packages/*/src/**/*.test.tsx"
   ]

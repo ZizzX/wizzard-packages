@@ -10,8 +10,8 @@ import { describe, expect, it } from 'vitest';
  * Run `pnpm build` first; CI does.
  */
 describe('use client directive', () => {
-  it.each(['index.js', 'index.cjs'])('opens dist/v1/%s', (file) => {
-    const code = readFileSync(resolve(__dirname, '../../dist/v1', file), 'utf8');
+  it.each(['index.js', 'index.cjs'])('opens dist/%s', (file) => {
+    const code = readFileSync(resolve(__dirname, '../../dist', file), 'utf8');
     // A directive prologue may hold several directives; CJS output opens with
     // 'use strict'. Anything else before 'use client' would end the prologue.
     const prologue = code.split('\n').slice(0, 2);

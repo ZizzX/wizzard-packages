@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { provideWizard } from '@wizzard-packages/vue/v1';
+import { provideWizard } from '@wizzard-packages/vue';
 
 import Onboarding from './Onboarding.vue';
 import { onboarding } from './flow';

@@ -1,0 +1,49 @@
+name: Deploy site
+
+# The documentation site is what GitHub Pages serves. It replaced the 0.x
+# marketing site when that line was deleted; `site/astro.config.mjs` already
+# builds for `/wizzard-packages/`, the path Pages serves this repository from,
+# and the e2e suite drives that same production build.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-site
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          # 22, not 20: the site's toolchain refuses to run below 22.12. The
+          # packages' own Node 20 promise is proved by the CI matrix.
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The site imports the packages' `dist`, and its API reference is
+      # generated from their sources on every build.
+      - name: Build
+        run: pnpm build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: site/dist

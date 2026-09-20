@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useField, useNavigation, useStep, useWizardSelector } from '@wizzard-packages/vue/v1';
+import { useField, useNavigation, useStep, useWizardSelector } from '@wizzard-packages/vue';
 import { computed } from 'vue';
 
 const { current, isLast } = useStep();

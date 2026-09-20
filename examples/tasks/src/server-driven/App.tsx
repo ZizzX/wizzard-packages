@@ -1,15 +1,11 @@
-import {
-  createWizard,
-  type FlowDefinition,
-  type Wizard as Engine,
-} from '@wizzard-packages/core/v1';
+import { createWizard, type FlowDefinition, type Wizard as Engine } from '@wizzard-packages/core';
 import {
   WizardProvider,
   useField,
   useNavigation,
   useStep,
   useWizard,
-} from '@wizzard-packages/react/v1';
+} from '@wizzard-packages/react';
 import { useId, useMemo, useState, type ReactNode } from 'react';
 
 import { FROM_SERVER, PATCH_FROM_SERVER, registry } from './contract';

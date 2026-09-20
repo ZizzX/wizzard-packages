@@ -1,4 +1,4 @@
-import type { Expr } from '@wizzard-packages/core/v1';
+import type { Expr } from '@wizzard-packages/core';
 
 /**
  * Prints an expression as infix text for a label: `{ $eq: [{ $get: 'data.plan' },

@@ -8,7 +8,7 @@ concern, so a flow that persists nothing carries none of the code that would.
 Keeps a wizard across a reload.
 
 ```ts
-import { createWizard } from '@wizzard-packages/core/v1';
+import { createWizard } from '@wizzard-packages/core';
 import { persist } from '@wizzard-packages/plugins/persist';
 
 const wizard = createWizard({

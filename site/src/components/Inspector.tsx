@@ -15,9 +15,9 @@
  * (`readFlow`), turning a recording into frames (`replayFrames`), the route a
  * data change implies (`rerouteTo`). What is left here is which of them to show.
  */
+import { END, type FlowDefinition } from '@wizzard-packages/core';
 import { buildGraph, type FlowGraph as Graph, type GraphNode } from '@wizzard-packages/core/graph';
 import { checkSession } from '@wizzard-packages/core/session';
-import { END, type FlowDefinition } from '@wizzard-packages/core/v1';
 import { diffState } from '@wizzard-packages/devtools/headless';
 import {
   WizardProvider,
@@ -26,7 +26,7 @@ import {
   useNavigation,
   useStep,
   useWizard,
-} from '@wizzard-packages/react/v1';
+} from '@wizzard-packages/react';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { flowA, registryA } from '../../../contract/fixtures';

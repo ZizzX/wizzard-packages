@@ -13,7 +13,7 @@
  * @module @wizzard-packages/validate
  */
 
-import { getPath, type AsyncResolver } from '@wizzard-packages/core/v1';
+import { getPath, type AsyncResolver } from '@wizzard-packages/core';
 
 import type { StandardIssue, StandardSchemaV1 } from './standard';
 

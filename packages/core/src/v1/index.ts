@@ -2,7 +2,7 @@
  * The engine: a flow definition, the wizard created from it, and the
  * selectors that read its state.
  *
- * @module @wizzard-packages/core/v1
+ * @module @wizzard-packages/core
  */
 
 export * from './commit';

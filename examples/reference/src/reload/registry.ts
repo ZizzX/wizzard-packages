@@ -1,4 +1,4 @@
-import type { AsyncRegistry, Scope } from '@wizzard-packages/core/v1';
+import type { AsyncRegistry, Scope } from '@wizzard-packages/core';
 
 /**
  * The validators. One is a plain function of the data; the other has to ask

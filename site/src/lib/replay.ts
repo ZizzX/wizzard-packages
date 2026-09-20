@@ -8,7 +8,7 @@
  * graph the visitor saw when the frame was recorded, not a re-derivation that
  * could disagree with it.
  */
-import { createSelector, type FlowDefinition, type WizardState } from '@wizzard-packages/core/v1';
+import { createSelector, type FlowDefinition, type WizardState } from '@wizzard-packages/core';
 
 import type { GraphView } from '../components/FlowGraph';
 import type { RecordedSession } from '@wizzard-packages/core/session';

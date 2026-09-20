@@ -1,5 +1,5 @@
 import { persist, type RestoreOutcome } from '@wizzard-packages/plugins/persist';
-import { WizardProvider, useField, useNavigation, useStep } from '@wizzard-packages/react/v1';
+import { WizardProvider, useField, useNavigation, useStep } from '@wizzard-packages/react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { APP_VERSION, STORAGE_KEY, signup } from './flow';

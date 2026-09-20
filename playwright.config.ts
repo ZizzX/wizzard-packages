@@ -23,8 +23,8 @@ export default defineConfig({
   // Retry on CI only
   retries: process.env.CI ? 2 : 0,
 
-  // Two workers, not one: the suite has ~117 tests and a handful of hard waits,
-  // and a single worker does not finish inside the CI step budget.
+  // Two workers, not one: the suite has a handful of hard waits, and a single
+  // worker does not finish inside the CI step budget.
   workers: process.env.CI ? 2 : undefined,
 
   // `github` annotates the failing line in the PR diff; the HTML report is an
@@ -35,8 +35,9 @@ export default defineConfig({
 
   // Shared settings for all the projects below
   use: {
-    // Base URL to use in actions like `await page.goto('/')`
-    baseURL: 'http://localhost:5173/',
+    // Each project sets its own; this is the fallback for a spec that is added
+    // outside one.
+    baseURL: 'http://127.0.0.1:4321/wizzard-packages/',
 
     // Collect trace when retrying the failed test
     trace: 'on-first-retry',
@@ -50,22 +51,6 @@ export default defineConfig({
 
   // Configure projects for major browsers
   projects: [
-    {
-      name: 'react',
-      testMatch: /react\/.*\.spec\.ts/,
-      use: {
-        ...devices['Desktop Chrome'],
-        baseURL: 'http://localhost:5173/',
-      },
-    },
-    {
-      name: 'vue',
-      testMatch: /vue\/.*\.spec\.ts/,
-      use: {
-        ...devices['Desktop Chrome'],
-        baseURL: 'http://127.0.0.1:5174/',
-      },
-    },
     {
       name: 'next',
       testMatch: /next\/.*\.spec\.ts/,
@@ -89,26 +74,6 @@ export default defineConfig({
 
   // Run your local dev servers before starting the tests
   webServer: [
-    {
-      command: 'pnpm --filter demo dev',
-      url: 'http://localhost:5173/',
-      reuseExistingServer: !process.env.CI,
-      timeout: process.env.CI ? 180 * 1000 : 120 * 1000,
-      stdout: 'pipe',
-      stderr: 'pipe',
-      // Add retries for readiness check
-      ignoreHTTPSErrors: true,
-    },
-    {
-      command: 'pnpm --filter @examples/vue-demo dev --host 127.0.0.1 --port 5174 --strictPort',
-      url: 'http://127.0.0.1:5174/',
-      reuseExistingServer: !process.env.CI,
-      timeout: process.env.CI ? 180 * 1000 : 120 * 1000,
-      stdout: 'pipe',
-      stderr: 'pipe',
-      // Add retries for readiness check
-      ignoreHTTPSErrors: true,
-    },
     {
       // Serves the production build: `pnpm build` runs `next build` for the
       // fixture, and the e2e job builds before it tests.

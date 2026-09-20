@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { groups } from '@wizzard-packages/core/groups';
 import { checkSession } from '@wizzard-packages/core/session';
-import { createWizard } from '@wizzard-packages/core/v1';
+import { createWizard } from '@wizzard-packages/core';
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
@@ -19,7 +19,7 @@ import {
 import { devtools } from './plugin';
 import { recordSession } from './record';
 
-import type { FlowDefinition, SubFlows, Wizard } from '@wizzard-packages/core/v1';
+import type { FlowDefinition, SubFlows, Wizard } from '@wizzard-packages/core';
 import type { SessionBundle } from './record';
 
 // No DOM anywhere in this file: this is the Node capture the headless entry promises.

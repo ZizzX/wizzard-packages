@@ -44,7 +44,7 @@ ignored.
 
 <!-- prettier-ignore -->
 ```tsx
-import { WizardProvider, useField, useNavigation, useStep } from '@wizzard-packages/react/v1';
+import { WizardProvider, useField, useNavigation, useStep } from '@wizzard-packages/react';
 
 import { signup } from './flow';
 
@@ -138,7 +138,7 @@ contract suite runs against both, which is what stops them drifting apart.
 
 0.x was a different library with the same name: `createWizardFactory`, a store per wizard, and
 the branching in your components. Both lines export a `WizardProvider` with different props,
-so check the import path — v1 is `@wizzard-packages/react/v1`. v1 is on the `canary` tag while
+so check the import path — v1 is `@wizzard-packages/react`. v1 is on the `canary` tag while
 the launch lands; the 0.x line on `latest` is being retired.
 
 ## License

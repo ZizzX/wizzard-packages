@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { FlowGraph, GraphNode } from '@wizzard-packages/core/graph';
-import { isSync, test } from '@wizzard-packages/core/v1';
-import type { WizardState } from '@wizzard-packages/core/v1';
+import { isSync, test } from '@wizzard-packages/core';
+import type { WizardState } from '@wizzard-packages/core';
 import { formatExpr } from './headless';
 
 /**

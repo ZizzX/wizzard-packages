@@ -1,4 +1,4 @@
-import { defineFlow, step } from '@wizzard-packages/core/v1';
+import { defineFlow, step } from '@wizzard-packages/core';
 
 /**
  * R-B: an application that survives a reload, and an asynchronous check that a

@@ -52,7 +52,7 @@ message of one [`flow-invalid`](../../errors/flow-invalid/) error. Use it where 
 response in development, a fixture in a test - and use `validateFlow` where the problems are
 something to render.
 
-This entry point is deliberately separate from `@wizzard-packages/core/v1`. Checking a
+This entry point is deliberately separate from `@wizzard-packages/core`. Checking a
 definition is development work; shipping the checker to every user who runs the flow is not.
 
 ## Checking the answers

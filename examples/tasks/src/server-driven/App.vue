@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { createWizard } from '@wizzard-packages/core/v1';
-import { provideWizard } from '@wizzard-packages/vue/v1';
+import { createWizard } from '@wizzard-packages/core';
+import { provideWizard } from '@wizzard-packages/vue';
 
 import Wizard from './Wizard.vue';
 import { FROM_SERVER, registry } from './contract';

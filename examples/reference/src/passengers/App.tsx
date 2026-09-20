@@ -5,7 +5,7 @@ import {
   useStep,
   useWizard,
   useWizardSelector,
-} from '@wizzard-packages/react/v1';
+} from '@wizzard-packages/react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { answerPath, initialData, subFlows, trip } from './flow';

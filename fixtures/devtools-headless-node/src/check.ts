@@ -1,6 +1,6 @@
 import { strict as assert } from 'node:assert';
 
-import { createWizard, defineFlow, step, type AsyncRegistry } from '@wizzard-packages/core/v1';
+import { createWizard, defineFlow, step, type AsyncRegistry } from '@wizzard-packages/core';
 import { devtools, recordSession } from '@wizzard-packages/devtools/headless';
 
 /**

@@ -1,4 +1,4 @@
-import type { AsyncRegistry, FlowDefinition } from '@wizzard-packages/core/v1';
+import type { AsyncRegistry, FlowDefinition } from '@wizzard-packages/core';
 import { validateFlow, type FlowProblem } from '@wizzard-packages/core/validate-flow';
 
 /**

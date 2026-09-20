@@ -14,8 +14,8 @@ import { layoutGraph, type Direction } from '@wizzard-packages/devtools/headless
 
 import { asText, printExpr } from '../lib/print-expr';
 
+import type { Breadcrumb } from '@wizzard-packages/core';
 import type { FlowGraph as Graph, GraphNode } from '@wizzard-packages/core/graph';
-import type { Breadcrumb } from '@wizzard-packages/core/v1';
 import type { KeyboardEvent, ReactNode } from 'react';
 
 export type NodeState = 'active' | 'error' | 'visited' | 'skipped' | 'done' | 'rest';

@@ -37,12 +37,12 @@
     "./package.json": "./package.json",
     "./v1": {
       "import": {
-        "types": "./dist/v1/index.d.ts",
-        "default": "./dist/v1/index.js"
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
       },
       "require": {
-        "types": "./dist/v1/index.d.cts",
-        "default": "./dist/v1/index.cjs"
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
       }
     }
   },
@@ -57,7 +57,7 @@
   },
   "scripts": {
     "build": "tsup",
-    "dev": "tsup src/index.ts --format cjs,esm --watch --dts",
+    "dev": "tsup src/v1/index.ts --format cjs,esm --watch --dts",
     "lint": "eslint .",
     "test": "vitest",
     "test:run": "vitest run",
@@ -67,9 +67,7 @@
     "vue": "^3.3.0"
   },
   "dependencies": {
-    "@wizzard-packages/core": "workspace:*",
-    "@wizzard-packages/middleware": "workspace:*",
-    "@wizzard-packages/persistence": "workspace:*"
+    "@wizzard-packages/core": "workspace:*"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.1",

@@ -1,4 +1,4 @@
-import type { AsyncRegistry, Scope } from '@wizzard-packages/core/v1';
+import type { AsyncRegistry, Scope } from '@wizzard-packages/core';
 
 /**
  * What the flow could not serialize. A validator is an ordinary function of the

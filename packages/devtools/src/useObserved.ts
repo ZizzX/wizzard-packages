@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
-import type { FlowDefinition, WizardState } from '@wizzard-packages/core/v1';
+import type { FlowDefinition, WizardState } from '@wizzard-packages/core';
 import { diffState } from './headless';
 import type { DevtoolsPlugin, Outcome, Pending, WizardLike } from './headless';
 import { stopped } from './messages';

@@ -1,10 +1,10 @@
-import { groups } from '@wizzard-packages/core/groups';
 import {
   WizardError,
   type FlowDefinition,
   type SubFlows,
   type Traversal,
-} from '@wizzard-packages/core/v1';
+} from '@wizzard-packages/core';
+import { groups } from '@wizzard-packages/core/groups';
 import { describe, expect, it, vi } from 'vitest';
 
 import { flowC as tripFlow, subFlowsC } from './fixtures';
@@ -55,6 +55,8 @@ export interface BindingHarness {
  * Test ids a probe must render:
  *   step, progress, can-back, busy, errors, renders
  *   name-input (bound to the `name` field), next, back
+ *   go-first    jumps to `breadcrumbs[0]`, the step a crumb would name
+ *   go-missing  jumps at a step the flow does not have, for the refused case
  *   refusal     `<code> <url>` of the last refused `next()`, or ''
  *
  * And, for the repeat group below - all of it read from the engine, never kept
@@ -202,6 +204,40 @@ export function describeBindingContract(harness: BindingHarness): void {
 
       await probe.click('back');
       expect(probe.text('step')).toBe('one');
+      probe.unmount();
+    });
+
+    // What a stepper's breadcrumbs do when one is clicked. 0.x drove this
+    // through the demo applications, and each binding wired `go` itself; here
+    // both answer the same test, and the jump keeps the answers already given.
+    it('jumps to the step a breadcrumb names, keeping the data behind it', async () => {
+      const probe = await mount({ name: 'Ann', wantsTwo: false });
+      await probe.click('next');
+      expect(probe.text('step')).toBe('three');
+
+      await probe.click('go-first');
+      expect(probe.text('step')).toBe('one');
+      expect(probe.text('name-value')).toBe('Ann');
+      expect(probe.text('refusal')).toBe('');
+      probe.unmount();
+    });
+
+    // The other half of the same wiring: a refused jump has to come back as a
+    // result with a code and a page, the way a refused `next()` does. A binding
+    // that forwards `go` but drops what it returns passes the case above.
+    it('returns a refused jump with its code and page', async () => {
+      const probe = await mount({ name: 'Ann', wantsTwo: false });
+
+      await probe.click('go-missing');
+      // Polled, not asserted straight after the click: a refused jump resolves
+      // a turn later than a refused `next()`, and Vue's harness only flushes
+      // microtasks between the two.
+      await until(() => probe.text('refusal') !== '', 'the refused jump');
+
+      expect(probe.text('step')).toBe('one');
+      expect(probe.text('refusal')).toMatch(
+        /^\S+ https:\/\/zizzx\.github\.io\/wizzard-packages\/errors\/\S+$/
+      );
       probe.unmount();
     });
 

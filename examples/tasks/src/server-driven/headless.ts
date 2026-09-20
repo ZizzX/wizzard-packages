@@ -1,4 +1,4 @@
-import { createWizard } from '@wizzard-packages/core/v1';
+import { createWizard } from '@wizzard-packages/core';
 
 import { FROM_SERVER, PATCH_FROM_SERVER, registry } from './contract';
 import { checkPatch, loadFlow } from './load';

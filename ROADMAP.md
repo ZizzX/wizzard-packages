@@ -1,7 +1,5 @@
 # Roadmap — v1
 
-Supersedes `docs/legacy/IMPROVEMENT_ROADMAP.md`.
-
 ## Why a v1 rewrite
 
 An audit of the 0.x sources found problems that cannot be fixed incrementally, because they

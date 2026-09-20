@@ -6,7 +6,7 @@ import {
   useStep,
   useWizard,
   useWizardSelector,
-} from '@wizzard-packages/vue/v1';
+} from '@wizzard-packages/vue';
 import { computed, ref, useTemplateRef, watch } from 'vue';
 
 /**

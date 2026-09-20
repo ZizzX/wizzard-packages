@@ -16,7 +16,7 @@ a flow with no sub-flows would carry it for nothing, so it ships as a separate
 entry and is handed to the engine rather than imported by it.
 
 ```ts
-import { createWizard } from '@wizzard-packages/core/v1';
+import { createWizard } from '@wizzard-packages/core';
 import { groups } from '@wizzard-packages/core/groups';
 
 const wizard = createWizard({ flow, groups, subFlows });

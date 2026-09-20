@@ -1,4 +1,4 @@
-import type { AsyncRegistry, Scope } from '@wizzard-packages/core/v1';
+import type { AsyncRegistry, Scope } from '@wizzard-packages/core';
 
 /**
  * A validator answers with one message per field, keyed by the field's name, or

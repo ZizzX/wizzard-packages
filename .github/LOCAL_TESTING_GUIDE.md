@@ -10,22 +10,27 @@ This guide explains how to test packages locally before publishing to npm.
 
 ## 🚀 Quick Start
 
-### Method 1: Test in Monorepo Demos (Fastest)
+### Method 1: Test in the workspace examples (Fastest)
 
-The easiest way to test changes is using the existing demo applications:
+The easiest way to test changes is to run an example against the built packages:
 
 ```bash
-# Build all packages
-pnpm -r build
+# Build all packages; the examples import dist, not src
+pnpm build
 
-# Run React demo (port 5173)
-cd examples/demo
-pnpm dev
+# The documentation site: the reference applications, the task pages and the
+# inspector, all running against what you just built
+pnpm --filter @wizzard-packages/site dev
 
-# Run Vue demo (port 5174)
-cd examples/vue-demo
-pnpm dev
+# The Next.js fixture, which proves the React binding in a server-components
+# build. It has no dev script on purpose - the directive only reaches `dist`
+# through a production build, which is what the e2e suite drives.
+pnpm --filter @examples/next-app start
 ```
+
+`examples/quickstart`, `examples/reference` and `examples/tasks` are libraries of
+flows rather than applications: vitest runs the first, and the site renders the
+other two. None of them has a `dev` script.
 
 **Pros**: Instant feedback, no setup required, uses `workspace:*` protocol  
 **Cons**: Tests workspace version, not the exact npm package artifact
@@ -84,11 +89,11 @@ console.log('✅ Package loaded!');
 console.log('📦 Exports:', Object.keys(vue));
 
 // Test specific exports
-const { useProvideWizard, useWizardActions, createWizardFactory } = vue;
+const { provideWizard, useWizard, useNavigation } = vue;
 console.log('✅ Core exports present:', {
-  useProvideWizard: typeof useProvideWizard,
-  useWizardActions: typeof useWizardActions,
-  createWizardFactory: typeof createWizardFactory,
+  provideWizard: typeof provideWizard,
+  useWizard: typeof useWizard,
+  useNavigation: typeof useNavigation,
 });
 ```
 
@@ -105,15 +110,11 @@ npm install -D typescript
 
 # Create test.ts
 cat > test.ts << 'EOF'
-import { createWizardFactory, useWizardActions } from '@wizzard-packages/vue';
+import { useField, useNavigation } from '@wizzard-packages/vue';
 
-interface MySchema {
-  name: string;
-  email: string;
-}
-
-const { useWizardValue } = createWizardFactory<MySchema>();
-console.log('✅ Types are valid');
+const name = useField<string>('name');
+const nav: ReturnType<typeof useNavigation> = useNavigation();
+console.log('✅ Types are valid', name, nav);
 EOF
 
 # Check types
@@ -249,7 +250,7 @@ To test packages with local dependencies:
 cd packages/core
 pnpm pack
 
-cd ../middleware
+cd ../plugins
 pnpm pack
 
 cd ../vue
@@ -259,7 +260,7 @@ pnpm pack
 cd ../../test-project
 npm install \
   ../wizzard-packages/packages/core/wizzard-packages-core-*.tgz \
-  ../wizzard-packages/packages/middleware/wizzard-packages-middleware-*.tgz \
+  ../wizzard-packages/packages/plugins/wizzard-packages-plugins-*.tgz \
   ../wizzard-packages/packages/vue/wizzard-packages-vue-*.tgz
 ```
 

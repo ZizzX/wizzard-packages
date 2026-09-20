@@ -7,8 +7,9 @@ file, it is not a rule.
 ## What this repository is
 
 A headless, framework-agnostic engine for multi-step wizards and flows, published as
-`@wizzard-packages/*`. The 0.x line is in maintenance. All new work targets **v1**, whose
-architecture is described in [`ROADMAP.md`](ROADMAP.md).
+`@wizzard-packages/*`. The 0.x line is deleted; what shipped under it stays on npm's `latest`
+until 1.0.0 replaces it, and [`docs/MIGRATION.md`](docs/MIGRATION.md) is the way across. All
+work targets **v1**, whose architecture is described in [`ROADMAP.md`](ROADMAP.md).
 
 The one decision everything else follows from: **a flow is data.** A wizard is a
 JSON-serializable `FlowDefinition` plus a registry of named resolvers for the parts that
@@ -18,15 +19,15 @@ it is the wrong change.
 
 ## Where things live
 
-The tree carries two libraries at once until 0.x is deleted. Everything under a `v1`
-directory is the new engine; everything beside it is the line being retired.
+Every source directory is v1. A package's `v1` directory is its root export as well: `.` and
+`./v1` name the same built module and the same declarations, and `./v1` stays through 1.x so
+an import written against canary keeps working.
 
 ```
 packages/core/src/v1/   the engine: expr, resolve, navigate, commit, select, store, state, path
                         plus its own entries - validate-flow, graph, groups, session,
                         snapshot, expr
-packages/core/src/      0.x. Being deleted; do not build on it
-packages/react/src/v1/  the React binding, ~200 lines. packages/react/src/* is 0.x
+packages/react/src/v1/  the React binding, ~200 lines
 packages/vue/src/v1/    the Vue binding, same shape
 packages/validate/      one Standard Schema adapter for five validation libraries
 contract/               one suite, run against both bindings, so they cannot drift apart
@@ -111,7 +112,7 @@ names are identical across both and stay that way; the asymmetry above them is n
 fix.
 
 **The React binding is a client module.** `react/src/v1/index.tsx` opens with `'use client'`
-and the built `dist/v1/index.js` and `.cjs` must too: a React Server Components bundler reads
+and the built `dist/index.js` and `.cjs` must too: a React Server Components bundler reads
 the directive from `dist`, and without it a server component importing the binding fails at
 build time. `examples/next-app` is the proof, built on every `pnpm build` and driven by e2e.
 Outside RSC - Vite, Remix, plain bundlers, Node - the directive is inert. Keep the react
@@ -178,8 +179,9 @@ tests until `build` runs.
 `pnpm size` budgets are a ratchet: they sit just above current size, so any growth fails the
 build. Raise a budget only with a stated reason in the PR.
 
-The ESLint config has a **legacy quarantine** block listing 0.x source paths that are held to
-a lower standard. Remove an entry when its v1 replacement lands. Never add one.
+The ESLint config has a **legacy quarantine** block, now down to the old marketing site and
+the devtools panel, which are held to a lower standard. Remove an entry when its replacement
+lands. Never add one.
 
 ## Issue tracking
 
@@ -248,8 +250,3 @@ Include the appropriate instruction in the session prompt:
 - QA test a URL: "Load gstack. Run /qa https://..."
 - Build a feature end-to-end: "Load gstack. Run /autoplan, implement the plan, then run /ship"
 - Plan before building: "Load gstack. Run /office-hours then /autoplan. Save the plan, don't implement."
-
-## Deprecated
-
-`docs/legacy/` holds the 0.x guides, the old roadmap and the pre-split migration notes. They
-describe how the library used to work. Read them for context; do not follow them.

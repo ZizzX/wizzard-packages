@@ -1,4 +1,4 @@
-import type { WizardState } from '@wizzard-packages/core/v1';
+import type { WizardState } from '@wizzard-packages/core';
 
 /**
  * What one commit changed, as rows a person can read: `data` and `ctx` by

@@ -30,7 +30,7 @@ pnpm add @wizzard-packages/core@canary
 
 <!-- prettier-ignore -->
 ```ts
-import { defineFlow, step } from '@wizzard-packages/core/v1';
+import { defineFlow, step } from '@wizzard-packages/core';
 
 /**
  * The smallest flow that is still a wizard: two steps, one field, and a value
@@ -55,7 +55,7 @@ export const signup = defineFlow({
 ## Running it
 
 ```ts
-import { createWizard } from '@wizzard-packages/core/v1';
+import { createWizard } from '@wizzard-packages/core';
 
 import { signup } from './flow';
 

@@ -1,4 +1,4 @@
-import { defineFlow, step } from '@wizzard-packages/core/v1';
+import { defineFlow, step } from '@wizzard-packages/core';
 
 /**
  * The smallest flow with a guard on it: one step that will not be left until

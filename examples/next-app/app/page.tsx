@@ -1,4 +1,4 @@
-import { WizardProvider } from '@wizzard-packages/react/v1';
+import { WizardProvider } from '@wizzard-packages/react';
 
 import { signup } from './flow';
 import { Steps } from './steps';

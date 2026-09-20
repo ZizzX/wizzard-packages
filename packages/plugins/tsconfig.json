@@ -12,7 +12,7 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@wizzard-packages/core/v1": ["../core/src/v1/index.ts"],
+      "@wizzard-packages/core": ["../core/src/v1/index.ts"],
       "@wizzard-packages/core/snapshot": ["../core/src/v1/snapshot.ts"]
     },
     "types": ["vitest/globals"]

@@ -36,72 +36,72 @@
     "./package.json": "./package.json",
     "./v1": {
       "import": {
-        "types": "./dist/v1/index.d.ts",
-        "default": "./dist/v1/index.js"
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
       },
       "require": {
-        "types": "./dist/v1/index.d.cts",
-        "default": "./dist/v1/index.cjs"
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
       }
     },
     "./validate-flow": {
       "import": {
-        "types": "./dist/v1/validate-flow.d.ts",
-        "default": "./dist/v1/validate-flow.js"
+        "types": "./dist/validate-flow.d.ts",
+        "default": "./dist/validate-flow.js"
       },
       "require": {
-        "types": "./dist/v1/validate-flow.d.cts",
-        "default": "./dist/v1/validate-flow.cjs"
+        "types": "./dist/validate-flow.d.cts",
+        "default": "./dist/validate-flow.cjs"
       }
     },
     "./graph": {
       "import": {
-        "types": "./dist/v1/graph.d.ts",
-        "default": "./dist/v1/graph.js"
+        "types": "./dist/graph.d.ts",
+        "default": "./dist/graph.js"
       },
       "require": {
-        "types": "./dist/v1/graph.d.cts",
-        "default": "./dist/v1/graph.cjs"
+        "types": "./dist/graph.d.cts",
+        "default": "./dist/graph.cjs"
       }
     },
     "./groups": {
       "import": {
-        "types": "./dist/v1/groups.d.ts",
-        "default": "./dist/v1/groups.js"
+        "types": "./dist/groups.d.ts",
+        "default": "./dist/groups.js"
       },
       "require": {
-        "types": "./dist/v1/groups.d.cts",
-        "default": "./dist/v1/groups.cjs"
+        "types": "./dist/groups.d.cts",
+        "default": "./dist/groups.cjs"
       }
     },
     "./session": {
       "import": {
-        "types": "./dist/v1/session.d.ts",
-        "default": "./dist/v1/session.js"
+        "types": "./dist/session.d.ts",
+        "default": "./dist/session.js"
       },
       "require": {
-        "types": "./dist/v1/session.d.cts",
-        "default": "./dist/v1/session.cjs"
+        "types": "./dist/session.d.cts",
+        "default": "./dist/session.cjs"
       }
     },
     "./snapshot": {
       "import": {
-        "types": "./dist/v1/snapshot.d.ts",
-        "default": "./dist/v1/snapshot.js"
+        "types": "./dist/snapshot.d.ts",
+        "default": "./dist/snapshot.js"
       },
       "require": {
-        "types": "./dist/v1/snapshot.d.cts",
-        "default": "./dist/v1/snapshot.cjs"
+        "types": "./dist/snapshot.d.cts",
+        "default": "./dist/snapshot.cjs"
       }
     },
     "./expr": {
       "import": {
-        "types": "./dist/v1/expr-builder.d.ts",
-        "default": "./dist/v1/expr-builder.js"
+        "types": "./dist/expr-builder.d.ts",
+        "default": "./dist/expr-builder.js"
       },
       "require": {
-        "types": "./dist/v1/expr-builder.d.cts",
-        "default": "./dist/v1/expr-builder.cjs"
+        "types": "./dist/expr-builder.d.cts",
+        "default": "./dist/expr-builder.cjs"
       }
     }
   },
@@ -116,7 +116,7 @@
   },
   "scripts": {
     "build": "tsup",
-    "dev": "tsup src/index.ts --format cjs,esm --watch --dts",
+    "dev": "tsup src/v1/index.ts --format cjs,esm --watch --dts",
     "lint": "eslint .",
     "test": "vitest",
     "test:run": "vitest run",

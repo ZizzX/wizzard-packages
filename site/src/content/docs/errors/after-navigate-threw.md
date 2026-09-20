@@ -8,7 +8,7 @@ description: A plugin threw in afterNavigate, after the move it was told about h
 next one. Fix the plugin, or catch inside its afterNavigate. …/errors/after-navigate-threw
 ```
 
-Printed with `console.error` by the navigation pipeline in `@wizzard-packages/core/v1`, with what
+Printed with `console.error` by the navigation pipeline in `@wizzard-packages/core`, with what
 the plugin threw as the second argument, each time it throws.
 
 `afterNavigate` runs once a move has been committed. There is nothing left to refuse or undo, so the

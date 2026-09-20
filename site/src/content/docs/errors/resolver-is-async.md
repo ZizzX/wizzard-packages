@@ -22,5 +22,5 @@ the network belongs there. A condition that depends on something fetched reads a
 already present instead: fetch it before `createWizard` and pass it in `data` or `ctx`, or write it
 with `set` once it arrives, and let the `when` compare it with `$get`.
 
-`isSync(expr)` from `@wizzard-packages/core/v1` tells whether an expression contains any `$ref`
+`isSync(expr)` from `@wizzard-packages/core` tells whether an expression contains any `$ref`
 at all, which is the question to ask of a flow that arrives from a server before rendering it.

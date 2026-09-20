@@ -13,7 +13,7 @@ import { toSnapshot, decodeSnapshot } from '@wizzard-packages/core/snapshot';
 
 ## Two things named Snapshot
 
-`@wizzard-packages/core/v1` exports a `Snapshot` that is the live view a component renders -
+`@wizzard-packages/core` exports a `Snapshot` that is the live view a component renders -
 the current step, the derived status of every other one. `@wizzard-packages/core/snapshot`
 exports a different `Snapshot`: the storage format. They share a name and nothing else. Import
 from the path that matches the job.

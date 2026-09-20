@@ -16,8 +16,8 @@
  * the form is inert markup. With `client:load` the same tree hydrates and the
  * engine takes over.
  */
+import { END } from '@wizzard-packages/core';
 import { buildGraph } from '@wizzard-packages/core/graph';
-import { END } from '@wizzard-packages/core/v1';
 import {
   WizardProvider,
   useErrors,
@@ -25,7 +25,7 @@ import {
   useNavigation,
   useStep,
   useWizard,
-} from '@wizzard-packages/react/v1';
+} from '@wizzard-packages/react';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { flowA, registryA } from '../../../contract/fixtures';

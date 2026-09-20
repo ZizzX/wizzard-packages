@@ -1,4 +1,4 @@
-import { defineFlow, step } from '@wizzard-packages/core/v1';
+import { defineFlow, step } from '@wizzard-packages/core';
 
 /** One key per flow. Change it and every stored session is orphaned. */
 export const STORAGE_KEY = 'restore-after-reload';

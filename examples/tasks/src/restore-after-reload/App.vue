@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { persist, type RestoreOutcome } from '@wizzard-packages/plugins/persist';
-import { provideWizard } from '@wizzard-packages/vue/v1';
+import { provideWizard } from '@wizzard-packages/vue';
 
 import Wizard from './Wizard.vue';
 import { APP_VERSION, STORAGE_KEY, signup } from './flow';

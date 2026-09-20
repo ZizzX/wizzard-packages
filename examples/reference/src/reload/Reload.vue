@@ -7,7 +7,7 @@ import {
   useStep,
   useWizard,
   useWizardSelector,
-} from '@wizzard-packages/vue/v1';
+} from '@wizzard-packages/vue';
 import { computed, onMounted, ref, useTemplateRef, watch } from 'vue';
 
 import { LAST_STEP, STORAGE_KEY } from './flow';

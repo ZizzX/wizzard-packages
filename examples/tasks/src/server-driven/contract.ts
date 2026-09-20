@@ -1,4 +1,4 @@
-import type { AsyncRegistry, Scope } from '@wizzard-packages/core/v1';
+import type { AsyncRegistry, Scope } from '@wizzard-packages/core';
 
 /**
  * A flow as it arrives from a backend: text, not a module.

@@ -12,7 +12,7 @@
  */
 import { formatExpr } from '@wizzard-packages/devtools/headless';
 
-import type { Expr } from '@wizzard-packages/core/v1';
+import type { Expr } from '@wizzard-packages/core';
 
 const cut = (text: string, max: number): string =>
   text.length <= Math.max(max, 1) ? text : `${text.slice(0, Math.max(max - 1, 0))}…`;

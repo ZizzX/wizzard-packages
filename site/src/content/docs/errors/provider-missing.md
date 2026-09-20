@@ -12,8 +12,8 @@ component provided one. Call provideWizard in the setup of an ancestor component
 …/errors/provider-missing
 ```
 
-Thrown as a `WizardError` with `op: 'useWizard'`, the first form by `@wizzard-packages/react/v1`
-and the second by `@wizzard-packages/vue/v1`. Every hook that reads the wizard goes through
+Thrown as a `WizardError` with `op: 'useWizard'`, the first form by `@wizzard-packages/react`
+and the second by `@wizzard-packages/vue`. Every hook that reads the wizard goes through
 `useWizard` - `useStep`, `useNavigation`, `useField`, `useErrors`, `useWizardSelector`,
 `useWizardSnapshot` - so any of them can be where it surfaces.
 

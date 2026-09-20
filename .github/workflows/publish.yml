@@ -7,7 +7,6 @@ on:
       - main
     paths-ignore:
       - 'examples/**'
-      - '.github/workflows/deploy-demo.yml'
 
 jobs:
   release:

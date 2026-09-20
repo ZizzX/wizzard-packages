@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import type { WizardState } from '@wizzard-packages/core/v1';
+import type { WizardState } from '@wizzard-packages/core';
 import { diffState } from './headless';
 import type { Change } from './headless';
 
