@@ -128,6 +128,7 @@ into its first step on the client.
 [Getting started](https://zizzx.github.io/wizzard-packages/docs/start/) ·
 [The flow](https://zizzx.github.io/wizzard-packages/docs/flow/) ·
 [Navigation](https://zizzx.github.io/wizzard-packages/docs/navigation/) ·
+[Hooks](https://zizzx.github.io/wizzard-packages/docs/hooks/) ·
 [Validation](https://zizzx.github.io/wizzard-packages/docs/validation/) ·
 [Persistence](https://zizzx.github.io/wizzard-packages/docs/persistence/)
 

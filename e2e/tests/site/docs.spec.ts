@@ -28,6 +28,7 @@ const DOCS = [
   ['The flow', 'docs/flow/'],
   ['Expressions', 'docs/expressions/'],
   ['Navigation', 'docs/navigation/'],
+  ['Hooks', 'docs/hooks/'],
   ['API behaviour', 'docs/api-behaviour/'],
   ['Validation', 'docs/validation/'],
   ['Persistence', 'docs/persistence/'],
