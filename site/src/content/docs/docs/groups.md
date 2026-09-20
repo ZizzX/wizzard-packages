@@ -89,9 +89,12 @@ people: group({
 });
 ```
 
-Each expression is evaluated against the parent's scope as the group is entered, and the results
-land in the `ctx` the nested flow reads - `ctx.traveller`, `ctx.tier`. The parent's own `ctx` is
-untouched. An expression that fails leaves its name `undefined` rather than refusing the move.
+Each expression is evaluated against the parent's scope, with the group's own `loop` already on
+it, and the results land in the `ctx` the nested flow reads - `ctx.traveller`, `ctx.tier`. They
+are derived, not captured: every read of the scope evaluates them again, so a value that changes
+upstream is visible inside the group without leaving it and coming back. The parent's own `ctx`
+is untouched, and an expression that fails leaves its name `undefined` rather than refusing the
+move.
 
 ## What the wizard reports inside a group
 

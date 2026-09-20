@@ -36,9 +36,10 @@ waits for the promise and moves on. Where the data lands is yours to decide - a 
 `wizard.set` from inside the resolver. A resolver `load` names but the registry does not hold
 throws [`resolver-not-registered`](../../errors/resolver-not-registered/) with `op: 'load'`.
 
-`load` is one of the two places built for waiting, so a promise here is expected;
-[`resolver-is-async`](../../errors/resolver-is-async/) is about the places that are not, such as
-`when` and the guards.
+`load` is one of the places built for waiting, so a promise here is expected;
+[`resolver-is-async`](../../errors/resolver-is-async/) is about the places that are not: `when`,
+a transition's condition, `repeat.over` and a group's `input`, all of which are evaluated
+synchronously. A step's guards are awaited, so a resolver behind `guards.enter` may be async.
 
 ## `deferred`
 
@@ -58,8 +59,13 @@ while it runs.
 
 ## While it loads
 
-The step being entered is in `busy`, and `isBusy` is true for as long as the move takes, which
-is what disables a Next button without any state of your own.
+The step being entered is added to `busy`, and `isBusy` is true while the move runs, which is
+what disables a Next button without any state of your own.
+
+The marker is removed by the commit that lands the move. A move that never commits - one that is
+superseded, cancelled, or ends in a loader throwing - leaves the step in `busy`, so a button
+bound to `isBusy` alone stays disabled after a failed load. Until that is fixed, pair it with
+the result of the call: re-enable on anything that is not `{ ok: true }`.
 
 A move that takes time can be overtaken. Every wait is followed by a check, and neither outcome
 is an exception:
@@ -69,9 +75,11 @@ is an exception:
 | [`nav-superseded`](../../errors/nav-superseded/) | a newer move started while this one waited; nothing was committed                  |
 | [`nav-aborted`](../../errors/nav-aborted/)       | `cancel()` or `destroy()` stopped it; a plugin's `loadStep` signal was aborted too |
 
-Both come back from `next()` as `{ ok: false, reason }`. Neither stops a `load` resolver that is
-already running, since it has no signal to stop on; what they guarantee is that its result
-changes nothing. A plugin's `loadStep` is handed the signal and can stop its own work on it.
+Both come back from `next()` as `{ ok: false, reason }`. What they guarantee is narrow: the move
+is not committed, so the wizard does not land on the step. A `load` resolver already running is
+not stopped - it has no signal to stop on - and whatever it writes to a store, a cache or
+through `wizard.set` is written anyway. A plugin's `loadStep` is handed the signal and can stop
+its own work on it.
 
 A loader that throws is different: the exception is not a refusal. The wizard returns to idle on
 the step it was on, and the promise from `next()` rejects with whatever the loader threw, for

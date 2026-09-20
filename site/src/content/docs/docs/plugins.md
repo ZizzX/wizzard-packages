@@ -43,8 +43,12 @@ plugin's `onCommit`, so a plugin restoring state does not see its own restoratio
 registration order, and the first one that refuses ends the move:
 
 ```ts
-beforeNavigate: ({ to }) => (to === 'payment' && !signedIn() ? { block: 'auth' } : undefined);
+beforeNavigate: ({ state }) => (signedIn() ? undefined : { block: 'auth' });
 ```
+
+`to` is the destination only when the move is an explicit `go(id)`. A `next()` or a `back()`
+has not resolved its target yet when plugins run, so `to` is `null` there: a rule about a
+particular step reads `from`, or the state, rather than `to`.
 
 | Returned           | Effect                                                         |
 | ------------------ | -------------------------------------------------------------- |
@@ -59,7 +63,10 @@ afterwards.
 
 ## Where the hooks sit in one move
 
-A move is one pipeline, and exactly one commit:
+A move is one pipeline, and lands in exactly one commit - the one that changes where the wizard
+is. It is not the only write: taking the navigation lock is a commit, and so is marking a step
+busy before it loads, and `onCommit` sees each of them. A plugin counting moves, or recording
+one entry per navigation, belongs in `onAttempt` or `afterNavigate` rather than in `onCommit`.
 
 1. `beforeNavigate` on every plugin
 2. the leaving step's `validate`, going forward
@@ -70,7 +77,7 @@ A move is one pipeline, and exactly one commit:
 7. the commit
 8. `afterNavigate` on every plugin
 
-`afterNavigate` runs after the commit, so it cannot undo a move; a plugin that must prevent one
+`afterNavigate` runs after that landing commit, so it cannot undo a move; a plugin that must prevent one
 does it in `beforeNavigate`.
 
 ## When a plugin throws
