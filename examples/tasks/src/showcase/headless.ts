@@ -41,6 +41,12 @@ wizard.set('trip', {
   ],
 });
 
+// The policy is `free`, so jumping is allowed and nothing has been left, so
+// nothing is validated. The guard on `review` refuses anyway: it is a rule
+// about the step being entered, not about the move that reached it.
+const early = await wizard.go('review');
+console.log(`refused: ${early.ok ? 'no' : `${early.reason} by ${String(early.by)}`}`);
+
 // Into the group: one pass of the sub-flow per traveller, keyed by id.
 await wizard.next();
 console.log(`at: ${where()}`);
@@ -77,9 +83,9 @@ console.log(`at: ${where()}`);
 await wizard.next();
 console.log(`at: ${where()}`);
 
-// The validator refuses, and says which field.
+// The other refusal, from the other rule: the validator on the step being left.
 const refused = await wizard.next();
-console.log(`refused: ${refused.ok ? 'no' : refused.reason}`);
+console.log(`refused: ${refused.ok ? 'no' : `${refused.reason} by ${String(refused.by)}`}`);
 
 wizard.set('payment', { card: '4242' });
 await wizard.next();
