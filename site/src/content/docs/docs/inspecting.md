@@ -69,13 +69,15 @@ naming a flow or a step the definition no longer has
 ([`session-unknown-flow`](../../errors/session-unknown-flow/),
 [`session-frame-mismatch`](../../errors/session-frame-mismatch/)).
 
-That is what the devtools timeline runs before replaying a recording: a scrubber drawing frames
-the flow can no longer explain shows a past that never happened, so it refuses with the problem
-instead.
+That is what this site's flow inspector runs before it replays the bundled recording against a
+flow you paste, and what devtools runs over a redacted export before handing it on. Frames a
+definition can no longer explain would draw a past that never happened, so both refuse with the
+problem instead of rendering it.
 
-Two smaller functions come with it. `knownFlows(flow, subFlows?)` collects every definition
+Two smaller functions come with it. `knownFlows(flow, subFlows)` collects every definition
 reachable from a root - inline sub-flows and named ones - into a map, which is what any check
-over a stack needs first. `checkFrames(stack, known, report)` is that walk on its own, reporting
+over a stack needs first. Its second argument is not optional: pass `undefined` when there is no
+registry of named sub-flows. `checkFrames(stack, known, report)` is that walk on its own, reporting
 `unknown-flow`, `unknown-step`, `not-a-group`, `wrong-flow` or `key` for the frame it is on. It
 is exported because restoring a snapshot needs the same walk that checking a session does;
 [Persistence](../persistence/) is where it runs for you.

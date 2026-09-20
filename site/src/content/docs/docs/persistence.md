@@ -53,14 +53,14 @@ if (result.restored) {
 }
 ```
 
-| `reason`                | What was wrong                                                  |
-| ----------------------- | --------------------------------------------------------------- |
-| `snapshot/unreadable`   | Not a snapshot: wrong shape, or not an object at all.           |
-| `snapshot/version`      | The definition's `version` moved and no `migrate` was supplied. |
-| `snapshot/other-flow`   | Taken against a different flow `id`.                            |
-| `snapshot/unknown-step` | Names a step this definition no longer has.                     |
-| `snapshot/unstorable`   | Holds something that cannot survive the round trip.             |
-| `snapshot/too-large`    | Past the size or nesting limit.                                 |
+| `reason`                | What was wrong                                                            |
+| ----------------------- | ------------------------------------------------------------------------- |
+| `snapshot/unreadable`   | Not a snapshot: wrong shape, or not an object at all.                     |
+| `snapshot/version`      | Written in an older snapshot format that `migrate` did not bring forward. |
+| `snapshot/other-flow`   | Taken against a different flow `id`, or a different flow `version`.       |
+| `snapshot/unknown-step` | Names a step this definition no longer has.                               |
+| `snapshot/unstorable`   | Holds something that cannot survive the round trip.                       |
+| `snapshot/too-large`    | Past the size or nesting limit.                                           |
 
 Every one of these is a reason to start the user cleanly rather than to drop them into a step
 that no longer exists. Refusing loudly at restore is the point of the format carrying `flow`
@@ -72,30 +72,32 @@ continues from, and `subFlows` supplies the definitions a group step referenced 
 
 ## Migrating an older snapshot
 
-A stored session outlives the definition it was taken against. Bump `version` on the flow and
-every snapshot written before the bump refuses with `snapshot/version` - unless `migrate` is
-there to bring it forward.
+Two different versions live in a stored session, and only one of them `migrate` is about.
+
+`v` is the version of the snapshot format itself, which this library owns; it is `1` today.
+`version` is the flow's own, which you own. A snapshot whose `version` does not match the
+definition's is refused with `snapshot/other-flow`, and no migration is consulted: a stored
+session of a flow that has since changed shape is a session for a different flow. Migrating that
+is a decision about your data, taken before the payload ever reaches `decodeSnapshot`.
+
+`migrate` is for the envelope. It runs while `v` is behind the current format, once per hop, so
+a payload two formats old is two ordinary steps rather than one function that knows every past
+shape:
 
 ```ts
 const result = decodeSnapshot(signup, JSON.parse(stored), {
-  migrate: (snapshot) => {
-    if (snapshot.v === 1) return { ...snapshot, v: 2, data: rename(snapshot.data) };
-    return snapshot;
-  },
+  migrate: (snapshot) => (snapshot.v === 0 ? { ...snapshot, v: 1 } : snapshot),
 });
 ```
 
-`migrate` is called with the envelope as it stands and returns the next one. The decoder calls
-it again on what comes back, and keeps calling while the version is still behind the current
-one, so a payload three versions old is three ordinary steps rather than one function that has
-to know every past shape. It stops when the version is current, after 16 hops, or as soon as a
-call makes no progress - returning the same object, a non-object, or a `v` that is not a number
+It stops when the version is current, after sixteen hops, or as soon as a call makes no
+progress - returning the same object, or something that is not an object - and refuses with
+`snapshot/version`. A migration that returns an object whose `v` is not a number is refused as
+`snapshot/unreadable`, like any other payload that is not shaped like a snapshot.
 
-- and refuses with `snapshot/version` rather than looping.
-
-Migration runs before validation, not after. Whatever `migrate` produced is then read like any
-other stored payload: shape, flow id, steps, size, and what a JSON round trip survives. A
-migration that writes a step name the flow no longer has is refused the same way a stale
+Migration runs before validation, not after. Whatever it produced is then read like any other
+stored payload: shape, flow id and version, frames, size, and what a JSON round trip survives.
+A migration that writes a step name the flow no longer has is refused the same way a stale
 snapshot would be, which is what makes a hand-written upgrade safe to run on input from storage.
 
 ## Letting the plugin do it
@@ -141,7 +143,9 @@ persisted state instead of clearing it afterwards.
 
 ## Size
 
-The decoder enforces a ceiling on payload size and nesting depth - one megabyte and 32 levels -
-and stops a migration chain after 16 hops rather than following one that does not converge. A snapshot is user-supplied input whenever
+The decoder enforces a ceiling on nesting depth - 32 levels - and a budget of a million
+characters, counted over the strings and keys it walks, which is a guard against a runaway
+payload rather than a measurement of its encoded size. It also stops a migration chain after
+sixteen hops rather than following one that does not converge. A snapshot is user-supplied input whenever
 it comes back from storage - it has been in a place the application does not control, so it is
 treated as untrusted on the way in.

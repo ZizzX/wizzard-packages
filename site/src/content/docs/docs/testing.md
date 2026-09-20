@@ -52,18 +52,22 @@ Nothing about it is a stub: the same shape goes to production.
 
 Two kinds of outcome, and they are not the same assertion.
 
-A refusal is a value. `next()`, `back()` and `go()` resolve to a `NavResult`, so an expected
-refusal is compared, not caught:
+A refusal is a value, as the move above shows: `next()`, `back()` and `go()` resolve to a
+`NavResult`, and an expected refusal is compared rather than caught. `reason` says which kind it
+is, `by` names the step or the plugin that refused, and the wizard is still where it was.
 
-```ts
-expect(await wizard.go('payment')).toMatchObject({ ok: false, reason: 'not-reachable' });
-```
-
-A mistake in the flow throws. A `$ref` the registry does not hold, a group step with no
-traversal - those reject the promise, and the test says so:
+A mistake in the flow throws instead, and where it throws depends on when it is found. A `$ref`
+the registry does not hold is found while moving, so the promise rejects:
 
 ```ts
 await expect(wizard.next()).rejects.toMatchObject({ code: 'resolver-not-registered' });
+```
+
+A group step with no traversal installed is found before there is a wizard at all -
+`createWizard` throws on the spot - so that one is asserted around the construction instead:
+
+```ts
+expect(() => createWizard({ flow: tripWithGroups })).toThrowError(/groups-not-installed/);
 ```
 
 [API behaviour](../api-behaviour/) is the division in full: refusals are values, failures are
@@ -81,7 +85,7 @@ A flow that is never walked can still be wrong, and the check for that is not a 
 import { validateFlow } from '@wizzard-packages/core/validate-flow';
 
 it('is a valid flow', () => {
-  expect(validateFlow(booking, registry)).toEqual([]);
+  expect(validateFlow(flow, registry)).toEqual([]);
 });
 ```
 
