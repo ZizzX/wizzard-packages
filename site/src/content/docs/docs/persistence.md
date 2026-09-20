@@ -70,6 +70,34 @@ and `version` at all.
 older payload before it is read, `epoch` sets the navigation epoch the restored session
 continues from, and `subFlows` supplies the definitions a group step referenced by name.
 
+## Migrating an older snapshot
+
+A stored session outlives the definition it was taken against. Bump `version` on the flow and
+every snapshot written before the bump refuses with `snapshot/version` - unless `migrate` is
+there to bring it forward.
+
+```ts
+const result = decodeSnapshot(signup, JSON.parse(stored), {
+  migrate: (snapshot) => {
+    if (snapshot.v === 1) return { ...snapshot, v: 2, data: rename(snapshot.data) };
+    return snapshot;
+  },
+});
+```
+
+`migrate` is called with the envelope as it stands and returns the next one. The decoder calls
+it again on what comes back, and keeps calling while the version is still behind the current
+one, so a payload three versions old is three ordinary steps rather than one function that has
+to know every past shape. It stops when the version is current, after 16 hops, or as soon as a
+call makes no progress - returning the same object, a non-object, or a `v` that is not a number
+
+- and refuses with `snapshot/version` rather than looping.
+
+Migration runs before validation, not after. Whatever `migrate` produced is then read like any
+other stored payload: shape, flow id, steps, size, and what a JSON round trip survives. A
+migration that writes a step name the flow no longer has is refused the same way a stale
+snapshot would be, which is what makes a hand-written upgrade safe to run on input from storage.
+
 ## Letting the plugin do it
 
 The two functions are the contract. `@wizzard-packages/plugins/persist` is the wiring most
@@ -113,7 +141,7 @@ persisted state instead of clearing it afterwards.
 
 ## Size
 
-The decoder enforces a ceiling on payload size and nesting depth, and a migration chain that
-does not converge is stopped rather than followed. A snapshot is user-supplied input whenever
+The decoder enforces a ceiling on payload size and nesting depth - one megabyte and 32 levels -
+and stops a migration chain after 16 hops rather than following one that does not converge. A snapshot is user-supplied input whenever
 it comes back from storage - it has been in a place the application does not control, so it is
 treated as untrusted on the way in.

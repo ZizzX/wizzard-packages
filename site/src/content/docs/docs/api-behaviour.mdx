@@ -28,6 +28,55 @@ call does, in one table, so you can check a belief without reading four pages.
 | `repeat` items are keyed by `keyBy`, and by position when it is absent.                                                                        | [The flow](../flow/)                                           |
 | The provider creates one engine and keeps it across rerenders. It never starts on the server.                                                  | [Getting started](../start/)                                   |
 
+## Every method on the wizard
+
+The engine `createWizard` returns, whole. The bindings' hooks are views over this object, and
+`useWizard()` hands you the object itself.
+
+| Method                          | Does                                                                                         |
+| ------------------------------- | -------------------------------------------------------------------------------------------- |
+| `start()`                       | Enters the first reachable step. Idempotent: a wizard already on a step stays there.         |
+| `next(opts?)`                   | Forward, by `on.next` or by `order`. `{ validate: false }` skips the leaving validator.      |
+| `back()`                        | Backward, by `on.back` or by `order`.                                                        |
+| `go(to, opts?)`                 | Jumps, if `policy` allows it or `force: true` is given. `to` may be `END`.                   |
+| `cancel()`                      | Aborts the move in flight.                                                                   |
+| `get(path)`                     | Reads `data` at a dot path. `undefined` before anything is written there.                    |
+| `set(path, value)`              | Replaces the value at that path.                                                             |
+| `patch(partial)`                | Merges shallowly into `data`.                                                                |
+| `setCtx(ctx)`                   | Replaces the context - the values a flow reads as `ctx.*` and never edits.                   |
+| `batch(fn)`                     | Runs several writes and notifies once.                                                       |
+| `reset(data?)`                  | Returns the wizard to its starting state, with new data if given.                            |
+| `validate(stepId?)`             | Runs one step's validator. Resolves to a boolean; messages land in state.                    |
+| `setErrors(stepId, errors)`     | Sets or clears a step's messages by hand. `null` clears.                                     |
+| `getSnapshot()`                 | State and derived values in one object, identity-stable until the next commit.               |
+| `getState()`                    | The raw state, without the derived values.                                                   |
+| `getFlow()`                     | The definition in force now, which `patchFlow` may have changed.                             |
+| `subscribe(listener)`           | Calls back on every commit. Returns the unsubscribe.                                         |
+| `select(fn, listener, equals?)` | Calls back only when the selected value changes.                                             |
+| `watch(path, listener)`         | Calls back only when the value at that data path changes.                                    |
+| `patchFlow(patch)`              | Replaces steps by id. Returns whether it applied; refuses a patch removing the current step. |
+| `destroy()` / `isDestroyed()`   | Stops the engine and runs plugin teardowns; reports whether that happened.                   |
+
+Navigation methods resolve to a `NavResult`, never a boolean. `subscribe`, `select` and `watch`
+each return the function that unsubscribes them.
+
+## Every option createWizard takes
+
+| Option     | Default                | Without it                                                              |
+| ---------- | ---------------------- | ----------------------------------------------------------------------- |
+| `flow`     | required               | -                                                                       |
+| `registry` | none                   | a `$ref` anywhere in the flow throws `resolver-not-registered` when run |
+| `plugins`  | `[]`                   | no hooks run                                                            |
+| `data`     | `{}`                   | the wizard starts empty                                                 |
+| `ctx`      | `{}`                   | `ctx.*` in expressions is `undefined`                                   |
+| `state`    | a fresh starting state | nothing is restored; this is where a decoded snapshot goes              |
+| `groups`   | none                   | a flow containing a group step throws `groups-not-installed`            |
+| `subFlows` | none                   | a group naming its flow by string cannot resolve it                     |
+
+`registry`, `plugins` and `state` hold functions or live state, which is why a flow stays
+serializable and its options do not. [Groups](../groups/) covers the last two,
+[Persistence](../persistence/) the third.
+
 ## The three switches are not one switch
 
 `force`, `validate` and guards are read as one idea - "let me through" - and they are three, with

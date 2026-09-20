@@ -35,6 +35,8 @@ const DOCS = [
   ['Loading a step', 'docs/async-steps/'],
   ['Persistence', 'docs/persistence/'],
   ['Writing a plugin', 'docs/plugins/'],
+  ['Testing a wizard', 'docs/testing/'],
+  ['Inspecting a flow', 'docs/inspecting/'],
   ['Devtools', 'docs/devtools/'],
   ['Server-driven flows', 'docs/server-driven/'],
   // The API reference is generated, one page per export, so it is sampled rather than listed:

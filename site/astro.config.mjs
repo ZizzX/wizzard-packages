@@ -113,6 +113,8 @@ export default defineConfig({
             { label: 'Loading a step', link: '/docs/async-steps/' },
             { label: 'Persistence', link: '/docs/persistence/' },
             { label: 'Writing a plugin', link: '/docs/plugins/' },
+            { label: 'Testing a wizard', link: '/docs/testing/' },
+            { label: 'Inspecting a flow', link: '/docs/inspecting/' },
             { label: 'Devtools', link: '/docs/devtools/' },
             { label: 'Server-driven flows', link: '/docs/server-driven/' },
           ],
