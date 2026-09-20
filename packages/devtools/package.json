@@ -1,6 +1,6 @@
 {
   "name": "@wizzard-packages/devtools",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "Devtools panel for Wizzard: the flow graph, the state diff and the refusals, for the v1 engine.",
   "keywords": [
     "wizard",

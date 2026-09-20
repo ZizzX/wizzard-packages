@@ -1,5 +1,13 @@
 # @wizzard-packages/devtools
 
+## 4.0.0
+
+### Patch Changes
+
+- Updated dependencies [c54e0e6]
+  - @wizzard-packages/core@1.0.0
+  - @wizzard-packages/react@1.0.0
+
 ## 3.0.0
 
 ### Major Changes
