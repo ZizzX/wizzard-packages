@@ -86,6 +86,52 @@ question about steps nobody has reached yet, and its answer goes stale as soon a
 typed. Checking several steps on purpose is a loop over `validate(step)`, which also says which
 one failed. [API behaviour](../api-behaviour/) collects that rule beside the others.
 
+## Validating with a schema library
+
+A validator is a resolver, so a schema library is one adapter away.
+`@wizzard-packages/validate` is that adapter - one for every library, not one per library,
+because Zod 3.24+, Zod 4, Valibot, ArkType, Effect and Yup 1.5+ all speak
+[Standard Schema](https://standardschema.dev):
+
+```ts
+import { createWizard } from '@wizzard-packages/core/v1';
+import { schema } from '@wizzard-packages/validate';
+import { z } from 'zod';
+
+const wizard = createWizard({
+  flow: booking,
+  registry: {
+    tripRules: schema(z.object({ name: z.string().min(1), age: z.number().min(18) })),
+  },
+});
+
+await wizard.start(); // the first move, which validates nothing: no step has been left yet
+await wizard.next(); // { ok: false, reason: 'invalid', errors: { name: '...', age: '...' } }
+```
+
+Swapping the Zod schema for a Valibot, ArkType, Effect or Yup one changes nothing else. The
+package never bundles a schema library; the one you use is yours.
+
+`schema(s, opts?)` returns an async resolver:
+`(args, scope) => Promise<Record<string, string> | null>`. Keys are dot-paths, values the first message reported for that path, and `null` means the value is good.
+An issue path of `['guests', 1, 'name']` becomes the key `guests.1.name`; an issue with no path -
+a cross-field refinement - lands on the empty key, which is an error about the value as a whole.
+Where two issues share a path the first wins, because schemas report in declaration order and
+letting a later refinement overwrite the first hides the obvious failure behind the subtle one.
+
+`opts.at` says which value to validate, as a path into the same scope the flow's expressions
+address - `data`, `data.trip`, `ctx.user`. It defaults to `data`, the whole form, because most
+schemas describe the fields of the step being left and object schemas ignore keys they do not
+mention. A path that is absent hands the schema `undefined` rather than throwing, so a schema
+that allows a missing value stays in charge of that decision.
+
+```ts
+createWizard({ flow: booking, registry: { tripRules: schema(tripSchema, { at: 'data.trip' }) } });
+```
+
+`issuesToErrors` is the same flattening on its own, for a validator that runs a schema itself and
+wants the engine's error shape.
+
 ## When it runs
 
 `FlowDefinition.validate` schedules the whole thing:

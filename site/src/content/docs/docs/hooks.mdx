@@ -1,0 +1,181 @@
+---
+title: Hooks
+description: The provider and the hooks each binding exposes, what they return, and which one to reach for.
+---
+
+import { TabItem, Tabs } from '@astrojs/starlight/components';
+import { FRAMEWORK_LABELS, FRAMEWORK_SYNC_KEY } from '../../../lib/framework';
+
+The engine is the same object in both bindings. A binding does one job: put that object where
+components can reach it, and turn its snapshot into something the framework re-renders on. The
+hook names are identical across React and Vue; what differs is what they hand back, because a
+React hook returns a value and a Vue composable returns a ref.
+
+## Providing the wizard
+
+<Tabs syncKey={FRAMEWORK_SYNC_KEY}>
+  <TabItem label={FRAMEWORK_LABELS.react}>
+
+```tsx
+import { WizardProvider } from '@wizzard-packages/react/v1';
+
+<WizardProvider flow={signup} registry={registry}>
+  <Steps />
+</WizardProvider>;
+```
+
+`WizardProvider` takes the options of `createWizard` - `flow`, `registry`, `plugins`, `data`,
+`ctx`, `state`, `groups`, `subFlows` - and builds the engine itself, or takes an engine you
+built with `wizard`. Passing both throws
+[`provider-wizard-and-options`](../../errors/provider-wizard-and-options/): options beside a
+built engine would be silently ignored.
+
+  </TabItem>
+  <TabItem label={FRAMEWORK_LABELS.vue}>
+
+```vue
+<script setup lang="ts">
+import { provideWizard } from '@wizzard-packages/vue/v1';
+
+provideWizard({ flow: signup, registry });
+</script>
+```
+
+`provideWizard` takes the options of `createWizard` - `flow`, `registry`, `plugins`, `data`,
+`ctx`, `state`, `groups`, `subFlows` - and builds the engine, or takes an engine you built and
+provides that one. An engine it created is destroyed with the scope, so plugin teardown runs;
+one you passed in stays yours to destroy.
+
+  </TabItem>
+</Tabs>
+
+Each is what its framework expects - a component in React, a setup function in Vue - and that
+asymmetry is deliberate. Everything below it is the same in both.
+
+The wizard is started on mount. If that first move throws, which a first step whose loader
+rejects will do, there is no caller to throw to: the binding logs
+[`start-failed`](../../errors/start-failed/) with the cause and no step is current. The wizard
+has not started, so `useWizard().start()` runs the first move again - from a retry button - and
+so does mounting again.
+
+On the server, mount never runs. A wizard rendered by SSR navigates nowhere and hydrates into
+its first step on the client.
+
+## The hooks
+
+Each one is a narrower view of the same snapshot. Take the narrowest that answers the question:
+a component that reads one field re-renders when that field changes, and one that reads the
+whole snapshot re-renders on every commit.
+
+| Hook                              | React returns                                                                          | Vue returns                                             |
+| --------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `useStep()`                       | `current`, `index`, `isFirst`, `isLast`, `progress`, `breadcrumbs`, `active`, `status` | the same fields, each a `ComputedRef`                   |
+| `useNavigation()`                 | `next`, `back`, `go`, `cancel`, and `canBack`, `isBusy`, `isLast` as booleans          | the same methods, and the three flags as `ComputedRef`s |
+| `useField<T>(path)`               | `[value, setValue]`                                                                    | a `WritableComputedRef`, for `v-model`                  |
+| `useErrors(stepId?)`              | the error map of a step, or of the current one                                         | that map as a `ComputedRef`                             |
+| `useWizardSelector(fn, isEqual?)` | one derived value                                                                      | one derived value as a `ComputedRef`                    |
+| `useWizardSnapshot()`             | the whole snapshot                                                                     | the snapshot as a `Ref`                                 |
+| `useWizard()`                     | the engine                                                                             | the engine                                              |
+| `useOptionalWizard()`             | the engine, or `null` outside a provider                                               | the same                                                |
+
+### Drawing a step
+
+`useStep` is what a stepper needs and nothing else. It compares its fields one by one, including
+the status of each breadcrumb, so a step turning invalid repaints the stepper.
+
+<Tabs syncKey={FRAMEWORK_SYNC_KEY}>
+  <TabItem label={FRAMEWORK_LABELS.react}>
+
+```tsx
+const { current, progress, breadcrumbs } = useStep();
+```
+
+  </TabItem>
+  <TabItem label={FRAMEWORK_LABELS.vue}>
+
+```vue
+<script setup lang="ts">
+const { current, progress, breadcrumbs } = useStep();
+</script>
+
+<template>
+  <progress :value="progress" max="1" />
+  <p>{{ current }}</p>
+</template>
+```
+
+Each field is a `ComputedRef`, so destructuring keeps it reactive - unlike destructuring a
+reactive object.
+
+  </TabItem>
+</Tabs>
+
+### Moving
+
+`useNavigation` hands back the engine's four moves unchanged and the three flags a set of
+buttons needs. Navigation is async and returns a result, not a boolean:
+`await next()` gives `{ ok: false, reason: 'blocked', by: 'age-check' }` when a guard refuses.
+[Navigation](../navigation/) has the full list of refusals.
+
+### Reading and writing a field
+
+`useField` addresses the same dot paths the flow does, so `data.trip.name` in an expression is
+`'trip.name'` here.
+
+<Tabs syncKey={FRAMEWORK_SYNC_KEY}>
+  <TabItem label={FRAMEWORK_LABELS.react}>
+
+```tsx
+const [name, setName] = useField<string>('trip.name');
+
+<input value={name ?? ''} onChange={(e) => setName(e.target.value)} />;
+```
+
+  </TabItem>
+  <TabItem label={FRAMEWORK_LABELS.vue}>
+
+```vue
+<script setup lang="ts">
+const name = useField<string>('trip.name');
+</script>
+
+<template>
+  <input v-model="name" />
+</template>
+```
+
+  </TabItem>
+</Tabs>
+
+### Errors
+
+`useErrors()` reads the messages of the current step, `useErrors('payment')` those of a named
+one. The map is the one validation produced, so a field component does not need the result of
+the call that created it. [Render field errors](../render-field-errors/) is the whole pattern.
+
+### One derived value
+
+`useWizardSelector` is the escape hatch for anything the hooks above do not cover, and the way
+to keep a large tree from re-rendering on every commit:
+
+```ts
+const cost = useWizardSelector((s) => s.data.cart.total);
+```
+
+In React it takes a second argument, an equality function, which defaults to `Object.is`. Give
+it one when the selector returns a fresh object each time, or the component re-renders on every
+commit. Vue has no such argument: the `ComputedRef` is recomputed once per commit, so a selector
+building a fresh object hands its watchers a new identity each time. Select a primitive, or
+compare in the watcher.
+
+### The engine itself
+
+`useWizard()` is the engine: `set`, `get`, `validate`, `setErrors`, `watch`, `select`,
+`subscribe`, `batch`, `patchFlow` and the rest. Typing it against a flow -
+`useWizard<typeof signup>()` - types `go`, `get` and `set` against that flow's steps and data.
+
+Outside a provider `useWizard()` and every hook built on it throw
+[`provider-missing`](../../errors/provider-missing/). `useOptionalWizard()` returns `null` there
+instead, which is what a component rendered both inside and outside a wizard needs - a
+diagnostic panel, say, which should report that it has nothing to watch rather than crash the
+application it is watching.

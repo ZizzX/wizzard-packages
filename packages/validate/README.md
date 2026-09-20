@@ -41,6 +41,7 @@ const wizard = createWizard({
   },
 });
 
+await wizard.start(); // the first move, which validates nothing: no step has been left yet
 await wizard.next(); // { ok: false, reason: 'invalid', errors: { name: '…', age: '…' } }
 ```
 
@@ -49,7 +50,7 @@ else changes.
 
 ## `schema(s, opts?)`
 
-Returns a resolver: `(args, scope) => Record<string, string> | null`. Keys are
+Returns an async resolver: `(args, scope) => Promise<Record<string, string> | null>`. Keys are
 dot-paths, values are the first message reported for that path. `null` means the
 value is good.
 

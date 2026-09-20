@@ -106,6 +106,7 @@ export default defineConfig({
             { label: 'The flow', link: '/docs/flow/' },
             { label: 'Expressions', link: '/docs/expressions/' },
             { label: 'Navigation', link: '/docs/navigation/' },
+            { label: 'Hooks', link: '/docs/hooks/' },
             { label: 'API behaviour', link: '/docs/api-behaviour/' },
             { label: 'Validation', link: '/docs/validation/' },
             { label: 'Persistence', link: '/docs/persistence/' },
