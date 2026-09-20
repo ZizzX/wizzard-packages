@@ -163,8 +163,10 @@ const cost = useWizardSelector((s) => s.data.cart.total);
 ```
 
 In React it takes a second argument, an equality function, which defaults to `Object.is`. Give
-it one when the selector returns a fresh object each time. In Vue the value is a `ComputedRef`
-and Vue's own caching covers that.
+it one when the selector returns a fresh object each time, or the component re-renders on every
+commit. Vue has no such argument: the `ComputedRef` is recomputed once per commit, so a selector
+building a fresh object hands its watchers a new identity each time. Select a primitive, or
+compare in the watcher.
 
 ### The engine itself
 

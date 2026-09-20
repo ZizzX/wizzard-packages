@@ -105,14 +105,15 @@ const wizard = createWizard({
   },
 });
 
+await wizard.start(); // the first move, which validates nothing: no step has been left yet
 await wizard.next(); // { ok: false, reason: 'invalid', errors: { name: '...', age: '...' } }
 ```
 
 Swapping the Zod schema for a Valibot, ArkType, Effect or Yup one changes nothing else. The
 package never bundles a schema library; the one you use is yours.
 
-`schema(s, opts?)` returns a resolver: `(args, scope) => Record<string, string> | null`. Keys are
-dot-paths, values the first message reported for that path, and `null` means the value is good.
+`schema(s, opts?)` returns an async resolver:
+`(args, scope) => Promise<Record<string, string> | null>`. Keys are dot-paths, values the first message reported for that path, and `null` means the value is good.
 An issue path of `['guests', 1, 'name']` becomes the key `guests.1.name`; an issue with no path -
 a cross-field refinement - lands on the empty key, which is an error about the value as a whole.
 Where two issues share a path the first wins, because schemas report in declaration order and
@@ -125,9 +126,7 @@ mention. A path that is absent hands the schema `undefined` rather than throwing
 that allows a missing value stays in charge of that decision.
 
 ```ts
-registry: {
-  tripRules: schema(tripSchema, { at: 'data.trip' });
-}
+createWizard({ flow: booking, registry: { tripRules: schema(tripSchema, { at: 'data.trip' }) } });
 ```
 
 `issuesToErrors` is the same flattening on its own, for a validator that runs a schema itself and
