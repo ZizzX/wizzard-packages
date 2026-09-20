@@ -10,21 +10,22 @@ This guide explains how to test packages locally before publishing to npm.
 
 ## 🚀 Quick Start
 
-### Method 1: Test in Monorepo Demos (Fastest)
+### Method 1: Test in the workspace examples (Fastest)
 
-The easiest way to test changes is using the existing demo applications:
+The easiest way to test changes is to run an example against the built packages:
 
 ```bash
-# Build all packages
-pnpm -r build
+# Build all packages; the examples import dist, not src
+pnpm build
 
-# Run React demo (port 5173)
-cd examples/demo
-pnpm dev
+# The example the README embeds, React and Vue side by side
+pnpm --filter @examples/quickstart dev
 
-# Run Vue demo (port 5174)
-cd examples/vue-demo
-pnpm dev
+# The documentation site, with the reference applications and the inspector
+pnpm --filter @wizzard-packages/site dev
+
+# The Next.js fixture, which proves the React binding in a server-components build
+pnpm --filter @examples/next-app dev
 ```
 
 **Pros**: Instant feedback, no setup required, uses `workspace:*` protocol  
@@ -249,7 +250,7 @@ To test packages with local dependencies:
 cd packages/core
 pnpm pack
 
-cd ../middleware
+cd ../plugins
 pnpm pack
 
 cd ../vue
@@ -259,7 +260,7 @@ pnpm pack
 cd ../../test-project
 npm install \
   ../wizzard-packages/packages/core/wizzard-packages-core-*.tgz \
-  ../wizzard-packages/packages/middleware/wizzard-packages-middleware-*.tgz \
+  ../wizzard-packages/packages/plugins/wizzard-packages-plugins-*.tgz \
   ../wizzard-packages/packages/vue/wizzard-packages-vue-*.tgz
 ```
 
