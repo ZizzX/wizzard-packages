@@ -1,0 +1,443 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Add passengers. Revisit any passenger. - wizzard</title><meta name="description" content="One block of steps per passenger, written once and run as many times as there are people. Add and remove passengers, then go back and edit the second after finishing the third."><meta property="og:title" content="Add passengers. Revisit any passenger. - wizzard"><meta property="og:description" content="One block of steps per passenger, written once and run as many times as there are people. Add and remove passengers, then go back and edit the second after finishing the third."><meta property="og:type" content="website"><script>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme =
+			storedTheme ||
+			(window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+		document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme || 'auto') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script><template id="theme-icons"><svg aria-hidden="true" class="light astro-ac6ikqru" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg><svg aria-hidden="true" class="dark astro-ac6ikqru" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><svg aria-hidden="true" class="auto astro-ac6ikqru" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg></template><link rel="stylesheet" href="/wizzard-packages/_astro/ThemeProvider.DplDwoYR.css"><style>@layer starlight.components{svg:where(.astro-ac6ikqru){color:var(--sl-icon-color);font-size:var(--sl-icon-size,1em);width:1em;height:1em}}
+</style><script type="module" src="/wizzard-packages/_astro/page.Dwipeu-R.js"></script></head><body><header class="topbar"><div class="site-header"><a class="wordmark" href="/wizzard-packages/">wizzard</a><nav class="site-nav" aria-label="Site"><a href="/wizzard-packages/examples/" aria-current="true">Examples</a><a href="/wizzard-packages/inspector/">Inspector</a><a href="/wizzard-packages/docs/start/">Docs</a><a href="https://github.com/ZizzX/wizzard-packages">GitHub</a></nav><div class="site-tools"><site-search class=" astro-twxbhvpe" data-translations="{&quot;placeholder&quot;:&quot;Search&quot;}"><button data-open-modal disabled aria-label="Search" aria-keyshortcuts="Control+K" class="astro-twxbhvpe"><svg aria-hidden="true" class="astro-twxbhvpe astro-ac6ikqru" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"/></svg><span class="sl-hidden md:sl-block astro-twxbhvpe" aria-hidden="true">Search</span><kbd class="sl-hidden md:sl-flex astro-twxbhvpe" style="display: none;"><kbd class="astro-twxbhvpe">Ctrl</kbd><kbd class="astro-twxbhvpe">K</kbd></kbd></button><dialog style="padding:0" aria-label="Search" class="astro-twxbhvpe"><div class="dialog-frame sl-flex astro-twxbhvpe"><button data-close-modal class="sl-flex md:sl-hidden astro-twxbhvpe">Cancel</button><div class="search-container astro-twxbhvpe"><div id="starlight__search" class="astro-twxbhvpe"></div></div></div></dialog></site-search><script>
+	(() => {
+		const openBtn = document.querySelector('button[data-open-modal]');
+		const shortcut = openBtn?.querySelector('kbd');
+		if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+		const platformKey = shortcut.querySelector('kbd');
+		if (platformKey && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+			platformKey.textContent = '⌘';
+			openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+		}
+		shortcut.style.display = '';
+	})();
+</script><script type="module" src="/wizzard-packages/_astro/Search.astro_astro_type_script_index_0_lang.raRQUAJA.js"></script><div class="site-theme"><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-r2uzkgg6"><span class="sr-only astro-r2uzkgg6">Select theme</span><svg aria-hidden="true" class="icon label-icon astro-r2uzkgg6 astro-ac6ikqru" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-r2uzkgg6"><option value="dark" class="astro-r2uzkgg6">Dark</option><option value="light" class="astro-r2uzkgg6">Light</option><option value="auto" selected class="astro-r2uzkgg6">Auto</option></select><svg aria-hidden="true" class="icon caret astro-r2uzkgg6 astro-ac6ikqru" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><script type="module">var e=`starlight-theme`,t=e=>e===`auto`||e===`dark`||e===`light`?e:`auto`,n=()=>t(typeof localStorage<`u`&&localStorage.getItem(e));function r(t){typeof localStorage<`u`&&localStorage.setItem(e,t===`light`||t===`dark`?t:``)}var i=()=>matchMedia(`(prefers-color-scheme: light)`).matches?`light`:`dark`;function a(e){StarlightThemeProvider.updatePickers(e),document.documentElement.dataset.theme=e===`auto`?i():e,r(e)}matchMedia(`(prefers-color-scheme: light)`).addEventListener(`change`,()=>{n()===`auto`&&a(`auto`)});var o=class extends HTMLElement{constructor(){super(),a(n()),this.querySelector(`select`)?.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&a(t(e.currentTarget.value))})}};customElements.define(`starlight-theme-select`,o);</script></div></div></div></header><div class="shell"><main><section class="hero hero-tight"><p class="example-ref">R-C</p><h1>Add passengers. Revisit any passenger.</h1><p class="lede">One block of steps per passenger, written once and run as many times as there are people. Add and remove passengers, then go back and edit the second after finishing the third.</p><nav class="framework" aria-label="Rendering"><a href="/wizzard-packages/examples/passengers/">React</a><a href="/wizzard-packages/examples/passengers/vue/" aria-current="page">Vue</a></nav><p class="framework-note">This page ships the Vue binding and only that one. React is what the server renders when no framework is named, so the choice is a link rather than a switch: nothing a browser remembered can disagree with what arrived.</p><div class="example-stage"><style>astro-island,astro-slot,astro-static-slot{display:contents}</style><script>(()=>{var e=async t=>{await(await t())()};(self.Astro||(self.Astro={})).load=e;window.dispatchEvent(new Event("astro:load"));})();</script><script>(()=>{var g=Object.defineProperty;var w=(a,s,c)=>s in a?g(a,s,{enumerable:!0,configurable:!0,writable:!0,value:c}):a[s]=c;var l=(a,s,c)=>w(a,typeof s!="symbol"?s+"":s,c);var E=new Set(["__proto__","constructor","prototype"]);{let a={0:t=>y(t),1:t=>c(t),2:t=>new RegExp(t),3:t=>new Date(t),4:t=>new Map(c(t)),5:t=>new Set(c(t)),6:t=>BigInt(t),7:t=>new URL(t),8:t=>new Uint8Array(t),9:t=>new Uint16Array(t),10:t=>new Uint32Array(t),11:t=>Number.POSITIVE_INFINITY*t},s=t=>{let[p,e]=t;return p in a?a[p](e):void 0},c=t=>t.map(s),y=t=>typeof t!="object"||t===null?t:Object.fromEntries(Object.entries(t).map(([p,e])=>[p,s(e)]));class f extends HTMLElement{constructor(){super(...arguments);l(this,"Component");l(this,"hydrator");l(this,"hydrate",async()=>{var b;if(!this.hydrator||!this.isConnected)return;let e=(b=this.parentElement)==null?void 0:b.closest("astro-island[ssr]");if(e){e.addEventListener("astro:hydrate",this.hydrate,{once:!0});return}let r=this.querySelectorAll("astro-slot"),n={},d=this.querySelectorAll("template[data-astro-template]");for(let o of d){let i=o.closest(this.tagName);i!=null&&i.isSameNode(this)&&(n[o.getAttribute("data-astro-template")||"default"]=o.innerHTML,o.remove())}for(let o of r){let i=o.closest(this.tagName);i!=null&&i.isSameNode(this)&&(n[o.getAttribute("name")||"default"]=o.innerHTML)}let u;try{u=this.hasAttribute("props")?y(JSON.parse(this.getAttribute("props"))):{}}catch(o){let i=this.getAttribute("component-url")||"<unknown>",v=this.getAttribute("component-export");throw v&&(i+=` (export ${v})`),console.error(`[hydrate] Error parsing props for component ${i}`,this.getAttribute("props"),o),o}let h;await this.hydrator(this)(this.Component,u,n,{client:this.getAttribute("client")}),this.removeAttribute("ssr"),this.dispatchEvent(new CustomEvent("astro:hydrate"))});l(this,"unmount",()=>{this.isConnected||this.dispatchEvent(new CustomEvent("astro:unmount"))})}disconnectedCallback(){document.removeEventListener("astro:after-swap",this.unmount),document.addEventListener("astro:after-swap",this.unmount,{once:!0})}connectedCallback(){if(!this.hasAttribute("await-children")||document.readyState==="interactive"||document.readyState==="complete")this.childrenConnectedCallback();else{let e=()=>{document.removeEventListener("DOMContentLoaded",e),r.disconnect(),this.childrenConnectedCallback()},r=new MutationObserver(()=>{var n;((n=this.lastChild)==null?void 0:n.nodeType)===Node.COMMENT_NODE&&this.lastChild.nodeValue==="astro:end"&&(this.lastChild.remove(),e())});r.observe(this,{childList:!0}),document.addEventListener("DOMContentLoaded",e)}}async childrenConnectedCallback(){let e=this.getAttribute("before-hydration-url");e&&await import(e),this.start()}getRetryImportUrl(e){let r=new URL(e,document.baseURI);return r.searchParams.set("astro-retry",Date.now().toString()),r.toString()}async importWithRetry(e){try{return await import(e)}catch(r){return await new Promise(n=>setTimeout(n,1e3)),import(this.getRetryImportUrl(e))}}handleHydrationError(e){let r=this.getAttribute("component-url"),n=new CustomEvent("astro:hydration-error",{cancelable:!0,bubbles:!0,composed:!0,detail:{error:e,componentUrl:r}});this.dispatchEvent(n)&&console.error(`[astro-island] Error hydrating ${r}`,e)}async start(){let e=JSON.parse(this.getAttribute("opts")),r=this.getAttribute("client");if(Astro[r]===void 0){window.addEventListener(`astro:${r}`,()=>this.start(),{once:!0});return}try{await Astro[r](async()=>{let n=this.getAttribute("renderer-url");try{let[d,{default:u}]=await Promise.all([this.importWithRetry(this.getAttribute("component-url")),n?this.importWithRetry(n):Promise.resolve({default:()=>()=>{}})]),h=this.getAttribute("component-export")||"default";if(h.includes(".")){this.Component=d;for(let m of h.split(".")){if(E.has(m)||!this.Component||typeof this.Component!="object"&&typeof this.Component!="function"||!Object.hasOwn(this.Component,m))throw new Error(`Invalid component export path: ${h}`);this.Component=this.Component[m]}}else{if(E.has(h))throw new Error(`Invalid component export path: ${h}`);this.Component=d[h]}return this.hydrator=u,this.hydrate}catch(d){return this.handleHydrationError(d),()=>{}}},e,this)}catch(n){this.handleHydrationError(n)}}attributeChangedCallback(){this.hydrate()}}l(f,"observedAttributes",["props"]),customElements.get("astro-island")||customElements.define("astro-island",f)}})();</script><astro-island uid="ZhCIDQ" prefix="s0" component-url="/wizzard-packages/_astro/PassengersVue.D4DNZ2kT.js" component-export="default" renderer-url="/wizzard-packages/_astro/client.CErW1bqM.js" props="{}" ssr client="load" opts="{&quot;name&quot;:&quot;PassengersVue&quot;,&quot;value&quot;:true}" await-children><!--[--><div class="app"><!--[--><h2 tabindex="-1">Who is travelling</h2><p> Each passenger answers the same two questions. The definition says so once; the engine runs the block as many times as there are people in this list. </p><ul class="party"><!--[--><li><label class="field"><span class="field-label">Passenger 1</span><input value="Ada" placeholder="Name"></label><button class="button button-secondary" type="button"> Remove </button></li><!--]--></ul><div class="actions"><button class="button button-secondary" type="button"> Add a passenger </button></div><!--]--><div class="actions"><!--[--><button class="button button-accent" type="button" disabled>Next</button><button class="button button-secondary" type="button" disabled> Back </button><!--]--></div><dl class="app-state"><dt>stack</dt><dd>not started</dd><dt>passengers</dt><dd>p1</dd></dl><p class="app-live" role="status" aria-live="polite">Starting.</p></div><!--]--><!--astro:end--></astro-island></div></section><section class="example-source"><h2>The source it is running</h2><p class="lede">These blocks are the files the application above imports, read at build time. There is no copy of them to fall out of date.</p><article><h3>flow.ts</h3><p>The same file the React page shows. A group is a sub-flow entered once per item, and neither rendering knows how many items there are.</p><pre class="code-block" data-lang="ts"><code>import { empty, get, not } from &#39;@wizzard-packages/core/expr&#39;;
+import { defineFlow, group, step } from &#39;@wizzard-packages/core&#39;;
+
+import type { SubFlows } from &#39;@wizzard-packages/core&#39;;
+
+/**
+ * R-C: one block of steps per passenger.
+ *
+ * A repeat group is a sub-flow entered once per item, so the two questions each
+ * passenger answers are written once, here, and the engine runs them as many
+ * times as there are passengers. Adding a fourth passenger is a write to
+ * `data.passengers`; nothing in the definition and nothing in the rendering
+ * knows how many there are.
+ */
+export const passenger = defineFlow({
+  id: &#39;passenger&#39;,
+  order: [&#39;seat&#39;, &#39;meal&#39;],
+  steps: {
+    seat: step({ label: &#39;Seat&#39; }),
+    meal: step({ label: &#39;Meal&#39; }),
+  },
+  policy: &#39;free&#39;,
+});
+
+export const trip = defineFlow({
+  id: &#39;trip&#39;,
+  version: 1,
+  order: [&#39;party&#39;, &#39;people&#39;, &#39;review&#39;],
+  steps: {
+    party: step({ label: &#39;Who is travelling&#39; }),
+
+    people: group({
+      label: &#39;Passengers&#39;,
+      flow: &#39;passenger&#39;,
+      // A group is a step, so it answers to its own `when` first: an empty list
+      // means the group is not on the route and the flow walks past it.
+      when: not(empty(get(&#39;data.passengers&#39;))),
+      // `keyBy` is what makes a position durable. The index moves when the list
+      // is reordered or one is removed; the key does not, so a frame that names
+      // a key still names the same passenger afterwards.
+      repeat: { over: get(&#39;data.passengers&#39;), keyBy: &#39;id&#39; },
+    }),
+
+    review: step({ label: &#39;Review&#39; }),
+  },
+  policy: &#39;free&#39;,
+});
+
+/** A string `flow` is resolved here, the way a host resolves any other name. */
+export const subFlows: SubFlows = { passenger };
+
+/**
+ * Where one passenger&#39;s answers live.
+ *
+ * The engine does not namespace an item&#39;s data: `set` writes the literal path
+ * it is given, and a sub-flow step called `seat` would otherwise write the same
+ * `data.seat` for every passenger. The host decides where the answers go and
+ * builds the path from the item&#39;s key, which is what `loop.key` exists for on
+ * the flow side.
+ */
+export const answerPath = (key: string, field: &#39;seat&#39; | &#39;meal&#39;): string =&gt;
+  `answers.${key}.${field}`;
+
+/** One passenger to begin with, so the first thing on screen is a list of one. */
+export const initialData = (): Record&lt;string, unknown&gt; =&gt; ({
+  passengers: [{ id: &#39;p1&#39;, name: &#39;Ada&#39; }],
+});
+</code></pre></article><article><h3>party.ts</h3><p>Also the same file: where an item’s answers live, how a rendering reads the key off the frame, and the one workaround this application needed.</p><pre class="code-block" data-lang="ts"><code>import type { Frame, Wizard } from &#39;@wizzard-packages/core&#39;;
+
+/** One row of `data.passengers`. `id` is what `keyBy` reads. */
+export interface Passenger {
+  id: string;
+  name: string;
+}
+
+export const listOf = (data: Readonly&lt;Record&lt;string, unknown&gt;&gt;): readonly Passenger[] =&gt;
+  (data[&#39;passengers&#39;] as Passenger[] | undefined) ?? [];
+
+/**
+ * The key of the repeat frame the wizard is standing in, or null outside one.
+ *
+ * The stack is the enclosing frames with the current step last, and only a
+ * repeat frame carries a key - which is how a rendering knows whose answers it
+ * is showing without counting anything itself.
+ */
+export const keyOf = (stack: readonly Frame[]): string | null =&gt;
+  stack.find((frame) =&gt; frame.key !== undefined)?.key ?? null;
+
+/**
+ * A fresh id, unused by anyone in the list and by anyone who has answered.
+ *
+ * The second half is what makes it correct. A key is a data path, and removing
+ * the last passenger frees `p3` in the list while `answers.p3` is still sitting
+ * there - so an id chosen from the list alone would hand the next passenger
+ * somebody else&#39;s seat. The host clears the answers on removal too, and this
+ * looks at both, because either alone is one refactor away from the same bug.
+ */
+export const nextId = (
+  list: readonly Passenger[],
+  answers: Readonly&lt;Record&lt;string, unknown&gt;&gt; = {}
+): string =&gt; {
+  let n = list.length + 1;
+  while (list.some((p) =&gt; p.id === `p${n}`) || `p${n}` in answers) n += 1;
+  return `p${n}`;
+};
+
+/** Everyone&#39;s answers, keyed by passenger. */
+export const answersOf = (
+  data: Readonly&lt;Record&lt;string, unknown&gt;&gt;
+): Readonly&lt;Record&lt;string, { seat?: string; meal?: string }&gt;&gt; =&gt;
+  (data[&#39;answers&#39;] as Record&lt;string, { seat?: string; meal?: string }&gt; | undefined) ?? {};
+
+/** The same, without one passenger. Removing a person removes their answers. */
+export const withoutAnswers = (
+  data: Readonly&lt;Record&lt;string, unknown&gt;&gt;,
+  id: string
+): Record&lt;string, { seat?: string; meal?: string }&gt; =&gt; {
+  const rest = { ...answersOf(data) };
+  delete rest[id];
+  return rest;
+};
+
+/**
+ * Walks into the group until the frame names `key`.
+ *
+ * **A finding, not a pattern.** `go` addresses a step, never an item: entering
+ * a repeat group always lands on the first one, because `enter` takes
+ * `items.keys[0]` and there is no way to say which. So revisiting the second
+ * passenger after finishing the third means entering and advancing until the
+ * frame&#39;s key matches, which is fine here - every step it passes was already
+ * answered - and would not be fine in a flow with validators between.
+ *
+ * What the engine is missing is a target that can name an item, and this
+ * application is the argument for it. Filed in `TODOS.md`.
+ */
+export async function goToPassenger(wizard: Wizard, key: string): Promise&lt;boolean&gt; {
+  const entered = await wizard.go(&#39;people&#39;);
+  if (!entered.ok) return false;
+
+  // Two steps per passenger, plus the one the entry already used.
+  const hops = listOf(wizard.getState().data).length * 2 + 1;
+  for (let hop = 0; hop &lt; hops; hop++) {
+    if (keyOf(wizard.getState().stack) === key) return true;
+    const moved = await wizard.next();
+    if (!moved.ok || moved.to === &#39;@end&#39;) return false;
+  }
+  return false;
+}
+</code></pre></article><article><h3>Trip.vue</h3><p>The rendering, with `v-for` where the React file has `map`. The engine decides which of the three views is on screen.</p><pre class="code-block" data-lang="vue"><code>&lt;script setup lang=&quot;ts&quot;&gt;
+import { useNavigation, useStep, useWizard, useWizardSelector } from &#39;@wizzard-packages/vue&#39;;
+import { computed, ref, useTemplateRef, watch } from &#39;vue&#39;;
+
+import { answerPath, initialData } from &#39;./flow&#39;;
+import {
+  answersOf,
+  goToPassenger,
+  keyOf,
+  listOf,
+  nextId,
+  withoutAnswers,
+  type Passenger,
+} from &#39;./party&#39;;
+
+/**
+ * R-C on the Vue binding. The same application as `App.tsx`: the rendering
+ * draws the list, one passenger&#39;s question, or the review, and the engine
+ * decides which. It never counts passengers to work out where it is - the frame
+ * carries the key, and everything on screen is read from that.
+ */
+const SEATS = [&#39;Window&#39;, &#39;Aisle&#39;];
+const MEALS = [&#39;Standard&#39;, &#39;Vegetarian&#39;, &#39;None&#39;];
+
+const wizard = useWizard();
+const { current, active, index } = useStep();
+const { back, canBack, isBusy } = useNavigation();
+
+const data = useWizardSelector((s) =&gt; s.data);
+const stack = useWizardSelector((s) =&gt; s.stack);
+
+const announcement = ref(&#39;&#39;);
+const heading = useTemplateRef&lt;HTMLHeadingElement&gt;(&#39;heading&#39;);
+
+const list = computed(() =&gt; listOf(data.value));
+const itemKey = computed(() =&gt; keyOf(stack.value));
+const at = computed(() =&gt;
+  itemKey.value === null ? -1 : list.value.findIndex((p) =&gt; p.id === itemKey.value)
+);
+const standing = computed(() =&gt; current.value ?? active.value[0] ?? &#39;party&#39;);
+// Reaching the end does not move the wizard: it stays on the last step and says
+// `to: &#39;@end&#39;`. What changed is `status`.
+//
+// `status` and not `completed`: a forward `go` marks the step it left as
+// completed, and Edit jumps away from Review, so `completed` would call the trip
+// booked the moment somebody went back to change a seat. Nothing here is
+// persisted, so `status` - which `toSnapshot` does not carry - is exactly right
+// for this application and wrong for the one that reloads.
+const finished = useWizardSelector((s) =&gt; s.status === &#39;done&#39;);
+
+watch(current, (to) =&gt; {
+  if (to === null) return;
+  heading.value?.focus();
+});
+
+const answersFor = (id: string): { seat?: string; meal?: string } =&gt;
+  answersOf(data.value)[id] ?? {};
+
+const nameOf = (id: string): string =&gt; list.value.find((p) =&gt; p.id === id)?.name ?? &#39;&#39;;
+
+const choose = (field: &#39;seat&#39; | &#39;meal&#39;, value: string): void =&gt; {
+  if (itemKey.value === null) return;
+  wizard.set(answerPath(itemKey.value, field), value);
+};
+
+const chosen = (field: &#39;seat&#39; | &#39;meal&#39;): string | undefined =&gt;
+  itemKey.value === null ? undefined : answersFor(itemKey.value)[field];
+
+const addPassenger = (): void =&gt; {
+  wizard.set(&#39;passengers&#39;, [
+    ...list.value,
+    { id: nextId(list.value, answersOf(data.value)), name: &#39;&#39; },
+  ]);
+  announcement.value = `Passenger ${list.value.length} added.`;
+};
+
+const removePassenger = (id: string): void =&gt; {
+  // Their answers go with them, in one commit: a key is a data path, and
+  // leaving `answers.p3` behind is how the next passenger to be given that key
+  // would inherit somebody else&#39;s seat.
+  wizard.batch(() =&gt; {
+    wizard.set(
+      &#39;passengers&#39;,
+      list.value.filter((p: Passenger) =&gt; p.id !== id)
+    );
+    wizard.set(&#39;answers&#39;, withoutAnswers(data.value, id));
+  });
+  announcement.value = `Passenger removed. ${list.value.length} left.`;
+};
+
+const rename = (id: string, name: string): void =&gt; {
+  wizard.set(
+    &#39;passengers&#39;,
+    list.value.map((p: Passenger) =&gt; (p.id === id ? { ...p, name } : p))
+  );
+};
+
+async function onNext(): Promise&lt;void&gt; {
+  const result = await wizard.next();
+  if (result.ok) {
+    if (result.to === &#39;@end&#39;) announcement.value = &#39;Booked.&#39;;
+    return;
+  }
+  announcement.value = `That move was refused: ${result.reason}.`;
+}
+
+async function startAgain(): Promise&lt;void&gt; {
+  announcement.value = &#39;&#39;;
+  wizard.reset(initialData());
+  await wizard.start();
+}
+
+async function edit(id: string): Promise&lt;void&gt; {
+  const reached = await goToPassenger(wizard, id);
+  announcement.value = reached ? `Editing ${nameOf(id)}.` : `Could not reach ${nameOf(id)}.`;
+}
+
+const printFrame = (frame: { flow: string; step: string; key?: string }): string =&gt;
+  frame.key === undefined
+    ? `${frame.flow}.${frame.step}`
+    : `${frame.flow}.${frame.step}[${frame.key}]`;
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div class=&quot;app&quot;&gt;
+    &lt;template v-if=&quot;standing === &#39;party&#39;&quot;&gt;
+      &lt;h2 ref=&quot;heading&quot; tabindex=&quot;-1&quot;&gt;Who is travelling&lt;/h2&gt;
+      &lt;p&gt;
+        Each passenger answers the same two questions. The definition says so once; the engine runs
+        the block as many times as there are people in this list.
+      &lt;/p&gt;
+
+      &lt;ul class=&quot;party&quot;&gt;
+        &lt;li v-for=&quot;(person, position) in list&quot; :key=&quot;person.id&quot;&gt;
+          &lt;label class=&quot;field&quot;&gt;
+            &lt;span class=&quot;field-label&quot;&gt;Passenger {{ position + 1 }}&lt;/span&gt;
+            &lt;input
+              :value=&quot;person.name&quot;
+              placeholder=&quot;Name&quot;
+              @input=&quot;rename(person.id, ($event.target as HTMLInputElement).value)&quot;
+            /&gt;
+          &lt;/label&gt;
+          &lt;button class=&quot;button button-secondary&quot; type=&quot;button&quot; @click=&quot;removePassenger(person.id)&quot;&gt;
+            Remove
+          &lt;/button&gt;
+        &lt;/li&gt;
+      &lt;/ul&gt;
+
+      &lt;div class=&quot;actions&quot;&gt;
+        &lt;button class=&quot;button button-secondary&quot; type=&quot;button&quot; @click=&quot;addPassenger&quot;&gt;
+          Add a passenger
+        &lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/template&gt;
+
+    &lt;template v-else-if=&quot;(standing === &#39;seat&#39; || standing === &#39;meal&#39;) &amp;&amp; itemKey !== null&quot;&gt;
+      &lt;p class=&quot;app-where&quot;&gt;
+        Passenger {{ at + 1 }} of {{ list.length
+        }}{{ nameOf(itemKey) === &#39;&#39; ? &#39;&#39; : `, ${nameOf(itemKey)}` }} &amp;mdash; step {{ index + 1 }} of
+        {{ active.length }}
+      &lt;/p&gt;
+      &lt;h2 ref=&quot;heading&quot; tabindex=&quot;-1&quot;&gt;{{ standing === &#39;seat&#39; ? &#39;Seat&#39; : &#39;Meal&#39; }}&lt;/h2&gt;
+
+      &lt;fieldset class=&quot;field&quot;&gt;
+        &lt;legend class=&quot;field-label&quot;&gt;
+          {{ standing === &#39;seat&#39; ? &#39;Where would they sit&#39; : &#39;What would they eat&#39; }}
+        &lt;/legend&gt;
+        &lt;div class=&quot;segmented&quot;&gt;
+          &lt;button
+            v-for=&quot;option in standing === &#39;seat&#39; ? SEATS : MEALS&quot;
+            :key=&quot;option&quot;
+            type=&quot;button&quot;
+            :aria-pressed=&quot;chosen(standing) === option&quot;
+            @click=&quot;choose(standing, option)&quot;
+          &gt;
+            {{ option }}
+          &lt;/button&gt;
+        &lt;/div&gt;
+      &lt;/fieldset&gt;
+    &lt;/template&gt;
+
+    &lt;template v-else-if=&quot;standing === &#39;review&#39;&quot;&gt;
+      &lt;h2 ref=&quot;heading&quot; tabindex=&quot;-1&quot;&gt;Review&lt;/h2&gt;
+      &lt;table class=&quot;party-review&quot;&gt;
+        &lt;thead&gt;
+          &lt;tr&gt;
+            &lt;th scope=&quot;col&quot;&gt;Passenger&lt;/th&gt;
+            &lt;th scope=&quot;col&quot;&gt;Seat&lt;/th&gt;
+            &lt;th scope=&quot;col&quot;&gt;Meal&lt;/th&gt;
+            &lt;th scope=&quot;col&quot;&gt;&lt;span class=&quot;visually-hidden&quot;&gt;Actions&lt;/span&gt;&lt;/th&gt;
+          &lt;/tr&gt;
+        &lt;/thead&gt;
+        &lt;tbody&gt;
+          &lt;tr v-for=&quot;(person, position) in list&quot; :key=&quot;person.id&quot;&gt;
+            &lt;th scope=&quot;row&quot;&gt;
+              {{ person.name === &#39;&#39; ? `Passenger ${position + 1}` : person.name }}
+            &lt;/th&gt;
+            &lt;td&gt;{{ answersFor(person.id).seat ?? &#39;not chosen&#39; }}&lt;/td&gt;
+            &lt;td&gt;{{ answersFor(person.id).meal ?? &#39;not chosen&#39; }}&lt;/td&gt;
+            &lt;td&gt;
+              &lt;button class=&quot;button button-secondary&quot; type=&quot;button&quot; @click=&quot;edit(person.id)&quot;&gt;
+                Edit {{ person.name === &#39;&#39; ? `passenger ${position + 1}` : person.name }}
+              &lt;/button&gt;
+            &lt;/td&gt;
+          &lt;/tr&gt;
+        &lt;/tbody&gt;
+      &lt;/table&gt;
+
+      &lt;p v-if=&quot;finished&quot;&gt;Booked. Nothing below moves until this one starts again.&lt;/p&gt;
+
+      &lt;div v-else class=&quot;actions&quot;&gt;
+        &lt;button class=&quot;button button-secondary&quot; type=&quot;button&quot; @click=&quot;wizard.go(&#39;party&#39;)&quot;&gt;
+          Change who is travelling
+        &lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/template&gt;
+
+    &lt;div class=&quot;actions&quot;&gt;
+      &lt;button v-if=&quot;finished&quot; class=&quot;button button-accent&quot; type=&quot;button&quot; @click=&quot;startAgain()&quot;&gt;
+        Start again
+      &lt;/button&gt;
+      &lt;template v-else&gt;
+        &lt;button
+          class=&quot;button button-accent&quot;
+          type=&quot;button&quot;
+          :disabled=&quot;current === null || isBusy&quot;
+          @click=&quot;onNext()&quot;
+        &gt;
+          {{ standing === &#39;review&#39; ? &#39;Book the trip&#39; : &#39;Next&#39; }}
+        &lt;/button&gt;
+        &lt;button
+          class=&quot;button button-secondary&quot;
+          type=&quot;button&quot;
+          :disabled=&quot;current === null || !canBack || isBusy&quot;
+          @click=&quot;back()&quot;
+        &gt;
+          Back
+        &lt;/button&gt;
+      &lt;/template&gt;
+    &lt;/div&gt;
+
+    &lt;dl class=&quot;app-state&quot;&gt;
+      &lt;dt&gt;stack&lt;/dt&gt;
+      &lt;dd&gt;{{ stack.map(printFrame).join(&#39; / &#39;) || &#39;not started&#39; }}&lt;/dd&gt;
+      &lt;dt&gt;passengers&lt;/dt&gt;
+      &lt;dd&gt;{{ list.length === 0 ? &#39;none&#39; : list.map((p: Passenger) =&gt; p.id).join(&#39;, &#39;) }}&lt;/dd&gt;
+    &lt;/dl&gt;
+
+    &lt;p class=&quot;app-live&quot; role=&quot;status&quot; aria-live=&quot;polite&quot;&gt;
+      {{ current === null ? &#39;Starting.&#39; : announcement }}
+    &lt;/p&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+</code></pre></article></section></main><footer class="site-footer"><span>MIT licensed</span><a href="https://github.com/ZizzX/wizzard-packages">Source</a><a href="/wizzard-packages/docs/start/">Documentation</a></footer></div></body></html><script type="module" src="/wizzard-packages/_astro/ExampleShell.astro_astro_type_script_index_0_lang.DSFyOI18.js"></script>

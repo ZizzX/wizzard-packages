@@ -1,0 +1,1 @@
+import{n as e,t}from"./framework.Dn4rUcGN.js";try{if(localStorage.getItem(e)===t.vue)for(let e of document.querySelectorAll(`a[data-example]`))e.href=`${e.href}vue/`}catch{}

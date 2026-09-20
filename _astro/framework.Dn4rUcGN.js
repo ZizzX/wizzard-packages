@@ -1,0 +1,1 @@
+var e=`starlight-synced-tabs__framework`,t={react:`React`,vue:`Vue`,headless:`Headless`};export{e as n,t};

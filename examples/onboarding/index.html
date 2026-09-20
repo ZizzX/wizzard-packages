@@ -1,0 +1,507 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Change your answer. Keep the right data. - wizzard</title><meta name="description" content="Onboarding with a conditional branch and backtracking. Pick a payer type and the route changes; walk back across the branch and the answers are still there; finish, and the flow submits what it collected and nothing else."><meta property="og:title" content="Change your answer. Keep the right data. - wizzard"><meta property="og:description" content="Onboarding with a conditional branch and backtracking. Pick a payer type and the route changes; walk back across the branch and the answers are still there; finish, and the flow submits what it collected and nothing else."><meta property="og:type" content="website"><script>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme =
+			storedTheme ||
+			(window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+		document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme || 'auto') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script><template id="theme-icons"><svg aria-hidden="true" class="light astro-ac6ikqru" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg><svg aria-hidden="true" class="dark astro-ac6ikqru" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><svg aria-hidden="true" class="auto astro-ac6ikqru" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg></template><link rel="stylesheet" href="/wizzard-packages/_astro/ThemeProvider.DplDwoYR.css"><style>@layer starlight.components{svg:where(.astro-ac6ikqru){color:var(--sl-icon-color);font-size:var(--sl-icon-size,1em);width:1em;height:1em}}
+</style><script type="module" src="/wizzard-packages/_astro/page.Dwipeu-R.js"></script></head><body><header class="topbar"><div class="site-header"><a class="wordmark" href="/wizzard-packages/">wizzard</a><nav class="site-nav" aria-label="Site"><a href="/wizzard-packages/examples/" aria-current="true">Examples</a><a href="/wizzard-packages/inspector/">Inspector</a><a href="/wizzard-packages/docs/start/">Docs</a><a href="https://github.com/ZizzX/wizzard-packages">GitHub</a></nav><div class="site-tools"><site-search class=" astro-twxbhvpe" data-translations="{&quot;placeholder&quot;:&quot;Search&quot;}"><button data-open-modal disabled aria-label="Search" aria-keyshortcuts="Control+K" class="astro-twxbhvpe"><svg aria-hidden="true" class="astro-twxbhvpe astro-ac6ikqru" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"/></svg><span class="sl-hidden md:sl-block astro-twxbhvpe" aria-hidden="true">Search</span><kbd class="sl-hidden md:sl-flex astro-twxbhvpe" style="display: none;"><kbd class="astro-twxbhvpe">Ctrl</kbd><kbd class="astro-twxbhvpe">K</kbd></kbd></button><dialog style="padding:0" aria-label="Search" class="astro-twxbhvpe"><div class="dialog-frame sl-flex astro-twxbhvpe"><button data-close-modal class="sl-flex md:sl-hidden astro-twxbhvpe">Cancel</button><div class="search-container astro-twxbhvpe"><div id="starlight__search" class="astro-twxbhvpe"></div></div></div></dialog></site-search><script>
+	(() => {
+		const openBtn = document.querySelector('button[data-open-modal]');
+		const shortcut = openBtn?.querySelector('kbd');
+		if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+		const platformKey = shortcut.querySelector('kbd');
+		if (platformKey && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+			platformKey.textContent = '⌘';
+			openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+		}
+		shortcut.style.display = '';
+	})();
+</script><script type="module" src="/wizzard-packages/_astro/Search.astro_astro_type_script_index_0_lang.raRQUAJA.js"></script><div class="site-theme"><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-r2uzkgg6"><span class="sr-only astro-r2uzkgg6">Select theme</span><svg aria-hidden="true" class="icon label-icon astro-r2uzkgg6 astro-ac6ikqru" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-r2uzkgg6"><option value="dark" class="astro-r2uzkgg6">Dark</option><option value="light" class="astro-r2uzkgg6">Light</option><option value="auto" selected class="astro-r2uzkgg6">Auto</option></select><svg aria-hidden="true" class="icon caret astro-r2uzkgg6 astro-ac6ikqru" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><script type="module">var e=`starlight-theme`,t=e=>e===`auto`||e===`dark`||e===`light`?e:`auto`,n=()=>t(typeof localStorage<`u`&&localStorage.getItem(e));function r(t){typeof localStorage<`u`&&localStorage.setItem(e,t===`light`||t===`dark`?t:``)}var i=()=>matchMedia(`(prefers-color-scheme: light)`).matches?`light`:`dark`;function a(e){StarlightThemeProvider.updatePickers(e),document.documentElement.dataset.theme=e===`auto`?i():e,r(e)}matchMedia(`(prefers-color-scheme: light)`).addEventListener(`change`,()=>{n()===`auto`&&a(`auto`)});var o=class extends HTMLElement{constructor(){super(),a(n()),this.querySelector(`select`)?.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&a(t(e.currentTarget.value))})}};customElements.define(`starlight-theme-select`,o);</script></div></div></div></header><div class="shell"><main><section class="hero hero-tight"><p class="example-ref">R-A</p><h1>Change your answer. Keep the right data.</h1><p class="lede">Onboarding with a conditional branch and backtracking. Pick a payer type and the route changes; walk back across the branch and the answers are still there; finish, and the flow submits what it collected and nothing else.</p><nav class="framework" aria-label="Rendering"><a href="/wizzard-packages/examples/onboarding/" aria-current="page">React</a><a href="/wizzard-packages/examples/onboarding/vue/">Vue</a></nav><p class="framework-note">This page ships the React binding and only that one. React is what the server renders when no framework is named, so the choice is a link rather than a switch: nothing a browser remembered can disagree with what arrived.</p><div class="example-stage"><style>astro-island,astro-slot,astro-static-slot{display:contents}</style><script>(()=>{var e=async t=>{await(await t())()};(self.Astro||(self.Astro={})).load=e;window.dispatchEvent(new Event("astro:load"));})();</script><script>(()=>{var g=Object.defineProperty;var w=(a,s,c)=>s in a?g(a,s,{enumerable:!0,configurable:!0,writable:!0,value:c}):a[s]=c;var l=(a,s,c)=>w(a,typeof s!="symbol"?s+"":s,c);var E=new Set(["__proto__","constructor","prototype"]);{let a={0:t=>y(t),1:t=>c(t),2:t=>new RegExp(t),3:t=>new Date(t),4:t=>new Map(c(t)),5:t=>new Set(c(t)),6:t=>BigInt(t),7:t=>new URL(t),8:t=>new Uint8Array(t),9:t=>new Uint16Array(t),10:t=>new Uint32Array(t),11:t=>Number.POSITIVE_INFINITY*t},s=t=>{let[p,e]=t;return p in a?a[p](e):void 0},c=t=>t.map(s),y=t=>typeof t!="object"||t===null?t:Object.fromEntries(Object.entries(t).map(([p,e])=>[p,s(e)]));class f extends HTMLElement{constructor(){super(...arguments);l(this,"Component");l(this,"hydrator");l(this,"hydrate",async()=>{var b;if(!this.hydrator||!this.isConnected)return;let e=(b=this.parentElement)==null?void 0:b.closest("astro-island[ssr]");if(e){e.addEventListener("astro:hydrate",this.hydrate,{once:!0});return}let r=this.querySelectorAll("astro-slot"),n={},d=this.querySelectorAll("template[data-astro-template]");for(let o of d){let i=o.closest(this.tagName);i!=null&&i.isSameNode(this)&&(n[o.getAttribute("data-astro-template")||"default"]=o.innerHTML,o.remove())}for(let o of r){let i=o.closest(this.tagName);i!=null&&i.isSameNode(this)&&(n[o.getAttribute("name")||"default"]=o.innerHTML)}let u;try{u=this.hasAttribute("props")?y(JSON.parse(this.getAttribute("props"))):{}}catch(o){let i=this.getAttribute("component-url")||"<unknown>",v=this.getAttribute("component-export");throw v&&(i+=` (export ${v})`),console.error(`[hydrate] Error parsing props for component ${i}`,this.getAttribute("props"),o),o}let h;await this.hydrator(this)(this.Component,u,n,{client:this.getAttribute("client")}),this.removeAttribute("ssr"),this.dispatchEvent(new CustomEvent("astro:hydrate"))});l(this,"unmount",()=>{this.isConnected||this.dispatchEvent(new CustomEvent("astro:unmount"))})}disconnectedCallback(){document.removeEventListener("astro:after-swap",this.unmount),document.addEventListener("astro:after-swap",this.unmount,{once:!0})}connectedCallback(){if(!this.hasAttribute("await-children")||document.readyState==="interactive"||document.readyState==="complete")this.childrenConnectedCallback();else{let e=()=>{document.removeEventListener("DOMContentLoaded",e),r.disconnect(),this.childrenConnectedCallback()},r=new MutationObserver(()=>{var n;((n=this.lastChild)==null?void 0:n.nodeType)===Node.COMMENT_NODE&&this.lastChild.nodeValue==="astro:end"&&(this.lastChild.remove(),e())});r.observe(this,{childList:!0}),document.addEventListener("DOMContentLoaded",e)}}async childrenConnectedCallback(){let e=this.getAttribute("before-hydration-url");e&&await import(e),this.start()}getRetryImportUrl(e){let r=new URL(e,document.baseURI);return r.searchParams.set("astro-retry",Date.now().toString()),r.toString()}async importWithRetry(e){try{return await import(e)}catch(r){return await new Promise(n=>setTimeout(n,1e3)),import(this.getRetryImportUrl(e))}}handleHydrationError(e){let r=this.getAttribute("component-url"),n=new CustomEvent("astro:hydration-error",{cancelable:!0,bubbles:!0,composed:!0,detail:{error:e,componentUrl:r}});this.dispatchEvent(n)&&console.error(`[astro-island] Error hydrating ${r}`,e)}async start(){let e=JSON.parse(this.getAttribute("opts")),r=this.getAttribute("client");if(Astro[r]===void 0){window.addEventListener(`astro:${r}`,()=>this.start(),{once:!0});return}try{await Astro[r](async()=>{let n=this.getAttribute("renderer-url");try{let[d,{default:u}]=await Promise.all([this.importWithRetry(this.getAttribute("component-url")),n?this.importWithRetry(n):Promise.resolve({default:()=>()=>{}})]),h=this.getAttribute("component-export")||"default";if(h.includes(".")){this.Component=d;for(let m of h.split(".")){if(E.has(m)||!this.Component||typeof this.Component!="object"&&typeof this.Component!="function"||!Object.hasOwn(this.Component,m))throw new Error(`Invalid component export path: ${h}`);this.Component=this.Component[m]}}else{if(E.has(h))throw new Error(`Invalid component export path: ${h}`);this.Component=d[h]}return this.hydrator=u,this.hydrate}catch(d){return this.handleHydrationError(d),()=>{}}},e,this)}catch(n){this.handleHydrationError(n)}}attributeChangedCallback(){this.hydrate()}}l(f,"observedAttributes",["props"]),customElements.get("astro-island")||customElements.define("astro-island",f)}})();</script><astro-island uid="VhsHR" prefix="r1" component-url="/wizzard-packages/_astro/OnboardingReact.B1pDKqFX.js" component-export="default" renderer-url="/wizzard-packages/_astro/client.DRLNxISz.js" props="{}" ssr client="load" opts="{&quot;name&quot;:&quot;OnboardingReact&quot;,&quot;value&quot;:true}" await-children><form class="app"><h2 tabindex="-1">Your details</h2><div class="field"><label class="field-label" for="email">Email</label><input id="email" type="email" autoComplete="email" value=""/></div><fieldset class="field"><legend class="field-label">Who is paying</legend><div class="segmented"><button type="button" aria-pressed="false">Personal</button><button type="button" aria-pressed="false">Business</button></div></fieldset><div class="actions"><button class="button button-accent" type="submit" disabled="">Next</button><button class="button button-secondary" type="button" disabled="">Back</button></div><dl class="app-state"><dt>route</dt><dd>details → verify → payment → review</dd><dt>completed</dt><dd>none</dd><dt>edited</dt><dd>none</dd></dl><p class="app-live" role="status" aria-live="polite">Starting.</p></form><!--astro:end--></astro-island></div></section><section class="example-source"><h2>The source it is running</h2><p class="lede">These blocks are the files the application above imports, read at build time. There is no copy of them to fall out of date.</p><article><h3>flow.ts</h3><p>The route. Everything that decides where the visitor goes next is in this object, and nothing that decides it is anywhere else.</p><pre class="code-block" data-lang="ts"><code>import { defineFlow, step } from &#39;@wizzard-packages/core&#39;;
+import { eq, get } from &#39;@wizzard-packages/core/expr&#39;;
+
+/**
+ * R-A: onboarding with a conditional branch and backtracking.
+ *
+ * The whole route lives in this object. Nothing below it decides where the
+ * visitor goes next, which is the point: the rendering is a switch over
+ * `current`, and it stays a switch when a fourth step is added here.
+ */
+export const onboarding = defineFlow({
+  id: &#39;onboarding&#39;,
+  version: 1,
+  order: [&#39;details&#39;, &#39;verify&#39;, &#39;company&#39;, &#39;payment&#39;, &#39;review&#39;],
+  steps: {
+    details: step&lt;{ email: string; payer: &#39;personal&#39; | &#39;business&#39; }&gt;({
+      label: &#39;Details&#39;,
+      validate: { $ref: &#39;details&#39; },
+    }),
+
+    verify: step&lt;{ code: string }&gt;({
+      label: &#39;Verify&#39;,
+      validate: { $ref: &#39;verify&#39; },
+      // The code is a credential, not an answer. `true` drops the whole slice
+      // whichever way the step is left, so it is never in the object the last
+      // step submits and never sits in storage waiting to be restored.
+      clearOnLeave: true,
+      // A visitor who already has an account skips ahead. `company` and
+      // `payment` stay reachable — they are jumped over, not excluded — so the
+      // jump has to be an explicit target rather than a `when`.
+      //
+      // The list is exhaustive on purpose: a target list where nothing matches
+      // ends the flow, so the ordinary route is spelled out after the fast
+      // path. `company` is tried first and skipped when its own `when` is
+      // false, which lands a personal payer on `payment`.
+      on: { next: [{ to: &#39;review&#39;, when: get(&#39;ctx.returning&#39;) }, &#39;company&#39;, &#39;payment&#39;] },
+    }),
+
+    company: step&lt;{ name: string; vat: string }&gt;({
+      label: &#39;Company&#39;,
+      // Reachability, not navigation: a step whose `when` is false is off the
+      // route, so it is skipped forwards and backwards and drawn as a step this
+      // visitor will not see.
+      when: eq(get(&#39;data.details.payer&#39;), &#39;business&#39;),
+      validate: { $ref: &#39;company&#39; },
+    }),
+
+    payment: step&lt;{ card: string }&gt;({
+      label: &#39;Payment&#39;,
+      validate: { $ref: &#39;payment&#39; },
+    }),
+
+    review: step({ label: &#39;Review&#39; }),
+  },
+  policy: &#39;free&#39;,
+});
+</code></pre></article><article><h3>registry.ts</h3><p>What a flow cannot serialize: the validators, named by the `$ref` above and looked up at runtime.</p><pre class="code-block" data-lang="ts"><code>import type { AsyncRegistry, Scope } from &#39;@wizzard-packages/core&#39;;
+
+/**
+ * What the flow could not serialize. Each `$ref` in `flow.ts` is a key here,
+ * and a validator answers with the field errors it found or `null`.
+ *
+ * They are ordinary functions of the data: no component, no engine, nothing to
+ * mock. That is what makes the same four testable without a browser.
+ */
+type Fields = Record&lt;string, string&gt; | null;
+
+const slice = (scope: Scope, id: string): Record&lt;string, unknown&gt; =&gt;
+  (scope.data[id] as Record&lt;string, unknown&gt; | undefined) ?? {};
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export const registry: AsyncRegistry = {
+  details: (_args, scope): Fields =&gt; {
+    const { email, payer } = slice(scope, &#39;details&#39;);
+    const errors: Record&lt;string, string&gt; = {};
+    if (typeof email !== &#39;string&#39; || email === &#39;&#39;) errors[&#39;email&#39;] = &#39;Enter your email address.&#39;;
+    else if (!EMAIL.test(email)) errors[&#39;email&#39;] = &#39;That does not look like an email address.&#39;;
+    if (payer !== &#39;personal&#39; &amp;&amp; payer !== &#39;business&#39;) errors[&#39;payer&#39;] = &#39;Choose who is paying.&#39;;
+    return Object.keys(errors).length === 0 ? null : errors;
+  },
+
+  verify: (_args, scope): Fields =&gt; {
+    const { code } = slice(scope, &#39;verify&#39;);
+    // Six digits, and in a real application a call to the service that sent
+    // them. The example keeps it local so the page works offline.
+    if (typeof code !== &#39;string&#39; || !/^\d{6}$/.test(code)) {
+      return { code: &#39;The code is six digits.&#39; };
+    }
+    return null;
+  },
+
+  company: (_args, scope): Fields =&gt; {
+    const { name, vat } = slice(scope, &#39;company&#39;);
+    const errors: Record&lt;string, string&gt; = {};
+    if (typeof name !== &#39;string&#39; || name.trim() === &#39;&#39;) errors[&#39;name&#39;] = &#39;Enter the company name.&#39;;
+    if (typeof vat !== &#39;string&#39; || vat.trim() === &#39;&#39;) errors[&#39;vat&#39;] = &#39;Enter the VAT number.&#39;;
+    return Object.keys(errors).length === 0 ? null : errors;
+  },
+
+  payment: (_args, scope): Fields =&gt; {
+    const { card } = slice(scope, &#39;payment&#39;);
+    const digits = typeof card === &#39;string&#39; ? card.replace(/\s/g, &#39;&#39;) : &#39;&#39;;
+    if (!/^\d{16}$/.test(digits)) return { card: &#39;A card number is sixteen digits.&#39; };
+    return null;
+  },
+};
+</code></pre></article><article><h3>App.tsx</h3><p>The rendering. It knows the fields and the labels; it asks the engine which step is current and draws that one.</p><pre class="code-block" data-lang="tsx"><code>import {
+  WizardProvider,
+  useErrors,
+  useField,
+  useNavigation,
+  useStep,
+  useWizard,
+  useWizardSelector,
+} from &#39;@wizzard-packages/react&#39;;
+import { useEffect, useRef, useState, type ReactNode } from &#39;react&#39;;
+
+import { onboarding } from &#39;./flow&#39;;
+import { registry } from &#39;./registry&#39;;
+
+/**
+ * R-A on the React binding.
+ *
+ * The rendering knows the fields and nothing else. It never asks &quot;is this a
+ * business payer&quot; to decide what comes next - it asks the engine which step is
+ * current and draws that one. Adding a branch is an edit to `flow.ts`.
+ *
+ * Accessibility is by hand here, deliberately: the bindings supply no ARIA in
+ * 1.0, so this file is what that contract will be written from. Visible labels,
+ * one polite live region for validation and step changes, and focus moved to
+ * the heading of the step the visitor just arrived at.
+ */
+export default function OnboardingApp(): ReactNode {
+  return (
+    &lt;WizardProvider flow={onboarding} registry={registry} ctx={{ returning: false }}&gt;
+      &lt;Onboarding /&gt;
+    &lt;/WizardProvider&gt;
+  );
+}
+
+const LABELS: Record&lt;string, string&gt; = {
+  details: &#39;Your details&#39;,
+  verify: &#39;Verify your email&#39;,
+  company: &#39;Company details&#39;,
+  payment: &#39;Payment&#39;,
+  review: &#39;Review&#39;,
+};
+
+function Onboarding(): ReactNode {
+  const wizard = useWizard();
+  const { current, active, isLast } = useStep();
+  const { back, canBack, isBusy } = useNavigation();
+  const errors = useErrors();
+
+  const [email, setEmail] = useField&lt;string&gt;(&#39;details.email&#39;);
+  const [payer, setPayer] = useField&lt;string&gt;(&#39;details.payer&#39;);
+  const [code, setCode] = useField&lt;string&gt;(&#39;verify.code&#39;);
+  const [company, setCompany] = useField&lt;string&gt;(&#39;company.name&#39;);
+  const [vat, setVat] = useField&lt;string&gt;(&#39;company.vat&#39;);
+  const [card, setCard] = useField&lt;string&gt;(&#39;payment.card&#39;);
+
+  const returning = useWizardSelector((s) =&gt; s.ctx[&#39;returning&#39;] === true);
+  const completed = useWizardSelector((s) =&gt; s.completed);
+  const dirty = useWizardSelector((s) =&gt; s.dirty);
+  const data = useWizardSelector((s) =&gt; s.data);
+
+  const [announcement, setAnnouncement] = useState(&#39;&#39;);
+  const [ended, setEnded] = useState(false);
+  const heading = useRef&lt;HTMLHeadingElement&gt;(null);
+
+  // Before `start` has run - on the server, and for the first paint - there is
+  // no current step, so the form draws the step the flow is about to enter and
+  // says so, instead of a spinner over an empty box.
+  const standing = current ?? active[0] ?? &#39;details&#39;;
+  const starting = current === null;
+
+  // Focus follows the flow, but only once the visitor has moved: taking focus on
+  // the first paint would drag a reader who was still reading the page above.
+  //
+  // The step id is the only dependency, and the count is read off the engine
+  // inside: `active` is rebuilt on every commit, so depending on it would make
+  // a keystroke look like a step change and pull focus out of the field being
+  // typed into.
+  const moved = useRef(false);
+  useEffect(() =&gt; {
+    if (current === null) return;
+    if (!moved.current) {
+      moved.current = true;
+      return;
+    }
+    heading.current?.focus();
+    const { active: route } = wizard.getSnapshot();
+    const at = route.indexOf(current) + 1;
+    setAnnouncement(`${LABELS[current] ?? current}. Step ${at} of ${route.length}.`);
+  }, [current, wizard]);
+
+  async function onNext(): Promise&lt;void&gt; {
+    if (ended) {
+      setEnded(false);
+      setAnnouncement(&#39;&#39;);
+      // `reset` keeps `ctx` - it is the host&#39;s, not the run&#39;s - so the fast
+      // path has to be put back by hand, or starting again silently takes it.
+      wizard.setCtx({ returning: false });
+      wizard.reset();
+      await wizard.start();
+      return;
+    }
+    const result = await wizard.next();
+    if (result.ok) {
+      if (result.to === &#39;@end&#39;) {
+        setEnded(true);
+        setAnnouncement(&#39;Onboarding complete.&#39;);
+      }
+      return;
+    }
+    // A refusal is the one thing the live region must carry: the fields below
+    // show it too, but a screen reader is not looking at them.
+    const fields = Object.values(result.errors ?? {});
+    setAnnouncement(
+      fields.length === 0 ? `That move was refused: ${result.reason}.` : fields.join(&#39; &#39;)
+    );
+  }
+
+  if (ended) {
+    return (
+      &lt;div className=&quot;app&quot;&gt;
+        &lt;h2 ref={heading} tabIndex={-1}&gt;
+          Done
+        &lt;/h2&gt;
+        &lt;p&gt;The submission is what the flow collected, and nothing else.&lt;/p&gt;
+        &lt;pre className=&quot;app-data&quot;&gt;{JSON.stringify(submission(data, active), null, 2)}&lt;/pre&gt;
+        &lt;div className=&quot;actions&quot;&gt;
+          &lt;button
+            className=&quot;button button-accent&quot;
+            type=&quot;button&quot;
+            onClick={() =&gt; {
+              void onNext();
+            }}
+          &gt;
+            Start again
+          &lt;/button&gt;
+        &lt;/div&gt;
+        &lt;Live text={announcement} /&gt;
+      &lt;/div&gt;
+    );
+  }
+
+  return (
+    &lt;form
+      className=&quot;app&quot;
+      onSubmit={(event) =&gt; {
+        event.preventDefault();
+        void onNext();
+      }}
+    &gt;
+      &lt;h2 ref={heading} tabIndex={-1}&gt;
+        {LABELS[standing] ?? standing}
+      &lt;/h2&gt;
+
+      {standing === &#39;details&#39; &amp;&amp; (
+        &lt;&gt;
+          &lt;Field
+            id=&quot;email&quot;
+            label=&quot;Email&quot;
+            type=&quot;email&quot;
+            autoComplete=&quot;email&quot;
+            value={email}
+            onChange={setEmail}
+            error={errors[&#39;email&#39;]}
+          /&gt;
+          &lt;fieldset className=&quot;field&quot;&gt;
+            &lt;legend className=&quot;field-label&quot;&gt;Who is paying&lt;/legend&gt;
+            &lt;div className=&quot;segmented&quot;&gt;
+              {([&#39;personal&#39;, &#39;business&#39;] as const).map((choice) =&gt; (
+                &lt;button
+                  key={choice}
+                  type=&quot;button&quot;
+                  aria-pressed={payer === choice}
+                  onClick={() =&gt; {
+                    setPayer(choice);
+                  }}
+                &gt;
+                  {choice === &#39;personal&#39; ? &#39;Personal&#39; : &#39;Business&#39;}
+                &lt;/button&gt;
+              ))}
+            &lt;/div&gt;
+            {errors[&#39;payer&#39;] !== undefined &amp;&amp; &lt;p className=&quot;field-error&quot;&gt;{errors[&#39;payer&#39;]}&lt;/p&gt;}
+          &lt;/fieldset&gt;
+        &lt;/&gt;
+      )}
+
+      {standing === &#39;verify&#39; &amp;&amp; (
+        &lt;&gt;
+          &lt;Field
+            id=&quot;code&quot;
+            label=&quot;Six-digit code&quot;
+            inputMode=&quot;numeric&quot;
+            autoComplete=&quot;one-time-code&quot;
+            hint=&quot;Any six digits will do here.&quot;
+            value={code}
+            onChange={setCode}
+            error={errors[&#39;code&#39;]}
+          /&gt;
+          &lt;label className=&quot;check&quot;&gt;
+            &lt;input
+              type=&quot;checkbox&quot;
+              checked={returning}
+              onChange={(e) =&gt; {
+                wizard.setCtx({ returning: e.target.checked });
+              }}
+            /&gt;
+            I already have an account
+          &lt;/label&gt;
+        &lt;/&gt;
+      )}
+
+      {standing === &#39;company&#39; &amp;&amp; (
+        &lt;&gt;
+          &lt;Field
+            id=&quot;company-name&quot;
+            label=&quot;Company name&quot;
+            value={company}
+            onChange={setCompany}
+            error={errors[&#39;name&#39;]}
+          /&gt;
+          &lt;Field id=&quot;vat&quot; label=&quot;VAT number&quot; value={vat} onChange={setVat} error={errors[&#39;vat&#39;]} /&gt;
+        &lt;/&gt;
+      )}
+
+      {standing === &#39;payment&#39; &amp;&amp; (
+        &lt;Field
+          id=&quot;card&quot;
+          label=&quot;Card number&quot;
+          inputMode=&quot;numeric&quot;
+          autoComplete=&quot;cc-number&quot;
+          hint=&quot;Sixteen digits, spaces allowed.&quot;
+          value={card}
+          onChange={setCard}
+          error={errors[&#39;card&#39;]}
+        /&gt;
+      )}
+
+      {standing === &#39;review&#39; &amp;&amp; (
+        &lt;&gt;
+          &lt;p&gt;This is what the flow will submit.&lt;/p&gt;
+          &lt;pre className=&quot;app-data&quot;&gt;{JSON.stringify(submission(data, active), null, 2)}&lt;/pre&gt;
+        &lt;/&gt;
+      )}
+
+      &lt;div className=&quot;actions&quot;&gt;
+        &lt;button className=&quot;button button-accent&quot; type=&quot;submit&quot; disabled={starting || isBusy}&gt;
+          {isLast ? &#39;Submit&#39; : &#39;Next&#39;}
+        &lt;/button&gt;
+        &lt;button
+          className=&quot;button button-secondary&quot;
+          type=&quot;button&quot;
+          disabled={starting || !canBack || isBusy}
+          onClick={() =&gt; {
+            void back();
+          }}
+        &gt;
+          Back
+        &lt;/button&gt;
+      &lt;/div&gt;
+
+      &lt;dl className=&quot;app-state&quot;&gt;
+        &lt;dt&gt;route&lt;/dt&gt;
+        &lt;dd&gt;{active.join(&#39; → &#39;)}&lt;/dd&gt;
+        &lt;dt&gt;completed&lt;/dt&gt;
+        &lt;dd&gt;{completed.length === 0 ? &#39;none&#39; : completed.join(&#39;, &#39;)}&lt;/dd&gt;
+        &lt;dt&gt;edited&lt;/dt&gt;
+        &lt;dd&gt;{dirty.length === 0 ? &#39;none&#39; : dirty.join(&#39;, &#39;)}&lt;/dd&gt;
+      &lt;/dl&gt;
+
+      &lt;Live text={starting ? &#39;Starting.&#39; : announcement} /&gt;
+    &lt;/form&gt;
+  );
+}
+
+/**
+ * What the flow submits: the slices of the steps that are on the route.
+ *
+ * A branch the visitor walked away from keeps its answers - the engine clears
+ * nothing when a `when` goes false, so going back to it finds them still there -
+ * and it is the application that decides those answers are not part of this
+ * submission. `verify` is missing for the other reason: `clearOnLeave` dropped
+ * it the moment the step was left.
+ */
+function submission(
+  data: Readonly&lt;Record&lt;string, unknown&gt;&gt;,
+  active: readonly string[]
+): Record&lt;string, unknown&gt; {
+  const out: Record&lt;string, unknown&gt; = {};
+  for (const id of active) {
+    if (data[id] !== undefined) out[id] = data[id];
+  }
+  return out;
+}
+
+/**
+ * A labelled text field.
+ *
+ * The label is a `for`/`id` pair rather than a wrapper, and the hint and the
+ * error are named by `aria-describedby`: that keeps the accessible name of the
+ * input to the label alone, while a screen reader still reads the refusal with
+ * the field it belongs to. Wrapping all four in one `&lt;label&gt;` would fold the
+ * error message into the name, and the field would announce itself differently
+ * before and after a refusal.
+ */
+function Field(props: {
+  id: string;
+  label: string;
+  value: string | undefined;
+  onChange: (value: string) =&gt; void;
+  type?: string;
+  inputMode?: &#39;numeric&#39;;
+  autoComplete?: string;
+  hint?: string;
+  error?: string | undefined;
+}): ReactNode {
+  const described = [
+    props.hint === undefined ? null : `${props.id}-hint`,
+    props.error === undefined ? null : `${props.id}-error`,
+  ].filter((id): id is string =&gt; id !== null);
+
+  return (
+    &lt;div className=&quot;field&quot;&gt;
+      &lt;label className=&quot;field-label&quot; htmlFor={props.id}&gt;
+        {props.label}
+      &lt;/label&gt;
+      &lt;input
+        id={props.id}
+        type={props.type ?? &#39;text&#39;}
+        inputMode={props.inputMode}
+        autoComplete={props.autoComplete}
+        value={props.value ?? &#39;&#39;}
+        aria-invalid={props.error === undefined ? undefined : true}
+        aria-describedby={described.length === 0 ? undefined : described.join(&#39; &#39;)}
+        onChange={(e) =&gt; {
+          props.onChange(e.target.value);
+        }}
+      /&gt;
+      {props.hint !== undefined &amp;&amp; (
+        &lt;span className=&quot;field-hint&quot; id={`${props.id}-hint`}&gt;
+          {props.hint}
+        &lt;/span&gt;
+      )}
+      {props.error !== undefined &amp;&amp; (
+        &lt;span className=&quot;field-error&quot; id={`${props.id}-error`}&gt;
+          {props.error}
+        &lt;/span&gt;
+      )}
+    &lt;/div&gt;
+  );
+}
+
+/** One polite region for the whole application, so two announcements queue. */
+function Live(props: { text: string }): ReactNode {
+  return (
+    &lt;p className=&quot;app-live&quot; role=&quot;status&quot; aria-live=&quot;polite&quot;&gt;
+      {props.text}
+    &lt;/p&gt;
+  );
+}
+</code></pre></article></section></main><footer class="site-footer"><span>MIT licensed</span><a href="https://github.com/ZizzX/wizzard-packages">Source</a><a href="/wizzard-packages/docs/start/">Documentation</a></footer></div></body></html><script type="module" src="/wizzard-packages/_astro/ExampleShell.astro_astro_type_script_index_0_lang.DSFyOI18.js"></script>

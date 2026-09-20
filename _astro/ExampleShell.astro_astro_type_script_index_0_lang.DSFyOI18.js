@@ -1,0 +1,1 @@
+import{n as e,t}from"./framework.Dn4rUcGN.js";var n=document.location.pathname.replace(/\/$/,``).endsWith(`/vue`)?t.vue:t.react,r=t=>{try{localStorage.setItem(e,t)}catch{}};try{localStorage.getItem(e)!==t.headless&&r(n)}catch{}for(let e of document.querySelectorAll(`.framework a`))e.addEventListener(`click`,()=>{r(e.textContent?.trim()??n)});

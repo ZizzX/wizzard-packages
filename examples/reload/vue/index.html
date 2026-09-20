@@ -1,0 +1,411 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Reload halfway through. Continue safely. - wizzard</title><meta name="description" content="A form that survives F5, checks a name against a service that takes its time, and is not corrupted by a reload in the middle of that check. Every refusal to restore says which refusal it was."><meta property="og:title" content="Reload halfway through. Continue safely. - wizzard"><meta property="og:description" content="A form that survives F5, checks a name against a service that takes its time, and is not corrupted by a reload in the middle of that check. Every refusal to restore says which refusal it was."><meta property="og:type" content="website"><script>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme =
+			storedTheme ||
+			(window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+		document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme || 'auto') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script><template id="theme-icons"><svg aria-hidden="true" class="light astro-ac6ikqru" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg><svg aria-hidden="true" class="dark astro-ac6ikqru" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><svg aria-hidden="true" class="auto astro-ac6ikqru" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg></template><link rel="stylesheet" href="/wizzard-packages/_astro/ThemeProvider.DplDwoYR.css"><style>@layer starlight.components{svg:where(.astro-ac6ikqru){color:var(--sl-icon-color);font-size:var(--sl-icon-size,1em);width:1em;height:1em}}
+</style><script type="module" src="/wizzard-packages/_astro/page.Dwipeu-R.js"></script></head><body><header class="topbar"><div class="site-header"><a class="wordmark" href="/wizzard-packages/">wizzard</a><nav class="site-nav" aria-label="Site"><a href="/wizzard-packages/examples/" aria-current="true">Examples</a><a href="/wizzard-packages/inspector/">Inspector</a><a href="/wizzard-packages/docs/start/">Docs</a><a href="https://github.com/ZizzX/wizzard-packages">GitHub</a></nav><div class="site-tools"><site-search class=" astro-twxbhvpe" data-translations="{&quot;placeholder&quot;:&quot;Search&quot;}"><button data-open-modal disabled aria-label="Search" aria-keyshortcuts="Control+K" class="astro-twxbhvpe"><svg aria-hidden="true" class="astro-twxbhvpe astro-ac6ikqru" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"/></svg><span class="sl-hidden md:sl-block astro-twxbhvpe" aria-hidden="true">Search</span><kbd class="sl-hidden md:sl-flex astro-twxbhvpe" style="display: none;"><kbd class="astro-twxbhvpe">Ctrl</kbd><kbd class="astro-twxbhvpe">K</kbd></kbd></button><dialog style="padding:0" aria-label="Search" class="astro-twxbhvpe"><div class="dialog-frame sl-flex astro-twxbhvpe"><button data-close-modal class="sl-flex md:sl-hidden astro-twxbhvpe">Cancel</button><div class="search-container astro-twxbhvpe"><div id="starlight__search" class="astro-twxbhvpe"></div></div></div></dialog></site-search><script>
+	(() => {
+		const openBtn = document.querySelector('button[data-open-modal]');
+		const shortcut = openBtn?.querySelector('kbd');
+		if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+		const platformKey = shortcut.querySelector('kbd');
+		if (platformKey && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+			platformKey.textContent = '⌘';
+			openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+		}
+		shortcut.style.display = '';
+	})();
+</script><script type="module" src="/wizzard-packages/_astro/Search.astro_astro_type_script_index_0_lang.raRQUAJA.js"></script><div class="site-theme"><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-r2uzkgg6"><span class="sr-only astro-r2uzkgg6">Select theme</span><svg aria-hidden="true" class="icon label-icon astro-r2uzkgg6 astro-ac6ikqru" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg><select autocomplete="off" class="astro-r2uzkgg6"><option value="dark" class="astro-r2uzkgg6">Dark</option><option value="light" class="astro-r2uzkgg6">Light</option><option value="auto" selected class="astro-r2uzkgg6">Auto</option></select><svg aria-hidden="true" class="icon caret astro-r2uzkgg6 astro-ac6ikqru" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><script type="module">var e=`starlight-theme`,t=e=>e===`auto`||e===`dark`||e===`light`?e:`auto`,n=()=>t(typeof localStorage<`u`&&localStorage.getItem(e));function r(t){typeof localStorage<`u`&&localStorage.setItem(e,t===`light`||t===`dark`?t:``)}var i=()=>matchMedia(`(prefers-color-scheme: light)`).matches?`light`:`dark`;function a(e){StarlightThemeProvider.updatePickers(e),document.documentElement.dataset.theme=e===`auto`?i():e,r(e)}matchMedia(`(prefers-color-scheme: light)`).addEventListener(`change`,()=>{n()===`auto`&&a(`auto`)});var o=class extends HTMLElement{constructor(){super(),a(n()),this.querySelector(`select`)?.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&a(t(e.currentTarget.value))})}};customElements.define(`starlight-theme-select`,o);</script></div></div></div></header><div class="shell"><main><section class="hero hero-tight"><p class="example-ref">R-B</p><h1>Reload halfway through. Continue safely.</h1><p class="lede">A form that survives F5, checks a name against a service that takes its time, and is not corrupted by a reload in the middle of that check. Every refusal to restore says which refusal it was.</p><nav class="framework" aria-label="Rendering"><a href="/wizzard-packages/examples/reload/">React</a><a href="/wizzard-packages/examples/reload/vue/" aria-current="page">Vue</a></nav><p class="framework-note">This page ships the Vue binding and only that one. React is what the server renders when no framework is named, so the choice is a link rather than a switch: nothing a browser remembered can disagree with what arrived.</p><div class="example-stage"><style>astro-island,astro-slot,astro-static-slot{display:contents}</style><script>(()=>{var e=async t=>{await(await t())()};(self.Astro||(self.Astro={})).load=e;window.dispatchEvent(new Event("astro:load"));})();</script><script>(()=>{var g=Object.defineProperty;var w=(a,s,c)=>s in a?g(a,s,{enumerable:!0,configurable:!0,writable:!0,value:c}):a[s]=c;var l=(a,s,c)=>w(a,typeof s!="symbol"?s+"":s,c);var E=new Set(["__proto__","constructor","prototype"]);{let a={0:t=>y(t),1:t=>c(t),2:t=>new RegExp(t),3:t=>new Date(t),4:t=>new Map(c(t)),5:t=>new Set(c(t)),6:t=>BigInt(t),7:t=>new URL(t),8:t=>new Uint8Array(t),9:t=>new Uint16Array(t),10:t=>new Uint32Array(t),11:t=>Number.POSITIVE_INFINITY*t},s=t=>{let[p,e]=t;return p in a?a[p](e):void 0},c=t=>t.map(s),y=t=>typeof t!="object"||t===null?t:Object.fromEntries(Object.entries(t).map(([p,e])=>[p,s(e)]));class f extends HTMLElement{constructor(){super(...arguments);l(this,"Component");l(this,"hydrator");l(this,"hydrate",async()=>{var b;if(!this.hydrator||!this.isConnected)return;let e=(b=this.parentElement)==null?void 0:b.closest("astro-island[ssr]");if(e){e.addEventListener("astro:hydrate",this.hydrate,{once:!0});return}let r=this.querySelectorAll("astro-slot"),n={},d=this.querySelectorAll("template[data-astro-template]");for(let o of d){let i=o.closest(this.tagName);i!=null&&i.isSameNode(this)&&(n[o.getAttribute("data-astro-template")||"default"]=o.innerHTML,o.remove())}for(let o of r){let i=o.closest(this.tagName);i!=null&&i.isSameNode(this)&&(n[o.getAttribute("name")||"default"]=o.innerHTML)}let u;try{u=this.hasAttribute("props")?y(JSON.parse(this.getAttribute("props"))):{}}catch(o){let i=this.getAttribute("component-url")||"<unknown>",v=this.getAttribute("component-export");throw v&&(i+=` (export ${v})`),console.error(`[hydrate] Error parsing props for component ${i}`,this.getAttribute("props"),o),o}let h;await this.hydrator(this)(this.Component,u,n,{client:this.getAttribute("client")}),this.removeAttribute("ssr"),this.dispatchEvent(new CustomEvent("astro:hydrate"))});l(this,"unmount",()=>{this.isConnected||this.dispatchEvent(new CustomEvent("astro:unmount"))})}disconnectedCallback(){document.removeEventListener("astro:after-swap",this.unmount),document.addEventListener("astro:after-swap",this.unmount,{once:!0})}connectedCallback(){if(!this.hasAttribute("await-children")||document.readyState==="interactive"||document.readyState==="complete")this.childrenConnectedCallback();else{let e=()=>{document.removeEventListener("DOMContentLoaded",e),r.disconnect(),this.childrenConnectedCallback()},r=new MutationObserver(()=>{var n;((n=this.lastChild)==null?void 0:n.nodeType)===Node.COMMENT_NODE&&this.lastChild.nodeValue==="astro:end"&&(this.lastChild.remove(),e())});r.observe(this,{childList:!0}),document.addEventListener("DOMContentLoaded",e)}}async childrenConnectedCallback(){let e=this.getAttribute("before-hydration-url");e&&await import(e),this.start()}getRetryImportUrl(e){let r=new URL(e,document.baseURI);return r.searchParams.set("astro-retry",Date.now().toString()),r.toString()}async importWithRetry(e){try{return await import(e)}catch(r){return await new Promise(n=>setTimeout(n,1e3)),import(this.getRetryImportUrl(e))}}handleHydrationError(e){let r=this.getAttribute("component-url"),n=new CustomEvent("astro:hydration-error",{cancelable:!0,bubbles:!0,composed:!0,detail:{error:e,componentUrl:r}});this.dispatchEvent(n)&&console.error(`[astro-island] Error hydrating ${r}`,e)}async start(){let e=JSON.parse(this.getAttribute("opts")),r=this.getAttribute("client");if(Astro[r]===void 0){window.addEventListener(`astro:${r}`,()=>this.start(),{once:!0});return}try{await Astro[r](async()=>{let n=this.getAttribute("renderer-url");try{let[d,{default:u}]=await Promise.all([this.importWithRetry(this.getAttribute("component-url")),n?this.importWithRetry(n):Promise.resolve({default:()=>()=>{}})]),h=this.getAttribute("component-export")||"default";if(h.includes(".")){this.Component=d;for(let m of h.split(".")){if(E.has(m)||!this.Component||typeof this.Component!="object"&&typeof this.Component!="function"||!Object.hasOwn(this.Component,m))throw new Error(`Invalid component export path: ${h}`);this.Component=this.Component[m]}}else{if(E.has(h))throw new Error(`Invalid component export path: ${h}`);this.Component=d[h]}return this.hydrator=u,this.hydrate}catch(d){return this.handleHydrationError(d),()=>{}}},e,this)}catch(n){this.handleHydrationError(n)}}attributeChangedCallback(){this.hydrate()}}l(f,"observedAttributes",["props"]),customElements.get("astro-island")||customElements.define("astro-island",f)}})();</script><astro-island uid="ZJTDYO" prefix="s0" component-url="/wizzard-packages/_astro/ReloadVue.ONw3_ly3.js" component-export="default" renderer-url="/wizzard-packages/_astro/client.CErW1bqM.js" props="{}" ssr client="load" opts="{&quot;name&quot;:&quot;ReloadVue&quot;,&quot;value&quot;:true}" await-children><!--[--><div class="app"><p class="app-restore" role="status" aria-live="polite">Starting.</p><form><h2 tabindex="-1">Your account</h2><div class="field"><label class="field-label" for="reload-email">Email</label><input id="reload-email" value="" type="email" autocomplete="email"><!----></div><div class="actions"><button class="button button-accent" type="submit" disabled>Next</button><button class="button button-secondary" type="button" disabled> Back </button></div></form><dl class="app-state"><dt>status</dt><dd>init</dd><dt>saved</dt><dd>wizzard:example:reload</dd></dl><p class="app-note"><button class="button button-secondary" type="button" disabled> Ship version 2 and reload </button><span> Ages the saved session by one version and reloads, which is what everyone with a form open meets on the day an application changes what it collects. </span></p><p class="app-live" role="status" aria-live="polite"></p></div><!--]--><!--astro:end--></astro-island></div></section><section class="example-source"><h2>The source it is running</h2><p class="lede">These blocks are the files the application above imports, read at build time. There is no copy of them to fall out of date.</p><article><h3>flow.ts</h3><p>The same file the React page shows. A session saved on one page restores on the other: the binding is a rendering, and the snapshot does not belong to it.</p><pre class="code-block" data-lang="ts"><code>import { defineFlow, step } from &#39;@wizzard-packages/core&#39;;
+
+/**
+ * R-B: an application that survives a reload, and an asynchronous check that a
+ * reload in the middle of must not corrupt.
+ *
+ * Three steps, because what this one has to demonstrate is not a route: it is
+ * what is stored, what is refused, and what a person is told when the form they
+ * half filled in comes back empty.
+ */
+export const reload = defineFlow({
+  id: &#39;reload&#39;,
+  version: 1,
+  order: [&#39;account&#39;, &#39;workspace&#39;, &#39;confirm&#39;],
+  steps: {
+    account: step&lt;{ email: string }&gt;({
+      label: &#39;Account&#39;,
+      validate: { $ref: &#39;account&#39; },
+    }),
+
+    workspace: step&lt;{ name: string }&gt;({
+      label: &#39;Workspace&#39;,
+      // The check is a lookup, so it is asynchronous, so `next()` is a promise
+      // and the wizard is `busy` until it answers. That is what the buttons
+      // above read, and what a reload has to be safe in the middle of.
+      validate: { $ref: &#39;workspace&#39; },
+    }),
+
+    confirm: step({ label: &#39;Confirm&#39; }),
+  },
+  policy: &#39;free&#39;,
+});
+
+/**
+ * The last step. A finished run is one that has this in `completed`, which is
+ * the only durable way to know: `toSnapshot` does not carry `status`, so a
+ * wizard that reached the end and was reloaded comes back `idle`. Keeping the
+ * fact in the rendering instead would lose it on exactly the reload this
+ * application exists to survive.
+ */
+export const LAST_STEP = &#39;confirm&#39;;
+
+/** Where the session is kept. One key per flow. */
+export const STORAGE_KEY = &#39;wizzard:example:reload&#39;;
+
+/**
+ * The application&#39;s own version, not the flow&#39;s. It is bumped when the meaning
+ * of what was collected changes, and a session written under a different one is
+ * refused rather than half-understood.
+ */
+export const APP_VERSION = 1;
+</code></pre></article><article><h3>registry.ts</h3><p>Also the same file. A resolver is handed no abort signal, so cancelling does not stop the lookup - it makes the answer irrelevant.</p><pre class="code-block" data-lang="ts"><code>import type { AsyncRegistry, Scope } from &#39;@wizzard-packages/core&#39;;
+
+/**
+ * The validators. One is a plain function of the data; the other has to ask
+ * somebody, so it is a promise.
+ *
+ * A resolver is not handed an abort signal, so `cancel()` does not stop the
+ * lookup that is already in the air - it makes the answer irrelevant. The
+ * navigation epoch moved on, so whatever comes back is discarded rather than
+ * written over a wizard that has since gone somewhere else. That is the
+ * property a reload in the middle of a check depends on.
+ */
+type Fields = Record&lt;string, string&gt; | null;
+
+const slice = (scope: Scope, id: string): Record&lt;string, unknown&gt; =&gt;
+  (scope.data[id] as Record&lt;string, unknown&gt; | undefined) ?? {};
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** The names the imaginary service already has. */
+export const TAKEN = [&#39;acme&#39;, &#39;demo&#39;, &#39;test&#39;];
+
+/** How long the lookup pretends to take. */
+export const LOOKUP_MS = 700;
+
+const wait = (ms: number): Promise&lt;void&gt; =&gt;
+  new Promise((resolve) =&gt; {
+    setTimeout(resolve, ms);
+  });
+
+export const registry: AsyncRegistry = {
+  account: (_args, scope): Fields =&gt; {
+    const { email } = slice(scope, &#39;account&#39;);
+    if (typeof email !== &#39;string&#39; || email === &#39;&#39;) return { email: &#39;Enter your email address.&#39; };
+    if (!EMAIL.test(email)) return { email: &#39;That does not look like an email address.&#39; };
+    return null;
+  },
+
+  workspace: async (_args, scope): Promise&lt;Fields&gt; =&gt; {
+    const { name } = slice(scope, &#39;workspace&#39;);
+    const wanted = typeof name === &#39;string&#39; ? name.trim() : &#39;&#39;;
+    // The shape is checked before anything is asked: there is no point paying
+    // for a round trip to be told what a regular expression already knew.
+    if (wanted === &#39;&#39;) return { name: &#39;Choose a name for your workspace.&#39; };
+    if (!/^[a-z0-9-]{3,}$/.test(wanted)) {
+      return { name: &#39;Lower case letters, digits and dashes, three or more.&#39; };
+    }
+
+    await wait(LOOKUP_MS);
+
+    if (TAKEN.includes(wanted)) return { name: `&quot;${wanted}&quot; is taken. Try another one.` };
+    return null;
+  },
+};
+</code></pre></article><article><h3>outcome.ts</h3><p>And this one, so the two renderings cannot drift into saying different things about the same event.</p><pre class="code-block" data-lang="ts"><code>import type { RestoreOutcome } from &#39;@wizzard-packages/plugins/persist&#39;;
+
+import { STORAGE_KEY } from &#39;./flow&#39;;
+
+/**
+ * What a person is told about the session they did or did not get back.
+ *
+ * A form that was half filled in and is now empty looks like a bug to whoever
+ * filled it, and silence is why they would think so. The plugin answers with a
+ * reason for exactly this: the host turns it into a sentence, because only the
+ * host knows what the form is called and who is reading it.
+ *
+ * Shared by both renderings so the two cannot drift into saying different
+ * things about the same event.
+ */
+export function describeRestore(outcome: RestoreOutcome | null): string {
+  if (outcome === null) return &#39;Starting.&#39;;
+  if (outcome.restored) return &#39;Restored. You are back where you left off.&#39;;
+
+  switch (outcome.reason) {
+    case &#39;persist/nothing-stored&#39;:
+      return &#39;Nothing saved yet. This one will be, from the first answer.&#39;;
+    case &#39;persist/unavailable&#39;:
+      return &#39;Saving unavailable: this browser did not allow storage, which private windows do.&#39;;
+    case &#39;snapshot/other-flow&#39;:
+      return &#39;Reset: the saved session was written by an older version of this application.&#39;;
+    case &#39;snapshot/version&#39;:
+      return &#39;Reset: the saved session is in a format this build does not read.&#39;;
+    case &#39;snapshot/unknown-step&#39;:
+      return &#39;Reset: the saved session was standing on a step this flow no longer has.&#39;;
+    default:
+      return `Reset: the saved session could not be read (${outcome.reason}).`;
+  }
+}
+
+/**
+ * Ages the stored session, then reloads.
+ *
+ * A version bump is the one refusal a visitor cannot produce by hand, and it is
+ * the one worth seeing: it is what happens to everybody with a session open on
+ * the day an application ships a change to what it collects.
+ */
+export function simulateUpgrade(): void {
+  // Every one of these can throw in a browser that refuses storage - the
+  // property access included, which is why this is a try and not a check. The
+  // page already says saving is unavailable there; the button does nothing
+  // rather than taking the example down with it.
+  try {
+    const raw = globalThis.localStorage.getItem(STORAGE_KEY);
+    if (raw === null) return;
+    const stored = JSON.parse(raw) as Record&lt;string, unknown&gt;;
+    globalThis.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...stored, appVersion: 0 }));
+  } catch {
+    return;
+  }
+  globalThis.location.reload();
+}
+</code></pre></article><article><h3>Reload.vue</h3><p>The rendering, with `onMounted` where the React file has an effect. The restored session appears one tick after mount for the same reason.</p><pre class="code-block" data-lang="vue"><code>&lt;script setup lang=&quot;ts&quot;&gt;
+import type { RestoreOutcome } from &#39;@wizzard-packages/plugins/persist&#39;;
+import {
+  useErrors,
+  useField,
+  useNavigation,
+  useStep,
+  useWizard,
+  useWizardSelector,
+} from &#39;@wizzard-packages/vue&#39;;
+import { computed, onMounted, ref, useTemplateRef, watch } from &#39;vue&#39;;
+
+import { LAST_STEP, STORAGE_KEY } from &#39;./flow&#39;;
+import { describeRestore, simulateUpgrade } from &#39;./outcome&#39;;
+import { TAKEN } from &#39;./registry&#39;;
+
+/**
+ * R-B on the Vue binding. The same application as `App.tsx`, message for
+ * message, with `onMounted` where the other has an effect.
+ *
+ * `busy` is read off the engine, never tracked here: it is true from the moment
+ * `next()` starts until the validator answers, which is what disables the
+ * button and what &quot;Checking&quot; is spelled from.
+ */
+const props = defineProps&lt;{ restored: { outcome: RestoreOutcome | null } }&gt;();
+
+const LABELS: Record&lt;string, string&gt; = {
+  account: &#39;Your account&#39;,
+  workspace: &#39;Name your workspace&#39;,
+  confirm: &#39;Confirm&#39;,
+};
+
+const wizard = useWizard();
+const { current, active, isLast } = useStep();
+const { back, canBack, isBusy } = useNavigation();
+const errors = useErrors();
+
+const email = useField&lt;string&gt;(&#39;account.email&#39;);
+const name = useField&lt;string&gt;(&#39;workspace.name&#39;);
+const status = useWizardSelector((s) =&gt; s.status);
+
+// Whether the run is finished is read off the engine, not remembered here:
+// `toSnapshot` does not carry `status`, so a wizard that reached the end and was
+// reloaded comes back `idle`, and a flag in this component would come back
+// false and send the visitor round the last step again. `completed` is in the
+// snapshot, and the last step is in it only once the flow ended.
+const ended = useWizardSelector((s) =&gt; s.completed.includes(LAST_STEP));
+
+const mounted = ref(false);
+const outcome = ref&lt;RestoreOutcome | null&gt;(null);
+const announcement = ref(&#39;&#39;);
+const heading = useTemplateRef&lt;HTMLHeadingElement&gt;(&#39;heading&#39;);
+
+onMounted(() =&gt; {
+  mounted.value = true;
+  outcome.value = props.restored.outcome;
+});
+
+// Until mount, this is the frame the server sent: the step the flow is about to
+// enter, with the controls saying they are not ready.
+const standing = computed(() =&gt;
+  mounted.value ? (current.value ?? active.value[0] ?? &#39;account&#39;) : &#39;account&#39;
+);
+const starting = computed(() =&gt; !mounted.value || current.value === null);
+const restoreLine = computed(() =&gt; describeRestore(mounted.value ? outcome.value : null));
+const hint = computed(
+  () =&gt; `Checked against the service when you continue. ${TAKEN.join(&#39;, &#39;)} are taken.`
+);
+
+let moved = false;
+watch(current, (to) =&gt; {
+  if (to === null || !mounted.value) return;
+  if (!moved) {
+    moved = true;
+    return;
+  }
+  heading.value?.focus();
+  const at = active.value.indexOf(to) + 1;
+  announcement.value = `${LABELS[to] ?? to}. Step ${at} of ${active.value.length}.`;
+});
+
+async function onNext(): Promise&lt;void&gt; {
+  if (ended.value) {
+    announcement.value = &#39;&#39;;
+    wizard.reset();
+    await wizard.start();
+    return;
+  }
+  const result = await wizard.next();
+  if (result.ok) {
+    if (result.to === &#39;@end&#39;) announcement.value = &#39;Finished.&#39;;
+    return;
+  }
+  if (result.reason === &#39;superseded&#39; || result.reason === &#39;aborted&#39;) return;
+  const fields = Object.values(result.errors ?? {});
+  announcement.value =
+    fields.length === 0 ? `That move was refused: ${result.reason}.` : fields.join(&#39; &#39;);
+}
+
+/**
+ * Back while a check is in flight. `cancel()` aborts the navigation, so the
+ * answer that arrives later belongs to an epoch that has passed and is
+ * discarded; the move backwards is a new one and wins.
+ */
+async function onBack(): Promise&lt;void&gt; {
+  wizard.cancel();
+  await back();
+}
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;div class=&quot;app&quot;&gt;
+    &lt;p class=&quot;app-restore&quot; role=&quot;status&quot; aria-live=&quot;polite&quot;&gt;{{ restoreLine }}&lt;/p&gt;
+
+    &lt;template v-if=&quot;mounted &amp;&amp; ended&quot;&gt;
+      &lt;h2 ref=&quot;heading&quot; tabindex=&quot;-1&quot;&gt;Done&lt;/h2&gt;
+      &lt;p&gt;
+        The session is still saved: reload and you come back to this. Start again replaces it with
+        an empty one, because that is a commit like any other.
+      &lt;/p&gt;
+      &lt;div class=&quot;actions&quot;&gt;
+        &lt;button class=&quot;button button-accent&quot; type=&quot;button&quot; @click=&quot;onNext()&quot;&gt;Start again&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/template&gt;
+
+    &lt;form v-else @submit.prevent=&quot;onNext()&quot;&gt;
+      &lt;h2 ref=&quot;heading&quot; tabindex=&quot;-1&quot;&gt;{{ LABELS[standing] ?? standing }}&lt;/h2&gt;
+
+      &lt;div v-if=&quot;standing === &#39;account&#39;&quot; class=&quot;field&quot;&gt;
+        &lt;label class=&quot;field-label&quot; for=&quot;reload-email&quot;&gt;Email&lt;/label&gt;
+        &lt;input
+          id=&quot;reload-email&quot;
+          :value=&quot;mounted ? (email ?? &#39;&#39;) : &#39;&#39;&quot;
+          type=&quot;email&quot;
+          autocomplete=&quot;email&quot;
+          :aria-invalid=&quot;errors[&#39;email&#39;] ? true : undefined&quot;
+          :aria-describedby=&quot;errors[&#39;email&#39;] ? &#39;reload-email-error&#39; : undefined&quot;
+          @input=&quot;email = ($event.target as HTMLInputElement).value&quot;
+        /&gt;
+        &lt;span v-if=&quot;errors[&#39;email&#39;]&quot; id=&quot;reload-email-error&quot; class=&quot;field-error&quot;&gt;
+          {{ errors[&#39;email&#39;] }}
+        &lt;/span&gt;
+      &lt;/div&gt;
+
+      &lt;div v-else-if=&quot;standing === &#39;workspace&#39;&quot; class=&quot;field&quot;&gt;
+        &lt;label class=&quot;field-label&quot; for=&quot;reload-name&quot;&gt;Workspace name&lt;/label&gt;
+        &lt;input
+          id=&quot;reload-name&quot;
+          :value=&quot;mounted ? (name ?? &#39;&#39;) : &#39;&#39;&quot;
+          :aria-invalid=&quot;errors[&#39;name&#39;] ? true : undefined&quot;
+          :aria-describedby=&quot;
+            errors[&#39;name&#39;] ? &#39;reload-name-hint reload-name-error&#39; : &#39;reload-name-hint&#39;
+          &quot;
+          @input=&quot;name = ($event.target as HTMLInputElement).value&quot;
+        /&gt;
+        &lt;span id=&quot;reload-name-hint&quot; class=&quot;field-hint&quot;&gt;{{ hint }}&lt;/span&gt;
+        &lt;span v-if=&quot;errors[&#39;name&#39;]&quot; id=&quot;reload-name-error&quot; class=&quot;field-error&quot;&gt;
+          {{ errors[&#39;name&#39;] }}
+        &lt;/span&gt;
+      &lt;/div&gt;
+
+      &lt;p v-else-if=&quot;standing === &#39;confirm&#39;&quot;&gt;
+        Reload the page now and you come back to this step, with both answers still in it. What was
+        stored is the durable snapshot, so nothing that described a moment - a navigation in flight,
+        a validator&#39;s errors - came back with it.
+      &lt;/p&gt;
+
+      &lt;div class=&quot;actions&quot;&gt;
+        &lt;button class=&quot;button button-accent&quot; type=&quot;submit&quot; :disabled=&quot;starting || isBusy&quot;&gt;
+          {{ isBusy ? &#39;Checking…&#39; : isLast ? &#39;Finish&#39; : &#39;Next&#39; }}
+        &lt;/button&gt;
+        &lt;button
+          class=&quot;button button-secondary&quot;
+          type=&quot;button&quot;
+          :disabled=&quot;starting || !canBack&quot;
+          @click=&quot;onBack()&quot;
+        &gt;
+          Back
+        &lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/form&gt;
+
+    &lt;dl class=&quot;app-state&quot;&gt;
+      &lt;dt&gt;status&lt;/dt&gt;
+      &lt;dd&gt;{{ starting ? &#39;init&#39; : status }}&lt;/dd&gt;
+      &lt;dt&gt;saved&lt;/dt&gt;
+      &lt;dd&gt;{{ STORAGE_KEY }}&lt;/dd&gt;
+    &lt;/dl&gt;
+
+    &lt;p class=&quot;app-note&quot;&gt;
+      &lt;button
+        class=&quot;button button-secondary&quot;
+        type=&quot;button&quot;
+        :disabled=&quot;!mounted&quot;
+        @click=&quot;simulateUpgrade()&quot;
+      &gt;
+        Ship version 2 and reload
+      &lt;/button&gt;
+      &lt;span&gt;
+        Ages the saved session by one version and reloads, which is what everyone with a form open
+        meets on the day an application changes what it collects.
+      &lt;/span&gt;
+    &lt;/p&gt;
+
+    &lt;p class=&quot;app-live&quot; role=&quot;status&quot; aria-live=&quot;polite&quot;&gt;{{ announcement }}&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/template&gt;
+</code></pre></article></section></main><footer class="site-footer"><span>MIT licensed</span><a href="https://github.com/ZizzX/wizzard-packages">Source</a><a href="/wizzard-packages/docs/start/">Documentation</a></footer></div></body></html><script type="module" src="/wizzard-packages/_astro/ExampleShell.astro_astro_type_script_index_0_lang.DSFyOI18.js"></script>

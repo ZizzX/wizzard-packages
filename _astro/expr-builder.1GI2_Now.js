@@ -1,0 +1,1 @@
+var e=e=>({$get:e}),t=e=>({$not:e}),n=e=>({$empty:e}),r=(e,t)=>({$eq:[e,t]});export{t as i,r as n,e as r,n as t};
