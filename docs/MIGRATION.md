@@ -69,7 +69,7 @@ Every symbol the 0.x packages exported, and what replaces it.
 
 | 0.x export                                                     | v1                                                                                  |
 | -------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `WizardStore`                                                  | `createWizard(options)` in `core/v1`                                                |
+| `WizardStore`                                                  | `createWizard(options)` in `core`                                                   |
 | `IWizardStore`                                                 | `Wizard<F>`                                                                         |
 | `IWizardState`                                                 | `WizardState`, with the derived values in `Snapshot`                                |
 | `IWizardActions`                                               | methods on `Wizard`: `next`, `back`, `go`, `set`, `patch`, `reset`                  |
@@ -86,7 +86,7 @@ Every symbol the 0.x packages exported, and what replaces it.
 | `WizardEventName`, `WizardEventPayloads`, `WizardEventHandler` | none — use `subscribe`, `select`, `watch`, or a plugin hook                         |
 | `IBreadcrumb`, `BreadcrumbStatus`                              | `Breadcrumb`, on `Snapshot.breadcrumbs`                                             |
 | `Path`, `PathValue`                                            | `SliceAt<F, P>` — types a bare step id only; a nested path reads `unknown`          |
-| `getByPath`, `setByPath`                                       | `getPath`, `setPath` from `core/v1` — no default-value argument                     |
+| `getByPath`, `setByPath`                                       | `getPath`, `setPath` from `core` — no default-value argument                        |
 | `toPath`                                                       | none — paths are strings throughout                                                 |
 | `shallowEqual`                                                 | none — `useWizardSelector` takes an equality function                               |
 
@@ -94,7 +94,7 @@ Every symbol the 0.x packages exported, and what replaces it.
 
 | 0.x export                                                                                                           | v1                                                                                                                     |
 | -------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `WizardProvider`                                                                                                     | `WizardProvider` from `react/v1` — **same name, different props**, see below                                           |
+| `WizardProvider`                                                                                                     | `WizardProvider` from `react` — **same name, different props**, see below                                              |
 | `WizardProviderProps`                                                                                                | `WizardProviderProps` — `{ wizard }`, or the options to build one                                                      |
 | `createWizardFactory`                                                                                                | none — there is no factory; `createWizard` takes the flow                                                              |
 | `createWizardStore`, `createWizardHooks`, `WizardStoreBundle`, `CreateWizardStoreOptions`                            | none — the context-free store path is deleted                                                                          |
@@ -111,7 +111,7 @@ Every symbol the 0.x packages exported, and what replaces it.
 | `useWizardStoreState`, `useWizardStoreValue`, `useWizardStoreField`, `useWizardStoreError`, `useWizardStoreSelector` | none — the store-without-provider hooks are deleted                                                                    |
 | `WizardStepRenderer`, `WizardStepRendererProps`                                                                      | none — render on `current`, or name a view with `AtomStep.view`                                                        |
 | `IWizardHandle`                                                                                                      | none                                                                                                                   |
-| re-exports of `WizardStore`, `loggerMiddleware` and the core types                                                   | gone with their packages; import from `core/v1`                                                                        |
+| re-exports of `WizardStore`, `loggerMiddleware` and the core types                                                   | gone with their packages; import from `core`                                                                           |
 
 ### `@wizzard-packages/vue`
 
@@ -229,15 +229,16 @@ the restored run has not walked to in this session. It does **not** waive the st
 its `when`: a step the restored data no longer reaches is still refused, and `go` says so in its
 result. That is the right way round, and it is why the result is worth reading.
 
-## The root import changes at 1.0.0
+## The root import has changed
 
-Today `@wizzard-packages/core` resolves `.` to 0.x and `/v1` to the new engine, which is why
-every example here imports `/v1`. At 1.0.0 the root export becomes v1. **This is a breaking
-change to code that never named a version**: an untouched 0.x application that upgrades across
-it gets the new engine from an import it did not edit.
+`@wizzard-packages/core` resolves `.` to v1, and `/v1` resolves to the same module and the same
+declarations. Both are the new engine, and `/v1` keeps working through 1.x, so an import written
+against canary needs no edit. Every example on this page uses the root.
 
-Pin `0.x` on the `latest` tag until you have worked through this page, then move to `/v1`
-imports, then upgrade. The `/v1` path keeps working after the flip.
+What is published on `latest` is still 0.x, and it is the last 0.x release: the line is gone from
+the repository. **The flip is a breaking change to code that never named a version** — an
+untouched 0.x application that upgrades across 1.0.0 gets the new engine from an import it did
+not edit. Pin `0.x` on `latest` until you have worked through this page, then upgrade.
 
 ## Where to go next
 

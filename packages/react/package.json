@@ -56,7 +56,7 @@
   },
   "scripts": {
     "build": "tsup",
-    "dev": "tsup src/index.ts --format cjs,esm --watch --dts",
+    "dev": "tsup src/v1/index.tsx --format cjs,esm --watch --dts",
     "lint": "eslint .",
     "test": "vitest",
     "test:run": "vitest run",

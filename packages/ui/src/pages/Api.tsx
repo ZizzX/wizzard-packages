@@ -24,7 +24,11 @@ export default function Api() {
         <article className="api-content">
           <h2>API Reference</h2>
           <p>
-            API docs are not available. Run <code>pnpm docs:api</code> first.
+            The API reference has moved to the documentation site:{' '}
+            <a href="https://zizzx.github.io/wizzard-packages/docs/api/">
+              zizzx.github.io/wizzard-packages/docs/api/
+            </a>
+            . This page covered the 0.x surface, which no longer exists.
           </p>
         </article>
       </section>
