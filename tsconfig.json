@@ -20,7 +20,6 @@
   "references": [
     { "path": "./packages/core" },
     { "path": "./packages/react" },
-    { "path": "./packages/devtools" },
-    { "path": "./packages/ui" }
+    { "path": "./packages/devtools" }
   ]
 }

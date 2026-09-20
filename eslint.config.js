@@ -173,13 +173,11 @@ export default [
   },
 
   // ── LEGACY QUARANTINE ───────────────────────────────────────────────────────
-  // What is left after the 0.x teardown: the old marketing site, which keeps
-  // serving the live pages until the documentation site takes the deploy over,
-  // and the devtools panel, which predates the standard and is held to it by
-  // its own task. Remove an entry the moment its replacement lands. Never add
-  // one.
+  // What is left after the 0.x teardown: the devtools panel, which predates the
+  // standard and is held to it by its own task. Remove the entry the moment
+  // that lands. Never add one.
   {
-    files: ['packages/ui/src/**', 'packages/devtools/src/**'],
+    files: ['packages/devtools/src/**'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unnecessary-condition': 'off',
