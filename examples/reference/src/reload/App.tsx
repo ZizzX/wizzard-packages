@@ -6,7 +6,7 @@ import {
   useStep,
   useWizard,
   useWizardSelector,
-} from '@wizzard-packages/react/v1';
+} from '@wizzard-packages/react';
 import { persist, type RestoreOutcome } from '@wizzard-packages/plugins/persist';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 

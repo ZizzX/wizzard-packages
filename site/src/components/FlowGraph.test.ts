@@ -4,7 +4,7 @@
  * flow, and the node and edge states read off its snapshot.
  */
 import { describe, expect, it } from 'vitest';
-import { createWizard, END } from '@wizzard-packages/core/v1';
+import { createWizard, END } from '@wizzard-packages/core';
 import { buildGraph } from '@wizzard-packages/core/graph';
 import { flowA, registryA } from '../../../contract/fixtures';
 import { edgeLive, nodeState } from './FlowGraph';

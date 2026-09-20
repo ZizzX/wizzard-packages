@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
-import type { NavIntent, NavResult } from '@wizzard-packages/core/v1';
+import type { NavIntent, NavResult } from '@wizzard-packages/core';
 import type { Outcome, Pending } from './headless';
 import type { CommitRow } from './useObserved';
 import { noPlugin } from './messages';

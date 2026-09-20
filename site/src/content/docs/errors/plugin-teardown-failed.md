@@ -9,7 +9,7 @@ every other teardown still ran. Fix that function, or remove the plugin from opt
 …/errors/plugin-teardown-failed
 ```
 
-Printed with `console.error` by `destroy()` in `@wizzard-packages/core/v1`, with what the teardown
+Printed with `console.error` by `destroy()` in `@wizzard-packages/core`, with what the teardown
 threw as the second argument.
 
 A plugin's `init` may return a function, and `destroy()` runs each of them once. A provider in

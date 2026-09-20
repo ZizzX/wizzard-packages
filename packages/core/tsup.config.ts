@@ -2,12 +2,11 @@ import { resolve } from 'path';
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
-  // v1 ships as its own entry so it can be tried from canary without
-  // touching the 0.x surface, and so validate-flow, graph, session and the
-  // expression builder stay out of runtime bundles: a wizard that never draws,
-  // replays or authors itself should not carry the code that would.
+  // Every entry is its own budget: validate-flow, graph, session and the
+  // expression builder stay out of runtime bundles, because a wizard that
+  // never draws, replays or authors itself should not carry the code that
+  // would. The root export is an alias of `v1`, served from these same files.
   entry: [
-    'src/index.ts',
     'src/v1/index.ts',
     'src/v1/validate-flow.ts',
     'src/v1/graph.ts',

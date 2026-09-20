@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { formatExpr } from './format';
 
-import type { Expr } from '@wizzard-packages/core/v1';
+import type { Expr } from '@wizzard-packages/core';
 
 describe('formatExpr', () => {
   it.each<[Expr, string]>([

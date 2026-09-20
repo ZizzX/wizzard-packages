@@ -1,9 +1,9 @@
-import { initialState } from '@wizzard-packages/core/v1';
+import { initialState } from '@wizzard-packages/core';
 import { describe, expect, it } from 'vitest';
 
 import { diffState } from './diff';
 
-import type { WizardState } from '@wizzard-packages/core/v1';
+import type { WizardState } from '@wizzard-packages/core';
 
 const base = (data: Record<string, unknown> = {}): WizardState => ({
   ...initialState(data),

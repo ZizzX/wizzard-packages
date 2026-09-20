@@ -1,5 +1,5 @@
-import { createWizard } from '@wizzard-packages/core/v1';
-import { WizardProvider } from '@wizzard-packages/react/v1';
+import { createWizard } from '@wizzard-packages/core';
+import { WizardProvider } from '@wizzard-packages/react';
 import { WizardDevtools, devtools } from '@wizzard-packages/devtools';
 
 import { signup } from './flow';

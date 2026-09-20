@@ -1,4 +1,4 @@
-import { createWizard } from '@wizzard-packages/core/v1';
+import { createWizard } from '@wizzard-packages/core';
 
 import { checkout } from './flow';
 

@@ -4,7 +4,7 @@ import {
   useNavigation,
   useStep,
   useWizardSelector,
-} from '@wizzard-packages/react/v1';
+} from '@wizzard-packages/react';
 
 import { checkout } from './flow';
 

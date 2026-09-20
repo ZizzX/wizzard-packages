@@ -145,6 +145,28 @@ describe('runNav — refusals carry a reason', () => {
     expect(host.read().stack[0]?.step).toBe('trip');
   });
 
+  // The exit guard runs before the target is resolved, so it guards the way
+  // out of a step rather than the way forward. 0.x passed its guards a
+  // direction and let them wave `back` through; this does not.
+  it('refuses back() too, from the step being left', async () => {
+    const guarded: FlowDefinition = {
+      ...flow,
+      steps: { ...flow.steps, payment: { guards: { exit: false } } },
+    };
+    const host = makeHost({ ...on('payment'), visited: ['trip', 'payment'] });
+
+    const result = await runNav({ flow: guarded }, host, { type: 'back' });
+
+    expect(result).toEqual({
+      ok: false,
+      reason: 'blocked',
+      code: 'nav-blocked',
+      url: pageFor('nav-blocked'),
+      by: 'payment',
+    });
+    expect(host.read().stack[0]?.step).toBe('payment');
+  });
+
   it('names the step whose enter guard refused', async () => {
     const guarded: FlowDefinition = {
       ...flow,

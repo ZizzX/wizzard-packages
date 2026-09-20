@@ -1,6 +1,6 @@
 import { checkSession } from '@wizzard-packages/core/session';
 import type { RecordedSession } from '@wizzard-packages/core/session';
-import type { FlowDefinition, SubFlows, Wizard, WizardState } from '@wizzard-packages/core/v1';
+import type { FlowDefinition, SubFlows, Wizard, WizardState } from '@wizzard-packages/core';
 
 import type { DevtoolsPlugin, Outcome } from './plugin';
 

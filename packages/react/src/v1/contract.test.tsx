@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { Component, Profiler, useState, type ReactElement, type ReactNode } from 'react';
-import { createWizard, WizardError } from '@wizzard-packages/core/v1';
+import { createWizard, WizardError } from '@wizzard-packages/core';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -82,6 +82,20 @@ function Probe(): ReactElement {
         }}
       >
         back
+      </button>
+      {/* A stepper's crumb: the target is read off the breadcrumbs rather than
+          named, so the probe knows nothing about the flow it is mounted on. */}
+      <button
+        data-testid="go-first"
+        onClick={() => {
+          const first = step.breadcrumbs[0];
+          if (first === undefined) return;
+          void nav.go(first.id).then((result) => {
+            if (!result.ok) setRefusal(`${result.code} ${result.url}`);
+          });
+        }}
+      >
+        go first
       </button>
 
       <span data-testid="item-key">{itemKey}</span>

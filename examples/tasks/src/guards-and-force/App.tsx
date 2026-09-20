@@ -4,7 +4,7 @@ import {
   useNavigation,
   useStep,
   useWizard,
-} from '@wizzard-packages/react/v1';
+} from '@wizzard-packages/react';
 import { useId, useState } from 'react';
 
 import { signup } from './flow';

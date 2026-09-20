@@ -1,6 +1,6 @@
 import { groups } from '@wizzard-packages/core/groups';
-import { createWizard } from '@wizzard-packages/core/v1';
-import type { FlowDefinition, SubFlows } from '@wizzard-packages/core/v1';
+import { createWizard } from '@wizzard-packages/core';
+import type { FlowDefinition, SubFlows } from '@wizzard-packages/core';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 

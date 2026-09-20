@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { FlowDefinition, Wizard as Engine } from '@wizzard-packages/core/v1';
-import { useField, useNavigation, useStep, useWizard } from '@wizzard-packages/vue/v1';
+import type { FlowDefinition, Wizard as Engine } from '@wizzard-packages/core';
+import { useField, useNavigation, useStep, useWizard } from '@wizzard-packages/vue';
 import { computed, ref, useId } from 'vue';
 
 import { PATCH_FROM_SERVER, registry } from './contract';

@@ -1,4 +1,4 @@
-import type { AsyncRegistry, Scope } from '@wizzard-packages/core/v1';
+import type { AsyncRegistry, Scope } from '@wizzard-packages/core';
 
 /**
  * What the flow could not serialize. Each `$ref` in `flow.ts` is a key here,

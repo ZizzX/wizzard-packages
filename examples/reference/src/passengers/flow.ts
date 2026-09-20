@@ -1,7 +1,7 @@
 import { empty, get, not } from '@wizzard-packages/core/expr';
-import { defineFlow, group, step } from '@wizzard-packages/core/v1';
+import { defineFlow, group, step } from '@wizzard-packages/core';
 
-import type { SubFlows } from '@wizzard-packages/core/v1';
+import type { SubFlows } from '@wizzard-packages/core';
 
 /**
  * R-C: one block of steps per passenger.

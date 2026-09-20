@@ -1,4 +1,4 @@
-import { defineFlow, step } from '@wizzard-packages/core/v1';
+import { defineFlow, step } from '@wizzard-packages/core';
 
 /**
  * One step with two fields, so there are two messages to place rather than one

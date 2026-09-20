@@ -1,4 +1,4 @@
-import { createWizard } from '@wizzard-packages/core/v1';
+import { createWizard } from '@wizzard-packages/core';
 import { persist, type RestoreOutcome, type SyncStorage } from '@wizzard-packages/plugins/persist';
 
 import { APP_VERSION, STORAGE_KEY, signup } from './flow';

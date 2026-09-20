@@ -10,7 +10,7 @@ the provider, or drop wizard and let the provider build one.
 …/errors/provider-wizard-and-options
 ```
 
-Thrown as a `WizardError` with `op: 'WizardProvider'` by `@wizzard-packages/react/v1`, on any
+Thrown as a `WizardError` with `op: 'WizardProvider'` by `@wizzard-packages/react`, on any
 render where both are set, in development and production builds alike. The message lists every
 option that was passed with a value; a prop set to `undefined` does not count, and neither does
 a prop that is not an option, such as `data-*` or `ref` forwarded by a wrapper.

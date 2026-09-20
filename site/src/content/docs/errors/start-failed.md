@@ -8,8 +8,8 @@ description: A provider started the wizard, and its first move threw, so no step
 logged below, and call start() again or mount the wizard again. …/errors/start-failed
 ```
 
-Printed with `console.error` by `WizardProvider` from `@wizzard-packages/react/v1` and by
-`provideWizard` from `@wizzard-packages/vue/v1`, with what was thrown as the second argument.
+Printed with `console.error` by `WizardProvider` from `@wizzard-packages/react` and by
+`provideWizard` from `@wizzard-packages/vue`, with what was thrown as the second argument.
 
 A provider calls `start()` when it mounts, and `start()` moves onto the first reachable step. That
 move runs the step's `load` and `guards.enter` and every plugin's `beforeNavigate`, and any of them

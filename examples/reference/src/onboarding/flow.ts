@@ -1,4 +1,4 @@
-import { defineFlow, step } from '@wizzard-packages/core/v1';
+import { defineFlow, step } from '@wizzard-packages/core';
 import { eq, get } from '@wizzard-packages/core/expr';
 
 /**

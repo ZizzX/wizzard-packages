@@ -1,4 +1,4 @@
-import type { Frame, Wizard } from '@wizzard-packages/core/v1';
+import type { Frame, Wizard } from '@wizzard-packages/core';
 
 /** One row of `data.passengers`. `id` is what `keyBy` reads. */
 export interface Passenger {

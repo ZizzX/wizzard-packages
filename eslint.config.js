@@ -173,25 +173,13 @@ export default [
   },
 
   // ── LEGACY QUARANTINE ───────────────────────────────────────────────────────
-  // The 0.x engine and its duplicated framework layers. These files are replaced
-  // wholesale by the v1 packages; linting them to the new standard would only
-  // produce noise on code scheduled for deletion.
-  // Remove an entry the moment its replacement lands. Never add one.
+  // What is left after the 0.x teardown: the old marketing site, which keeps
+  // serving the live pages until the documentation site takes the deploy over,
+  // and the devtools panel, which predates the standard and is held to it by
+  // its own task. Remove an entry the moment its replacement lands. Never add
+  // one.
   {
-    // `ignores` inside a config object subtracts from `files`: v1 source lives
-    // under packages/core/src/v1 and is held to the full standard.
-    ignores: ['packages/core/src/v1/**', 'packages/react/src/v1/**', 'packages/vue/src/v1/**'],
-    files: [
-      'packages/core/src/**',
-      'packages/react/src/**',
-      'packages/vue/src/**',
-      'packages/devtools/src/**',
-      'packages/middleware/src/**',
-      'packages/persistence/src/**',
-      'packages/adapter-zod/src/**',
-      'packages/adapter-yup/src/**',
-      'packages/ui/src/**',
-    ],
+    files: ['packages/ui/src/**', 'packages/devtools/src/**'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unnecessary-condition': 'off',

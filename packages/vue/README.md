@@ -35,7 +35,7 @@ the engine, or pass a `Wizard` you built yourself and it stays yours.
 <!-- prettier-ignore -->
 ```vue
 <script setup lang="ts">
-import { provideWizard } from '@wizzard-packages/vue/v1';
+import { provideWizard } from '@wizzard-packages/vue';
 
 import Wizard from './Wizard.vue';
 import { signup } from './flow';
@@ -59,7 +59,7 @@ The child is where the composables are called:
 <!-- prettier-ignore -->
 ```vue
 <script setup lang="ts">
-import { useField, useNavigation, useStep } from '@wizzard-packages/vue/v1';
+import { useField, useNavigation, useStep } from '@wizzard-packages/vue';
 import { computed } from 'vue';
 
 const { current, isLast } = useStep();
@@ -139,7 +139,7 @@ contract suite runs against both, which is what stops them drifting apart.
 
 0.x was a different library with the same name: `createWizardFactory<TSchema>()`,
 `useProvideWizard`, `useWizardState`, `useWizardActions`. In v1 the names are shorter and the
-import path carries the version — `@wizzard-packages/vue/v1`. v1 is on the `canary` tag while
+import path carries the version — `@wizzard-packages/vue`. v1 is on the `canary` tag while
 the launch lands; the 0.x line on `latest` is being retired.
 
 ## License

@@ -19,8 +19,8 @@
  * inside the same `try`. A flow that cannot be built is not a flow this page
  * accepts, whatever field turns out to be the reason.
  */
+import { END, type FlowDefinition } from '@wizzard-packages/core';
 import { buildGraph, type FlowGraph } from '@wizzard-packages/core/graph';
-import { END, type FlowDefinition } from '@wizzard-packages/core/v1';
 import { validateFlow, type FlowProblem } from '@wizzard-packages/core/validate-flow';
 import { layoutGraph } from '@wizzard-packages/devtools/headless';
 

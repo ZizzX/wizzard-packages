@@ -32,7 +32,7 @@ size-limit line. Do not re-export it either.
 **How to apply:** a new core module that is not needed to _run_ a wizard gets
 its own entry, not a line in `index.ts` — and its own size-limit entry in the
 same PR, per the design review's E1. Consumers import
-`@wizzard-packages/core/graph`, never `@wizzard-packages/core/v1`. Related:
+`@wizzard-packages/core/graph`, never `@wizzard-packages/core`. Related:
 [[v1-showcase-is-the-flow-graph]], [[wizzard-v1-flow-as-data]].
 
 **Update 2026-09-08:** the published sub-entries are now `./v1`,

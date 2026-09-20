@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
-import { createWizard } from '@wizzard-packages/core/v1';
-import { WizardProvider } from '@wizzard-packages/react/v1';
+import { createWizard } from '@wizzard-packages/core';
+import { WizardProvider } from '@wizzard-packages/react';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 

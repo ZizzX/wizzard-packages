@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useErrors, useField, useNavigation, useStep, useWizard } from '@wizzard-packages/vue/v1';
+import { useErrors, useField, useNavigation, useStep, useWizard } from '@wizzard-packages/vue';
 import { computed, useId } from 'vue';
 
 const wizard = useWizard();

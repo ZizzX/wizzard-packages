@@ -9,7 +9,7 @@ so none of its later hooks run. Fix the plugin, or remove it from options.plugin
 …/errors/plugin-disabled
 ```
 
-Printed with `console.error` by `createWizard` from `@wizzard-packages/core/v1`, once, with what
+Printed with `console.error` by `createWizard` from `@wizzard-packages/core`, once, with what
 the plugin threw as the second argument. `<hook>` is `init`, `onCommit` or `onAttempt`.
 
 The engine calls a plugin from inside its own work: `init` while the wizard is being built,

@@ -1,4 +1,4 @@
-import { defineFlow, step } from '@wizzard-packages/core/v1';
+import { defineFlow, step } from '@wizzard-packages/core';
 
 // The quickstart flow. A flow is JSON, so a server component can hand it to
 // the provider as a prop without a serialisation boundary getting in the way.

@@ -1,10 +1,10 @@
-import { groups } from '@wizzard-packages/core/groups';
 import {
   WizardError,
   type FlowDefinition,
   type SubFlows,
   type Traversal,
-} from '@wizzard-packages/core/v1';
+} from '@wizzard-packages/core';
+import { groups } from '@wizzard-packages/core/groups';
 import { describe, expect, it, vi } from 'vitest';
 
 import { flowC as tripFlow, subFlowsC } from './fixtures';
@@ -55,6 +55,7 @@ export interface BindingHarness {
  * Test ids a probe must render:
  *   step, progress, can-back, busy, errors, renders
  *   name-input (bound to the `name` field), next, back
+ *   go-first    jumps to `breadcrumbs[0]`, the step a crumb would name
  *   refusal     `<code> <url>` of the last refused `next()`, or ''
  *
  * And, for the repeat group below - all of it read from the engine, never kept
@@ -202,6 +203,21 @@ export function describeBindingContract(harness: BindingHarness): void {
 
       await probe.click('back');
       expect(probe.text('step')).toBe('one');
+      probe.unmount();
+    });
+
+    // What a stepper's breadcrumbs do when one is clicked. 0.x drove this
+    // through the demo applications, and each binding wired `go` itself; here
+    // both answer the same test, and the jump keeps the answers already given.
+    it('jumps to the step a breadcrumb names, keeping the data behind it', async () => {
+      const probe = await mount({ name: 'Ann', wantsTwo: false });
+      await probe.click('next');
+      expect(probe.text('step')).toBe('three');
+
+      await probe.click('go-first');
+      expect(probe.text('step')).toBe('one');
+      expect(probe.text('name-value')).toBe('Ann');
+      expect(probe.text('refusal')).toBe('');
       probe.unmount();
     });
 

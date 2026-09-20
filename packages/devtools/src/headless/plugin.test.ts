@@ -1,4 +1,4 @@
-import { createWizard } from '@wizzard-packages/core/v1';
+import { createWizard } from '@wizzard-packages/core';
 import { describe, expect, it } from 'vitest';
 
 import { dataA, flowA, registryA } from '../../../../contract/fixtures';

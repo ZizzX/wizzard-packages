@@ -1,4 +1,4 @@
-import { createWizard, type FlowDefinition } from '@wizzard-packages/core/v1';
+import { createWizard, type FlowDefinition } from '@wizzard-packages/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { persist, type RestoreOutcome, type SyncStorage } from './persist';

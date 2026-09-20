@@ -6,7 +6,7 @@ metadata:
   type: project
 ---
 
-Tests import `@wizzard-packages/core/v1` through the workspace link, which points at
+Tests import `@wizzard-packages/core` through the workspace link, which points at
 `packages/core/dist`. `pnpm test:run` has no build step, so after pulling work that changed
 core the local suite fails on the _old_ build while CI is green - CI's `build-test` job builds
 first. Seen 2026-09-07 right after merging L5 PR 1: 11 devtools tests failed locally against a

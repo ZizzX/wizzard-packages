@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { defineFlow, step } from '@wizzard-packages/core/v1';
-import type { AsyncRegistry } from '@wizzard-packages/core/v1';
+import { defineFlow, step } from '@wizzard-packages/core';
+import type { AsyncRegistry } from '@wizzard-packages/core';
 import { devtools, WizardDevtools } from '@wizzard-packages/devtools';
 import {
   useErrors,
@@ -10,7 +10,7 @@ import {
   useNavigation,
   useStep,
   WizardProvider,
-} from '@wizzard-packages/react/v1';
+} from '@wizzard-packages/react';
 
 // The consumer proof for devtools: a page that can refuse a move, so the panel
 // has a refusal to report.

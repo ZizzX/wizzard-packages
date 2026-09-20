@@ -7,14 +7,14 @@
  * is about, and the picture is whatever that walk produced. If the engine's
  * behaviour changed, the row would change with it.
  */
-import { buildGraph } from '@wizzard-packages/core/graph';
-import { groups } from '@wizzard-packages/core/groups';
 import {
   createWizard,
   type AsyncRegistry,
   type FlowDefinition,
   type SubFlows,
-} from '@wizzard-packages/core/v1';
+} from '@wizzard-packages/core';
+import { buildGraph } from '@wizzard-packages/core/graph';
+import { groups } from '@wizzard-packages/core/groups';
 
 import { FlowGraph, type GraphView } from './FlowGraph';
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useNavigation, useStep, useWizard, useWizardSelector } from '@wizzard-packages/vue/v1';
+import { useNavigation, useStep, useWizard, useWizardSelector } from '@wizzard-packages/vue';
 import { computed, ref, useTemplateRef, watch } from 'vue';
 
 import { answerPath, initialData } from './flow';

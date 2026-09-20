@@ -1,6 +1,6 @@
 'use client';
 
-import { useField, useNavigation, useStep } from '@wizzard-packages/react/v1';
+import { useField, useNavigation, useStep } from '@wizzard-packages/react';
 
 export function Steps() {
   const { current, isLast } = useStep();

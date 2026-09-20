@@ -21,7 +21,7 @@ npm i @wizzard-packages/validate
 A flow names its validator; the registry says what the name means.
 
 ```ts
-import { createWizard } from '@wizzard-packages/core/v1';
+import { createWizard } from '@wizzard-packages/core';
 import { schema } from '@wizzard-packages/validate';
 import { z } from 'zod';
 

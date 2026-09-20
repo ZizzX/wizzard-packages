@@ -6,7 +6,7 @@
 
 import { decodeSnapshot, toSnapshot, type RestoreReason } from '@wizzard-packages/core/snapshot';
 
-import type { FlowDefinition, Hooks } from '@wizzard-packages/core/v1';
+import type { FlowDefinition, Hooks } from '@wizzard-packages/core';
 
 /**
  * Keeps a wizard across a reload.

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { groups } from '@wizzard-packages/core/groups';
-import { provideWizard } from '@wizzard-packages/vue/v1';
+import { provideWizard } from '@wizzard-packages/vue';
 
 import Trip from './Trip.vue';
 import { initialData, subFlows, trip } from './flow';

@@ -393,14 +393,14 @@ export default [
     path: 'packages/react/src/v1/index.tsx',
     limit: '1.45 kB',
     gzip: true,
-    ignore: ['react', 'react-dom', '@wizzard-packages/core/v1'],
+    ignore: ['react', 'react-dom', '@wizzard-packages/core'],
   },
   {
     name: 'vue-v1',
     path: 'packages/vue/src/v1/index.ts',
     limit: '900 B',
     gzip: true,
-    ignore: ['vue', '@wizzard-packages/core/v1'],
+    ignore: ['vue', '@wizzard-packages/core'],
   },
 
   // Devtools without React: the plugin that hears every navigation attempt,
@@ -422,7 +422,6 @@ export default [
     gzip: true,
     ignore: [
       '@wizzard-packages/core',
-      '@wizzard-packages/core/v1',
       '@wizzard-packages/core/graph',
       '@wizzard-packages/core/session',
     ],
@@ -452,9 +451,7 @@ export default [
       'react',
       'react-dom',
       '@wizzard-packages/react',
-      '@wizzard-packages/react/v1',
       '@wizzard-packages/core',
-      '@wizzard-packages/core/v1',
       '@wizzard-packages/core/graph',
       '@wizzard-packages/core/session',
     ],
@@ -479,37 +476,11 @@ export default [
     path: 'packages/plugins/src/persist.ts',
     limit: '1.35 kB',
     gzip: true,
-    ignore: ['@wizzard-packages/core/v1', '@wizzard-packages/core/snapshot'],
+    ignore: ['@wizzard-packages/core', '@wizzard-packages/core/snapshot'],
   },
 
-  // One adapter for every Standard Schema vendor, replacing the two 0.x
-  // adapter packages below. Measured from source like the rest of v1; the
-  // schema library itself is the consumer's, never bundled here.
+  // One adapter for every Standard Schema vendor, replacing the two adapter
+  // packages 0.x had. Measured from source like the rest of v1; the schema
+  // library itself is the consumer's, never bundled here.
   { name: 'validate', path: 'packages/validate/src/index.ts', limit: '400 B', gzip: true },
-
-  { name: 'core', path: 'packages/core/dist/index.js', limit: '4.2 kB', gzip: true },
-  {
-    name: 'react',
-    path: 'packages/react/dist/index.js',
-    limit: '8.6 kB',
-    gzip: true,
-    ignore: ['react', 'react-dom'],
-  },
-  { name: 'vue', path: 'packages/vue/dist/index.js', limit: '5.2 kB', gzip: true, ignore: ['vue'] },
-  { name: 'middleware', path: 'packages/middleware/dist/index.js', limit: '650 B', gzip: true },
-  { name: 'persistence', path: 'packages/persistence/dist/index.js', limit: '500 B', gzip: true },
-  {
-    name: 'adapter-zod',
-    path: 'packages/adapter-zod/dist/index.js',
-    limit: '250 B',
-    gzip: true,
-    ignore: ['zod'],
-  },
-  {
-    name: 'adapter-yup',
-    path: 'packages/adapter-yup/dist/index.js',
-    limit: '250 B',
-    gzip: true,
-    ignore: ['yup'],
-  },
 ];

@@ -204,7 +204,7 @@ and [its test](../examples/migration/from-0x-storage.test.ts) runs a real 0.x st
 through it and into a v1 wizard. Copy the file; it is not shipped as a package.
 
 ```ts
-import { createWizard } from '@wizzard-packages/core/v1';
+import { createWizard } from '@wizzard-packages/core';
 
 import { readLegacyWizard } from './from-0x-storage';
 

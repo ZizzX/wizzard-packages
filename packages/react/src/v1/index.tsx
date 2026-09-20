@@ -1,7 +1,7 @@
 /**
  * The React binding.
  *
- * @module @wizzard-packages/react/v1
+ * @module @wizzard-packages/react
  */
 
 // Read by React Server Components bundlers from `dist`; inert everywhere else.
@@ -16,7 +16,7 @@ import {
   type Wizard,
   type WizardOptions,
   WizardError,
-} from '@wizzard-packages/core/v1';
+} from '@wizzard-packages/core';
 import {
   createContext,
   createElement,

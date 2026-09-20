@@ -1,4 +1,4 @@
-import type { FlowDefinition, SubFlows } from '@wizzard-packages/core/v1';
+import type { FlowDefinition, SubFlows } from '@wizzard-packages/core';
 
 /**
  * The three reference flows of `docs/designs/v1-launch.md` (R-A, R-B, R-C) as

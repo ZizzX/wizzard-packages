@@ -1,5 +1,5 @@
 import { empty, get, not } from '@wizzard-packages/core/expr';
-import { defineFlow, step } from '@wizzard-packages/core/v1';
+import { defineFlow, step } from '@wizzard-packages/core';
 
 /**
  * Three steps and one guard, arranged so that the three things people expect to

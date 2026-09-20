@@ -25,7 +25,7 @@ Two steps, one field, and a value that is still there after Back.
 
 <!-- prettier-ignore -->
 ```ts
-import { defineFlow, step } from '@wizzard-packages/core/v1';
+import { defineFlow, step } from '@wizzard-packages/core';
 
 /**
  * The smallest flow that is still a wizard: two steps, one field, and a value
@@ -51,7 +51,7 @@ export const signup = defineFlow({
 
 <!-- prettier-ignore -->
 ```tsx
-import { WizardProvider, useField, useNavigation, useStep } from '@wizzard-packages/react/v1';
+import { WizardProvider, useField, useNavigation, useStep } from '@wizzard-packages/react';
 
 import { signup } from './flow';
 
@@ -108,7 +108,7 @@ the one that uses it, because Vue's `inject` reads the parent chain:
 <!-- prettier-ignore -->
 ```vue
 <script setup lang="ts">
-import { provideWizard } from '@wizzard-packages/vue/v1';
+import { provideWizard } from '@wizzard-packages/vue';
 
 import Wizard from './Wizard.vue';
 import { signup } from './flow';
@@ -132,7 +132,7 @@ The child is where the composables are called:
 <!-- prettier-ignore -->
 ```vue
 <script setup lang="ts">
-import { useField, useNavigation, useStep } from '@wizzard-packages/vue/v1';
+import { useField, useNavigation, useStep } from '@wizzard-packages/vue';
 import { computed } from 'vue';
 
 const { current, isLast } = useStep();
@@ -173,7 +173,7 @@ A repeated section — one block of steps per passenger — is a sub-flow entere
 The traversal that walks it is a separate entry, so a flat flow never carries it:
 
 ```ts
-import { createWizard } from '@wizzard-packages/core/v1';
+import { createWizard } from '@wizzard-packages/core';
 import { groups } from '@wizzard-packages/core/groups';
 
 const passenger = {
@@ -266,6 +266,9 @@ persistence and devtools are done, and the documentation site is up.
 `docs/designs/v1-launch.md` is the plan, and
 `ROADMAP.md` is where it came from. The 0.x line on `latest` is a different library with the
 same name and is being retired — [`docs/MIGRATION.md`](docs/MIGRATION.md) is the way across.
+Its code is gone from this repository, and `@wizzard-packages/core`, `/react` and `/vue` now
+import the v1 engine. The `/v1` subpath still resolves, to the same module and the same types
+as the root, and stays through 1.x, so an import written against canary keeps working.
 
 ## License
 

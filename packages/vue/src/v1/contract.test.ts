@@ -92,6 +92,22 @@ const ProbeComponent = defineComponent({
           'next'
         ),
         h('button', { 'data-testid': 'back', onClick: () => void nav.back() }, 'back'),
+        // A stepper's crumb, read off the breadcrumbs rather than named, so the
+        // probe knows nothing about the flow it is mounted on.
+        h(
+          'button',
+          {
+            'data-testid': 'go-first',
+            onClick: () => {
+              const first = step.breadcrumbs.value[0];
+              if (first === undefined) return;
+              void nav.go(first.id).then((result) => {
+                if (!result.ok) refusal.value = `${result.code} ${result.url}`;
+              });
+            },
+          },
+          'go first'
+        ),
 
         h('span', { 'data-testid': 'item-key' }, itemKey.value),
         h(

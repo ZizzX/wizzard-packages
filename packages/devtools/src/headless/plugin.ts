@@ -5,7 +5,7 @@ import type {
   NavResult,
   PluginHost,
   WizardState,
-} from '@wizzard-packages/core/v1';
+} from '@wizzard-packages/core';
 
 /**
  * The devtools plugin: the one piece of devtools the engine has to be told
