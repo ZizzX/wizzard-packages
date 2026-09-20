@@ -52,7 +52,7 @@ A test in the repository asserts those exact lines, so it is not a transcript of
 | `at: people[a1] / who`                              | position is a stack, not a step: the group is one frame and the sub-flow's step is the next                  |
 | `at: people[a1] / meal` then `at: people[c1] / who` | the adult gets the meal step and the child does not - a branch inside the repeat                             |
 | `at: seats`                                         | the second traveller's pass ended and the group did, both decided by the traversal rather than by the caller |
-| `seat map loaded: 11, 12, 14`                       | the move waited for `load` before the step became current                                                    |
+| `seat map loaded: ...`                              | the move waited for `load` before the step became current                                                    |
 | `restored at: seats`                                | a snapshot encodes the whole stack, so a restore lands inside the group as readily as at the root            |
 | `restored answer: PA-118`                           | and the answers keyed by traveller came back with it                                                         |
 | `at: visa`                                          | the branch on `destination`, taken long after the answer                                                     |
