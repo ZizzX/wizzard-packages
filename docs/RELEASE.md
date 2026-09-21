@@ -4,8 +4,9 @@ This document describes the release workflow for `@wizzard-packages/*`.
 
 ## Key Facts
 
-- Releases are started by hand: `.github/workflows/publish.yml` runs on `workflow_dispatch` only.
-  Nothing on `main` opens a release PR or publishes to `latest` by itself.
+- Releases are started by hand and published from the reviewed commit. `.github/workflows/publish.yml`
+  run by hand opens the release PR; merging that PR publishes its own merge commit, and nothing else
+  on `main` opens a release PR or publishes to `latest`.
 - Versioning is managed by Changesets with a fixed group for all `@wizzard-packages/*`.
 - CI creates git tags (`vX.Y.Z`) and GitHub releases after publish.
 - Every merge to `main` also publishes a snapshot under the `canary` dist-tag.
@@ -26,14 +27,21 @@ This document describes the release workflow for `@wizzard-packages/*`.
    ```
 3. Run quality gates locally (see below).
 4. When a release is due, run the "Release" workflow from GitHub Actions (`workflow_dispatch`),
-   or `gh workflow run publish.yml --ref main`. With changesets on `main` it opens or updates the
-   release PR, `Version Packages`, and publishes nothing.
-5. Review and merge the release PR. Merging publishes nothing either.
-6. Run the workflow a second time. With no changesets left it publishes to npm, tags the release
-   (`vX.Y.Z`) and pushes the tags.
-7. Verify release outputs (tags, GitHub release, npm versions).
+   or `gh workflow run publish.yml --ref main`. It opens or updates the release PR,
+   `Version Packages`, from the changesets on `main`, and publishes nothing.
+5. Review the release PR and merge it with its title unchanged. The merge commit starts with
+   `Version Packages`, and that push publishes exactly that commit: it tags the release (`vX.Y.Z`),
+   pushes the tags and checks the registry.
+6. Verify release outputs (tags, GitHub release, npm versions).
 
-The two runs are the point: a stable release is never one click away from a merge.
+A stable release is never one click from an unrelated merge, and what is published is the commit the
+release PR showed. Two cases end without a publish, on purpose:
+
+- A changeset reached `main` after the release PR was opened. The merge then versions it into a new
+  release PR instead of publishing; review and merge that one.
+- The publish failed part-way. Run the workflow by hand again while the release merge is still the tip
+  of `main` and it publishes; once anything has merged after it, a manual run only opens a new
+  release PR.
 
 ## Quality Gates
 
@@ -60,8 +68,8 @@ pnpm changeset pre enter next
 pnpm changeset
 ```
 
-Release with the same two runs of the workflow. While pre mode is active the release PR carries
-`-next.N` versions and the publish goes out under the `next` tag.
+Release the same way. While pre mode is active the release PR carries `-next.N` versions and its merge
+publishes under the `next` tag.
 Exit prerelease mode after the final `next` release:
 
 ```bash
@@ -73,7 +81,8 @@ pnpm changeset pre exit
 - **E404/E403 from npm**: confirm `NPM_TOKEN` is valid and has publish rights.
 - **No publish happens**: ensure there is at least one changeset in `.changeset/`.
 - **Build fails in CI**: reproduce locally with `pnpm -r build`.
-- **Release PR merged, nothing published**: expected - run the workflow again to publish.
+- **Release PR merged, nothing published**: the merge commit must start with `Version Packages`; if a
+  changeset landed first, a new release PR is open instead.
 
 ## Verification Checklist
 

@@ -1,19 +1,36 @@
 name: Release
 
-# Run by hand only. On a push to `main` this workflow opened the changesets
-# release PR, and merging that PR published to `latest` straight away - one
-# click from a stable release, with no candidate on `next` before it and no
-# gate in the `wizzard-packages` environment. Every merge still reaches npm, as
-# a canary, through `canary.yml`.
+# A release is started by hand and published from the commit that was reviewed.
 #
-# A release is two runs: the first opens or updates the release PR from the
-# changesets on `main`; once that PR is merged, the second finds no changesets
-# left and publishes.
+# Before, every push to `main` opened the changesets release PR, and merging it
+# published to `latest` at once - one click from a stable release, with no
+# candidate on `next` before it and no gate in the `wizzard-packages`
+# environment. Now:
+#
+# - Run by hand on an ordinary `main`, this opens or updates the release PR and
+#   never publishes.
+# - A push runs it only when the pushed commit is that PR's own merge, and it
+#   publishes that exact commit. There is no window between approving a release
+#   and publishing it for anything else to land in.
+# - Run by hand while the tip of `main` is still the release merge, it publishes
+#   again - the way back from a publish that failed half-way. Once anything has
+#   merged after it, a manual run only opens a new release PR.
+#
+# If a changeset reached `main` before the release PR was merged, the merge
+# versions it into a new release PR instead of publishing: nothing ships that
+# the merged PR did not show. Every merge still reaches npm as a canary through
+# `canary.yml`.
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   release:
+    # The release PR is titled `Version Packages`, and so is the commit that
+    # squash-merges it. Any other push has nothing to do here.
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'Version Packages')
     runs-on: ubuntu-latest
     environment: wizzard-packages
     permissions:
@@ -34,12 +51,22 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
 
+      # Publishing is allowed only from a release merge. Without a publish
+      # command changesets/action versions whatever changesets it finds into
+      # the release PR, and with none it stops.
+      - name: Is this the release merge
+        id: tip
+        run: |
+          if git log -1 --format=%s | grep -q '^Version Packages'; then
+            echo "publish=pnpm release:publish" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Create release PR or publish
         id: changesets
         uses: changesets/action@v1
         with:
           version: pnpm release
-          publish: pnpm release:publish
+          publish: ${{ steps.tip.outputs.publish }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
