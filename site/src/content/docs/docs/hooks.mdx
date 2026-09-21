@@ -223,37 +223,168 @@ that drives the engine directly and mounts a component to look at it.
 The hooks read the wizard from React context or Vue's injection, and there is no argument that
 passes one in: outside a provider they throw. The engine itself needs neither. It is an external
 store - `subscribe` returns an unsubscribe, and `getSnapshot` returns the same object until a
-commit - so a component can read one directly with what its framework already has:
+commit - so a component can read one directly with what its framework already has. Three things
+have to happen, and with no provider each of them is yours: create the engine, start it, and
+destroy it when it is no longer needed.
 
 <Tabs syncKey={FRAMEWORK_SYNC_KEY}>
   <TabItem label={FRAMEWORK_LABELS.react}>
 
-```tsx
-const wizard = createWizard({ flow: signup, registry });
+**1. Create the engine where it should live.** A module-level engine is one wizard for the whole
+page, shared by every component that imports it, and it lives until the page is gone - which is
+why nothing here calls `destroy()`.
 
-function useSnapshot() {
+```ts
+// wizard.ts
+import { createWizard } from '@wizzard-packages/core';
+
+import { signup } from './flow';
+import { registry } from './registry';
+
+export const wizard = createWizard({ flow: signup, registry });
+```
+
+**2. Subscribe to it.** `useSyncExternalStore` is the whole bridge. The third argument is the
+server snapshot, and passing the same `getSnapshot` is right because the engine has not started
+there: the server renders the empty state and the client hydrates into it.
+
+```ts
+// useSnapshot.ts
+import { useSyncExternalStore } from 'react';
+
+import { wizard } from './wizard';
+
+export function useSnapshot() {
   return useSyncExternalStore(wizard.subscribe, wizard.getSnapshot, wizard.getSnapshot);
 }
+```
+
+**3. Start it, and render.** `start()` is what enters the first step - without it `current` is
+`null` and there is nothing to draw. It is idempotent and asynchronous, it must not run on the
+server, and it rejects when the first step's loader fails, so it goes in an effect with a
+`catch`. This is the part the provider does for you.
+
+```tsx
+// Steps.tsx
+import { useEffect } from 'react';
+
+import { useSnapshot } from './useSnapshot';
+import { wizard } from './wizard';
+
+export function Steps() {
+  const { current, canBack, isBusy } = useSnapshot();
+
+  useEffect(() => {
+    wizard.start().catch(console.error);
+  }, []);
+
+  if (current === null) return null;
+
+  return (
+    <div>
+      <h2>{current}</h2>
+      <button onClick={() => void wizard.back()} disabled={!canBack || isBusy}>
+        Back
+      </button>
+      <button onClick={() => void wizard.next()} disabled={isBusy}>
+        Next
+      </button>
+    </div>
+  );
+}
+```
+
+**When the wizard belongs to one screen rather than the page**, create it in `useState` so a
+re-render does not build a second one, and destroy it in the effect's cleanup - a plugin's
+teardown runs there, and an engine nobody destroys keeps its subscriptions:
+
+```tsx
+const [wizard] = useState(() => createWizard({ flow: signup, registry }));
+useEffect(() => {
+  wizard.start().catch(console.error);
+  return () => wizard.destroy();
+}, [wizard]);
 ```
 
   </TabItem>
   <TabItem label={FRAMEWORK_LABELS.vue}>
 
-```ts
-const wizard = createWizard({ flow: signup, registry });
+**1. Create the engine where it should live.** A module-level engine is one wizard for the whole
+page, shared by every component that imports it, and it lives until the page is gone - which is
+why nothing here calls `destroy()`.
 
-function useSnapshot() {
+```ts
+// wizard.ts
+import { createWizard } from '@wizzard-packages/core';
+
+import { signup } from './flow';
+import { registry } from './registry';
+
+export const wizard = createWizard({ flow: signup, registry });
+```
+
+**2. Subscribe to it.** A `shallowRef` holding the snapshot invalidates exactly once per commit,
+because the engine hands back the same object until one happens. Unsubscribe with the scope, or
+a component that has gone leaves a listener behind.
+
+```ts
+// useSnapshot.ts
+import { onScopeDispose, shallowRef } from 'vue';
+
+import { wizard } from './wizard';
+
+export function useSnapshot() {
   const snapshot = shallowRef(wizard.getSnapshot());
-  onScopeDispose(wizard.subscribe(() => (snapshot.value = wizard.getSnapshot())));
+  const stop = wizard.subscribe(() => {
+    snapshot.value = wizard.getSnapshot();
+  });
+  onScopeDispose(stop);
   return snapshot;
 }
+```
+
+**3. Start it, and render.** `start()` is what enters the first step - without it `current` is
+`null` and there is nothing to draw. It is idempotent and asynchronous, it must not run on the
+server, and it rejects when the first step's loader fails, so it goes in `onMounted` with a
+`catch`. This is the part `provideWizard` does for you.
+
+```vue
+<script setup lang="ts">
+import { onMounted } from 'vue';
+
+import { useSnapshot } from './useSnapshot';
+import { wizard } from './wizard';
+
+const snapshot = useSnapshot();
+
+onMounted(() => {
+  wizard.start().catch(console.error);
+});
+</script>
+
+<template>
+  <div v-if="snapshot.current">
+    <h2>{{ snapshot.current }}</h2>
+    <button :disabled="!snapshot.canBack || snapshot.isBusy" @click="wizard.back()">Back</button>
+    <button :disabled="snapshot.isBusy" @click="wizard.next()">Next</button>
+  </div>
+</template>
+```
+
+**When the wizard belongs to one screen rather than the page**, create it in the component's
+setup and destroy it with the scope - a plugin's teardown runs there, and an engine nobody
+destroys keeps its subscriptions:
+
+```ts
+const wizard = createWizard({ flow: signup, registry });
+onMounted(() => void wizard.start().catch(console.error));
+onScopeDispose(() => wizard.destroy());
 ```
 
   </TabItem>
 </Tabs>
 
-That is the whole of what a binding does with a snapshot, and it is what these ten lines buy
-back. What they do not buy back is the rest: `start()` on mount, `destroy()` on unmount, the
-`start-failed` log, and the dozen hooks above. Wrapping a subtree in a provider is one line and
-gives you all of it, so this is for the case where context genuinely cannot be used - a wizard
-read outside the React tree, or one component that has to watch two wizards at once.
+That is what a provider is: those three responsibilities plus the context that carries the
+engine to components you did not pass it to. Taking them on by hand costs about twenty lines
+and the hooks above stop working, so reach for this only when context genuinely cannot be used -
+a wizard read from outside the component tree, or one component watching two wizards at once.
