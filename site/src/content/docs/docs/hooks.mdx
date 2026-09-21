@@ -250,14 +250,17 @@ there: the server renders the empty state and the client hydrates into it.
 
 ```ts
 // useSnapshot.ts
+import type { Wizard } from '@wizzard-packages/core';
 import { useSyncExternalStore } from 'react';
 
-import { wizard } from './wizard';
-
-export function useSnapshot() {
+export function useSnapshot(wizard: Wizard) {
   return useSyncExternalStore(wizard.subscribe, wizard.getSnapshot, wizard.getSnapshot);
 }
 ```
+
+It takes the engine rather than importing one, so the same bridge works for the module-level
+wizard above and for a wizard owned by one screen, below. A `wizard` that changes re-subscribes,
+because `subscribe` is a new function then.
 
 **3. Start it, and render.** `start()` is what enters the first step - without it `current` is
 `null` and there is nothing to draw. It is idempotent and asynchronous, it must not run on the
@@ -272,7 +275,7 @@ import { useSnapshot } from './useSnapshot';
 import { wizard } from './wizard';
 
 export function Steps() {
-  const { current, canBack, isBusy } = useSnapshot();
+  const { current, canBack, isBusy } = useSnapshot(wizard);
 
   useEffect(() => {
     wizard.start().catch(console.error);
@@ -294,16 +297,31 @@ export function Steps() {
 }
 ```
 
-**When the wizard belongs to one screen rather than the page**, create it in `useState` so a
-re-render does not build a second one, and destroy it in the effect's cleanup - a plugin's
-teardown runs there, and an engine nobody destroys keeps its subscriptions:
+**When the wizard belongs to one screen rather than the page**, it is created in `useState` so
+a re-render does not build a second one, destroyed in the effect's cleanup - a plugin's teardown
+runs there, and an engine nobody destroys keeps its subscriptions - and rebuilt when it has been
+destroyed. That last branch is for StrictMode, which in development mounts, unmounts and mounts
+again while `useState` keeps the same value: without it the second mount is handed a torn-down
+engine, and `start()` does not bring one back. `WizardProvider` carries the same three lines,
+which is the clearest argument for using it instead.
 
 ```tsx
-const [wizard] = useState(() => createWizard({ flow: signup, registry }));
-useEffect(() => {
-  wizard.start().catch(console.error);
-  return () => wizard.destroy();
-}, [wizard]);
+// Screen.tsx
+export function Screen() {
+  const [wizard, setWizard] = useState(() => createWizard({ flow: signup, registry }));
+  const { current } = useSnapshot(wizard);
+
+  useEffect(() => {
+    if (wizard.isDestroyed()) {
+      setWizard(createWizard({ flow: signup, registry }));
+      return;
+    }
+    wizard.start().catch(console.error);
+    return () => wizard.destroy();
+  }, [wizard]);
+
+  return current === null ? null : <h2>{current}</h2>;
+}
 ```
 
   </TabItem>
@@ -329,11 +347,10 @@ a component that has gone leaves a listener behind.
 
 ```ts
 // useSnapshot.ts
+import type { Wizard } from '@wizzard-packages/core';
 import { onScopeDispose, shallowRef } from 'vue';
 
-import { wizard } from './wizard';
-
-export function useSnapshot() {
+export function useSnapshot(wizard: Wizard) {
   const snapshot = shallowRef(wizard.getSnapshot());
   const stop = wizard.subscribe(() => {
     snapshot.value = wizard.getSnapshot();
@@ -342,6 +359,9 @@ export function useSnapshot() {
   return snapshot;
 }
 ```
+
+It takes the engine rather than importing one, so the same composable works for the
+module-level wizard above and for a wizard owned by one screen, below.
 
 **3. Start it, and render.** `start()` is what enters the first step - without it `current` is
 `null` and there is nothing to draw. It is idempotent and asynchronous, it must not run on the
@@ -355,7 +375,7 @@ import { onMounted } from 'vue';
 import { useSnapshot } from './useSnapshot';
 import { wizard } from './wizard';
 
-const snapshot = useSnapshot();
+const snapshot = useSnapshot(wizard);
 
 onMounted(() => {
   wizard.start().catch(console.error);
@@ -372,13 +392,22 @@ onMounted(() => {
 ```
 
 **When the wizard belongs to one screen rather than the page**, create it in the component's
-setup and destroy it with the scope - a plugin's teardown runs there, and an engine nobody
-destroys keeps its subscriptions:
+setup, subscribe to that one, and destroy it with the scope - a plugin's teardown runs there,
+and an engine nobody destroys keeps its subscriptions:
 
-```ts
+```vue
+<script setup lang="ts">
+import { createWizard } from '@wizzard-packages/core';
+import { onMounted, onScopeDispose } from 'vue';
+
+import { useSnapshot } from './useSnapshot';
+
 const wizard = createWizard({ flow: signup, registry });
+const snapshot = useSnapshot(wizard);
+
 onMounted(() => void wizard.start().catch(console.error));
 onScopeDispose(() => wizard.destroy());
+</script>
 ```
 
   </TabItem>
