@@ -6,7 +6,9 @@ at: people[c1] / who
 restored at: people[c1] / who
 restored answer: PA118
 at: seats
-seat map loaded: 11, 12, 14
+shown before its map loaded: no
+ahead for FR: trip, people, seats, payment, review
+ahead for JP: trip, people, seats, visa, payment, review
 at: visa
 at: payment
 refused: invalid by payment

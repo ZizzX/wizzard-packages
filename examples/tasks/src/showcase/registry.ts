@@ -12,8 +12,10 @@ export const seatsByRow: number[] = [];
  * when the step may be left.
  */
 export const registry = {
+  // A timer rather than a resolved promise, so the answer arrives a whole task
+  // later - long after anything that forgot to wait would have moved on.
   seatMap: async (): Promise<void> => {
-    await Promise.resolve();
+    await new Promise((settle) => setTimeout(settle, 10));
     seatsByRow.splice(0, seatsByRow.length, 11, 12, 14);
   },
 

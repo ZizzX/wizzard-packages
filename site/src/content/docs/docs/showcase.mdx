@@ -50,18 +50,19 @@ A test in the repository asserts those exact lines, so it is not a transcript of
 
 ## What each line proves
 
-| Line                                                | What it is                                                                                                                                            |
-| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `refused: blocked by review`                        | the guard refused a jump the policy allowed, before any step had been left and any validator had run - `guards.enter` is about the step being entered |
-| `at: people[a1] / who`                              | position is a stack, not a step: the group is one frame and the sub-flow’s step is the next                                                           |
-| `at: people[a1] / meal` then `at: people[c1] / who` | the adult gets the meal step and the child does not - a branch inside the repeat                                                                      |
-| `restored at: people[c1] / who`                     | the snapshot was written two frames deep, and the restore came back to the same place - the group, the traveller’s key and the step inside it         |
-| `restored answer: PA118`                            | the answers keyed by traveller came back with it, into an engine that had never seen them                                                             |
-| `at: seats`                                         | the last traveller’s pass ended and so did the group, both decided by the traversal rather than by the caller                                         |
-| `seat map loaded: ...`                              | the move waited for `load` before the step became current                                                                                             |
-| `at: visa`                                          | the branch on `destination`, taken long after the answer                                                                                              |
-| `refused: invalid by payment`                       | the other rule, on the step being left: the validator refused and the flow stayed put - a result, never a thrown error                                |
-| `at: review`                                        | the card satisfied both of them, so the move that had been refused twice went through                                                                 |
+| Line                                                | What it is                                                                                                                                                     |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `refused: blocked by review`                        | the guard refused a jump the policy allowed, before any step had been left and any validator had run - `guards.enter` is about the step being entered          |
+| `at: people[a1] / who`                              | position is a stack, not a step: the group is one frame and the sub-flow’s step is the next                                                                    |
+| `at: people[a1] / meal` then `at: people[c1] / who` | the adult gets the meal step and the child does not - a branch inside the repeat                                                                               |
+| `restored at: people[c1] / who`                     | the snapshot was written two frames deep, and the restore came back to the same place - the group, the traveller’s key and the step inside it                  |
+| `restored answer: PA118`                            | the answers keyed by traveller came back with it, into an engine that had never seen them                                                                      |
+| `at: seats`                                         | the last traveller’s pass ended and so did the group, both decided by the traversal rather than by the caller                                                  |
+| `shown before its map loaded: no`                   | every commit of that move was watched, and `seats` was never current while its map was missing - the move waited for `load`, which answers a whole timer later |
+| `ahead for FR` and `ahead for JP`                   | the branch both ways: `visa` is in the steps ahead only while the answer says Japan, and they are recomputed on every read rather than stored                  |
+| `at: visa`                                          | the branch taken, long after the answer that decided it                                                                                                        |
+| `refused: invalid by payment`                       | the other rule, on the step being left: the validator refused and the flow stayed put - a result, never a thrown error                                         |
+| `at: review`                                        | the card satisfied both of them, so the move that had been refused twice went through                                                                          |
 
 ## What is not in it
 

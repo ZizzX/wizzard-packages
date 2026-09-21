@@ -78,12 +78,26 @@ wizard = open(restored.state);
 console.log(`restored at: ${where()}`);
 console.log(`restored answer: ${String(wizard.get('people.a1.passport'))}`);
 
-// Out of the group and into the step that loads before it is shown.
+// Out of the group and into the step that loads before it is shown. Every
+// commit is watched: if `seats` were ever current while its map was still
+// missing, the engine would have shown the step before `load` finished.
+let shownEarly = false;
+const stop = wizard.subscribe(() => {
+  const current = wizard.getSnapshot().current;
+  if (current === 'seats' && seatsByRow.length === 0) shownEarly = true;
+});
 await wizard.next();
+stop();
 console.log(`at: ${where()}`);
-console.log(`seat map loaded: ${seatsByRow.join(', ')}`);
+console.log(`shown before its map loaded: ${shownEarly ? 'yes' : 'no'}`);
 
-// A branch on an answer given four steps earlier.
+// The branch, both ways. `visa` is part of the flow only while the answer
+// says Japan, and the steps ahead are computed from it on every read.
+wizard.set('trip.destination', 'FR');
+console.log(`ahead for FR: ${wizard.getSnapshot().active.join(', ')}`);
+wizard.set('trip.destination', 'JP');
+console.log(`ahead for JP: ${wizard.getSnapshot().active.join(', ')}`);
+
 await wizard.next();
 console.log(`at: ${where()}`);
 
