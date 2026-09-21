@@ -147,21 +147,6 @@ These run in CI and must pass locally before a PR:
 pnpm verify        # lint + type-check + test:run, the pre-PR command
 ```
 
-Each gate on its own, and each of them narrowed while you work - the whole-repo run is a
-slow way to learn one file is wrong:
-
-```bash
-pnpm lint          # eslint, type-aware on packages/*/src
-pnpm format:check  # prettier
-pnpm type-check    # tsc --noEmit, all packages
-pnpm build         # turbo, all packages
-pnpm test:coverage # vitest with coverage thresholds
-pnpm publint       # package manifest correctness
-pnpm attw          # type resolution across node10/node16/bundler
-pnpm size          # bundle budgets
-pnpm test:e2e      # playwright, react + vue demos
-```
-
 Narrowed forms, in the order they are usually needed:
 
 ```bash
