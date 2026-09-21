@@ -272,3 +272,32 @@ describe('WizardProvider given a wizard and options', () => {
     cleanup();
   });
 });
+
+/**
+ * The half of provider ownership the docs promise: an engine the caller built
+ * is started for them and is not disposed for them. Its sibling in the Vue
+ * suite asserts the same two facts, because a binding that destroys a wizard
+ * it does not own kills a flow that continues across routes.
+ */
+describe('an engine the caller built', () => {
+  const flat = { id: 'own', order: ['one', 'two'], steps: { one: {}, two: {} } };
+
+  it('is started on mount and left alive on unmount', async () => {
+    const wizard = createWizard({ flow: flat });
+    expect(wizard.getSnapshot().current).toBeNull();
+
+    await act(async () => {
+      render(
+        <WizardProvider wizard={wizard}>
+          <span data-testid="ok" />
+        </WizardProvider>
+      );
+    });
+    expect(wizard.getSnapshot().current).toBe('one');
+
+    cleanup();
+    expect(wizard.isDestroyed()).toBe(false);
+    expect((await wizard.next()).ok).toBe(true);
+    wizard.destroy();
+  });
+});

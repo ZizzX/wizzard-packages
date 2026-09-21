@@ -179,3 +179,81 @@ Outside a provider `useWizard()` and every hook built on it throw
 instead, which is what a component rendered both inside and outside a wizard needs - a
 diagnostic panel, say, which should report that it has nothing to watch rather than crash the
 application it is watching.
+
+## Owning the engine yourself
+
+The provider builds the engine by default, but it does not have to. Hand it one you built and
+the object is yours: it exists before the tree mounts, it survives the tree unmounting, and
+`destroy()` is never called for you - the binding disposes only an engine it created itself.
+
+<Tabs syncKey={FRAMEWORK_SYNC_KEY}>
+  <TabItem label={FRAMEWORK_LABELS.react}>
+
+```tsx
+const wizard = createWizard({ flow: signup, registry });
+
+<WizardProvider wizard={wizard}>
+  <Steps />
+</WizardProvider>;
+```
+
+  </TabItem>
+  <TabItem label={FRAMEWORK_LABELS.vue}>
+
+```vue
+<script setup lang="ts">
+const wizard = createWizard({ flow: signup, registry });
+provideWizard(wizard);
+</script>
+```
+
+  </TabItem>
+</Tabs>
+
+One thing the binding still does with an engine you passed: it starts it on mount, because a
+wizard with an empty stack has no step to render. `start()` is idempotent, so a wizard you
+already started is left where it is.
+
+Reach for this when the wizard has to outlive the components that show it - a flow that
+continues across routes, one built from a server response before anything renders, or a test
+that drives the engine directly and mounts a component to look at it.
+
+## Without a provider at all
+
+The hooks read the wizard from React context or Vue's injection, and there is no argument that
+passes one in: outside a provider they throw. The engine itself needs neither. It is an external
+store - `subscribe` returns an unsubscribe, and `getSnapshot` returns the same object until a
+commit - so a component can read one directly with what its framework already has:
+
+<Tabs syncKey={FRAMEWORK_SYNC_KEY}>
+  <TabItem label={FRAMEWORK_LABELS.react}>
+
+```tsx
+const wizard = createWizard({ flow: signup, registry });
+
+function useSnapshot() {
+  return useSyncExternalStore(wizard.subscribe, wizard.getSnapshot, wizard.getSnapshot);
+}
+```
+
+  </TabItem>
+  <TabItem label={FRAMEWORK_LABELS.vue}>
+
+```ts
+const wizard = createWizard({ flow: signup, registry });
+
+function useSnapshot() {
+  const snapshot = shallowRef(wizard.getSnapshot());
+  onScopeDispose(wizard.subscribe(() => (snapshot.value = wizard.getSnapshot())));
+  return snapshot;
+}
+```
+
+  </TabItem>
+</Tabs>
+
+That is the whole of what a binding does with a snapshot, and it is what these ten lines buy
+back. What they do not buy back is the rest: `start()` on mount, `destroy()` on unmount, the
+`start-failed` log, and the dozen hooks above. Wrapping a subtree in a provider is one line and
+gives you all of it, so this is for the case where context genuinely cannot be used - a wizard
+read outside the React tree, or one component that has to watch two wizards at once.
