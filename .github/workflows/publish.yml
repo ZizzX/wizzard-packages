@@ -1,15 +1,69 @@
 name: Release
 
+# A release is started by hand and published from the commit that was reviewed.
+#
+# Before, every push to `main` opened the changesets release PR, and merging it
+# published to `latest` at once - one click from a stable release, with no
+# candidate on `next` before it and no gate in the `wizzard-packages`
+# environment. Now:
+#
+# - Run by hand on `main`, this opens or updates the release PR and never
+#   publishes.
+# - The merge of that PR publishes itself, from its own commit. Nothing else
+#   can land between approving a release and publishing it.
+# - Run by hand while the tip of `main` is still that merge, it publishes again:
+#   the way back from a publish that failed part-way. Once anything has merged
+#   after it, a manual run only opens a new release PR.
+#
+# "The merge of the release PR" is a fact read from GitHub, not a commit
+# message: a title can be edited or imitated, and the branch a PR came from
+# cannot. If a changeset reached `main` before the merge, it is versioned into
+# a new release PR instead of shipping unseen. Every merge still reaches npm as
+# a canary through `canary.yml`.
 on:
   workflow_dispatch:
   push:
     branches:
       - main
-    paths-ignore:
-      - 'examples/**'
 
 jobs:
+  gate:
+    # Only `main`. A manual run on the release branch itself would find it
+    # already versioned, and publish before anyone had approved it.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      release: ${{ steps.pr.outputs.release }}
+    steps:
+      # Fails loudly rather than answering "not a release": a silent API error
+      # read as `false` would leave a real release merge green and unpublished.
+      - name: Is this commit the merge of the release PR
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          pulls=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls")
+          merged=$(jq -e --arg repo "$GITHUB_REPOSITORY" \
+            '[.[] | select(.merged_at != null and .base.ref == "main"
+              and .head.ref == "changeset-release/main" and .head.repo.full_name == $repo)] | length' <<<"$pulls")
+          if [ "$merged" -gt 0 ]; then release=true; else release=false; fi
+          echo "release=$release" >> "$GITHUB_OUTPUT"
+
   release:
+    needs: gate
+    # Any other push to `main` stops at the gate, so no release PR appears
+    # unless someone starts one.
+    if: github.event_name == 'workflow_dispatch' || needs.gate.outputs.release == 'true'
+    # Publishes queue behind each other and never behind a run that only opens
+    # the release PR. At the job, not the workflow: an ordinary push stops at
+    # the gate and never joins a queue, so it cannot replace a pending publish.
+    concurrency:
+      group: release-${{ needs.gate.outputs.release == 'true' && 'publish' || 'version' }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     environment: wizzard-packages
     permissions:
@@ -35,7 +89,9 @@ jobs:
         uses: changesets/action@v1
         with:
           version: pnpm release
-          publish: pnpm release:publish
+          # Without a publish command changesets/action versions whatever
+          # changesets it finds into the release PR, and with none it stops.
+          publish: ${{ needs.gate.outputs.release == 'true' && 'pnpm release:publish' || '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
