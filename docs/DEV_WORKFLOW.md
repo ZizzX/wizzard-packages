@@ -17,7 +17,7 @@ An unfinished feature ships behind a config flag rather than waiting on a branch
 | ----------- | ------------ | --------------------------------------------------------------- |
 | Canary      | `canary`     | every merge to `main` that touches `packages/` or `.changeset/` |
 | Pre-release | `next`       | while a changesets pre-release mode is active                   |
-| Stable      | `latest`     | when the release PR is merged                                   |
+| Stable      | `latest`     | when the Release workflow is run by hand after its PR is merged |
 
 Trying an unreleased change means installing it, not checking out a branch:
 

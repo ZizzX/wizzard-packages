@@ -4,7 +4,8 @@ This document describes the release workflow for `@wizzard-packages/*`.
 
 ## Key Facts
 
-- Releases are performed by CI/CD on push to `main` via `.github/workflows/publish.yml`.
+- Releases are started by hand: `.github/workflows/publish.yml` runs on `workflow_dispatch` only.
+  Nothing on `main` opens a release PR or publishes to `latest` by itself.
 - Versioning is managed by Changesets with a fixed group for all `@wizzard-packages/*`.
 - CI creates git tags (`vX.Y.Z`) and GitHub releases after publish.
 - Every merge to `main` also publishes a snapshot under the `canary` dist-tag.
@@ -24,21 +25,15 @@ This document describes the release workflow for `@wizzard-packages/*`.
    pnpm changeset
    ```
 3. Run quality gates locally (see below).
-4. CI/CD runs `.github/workflows/publish.yml`:
-   - Installs dependencies
-   - Builds all packages
-   - Runs `changesets/action`
-   - Either opens a release PR or publishes to npm
-   - Tags the release (`vX.Y.Z`) and pushes tags
-5. Verify release outputs (tags, GitHub release, npm versions).
+4. When a release is due, run the "Release" workflow from GitHub Actions (`workflow_dispatch`),
+   or `gh workflow run publish.yml --ref main`. With changesets on `main` it opens or updates the
+   release PR, `Version Packages`, and publishes nothing.
+5. Review and merge the release PR. Merging publishes nothing either.
+6. Run the workflow a second time. With no changesets left it publishes to npm, tags the release
+   (`vX.Y.Z`) and pushes the tags.
+7. Verify release outputs (tags, GitHub release, npm versions).
 
-## Manual Release Trigger (CI/CD)
-
-If you need to rerun without a new push:
-
-1. Open the GitHub Actions "Release" workflow.
-2. Use `workflow_dispatch`.
-3. Confirm the run finishes with `changeset publish` success.
+The two runs are the point: a stable release is never one click away from a merge.
 
 ## Quality Gates
 
@@ -65,7 +60,8 @@ pnpm changeset pre enter next
 pnpm changeset
 ```
 
-Release by pushing to `main`. CI/CD will publish with the `next` tag.
+Release with the same two runs of the workflow. While pre mode is active the release PR carries
+`-next.N` versions and the publish goes out under the `next` tag.
 Exit prerelease mode after the final `next` release:
 
 ```bash
@@ -77,7 +73,7 @@ pnpm changeset pre exit
 - **E404/E403 from npm**: confirm `NPM_TOKEN` is valid and has publish rights.
 - **No publish happens**: ensure there is at least one changeset in `.changeset/`.
 - **Build fails in CI**: reproduce locally with `pnpm -r build`.
-- **Release PR only**: merge the release PR to trigger publish.
+- **Release PR merged, nothing published**: expected - run the workflow again to publish.
 
 ## Verification Checklist
 

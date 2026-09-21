@@ -1,12 +1,16 @@
 name: Release
 
+# Run by hand only. On a push to `main` this workflow opened the changesets
+# release PR, and merging that PR published to `latest` straight away - one
+# click from a stable release, with no candidate on `next` before it and no
+# gate in the `wizzard-packages` environment. Every merge still reaches npm, as
+# a canary, through `canary.yml`.
+#
+# A release is two runs: the first opens or updates the release PR from the
+# changesets on `main`; once that PR is merged, the second finds no changesets
+# left and publishes.
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - 'examples/**'
 
 jobs:
   release:
