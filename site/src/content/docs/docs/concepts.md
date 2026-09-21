@@ -25,8 +25,8 @@ replayed step for step. A definition that held your `onNext` callback could do n
 to none of them. Nothing mutates it while a wizard runs.
 
 **The wizard** is the engine holding one run of that definition - what `createWizard()`
-returns, and what a binding's provider owns. It exposes the moves (`next`, `back`, `go`,
-`set`), the reads (`getSnapshot`, `select`, `watch`) and the lifecycle (`start`, `reset`,
+returns, and what a binding's provider owns. It exposes the moves (`next`, `back`, `go`),
+the writes (`set`, `setCtx`), the reads (`getSnapshot`, `select`, `watch`) and the lifecycle (`start`, `reset`,
 `destroy`). It is not serializable and is not meant to be.
 
 **The state** is what the run has accumulated: where it stands, what was answered, what failed.
@@ -54,9 +54,9 @@ and it may observe every commit, block or redirect a move, or load the body of a
 arrives late. Persistence and the devtools are plugins, with no privilege the one you write
 does not have. [Writing a plugin](../plugins/) is the guide.
 
-Views are a third name in the definition, resolved the same way as resolvers, but the engine
-never calls them: it reports which view the current step asks for, and your components decide
-what that means.
+A step's `view` is a third kind of name, and the only one nothing in the library reads. It is a
+string you map to a component yourself - `wizard.getFlow().steps[current].view` - which is
+what lets the same definition render in React, in Vue, or in a terminal.
 
 ## What the engine tracks while it runs
 
@@ -81,28 +81,28 @@ piped into a group reflects a change made upstream without leaving the group and
 
 Each word links to the page that explains it in full.
 
-| Word                          | What it is                                                                                    |
-| ----------------------------- | --------------------------------------------------------------------------------------------- |
-| [flow](../flow/)              | the definition: a JSON object of steps, order and policy                                      |
-| [step](../flow/)              | one entry in `steps`; renders a view and may carry `when`, `guards`, `validate`, `load`       |
-| [group](../groups/)           | a step whose body is another flow, run once or once per item of `repeat.over`                 |
-| [sub-flow](../groups/)        | a definition named in `subFlows`, so a group can reference it by string and stay serializable |
-| [expression](../expressions/) | the thirteen-operator JSON language `when`, `guards` and `repeat.over` are written in         |
-| [registry](../expressions/)   | named resolvers, the functions `$ref` reaches                                                 |
-| [resolver](../expressions/)   | one such function: `(args, scope) => unknown`                                                 |
-| [scope](../groups/)           | what an expression may read: `data`, `ctx`, and `loop` inside a repeat                        |
-| [data](../api-behaviour/)     | the answers the steps collect, addressed by `slice` or step id                                |
-| [ctx](../api-behaviour/)      | the host's context: values you pass in, plus what a group's `input` derives for its child     |
-| [state](../api-behaviour/)    | the whole runtime state - position, data, ctx, errors, counters; JSON, with nothing derived   |
-| [frame](../groups/)           | one level of position: `{ flow, step, key }`; `stack` holds them, current last                |
-| [traversal](../groups/)       | the optional code that walks groups, installed as `groups`                                    |
-| [policy](../navigation/)      | which jumps `go()` allows: `sequential`, `visited` (the default) or `free`                    |
-| [guard](../navigation/)       | an expression that refuses entry to or exit from a step                                       |
-| [plugin](../plugins/)         | an object with a name and up to six hooks around the moves                                    |
-| [deferred](../async-steps/)   | a step whose body arrives from the host while the move waits                                  |
-| [snapshot](../persistence/)   | the durable part of the state, written out and decoded back                                   |
-| [session](../inspecting/)     | a recorded run: a flow id and the states it passed through, for replay                        |
-| [selector](../api-behaviour/) | a derived read - `progress`, `breadcrumbs`, `canBack` - computed, never stored                |
+| Word                          | What it is                                                                                     |
+| ----------------------------- | ---------------------------------------------------------------------------------------------- |
+| [flow](../flow/)              | the definition: a JSON object of steps, order and policy                                       |
+| [step](../flow/)              | one entry in `steps`; renders a view and may carry `when`, `guards`, `validate`, `load`        |
+| [group](../groups/)           | a step whose body is another flow, run once or once per item of `repeat.over`                  |
+| [sub-flow](../groups/)        | a definition named in `subFlows`, so a group can reference it by string and stay serializable  |
+| [expression](../expressions/) | the thirteen-operator JSON language `when`, `guards` and `repeat.over` are written in          |
+| [registry](../expressions/)   | named resolvers, the functions `$ref` reaches                                                  |
+| [resolver](../expressions/)   | one such function: `(args, scope) => unknown`                                                  |
+| [scope](../groups/)           | what an expression may read: `data`, `ctx`, and `loop` inside a repeat                         |
+| [data](../api-behaviour/)     | the answers, at whatever paths the application writes them - by convention under the step's id |
+| [ctx](../api-behaviour/)      | the host's context: values you pass in, plus what a group's `input` derives for its child      |
+| [state](../api-behaviour/)    | the whole runtime state - position, data, ctx, errors, counters; JSON, with nothing derived    |
+| [frame](../groups/)           | one level of position: `{ flow, step, key }`; `stack` holds them, current last                 |
+| [traversal](../groups/)       | the optional code that walks groups, installed as `groups`                                     |
+| [policy](../navigation/)      | which jumps `go()` allows: `sequential`, `visited` (the default) or `free`                     |
+| [guard](../navigation/)       | an expression that refuses entry to or exit from a step                                        |
+| [plugin](../plugins/)         | an object with a name and up to six hooks around the moves                                     |
+| [deferred](../async-steps/)   | a step whose body arrives from the host while the move waits                                   |
+| [snapshot](../persistence/)   | the durable part of the state, written out and decoded back                                    |
+| [session](../inspecting/)     | a recorded run: a flow id and the states it passed through, for replay                         |
+| [selector](../api-behaviour/) | a derived read - `progress`, `breadcrumbs`, `canBack` - computed, never stored                 |
 
 Two words are overloaded on purpose and worth keeping apart. **Snapshot** is the persistence
 format in `@wizzard-packages/core/snapshot`, and also what `getSnapshot()` hands a subscriber -

@@ -1,5 +1,5 @@
 import { defineFlow, group, step } from '@wizzard-packages/core';
-import { and, empty, eq, get, not } from '@wizzard-packages/core/expr';
+import { empty, eq, get, not } from '@wizzard-packages/core/expr';
 
 /** One traveller on the booking, as the trip step collects them. */
 export interface Traveller {
@@ -62,10 +62,10 @@ export const booking = defineFlow({
       load: { $ref: 'seatMap' },
     }),
 
-    // A branch on an answer three steps back.
+    // A branch on an answer given before the whole group ran.
     visa: step<{ number: string }>({
       label: 'Visa',
-      when: and(eq(get('data.trip.destination'), 'JP'), not(empty(get('data.trip.travellers')))),
+      when: eq(get('data.trip.destination'), 'JP'),
     }),
 
     payment: step<{ card: string }>({

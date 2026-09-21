@@ -1,5 +1,5 @@
 import { createWizard } from '@wizzard-packages/core';
-import type { Wizard, WizardState } from '@wizzard-packages/core';
+import type { NavResult, Wizard, WizardState } from '@wizzard-packages/core';
 import { groups } from '@wizzard-packages/core/groups';
 import { decodeSnapshot, toSnapshot } from '@wizzard-packages/core/snapshot';
 
@@ -30,6 +30,12 @@ const where = (): string =>
     .stack.map((f) => (f.key === undefined ? f.step : `${f.step}[${f.key}]`))
     .join(' / ');
 
+/** What refused a move, by the rule's own name for itself. */
+const why = (r: NavResult): string => {
+  if (r.ok) return 'nothing';
+  return `${r.reason} by ${String(r.by)}`;
+};
+
 await wizard.start();
 console.log(`at: ${where()}`);
 
@@ -45,7 +51,7 @@ wizard.set('trip', {
 // nothing is validated. The guard on `review` refuses anyway: it is a rule
 // about the step being entered, not about the move that reached it.
 const early = await wizard.go('review');
-console.log(`refused: ${early.ok ? 'no' : `${early.reason} by ${String(early.by)}`}`);
+console.log(`refused: ${why(early)}`);
 
 // Into the group: one pass of the sub-flow per traveller, keyed by id.
 await wizard.next();
@@ -53,7 +59,7 @@ console.log(`at: ${where()}`);
 
 // A step inside a repeat runs once per item, so what it collects is written at
 // a path carrying the item's key.
-wizard.set('people.a1.passport', 'PA-118');
+wizard.set('people.a1.passport', 'PA118');
 await wizard.next();
 console.log(`at: ${where()}`);
 
@@ -64,7 +70,8 @@ console.log(`at: ${where()}`);
 // Written out and read back while the wizard stands two frames deep, which is
 // the case a flat snapshot cannot express: the group, its key and the step
 // inside it all have to survive.
-const saved = JSON.parse(JSON.stringify(toSnapshot(wizard.getState(), booking))) as unknown;
+const written = JSON.stringify(toSnapshot(wizard.getState(), booking));
+const saved: unknown = JSON.parse(written);
 const restored = decodeSnapshot(booking, saved, { subFlows: { passenger } });
 if (!restored.restored) throw new Error(restored.reason);
 wizard = open(restored.state);
@@ -85,7 +92,7 @@ console.log(`at: ${where()}`);
 
 // The other refusal, from the other rule: the validator on the step being left.
 const refused = await wizard.next();
-console.log(`refused: ${refused.ok ? 'no' : `${refused.reason} by ${String(refused.by)}`}`);
+console.log(`refused: ${why(refused)}`);
 
 wizard.set('payment', { card: '4242' });
 await wizard.next();

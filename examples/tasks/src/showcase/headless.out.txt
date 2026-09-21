@@ -4,7 +4,7 @@ at: people[a1] / who
 at: people[a1] / meal
 at: people[c1] / who
 restored at: people[c1] / who
-restored answer: PA-118
+restored answer: PA118
 at: seats
 seat map loaded: 11, 12, 14
 at: visa

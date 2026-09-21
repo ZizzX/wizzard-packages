@@ -56,7 +56,7 @@ A test in the repository asserts those exact lines, so it is not a transcript of
 | `at: people[a1] / who`                              | position is a stack, not a step: the group is one frame and the sub-flow’s step is the next                                                           |
 | `at: people[a1] / meal` then `at: people[c1] / who` | the adult gets the meal step and the child does not - a branch inside the repeat                                                                      |
 | `restored at: people[c1] / who`                     | the snapshot was written two frames deep, and the restore came back to the same place - the group, the traveller’s key and the step inside it         |
-| `restored answer: PA-118`                           | the answers keyed by traveller came back with it, into an engine that had never seen them                                                             |
+| `restored answer: PA118`                            | the answers keyed by traveller came back with it, into an engine that had never seen them                                                             |
 | `at: seats`                                         | the last traveller’s pass ended and so did the group, both decided by the traversal rather than by the caller                                         |
 | `seat map loaded: ...`                              | the move waited for `load` before the step became current                                                                                             |
 | `at: visa`                                          | the branch on `destination`, taken long after the answer                                                                                              |
@@ -76,7 +76,7 @@ A flow can be persisted automatically rather than by hand. The run above calls `
 [Persistence](../persistence/) is the plugin that does it on every commit, and the refusals that
 matter when the flow has changed since.
 
-## Where each piece is explained
+## Where to go next
 
 [Groups, repeat and sub-flows](../groups/) covers `people`, its `repeat` and its `input`.
 [Expressions](../expressions/) is the language `when` and `guards` are written in.
