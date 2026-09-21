@@ -50,14 +50,14 @@ A third way to look at a flow is to ask the engine's own questions without build
 The functions `next()`, `back()` and `go()` are built on are exported from the root entry, and
 each is a pure function of a definition and a state:
 
-| Function                                         | Answers                                                                                       |
-| ------------------------------------------------ | --------------------------------------------------------------------------------------------- |
-| `resolveNext(flow, state, scope, registry?)`     | where `next()` would go: a step id, `END`, or `null` when the current step is not in the flow |
-| `resolveBack(flow, state, scope, registry?)`     | where `back()` would go, or `null` when there is nowhere behind                               |
-| `reachable(flow, scope, registry?)`              | the steps of `order` whose `when` holds right now, in order                                   |
-| `reachableOnPath(flow, state, scope, registry?)` | that list with the branches this run actually entered spliced in where they were entered      |
-| `enterable(flow, id, scope, registry?)`          | whether a move may land on one step - it exists and its `when` holds                          |
-| `allowedByPolicy(flow, state, to, active)`       | whether `policy` permits jumping straight to `to`                                             |
+| Function                                         | Answers                                                                                                                                                                |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `resolveNext(flow, state, scope, registry?)`     | where `next()` would go: a step id, `END`, or `null` when nothing applies - the current step is not in the flow, or its `on.next` names no entry whose condition holds |
+| `resolveBack(flow, state, scope, registry?)`     | where `back()` would go, or `null` when there is nowhere behind                                                                                                        |
+| `reachable(flow, scope, registry?)`              | the steps of `order` whose `when` holds right now, in order                                                                                                            |
+| `reachableOnPath(flow, state, scope, registry?)` | that list with the branches this run actually entered spliced in where they were entered                                                                               |
+| `enterable(flow, id, scope, registry?)`          | whether a move may land on one step - it exists and its `when` holds                                                                                                   |
+| `allowedByPolicy(flow, state, to, active)`       | whether `policy` permits jumping straight to `to`                                                                                                                      |
 
 `reachable` walks `order` and nothing else, so a branch target that `order` omits is absent from
 it while `enterable` says yes for the same step: one answers "what is the route", the other

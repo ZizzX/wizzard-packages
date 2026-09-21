@@ -84,15 +84,15 @@ import { devtools, recordSession } from '@wizzard-packages/devtools/headless';
 
 ## What the headless entry promises, and what it does not
 
-`devtools()`, `recordSession` and the bundle types are public API under semver. The entry also
-exports three helpers the panel and this site's pages are drawn with - `layoutGraph`, which
-gives a graph coordinates, `formatExpr`, which shortens an expression to a label, and
-`diffState`, which lists what changed between two states. They are exported because the docs
-needed them, they are not part of the stable surface, and they may change in a minor release.
-Use them for a tool you can rebuild, not for something a user depends on.
+`devtools()`, `recordSession`, the bundle types and the panel itself are public API under
+semver - a recording attached to a bug report stays readable across minor releases, which is the
+point of it.
 
-`FlowGraphView`, the React component the Graph view is, is exported from the package root on the
-same terms: useful when you are drawing your own panel, and free to change under you.
+Three helpers the panel and this site's pages are drawn with are not: `layoutGraph`, which gives
+a graph coordinates, `formatExpr`, which shortens an expression to a label, and `diffState`,
+which lists what changed between two states, along with the types they use - `PositionedGraph`,
+`Positioned` and `Change`. They are exported because the docs needed them, and they may change
+in a minor release. Use them for a tool you can rebuild, not for something a user depends on.
 
 ## What it never does
 
