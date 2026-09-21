@@ -26,12 +26,6 @@ on:
     branches:
       - main
 
-# Two runs at once - a merge and a manual retry - would race to publish the
-# same versions.
-concurrency:
-  group: release
-  cancel-in-progress: false
-
 jobs:
   gate:
     # Only `main`. A manual run on the release branch itself would find it
@@ -44,21 +38,32 @@ jobs:
     outputs:
       release: ${{ steps.pr.outputs.release }}
     steps:
+      # Fails loudly rather than answering "not a release": a silent API error
+      # read as `false` would leave a real release merge green and unpublished.
       - name: Is this commit the merge of the release PR
         id: pr
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          merged=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" | jq --arg repo "$GITHUB_REPOSITORY" \
+          set -euo pipefail
+          pulls=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls")
+          merged=$(jq -e --arg repo "$GITHUB_REPOSITORY" \
             '[.[] | select(.merged_at != null and .base.ref == "main"
-              and .head.ref == "changeset-release/main" and .head.repo.full_name == $repo)] | length')
-          echo "release=$([ "$merged" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+              and .head.ref == "changeset-release/main" and .head.repo.full_name == $repo)] | length' <<<"$pulls")
+          if [ "$merged" -gt 0 ]; then release=true; else release=false; fi
+          echo "release=$release" >> "$GITHUB_OUTPUT"
 
   release:
     needs: gate
     # Any other push to `main` stops at the gate, so no release PR appears
     # unless someone starts one.
     if: github.event_name == 'workflow_dispatch' || needs.gate.outputs.release == 'true'
+    # Publishes queue behind each other and never behind a run that only opens
+    # the release PR. At the job, not the workflow: an ordinary push stops at
+    # the gate and never joins a queue, so it cannot replace a pending publish.
+    concurrency:
+      group: release-${{ needs.gate.outputs.release == 'true' && 'publish' || 'version' }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     environment: wizzard-packages
     permissions:
