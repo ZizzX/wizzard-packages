@@ -29,9 +29,9 @@ This document describes the release workflow for `@wizzard-packages/*`.
 4. When a release is due, run the "Release" workflow from GitHub Actions (`workflow_dispatch`),
    or `gh workflow run publish.yml --ref main`. It opens or updates the release PR,
    `Version Packages`, from the changesets on `main`, and publishes nothing.
-5. Review the release PR and merge it with its title unchanged. The merge commit starts with
-   `Version Packages`, and that push publishes exactly that commit: it tags the release (`vX.Y.Z`),
-   pushes the tags and checks the registry.
+5. Review the release PR and squash-merge it. The workflow asks GitHub whether the pushed commit is the
+   merge of a PR from `changeset-release/main`, and when it is, publishes exactly that commit: it tags
+   the release (`vX.Y.Z`), pushes the tags and checks the registry. The PR title plays no part.
 6. Verify release outputs (tags, GitHub release, npm versions).
 
 A stable release is never one click from an unrelated merge, and what is published is the commit the
@@ -81,8 +81,8 @@ pnpm changeset pre exit
 - **E404/E403 from npm**: confirm `NPM_TOKEN` is valid and has publish rights.
 - **No publish happens**: ensure there is at least one changeset in `.changeset/`.
 - **Build fails in CI**: reproduce locally with `pnpm -r build`.
-- **Release PR merged, nothing published**: the merge commit must start with `Version Packages`; if a
-  changeset landed first, a new release PR is open instead.
+- **Release PR merged, nothing published**: if a changeset landed first, a new release PR is open
+  instead. Otherwise run the workflow by hand while the merge is still the tip of `main`.
 
 ## Verification Checklist
 

@@ -7,30 +7,58 @@ name: Release
 # candidate on `next` before it and no gate in the `wizzard-packages`
 # environment. Now:
 #
-# - Run by hand on an ordinary `main`, this opens or updates the release PR and
-#   never publishes.
-# - A push runs it only when the pushed commit is that PR's own merge, and it
-#   publishes that exact commit. There is no window between approving a release
-#   and publishing it for anything else to land in.
-# - Run by hand while the tip of `main` is still the release merge, it publishes
-#   again - the way back from a publish that failed half-way. Once anything has
-#   merged after it, a manual run only opens a new release PR.
+# - Run by hand on `main`, this opens or updates the release PR and never
+#   publishes.
+# - The merge of that PR publishes itself, from its own commit. Nothing else
+#   can land between approving a release and publishing it.
+# - Run by hand while the tip of `main` is still that merge, it publishes again:
+#   the way back from a publish that failed part-way. Once anything has merged
+#   after it, a manual run only opens a new release PR.
 #
-# If a changeset reached `main` before the release PR was merged, the merge
-# versions it into a new release PR instead of publishing: nothing ships that
-# the merged PR did not show. Every merge still reaches npm as a canary through
-# `canary.yml`.
+# "The merge of the release PR" is a fact read from GitHub, not a commit
+# message: a title can be edited or imitated, and the branch a PR came from
+# cannot. If a changeset reached `main` before the merge, it is versioned into
+# a new release PR instead of shipping unseen. Every merge still reaches npm as
+# a canary through `canary.yml`.
 on:
   workflow_dispatch:
   push:
     branches:
       - main
 
+# Two runs at once - a merge and a manual retry - would race to publish the
+# same versions.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
+  gate:
+    # Only `main`. A manual run on the release branch itself would find it
+    # already versioned, and publish before anyone had approved it.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      release: ${{ steps.pr.outputs.release }}
+    steps:
+      - name: Is this commit the merge of the release PR
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          merged=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" | jq --arg repo "$GITHUB_REPOSITORY" \
+            '[.[] | select(.merged_at != null and .base.ref == "main"
+              and .head.ref == "changeset-release/main" and .head.repo.full_name == $repo)] | length')
+          echo "release=$([ "$merged" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
   release:
-    # The release PR is titled `Version Packages`, and so is the commit that
-    # squash-merges it. Any other push has nothing to do here.
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'Version Packages')
+    needs: gate
+    # Any other push to `main` stops at the gate, so no release PR appears
+    # unless someone starts one.
+    if: github.event_name == 'workflow_dispatch' || needs.gate.outputs.release == 'true'
     runs-on: ubuntu-latest
     environment: wizzard-packages
     permissions:
@@ -51,22 +79,14 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
 
-      # Publishing is allowed only from a release merge. Without a publish
-      # command changesets/action versions whatever changesets it finds into
-      # the release PR, and with none it stops.
-      - name: Is this the release merge
-        id: tip
-        run: |
-          if git log -1 --format=%s | grep -q '^Version Packages'; then
-            echo "publish=pnpm release:publish" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Create release PR or publish
         id: changesets
         uses: changesets/action@v1
         with:
           version: pnpm release
-          publish: ${{ steps.tip.outputs.publish }}
+          # Without a publish command changesets/action versions whatever
+          # changesets it finds into the release PR, and with none it stops.
+          publish: ${{ needs.gate.outputs.release == 'true' && 'pnpm release:publish' || '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
