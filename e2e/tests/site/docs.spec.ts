@@ -21,6 +21,8 @@ import { expect, test, type Page } from '@playwright/test';
 /** Every page the sidebar links to, which `sidebar.test.ts` keeps honest. */
 const DOCS = [
   ['Getting started', 'docs/start/'],
+  ['Concepts and glossary', 'docs/concepts/'],
+  ['What you can build', 'docs/showcase/'],
   ['Block Next until valid', 'docs/block-next-until-valid/'],
   ['Restore after reload', 'docs/restore-after-reload/'],
   ['Clear abandoned branch data', 'docs/clear-abandoned-branch-data/'],
