@@ -160,6 +160,56 @@ several top-level values at once, and for `set` everywhere else.
 Both go through the same commit, so a plugin sees each write exactly once and a selector
 recomputes once.
 
+## Typing what a step writes
+
+`defineFlow` on its own already buys something: the object is inferred `const`, so the step ids
+are a union rather than `string`, and `go('reveiw')` stops compiling. What it cannot know is
+what each step writes into `data` - a definition says nothing about the shape of an answer.
+
+`step<T>()` and `group<T>()` say it. Both return their argument untouched, exactly as
+`defineFlow` does, and carry `T` on a phantom property the compiler reads and the runtime never
+sees:
+
+```ts
+import { createWizard, defineFlow, step } from '@wizzard-packages/core';
+
+const booking = defineFlow({
+  id: 'booking',
+  order: ['who', 'bags'],
+  steps: {
+    who: step<{ name: string }>({ label: 'Who is travelling' }),
+    bags: step<{ count: number }>(),
+  },
+});
+
+const wizard = createWizard({ flow: booking });
+wizard.get('who'); // { name: string } | undefined
+wizard.set('who', { name: 'Ada' }); // a string here is an error
+wizard.set('who.name', 'Grace'); // a nested path is `unknown`: no shape is claimed for it
+```
+
+`group<T>()` is the same helper for a group step: it declares the shape at that step's key and
+returns the definition untouched. Running a flow that has one needs the traversal from
+[`core/groups`](../groups/); typing one does not.
+
+The slice belongs to the step's own key and nothing below it. A path one level down is
+`unknown` rather than checked, because a dotted path is a runtime string and narrowing it would
+mean inferring a type for every path a flow could produce.
+
+Two type helpers expose the same information without a wizard: `DataOf<typeof booking>` is the
+data shape, one key per step, and `StepIdOf<typeof booking>` is the union of ids that `go` takes.
+
+The reason the type is declared by hand rather than inferred from the literal is speed.
+Inference stays one level deep, so a forty-step flow type-checks as fast as a three-step one; a
+version that read the shape out of the definition made tsserver stall on flows this repository
+ships. The cost is that `step<T>()` cannot check `T` against a `slice` override - a step that
+redirects its data elsewhere at runtime still reports `T` at its own key.
+
+None of this is required, and none of it survives serialization. A flow that arrives as JSON is
+a plain `FlowDefinition`: `go` takes `string`, `get` returns `unknown`, and everything runs the
+same. A typed wizard is also assignable to a plain `Wizard`, which is what lets a binding store
+one without knowing the flow it came from.
+
 ## Checking a definition before it runs
 
 A flow that arrives from a backend has not been type-checked by anything. `validateFlow`

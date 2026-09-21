@@ -1,5 +1,6 @@
 import { mount } from '@vue/test-utils';
-import { vi } from 'vitest';
+import { createWizard } from '@wizzard-packages/core';
+import { describe, expect, it, vi } from 'vitest';
 import { computed, defineComponent, h, nextTick, onMounted, onUpdated, ref } from 'vue';
 
 import {
@@ -224,3 +225,34 @@ const harness: BindingHarness = {
 };
 
 describeBindingContract(harness);
+
+/**
+ * The half of provider ownership the docs promise: an engine the caller built
+ * is started for them and is not disposed for them. Its sibling in the React
+ * suite asserts the same two facts, because a binding that destroys a wizard
+ * it does not own kills a flow that continues across routes.
+ */
+describe('an engine the caller built', () => {
+  const flat = { id: 'own', order: ['one', 'two'], steps: { one: {}, two: {} } };
+
+  it('is started on mount and left alive on unmount', async () => {
+    const wizard = createWizard({ flow: flat });
+    expect(wizard.getSnapshot().current).toBeNull();
+
+    const Root = defineComponent({
+      setup() {
+        provideWizard(wizard);
+        return () => h('span');
+      },
+    });
+    const wrapper = mount(Root, { attachTo: document.body });
+    await nextTick();
+    await nextTick();
+    expect(wizard.getSnapshot().current).toBe('one');
+
+    wrapper.unmount();
+    expect(wizard.isDestroyed()).toBe(false);
+    expect((await wizard.next()).ok).toBe(true);
+    wizard.destroy();
+  });
+});

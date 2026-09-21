@@ -102,6 +102,11 @@ A bundle replays structure and data: the flow definition, every settled state, a
 outcomes. It does not replay resolver behaviour — a named resolver is not in the bundle, so a
 flow that fetches its options shows the options it recorded.
 
+`devtools`, `recordSession`, the bundle types and the panel are the stable surface. The entry
+also exports `layoutGraph`, `formatExpr` and `diffState`, with the types they use —
+`PositionedGraph`, `Positioned` and `Change`: those exist for a host drawing its own panel and
+may change in a minor release.
+
 ## Redaction
 
 `redact` runs once, at export, on a copy of the whole bundle:
