@@ -44,6 +44,61 @@ and a drawing can show as a loose end.
 Expressions are handed over unevaluated on purpose. A graph is the shape of a definition, not
 the path one person took through it.
 
+## Asking what a move would answer
+
+A third way to look at a flow is to ask the engine's own questions without building a wizard.
+The functions `next()`, `back()` and `go()` are built on are exported from the root entry, and
+each is a pure function of a definition and a state:
+
+| Function                                         | Answers                                                                                                                                                                |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `resolveNext(flow, state, scope, registry?)`     | where `next()` would go: a step id, `END`, or `null` when nothing applies - the current step is not in the flow, or its `on.next` names no entry whose condition holds |
+| `resolveBack(flow, state, scope, registry?)`     | where `back()` would go, or `null` when there is nowhere behind                                                                                                        |
+| `reachable(flow, scope, registry?)`              | the steps of `order` whose `when` holds right now, in order                                                                                                            |
+| `reachableOnPath(flow, state, scope, registry?)` | that list with the branches this run actually entered spliced in where they were entered                                                                               |
+| `enterable(flow, id, scope, registry?)`          | whether a move may land on one step - it exists and its `when` holds                                                                                                   |
+| `allowedByPolicy(flow, state, to, active)`       | whether `policy` permits jumping straight to `to`                                                                                                                      |
+
+`reachable` walks `order` and nothing else, so a branch target that `order` omits is absent from
+it while `enterable` says yes for the same step: one answers "what is the route", the other
+"may a move land here". `reachableOnPath` is the list the breadcrumbs draw.
+
+Nothing here touches a store, a component or a clock, which is what makes the part of a wizard
+that quietly breaks testable on its own: build a state, ask where `next()` would go, assert the
+id. `scope` is `{ data, ctx }`, the same object an expression is evaluated against, and
+`registry` is needed only when a `when` is a `$ref`.
+
+`createSelector` is the derived half of the same idea:
+
+```ts
+import { createSelector } from '@wizzard-packages/core';
+
+const select = createSelector(() => trip);
+const { active, current, progress, breadcrumbs, canBack, isBusy, hasErrors } = select(state);
+```
+
+It returns a function of state, memoized on `rev`, which changes on a commit and only on a
+commit. Two calls between commits return the identical object, which is what
+`useSyncExternalStore` requires and why none of these values are stored anywhere. A binding
+already runs one for you - this is for code that holds a state and no wizard, such as a replay
+of a recorded session.
+
+## Large flows
+
+The numbers a flow runs into are ceilings on the tools, not on the engine: a definition may hold
+as many steps as it likes, and `buildGraph` will return a node for each of them.
+
+Where the limits bite is nesting and drawing. A graph stops expanding sub-flows past 32 levels
+and marks the box `too-deep`; `validateFlow`, the traversal and the session check each stop at
+the same depth. A snapshot has its own budget, described in [Persistence](../persistence/). The
+inspector on this site draws up to 40 nodes and refuses a bigger flow with the count it
+measured, because past that the picture stops being readable rather than stops being correct -
+inspect a sub-flow on its own instead. Devtools bounds its state diff the same way, by the walk
+and by the rows it reports.
+
+Recomputation is the part that does not need managing: a selector recomputes once per commit
+whatever the size of the flow, and the built-in layout is memoized per graph.
+
 ## A recorded session
 
 `core/session` answers a narrower question: is this stack of frames still consistent with this

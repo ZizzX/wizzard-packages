@@ -13,11 +13,11 @@ An unfinished feature ships behind a config flag rather than waiting on a branch
 
 ## Channels
 
-| Channel     | npm dist-tag | Published when                                                  |
-| ----------- | ------------ | --------------------------------------------------------------- |
-| Canary      | `canary`     | every merge to `main` that touches `packages/` or `.changeset/` |
-| Pre-release | `next`       | while a changesets pre-release mode is active                   |
-| Stable      | `latest`     | when the release PR is merged                                   |
+| Channel     | npm dist-tag | Published when                                                    |
+| ----------- | ------------ | ----------------------------------------------------------------- |
+| Canary      | `canary`     | every merge to `main` that touches `packages/` or `.changeset/`   |
+| Pre-release | `next`       | while a changesets pre-release mode is active                     |
+| Stable      | `latest`     | when the release PR, opened by running Release by hand, is merged |
 
 Trying an unreleased change means installing it, not checking out a branch:
 

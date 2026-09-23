@@ -4,7 +4,9 @@ This document describes the release workflow for `@wizzard-packages/*`.
 
 ## Key Facts
 
-- Releases are performed by CI/CD on push to `main` via `.github/workflows/publish.yml`.
+- Releases are started by hand and published from the reviewed commit. `.github/workflows/publish.yml`
+  run by hand opens the release PR; merging that PR publishes its own merge commit, and nothing else
+  on `main` opens a release PR or publishes to `latest`.
 - Versioning is managed by Changesets with a fixed group for all `@wizzard-packages/*`.
 - CI creates git tags (`vX.Y.Z`) and GitHub releases after publish.
 - Every merge to `main` also publishes a snapshot under the `canary` dist-tag.
@@ -24,21 +26,22 @@ This document describes the release workflow for `@wizzard-packages/*`.
    pnpm changeset
    ```
 3. Run quality gates locally (see below).
-4. CI/CD runs `.github/workflows/publish.yml`:
-   - Installs dependencies
-   - Builds all packages
-   - Runs `changesets/action`
-   - Either opens a release PR or publishes to npm
-   - Tags the release (`vX.Y.Z`) and pushes tags
-5. Verify release outputs (tags, GitHub release, npm versions).
+4. When a release is due, run the "Release" workflow from GitHub Actions (`workflow_dispatch`),
+   or `gh workflow run publish.yml --ref main`. It opens or updates the release PR,
+   `Version Packages`, from the changesets on `main`, and publishes nothing.
+5. Review the release PR and squash-merge it. The workflow asks GitHub whether the pushed commit is the
+   merge of a PR from `changeset-release/main`, and when it is, publishes exactly that commit: it tags
+   the release (`vX.Y.Z`), pushes the tags and checks the registry. The PR title plays no part.
+6. Verify release outputs (tags, GitHub release, npm versions).
 
-## Manual Release Trigger (CI/CD)
+A stable release is never one click from an unrelated merge, and what is published is the commit the
+release PR showed. Two cases end without a publish, on purpose:
 
-If you need to rerun without a new push:
-
-1. Open the GitHub Actions "Release" workflow.
-2. Use `workflow_dispatch`.
-3. Confirm the run finishes with `changeset publish` success.
+- A changeset reached `main` after the release PR was opened. The merge then versions it into a new
+  release PR instead of publishing; review and merge that one.
+- The publish failed part-way. Run the workflow by hand again while the release merge is still the tip
+  of `main` and it publishes; once anything has merged after it, a manual run only opens a new
+  release PR.
 
 ## Quality Gates
 
@@ -65,7 +68,8 @@ pnpm changeset pre enter next
 pnpm changeset
 ```
 
-Release by pushing to `main`. CI/CD will publish with the `next` tag.
+Release the same way. While pre mode is active the release PR carries `-next.N` versions and its merge
+publishes under the `next` tag.
 Exit prerelease mode after the final `next` release:
 
 ```bash
@@ -77,7 +81,8 @@ pnpm changeset pre exit
 - **E404/E403 from npm**: confirm `NPM_TOKEN` is valid and has publish rights.
 - **No publish happens**: ensure there is at least one changeset in `.changeset/`.
 - **Build fails in CI**: reproduce locally with `pnpm -r build`.
-- **Release PR only**: merge the release PR to trigger publish.
+- **Release PR merged, nothing published**: if a changeset landed first, a new release PR is open
+  instead. Otherwise run the workflow by hand while the merge is still the tip of `main`.
 
 ## Verification Checklist
 
