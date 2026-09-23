@@ -141,26 +141,17 @@ as an older version: it is torn down, not supported.
 
 ## Quality gates
 
-These run in CI and must pass locally before a PR:
+The gates are the steps of `.github/workflows/ci.yml` - that file is the list, and every
+step in it must pass before a PR merges. Locally, before opening one:
 
 ```bash
 pnpm verify        # lint + type-check + test:run, the pre-PR command
 ```
 
-Each gate on its own, and each of them narrowed while you work - the whole-repo run is a
-slow way to learn one file is wrong:
-
-```bash
-pnpm lint          # eslint, type-aware on packages/*/src
-pnpm format:check  # prettier
-pnpm type-check    # tsc --noEmit, all packages
-pnpm build         # turbo, all packages
-pnpm test:coverage # vitest with coverage thresholds
-pnpm publint       # package manifest correctness
-pnpm attw          # type resolution across node10/node16/bundler
-pnpm size          # bundle budgets
-pnpm test:e2e      # playwright, react + vue demos
-```
+`verify` is a subset: it does not check formatting or the embedded examples, build, enforce
+coverage, check packaging or bundle size, or run e2e. When a change can move one of those, run
+that step of `ci.yml` too - `pnpm format:check`, `pnpm examples:check`, `pnpm build`,
+`pnpm test:coverage`, `pnpm check:pack`, `pnpm size`, `pnpm test:e2e`.
 
 Narrowed forms, in the order they are usually needed:
 
