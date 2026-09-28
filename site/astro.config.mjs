@@ -89,6 +89,7 @@ export default defineConfig({
           label: 'Start here',
           items: [
             { label: 'Getting started', link: '/docs/start/' },
+            { label: 'Tutorial', link: '/docs/tutorial/' },
             { label: 'Concepts and glossary', link: '/docs/concepts/' },
             { label: 'What you can build', link: '/docs/showcase/' },
           ],

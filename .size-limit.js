@@ -388,10 +388,15 @@ export default [
   // silently ignoring the options, in every build. It checks a list of the
   // option keys rather than every leftover prop, so `data-*` or a React 19
   // `ref` forwarded by a wrapper is not mistaken for an option.
+  //
+  // react 1.45 to 1.46 kB on 2026-09-28, measured 1452 B: useWizardSelector keys
+  // its cache on the selector as well as the snapshot, so a selector that closes
+  // over a render - `useField` with a path naming the current repeat item - is
+  // re-read instead of the first one answering forever.
   {
     name: 'react-v1',
     path: 'packages/react/src/v1/index.tsx',
-    limit: '1.45 kB',
+    limit: '1.46 kB',
     gzip: true,
     ignore: ['react', 'react-dom', '@wizzard-packages/core'],
   },

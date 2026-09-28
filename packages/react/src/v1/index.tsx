@@ -177,31 +177,36 @@ export function useOptionalWizard(): Wizard | null {
  * The cache is the documented shape for a selector over `useSyncExternalStore`:
  * the returned value has to be referentially stable while nothing it depends on
  * changed, or React re-renders forever. Recomputation is skipped entirely when
- * the snapshot itself has not changed, which is the common case.
+ * neither the snapshot nor the selector has changed, which is the common case.
+ *
+ * The selector is part of that key because it closes over the render it came
+ * from: `useField(\`guests.${key}.badge\`)` is a new selector on the next guest.
+ * Keyed on the snapshot alone, the first selector ever passed answered every
+ * later render, and a controlled input bound to it dropped each keystroke.
  */
 export function useWizardSelector<T>(
   selector: (snapshot: Snapshot) => T,
   isEqual: (a: T, b: T) => boolean = Object.is
 ): T {
   const wizard = useWizard();
-  const cache = useRef<{ snapshot: Snapshot; value: T } | null>(null);
+  const cache = useRef<{
+    snapshot: Snapshot;
+    selector: (snapshot: Snapshot) => T;
+    value: T;
+  } | null>(null);
 
   const getSelection = useCallback((): T => {
     const snapshot = wizard.getSnapshot();
     const previous = cache.current;
-    if (previous && previous.snapshot === snapshot) return previous.value;
-
-    const value = selector(snapshot);
-    if (previous && isEqual(previous.value, value)) {
-      cache.current = { snapshot, value: previous.value };
+    if (previous && previous.snapshot === snapshot && previous.selector === selector) {
       return previous.value;
     }
-    cache.current = { snapshot, value };
-    return value;
-    // `selector` and `isEqual` are read fresh on every call on purpose: pinning
-    // them would make an inline arrow selector stale.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wizard]);
+
+    const value = selector(snapshot);
+    const kept = previous && isEqual(previous.value, value) ? previous.value : value;
+    cache.current = { snapshot, selector, value: kept };
+    return kept;
+  }, [wizard, selector, isEqual]);
 
   return useSyncExternalStore(wizard.subscribe, getSelection, getSelection);
 }

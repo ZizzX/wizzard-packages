@@ -147,6 +147,13 @@ const name = useField<string>('trip.name');
   </TabItem>
 </Tabs>
 
+A path can name the item a repeat is on - `` `guests.${key}.badge` `` - and then it is a
+different path on the next item. In React pass the new path on the render that has it; the hook
+reads and writes whatever path the latest render gave it. In Vue `useField` takes its path once,
+in `setup`, so a field for the current item goes in a component keyed by that item, or reads and
+writes through `useWizardSelector` and `wizard.set` with the key taken inside the getter, as the
+[Tutorial](../tutorial/) does.
+
 ### Errors
 
 `useErrors()` reads the messages of the current step, `useErrors('payment')` those of a named

@@ -1,0 +1,58 @@
+---
+import { Code } from '@astrojs/starlight/components';
+
+import { lineDiff } from '../lib/line-diff';
+
+/**
+ * One file of one tutorial step, as the reader should type it.
+ *
+ * Every step of `examples/tasks/src/tutorial` keeps its files whole, and a test
+ * runs each step's script against its output. What the page shows is computed
+ * from those files: a file an earlier step already had is shown as the change
+ * from the latest earlier version, so the reader types the difference and the
+ * page cannot teach a line the tested code does not have. A step's script and
+ * its output are shown whole - each step writes a new one.
+ */
+interface Props {
+  /** The step's directory, `04-repeat`. */
+  step: string;
+  /** A file in it, `flow.ts`. */
+  file: string;
+}
+
+const ROOT = '../../../examples/tasks/src/tutorial';
+const files = import.meta.glob<string>('../../../examples/tasks/src/tutorial/0*/*.{ts,txt}', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+});
+
+const { step, file } = Astro.props;
+const steps = [...new Set(Object.keys(files).map((path) => path.split('/').at(-2) ?? ''))].sort();
+const read = (at: string): string | undefined => files[`${ROOT}/${at}/${file}`];
+
+const now = read(step);
+if (now === undefined) {
+  throw new Error(
+    `The tutorial page names ${step}/${file}, which does not exist. ` +
+      'The page and examples/tasks/src/tutorial have drifted apart. ' +
+      'Rename the file or the reference so the two agree.'
+  );
+}
+
+const before = steps
+  .slice(0, steps.indexOf(step))
+  .reverse()
+  .map(read)
+  .find((text) => text !== undefined);
+const whole = file.startsWith('run') || before === undefined;
+const title = file.endsWith('.txt') ? 'Output' : file;
+---
+
+{
+  whole ? (
+    <Code code={now} lang={file.endsWith('.txt') ? 'text' : 'ts'} title={title} />
+  ) : (
+    <Code code={lineDiff(before, now)} lang="diff" meta='lang="ts"' title={title} />
+  )
+}

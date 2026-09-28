@@ -1,0 +1,5 @@
+first visit: persist/nothing-stored
+left on: ticket
+after reload: restored
+back on: ticket
+name kept: Ada

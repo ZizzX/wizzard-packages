@@ -25,6 +25,28 @@ interface Passenger {
 
 let renders = 0;
 
+/**
+ * Vue's `useField` takes its path once, in `setup`: a field that names the
+ * current item lives in a component keyed by that item, so a new item is a new
+ * component with its own path.
+ */
+const KeyedField = defineComponent({
+  props: { itemKey: { type: String, required: true } },
+  setup(props) {
+    const note = useField<string | undefined>(`notes.${props.itemKey}`);
+    return () => [
+      h('span', { 'data-testid': 'keyed-value' }, note.value ?? ''),
+      h('input', {
+        'data-testid': 'keyed-input',
+        value: note.value ?? '',
+        onInput: (event: Event) => {
+          if (props.itemKey !== '-') note.value = (event.target as HTMLInputElement).value;
+        },
+      }),
+    ];
+  },
+});
+
 /** Renders exactly the test ids the contract suite reads, and nothing else. */
 const ProbeComponent = defineComponent({
   setup() {
@@ -140,6 +162,7 @@ const ProbeComponent = defineComponent({
             );
           },
         }),
+        h(KeyedField, { key: itemKey.value || '-', itemKey: itemKey.value || '-' }),
         h(
           'button',
           {

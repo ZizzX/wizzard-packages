@@ -1,0 +1,242 @@
+---
+title: Tutorial
+description: Build a conference registration one change at a time - two steps, then validation, a branch, a repeat over guests, a step that loads, a saved session and a plugin of your own.
+---
+
+import RunnableExample from '../../../components/RunnableExample.astro';
+import TutorialFile from '../../../components/TutorialFile.astro';
+import TutorialReact from '../../../islands/TutorialReact';
+import TutorialVue from '../../../islands/TutorialVue.vue';
+import appSource from '@examples/tasks/src/tutorial/finish/App.tsx?raw';
+import appVueSource from '@examples/tasks/src/tutorial/finish/App.vue?raw';
+import wizardVueSource from '@examples/tasks/src/tutorial/finish/Wizard.vue?raw';
+import guestsSource from '@examples/tasks/src/tutorial/finish/guests.ts?raw';
+import flowSource from '@examples/tasks/src/tutorial/07-plugin/flow.ts?raw';
+import wizardSource from '@examples/tasks/src/tutorial/07-plugin/wizard.ts?raw';
+import runSource from '@examples/tasks/src/tutorial/07-plugin/run.ts?raw';
+import runOutput from '@examples/tasks/src/tutorial/07-plugin/run.out.txt?raw';
+
+[Getting started](../start/) is one screen, and [What you can build](../showcase/) is a finished
+flow you read rather than build. This page is the road between them: a conference registration
+that starts as two steps and grows, one change at a time, into a wizard with validation, a
+branch, a list of guests, a step that loads, a session that survives a reload and a plugin you
+wrote.
+
+Every step changes a file or two and adds a short script that drives the wizard and prints what
+the change made work. A file that already existed is shown as the change to it, so what you type
+is the difference. The code and the output on this page are read from files in the repository,
+and a test runs every script and compares what it prints, so a line here cannot say something
+the engine does not do.
+
+The scripts need `@wizzard-packages/core` - install it as [Getting started](../start/#install)
+shows - and a way to run TypeScript, such as `npx tsx run.ts`. Step 6 adds the plugins package.
+The browser comes in at the end.
+
+## 1. Two steps and a review
+
+A flow is data: the order of the steps and what each one is. `step<T>` names the shape of the
+answers a step collects, which is what lets `set` and `get` check them; the object it returns is
+still plain JSON.
+
+<TutorialFile step="01-first-steps" file="flow.ts" />
+
+The engine is built from the flow. It gets its own file because every later step adds something
+to this call.
+
+<TutorialFile step="01-first-steps" file="wizard.ts" />
+
+<TutorialFile step="01-first-steps" file="run.ts" />
+
+<TutorialFile step="01-first-steps" file="run.out.txt" />
+
+Nothing is current until `start()` enters the first step. `back()` moves, and it does not throw
+away what was typed on the step it returns to. `active` is the route from start to end, worked
+out from the flow rather than stored.
+
+## 2. Refuse to leave a step
+
+A step that must be complete before the person moves on gets a `validate`. The flow cannot hold
+a function and stay JSON, so it holds a name, and a registry says what the name means.
+
+<TutorialFile step="02-validation" file="flow.ts" />
+
+<TutorialFile step="02-validation" file="registry.ts" />
+
+<TutorialFile step="02-validation" file="wizard.ts" />
+
+<TutorialFile step="02-validation" file="run.ts" />
+
+<TutorialFile step="02-validation" file="run.out.txt" />
+
+A refused `next()` is a value with a `reason` and the messages, not an exception, and the wizard
+stays where it was. The same messages sit in the wizard's state under the step's id, which is
+where a form reads them: [Block Next until valid](../block-next-until-valid/) and
+[Render field errors](../render-field-errors/) are the rendered side of this step.
+
+## 3. A step for some tickets only
+
+A business ticket needs a company name; a standard one does not. `when` puts a step on the route
+only while an expression holds, and the expression is data too - `eq(get(...), ...)` builds it.
+
+<TutorialFile step="03-branch" file="flow.ts" />
+
+<TutorialFile step="03-branch" file="run.ts" />
+
+<TutorialFile step="03-branch" file="run.out.txt" />
+
+The route is worked out from the answers on every read, so changing the ticket changes the steps
+ahead without anything being told to recompute. With a standard ticket `next()` from `ticket`
+lands on `review`; with a business one it lands on `company`. What the person typed on a step
+that then goes off the route stays in the data;
+[Clear abandoned branch data](../clear-abandoned-branch-data/) is how to decide what does not.
+
+## 4. The same questions for every guest
+
+A ticket can bring guests, and each guest is asked the same two things. That is a flow of its
+own, `guest`, run once per item of a list by a `group` with a `repeat`.
+
+<TutorialFile step="04-repeat" file="flow.ts" />
+
+Three fields beside the group are not optional. `keyBy` names what tells one guest from another,
+so a guest keeps their answers when the list is edited. The group's `when` has to say what
+happens while the list is empty ([`repeat-without-when`](../../errors/repeat-without-when/)), and
+a flow with a repeat carries a `version`
+([`repeat-without-version`](../../errors/repeat-without-version/)), because a saved session
+names guests of a list that may have changed shape since.
+
+Walking into a group is a separate entry point, so a flow without one does not pay for it:
+
+<TutorialFile step="04-repeat" file="wizard.ts" />
+
+<TutorialFile step="04-repeat" file="run.ts" />
+
+<TutorialFile step="04-repeat" file="run.out.txt" />
+
+Where the wizard is, inside a group, is a stack: the group with the guest's key, then the step of
+the guest's flow. The engine does not decide where a guest's answers are kept; a path with the
+guest's key in it, `guests.g1.diet`, keeps them apart. [Groups, repeat and
+sub-flows](../groups/) covers the rest - what a nested flow can read about its item, and
+`back()` across a group's edge.
+
+## 5. A step that waits for its data
+
+The sessions a person can pick come from a server. `load` names a resolver the move waits on, so
+no move makes the step current with nothing to pick from.
+
+<TutorialFile step="05-load" file="flow.ts" />
+
+`load` gates the step and discards what the resolver returns, so the resolver puts the answer
+where the page will read it - here a module, in an app a store or a query cache.
+
+<TutorialFile step="05-load" file="registry.ts" />
+
+<TutorialFile step="05-load" file="run.ts" />
+
+<TutorialFile step="05-load" file="run.out.txt" />
+
+While the agenda loads the wizard reports itself busy, which is what the buttons of the rendered
+wizard below are disabled on, and no commit ever shows `sessions` current before the talks are in.
+[Loading a step](../async-steps/) covers a load that fails and one that is overtaken by another
+move.
+
+## 6. Keep the session across a reload
+
+The `persist` plugin writes the session on every change and reads it back when the wizard starts.
+It ships in its own package, beside the engine:
+
+```bash
+pnpm add @wizzard-packages/plugins@canary
+```
+
+In a browser it uses `localStorage`; the script hands it a `Map` behind the same three methods, so
+a reload can happen in one process.
+
+<TutorialFile step="06-save" file="wizard.ts" />
+
+<TutorialFile step="06-save" file="run.ts" />
+
+<TutorialFile step="06-save" file="run.out.txt" />
+
+`onRestore` is told once, at start, whether a session came back and, when one did not, why - here
+`persist/nothing-stored` on the first visit. Writes are coalesced, and `destroy()` flushes the
+last one, as closing the page does in a browser. [Restore after reload](../restore-after-reload/)
+is this step rendered, and [Persistence](../persistence/) is the format underneath.
+
+A restore puts the wizard back on its step without entering it, so a step's `load` does not run
+again: a page reloaded on `sessions` comes back without the agenda step 5 fetched. The rendered
+wizard below checks for that once it mounts and enters `sessions` again with `go('sessions')`,
+which runs the load.
+
+## 7. A plugin of your own
+
+`persist` is a plugin, and nothing about it is privileged: a plugin is an object with a name and
+the hooks it needs. This one reports every step a move lands on, which is the shape of an
+analytics event.
+
+<TutorialFile step="07-plugin" file="trail.ts" />
+
+<TutorialFile step="07-plugin" file="wizard.ts" />
+
+<TutorialFile step="07-plugin" file="run.ts" />
+
+<TutorialFile step="07-plugin" file="run.out.txt" />
+
+The refused `next()` is not in the trail: `afterNavigate` runs once a move has committed, so it
+sees only moves that happened, and it cannot undo one. A session `persist` restores is not a
+move either: the wizard below, reloaded, does not list the step it came back on - unless that
+is `sessions`, which it enters again to fetch the agenda. A plugin that must stop a move refuses it from `beforeNavigate`.
+[Writing a plugin](../plugins/) lists every hook and the order they run in.
+
+## The wizard, rendered
+
+Everything above, drawn by a binding. `App` hands the provider the options `openWizard` passed to
+`createWizard`, and the components ask which step is current and draw that one. The session is
+kept in this browser, one per tab, so leave it half done and reload the page.
+
+<RunnableExample
+  reactSources={[
+    {
+      name: 'App.tsx',
+      lang: 'tsx',
+      code: appSource,
+      note: 'The provider, and one component that draws whichever step is current.',
+    },
+    {
+      name: 'guests.ts',
+      lang: 'ts',
+      code: guestsSource,
+      note: 'Removing a guest takes their answers with them, in one commit.',
+    },
+  ]}
+  vueSources={[
+    { name: 'App.vue', lang: 'vue', code: appVueSource },
+    { name: 'Wizard.vue', lang: 'vue', code: wizardVueSource },
+    { name: 'guests.ts', lang: 'ts', code: guestsSource },
+  ]}
+  headlessSources={[
+    { name: 'flow.ts', lang: 'ts', code: flowSource },
+    { name: 'wizard.ts', lang: 'ts', code: wizardSource },
+    { name: 'run.ts', lang: 'ts', code: runSource },
+    {
+      name: 'Output',
+      lang: 'text',
+      code: runOutput,
+      note: 'A test in the repository asserts these exact lines.',
+    },
+  ]}
+>
+  <TutorialReact client:only="react" slot="react" />
+  <TutorialVue client:only="vue" slot="vue" />
+</RunnableExample>
+
+Both renderings are mounted in the browser only, because the session lives in the browser: a
+server rendering the first step while the browser restores a later one is a flash of the wrong
+page. [Restore after reload](../restore-after-reload/#this-one-is-mounted-in-the-browser-only)
+explains why in full.
+
+## Where to go next
+
+[What you can build](../showcase/) is the next size up: a sub-flow that branches inside a repeat,
+a guard on entering a step, and a session written two frames deep and read back into a different
+engine. [Concepts and glossary](../concepts/) defines every word this page used, and every export
+is in the [API reference](../api/).

@@ -208,7 +208,9 @@ guide; `docs/designs/group-traversal.md` is the full set of rules.
 [What you can build](https://zizzx.github.io/wizzard-packages/docs/showcase/) puts this beside
 a branch, a loading step, a validator and a restored session, in one definition and one run of
 it, and [Concepts and glossary](https://zizzx.github.io/wizzard-packages/docs/concepts/)
-defines each word the documentation uses.
+defines each word the documentation uses. The
+[Tutorial](https://zizzx.github.io/wizzard-packages/docs/tutorial/) builds a wizard with all of
+them one change at a time, starting from two steps.
 
 ## Why this and not something else
 

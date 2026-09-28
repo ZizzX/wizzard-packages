@@ -1,0 +1,4 @@
+busy while loading: yes
+shown before the agenda arrived: no
+at: sessions
+talks: Keynote, Flows as data, Testing wizards
