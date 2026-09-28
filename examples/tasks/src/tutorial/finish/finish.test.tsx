@@ -1,0 +1,86 @@
+import { fireEvent, render, screen } from '@testing-library/react';
+import { mount } from '@vue/test-utils';
+import { beforeEach, describe, expect, it } from 'vitest';
+
+import AppVue from './App.vue';
+import { App } from './App';
+
+/**
+ * The tutorial ends on this wizard, rendered on both bindings. One walk drives
+ * each of them through everything the seven steps added: the refusal, the
+ * branch, a guest, the step that loads, and the plugin's trail.
+ *
+ * The walk reads the page the way a person does - by label and role - so the
+ * same script holds for a React tree and a Vue one.
+ */
+const next = (): void => {
+  fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+};
+
+const walk = async (): Promise<void> => {
+  fireEvent.input(await screen.findByLabelText('Name'), { target: { value: 'Ada' } });
+  next();
+  // Refused by the validator: still on the step, and told why.
+  expect((await screen.findByRole('alert')).textContent).toBe('Enter an email address.');
+
+  fireEvent.input(screen.getByLabelText('Email'), { target: { value: 'ada@example.com' } });
+  next();
+
+  fireEvent.click(await screen.findByRole('radio', { name: 'business' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Add a guest' }));
+  fireEvent.input(await screen.findByRole('textbox', { name: 'Guest 1' }), {
+    target: { value: 'Grace' },
+  });
+  next();
+
+  // On the route because the ticket is business - and off it again once the
+  // ticket is standard.
+  await screen.findByLabelText('Company');
+  fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+  fireEvent.click(await screen.findByRole('radio', { name: 'standard' }));
+  next();
+
+  // Inside the group: the step knows whose pass it is.
+  fireEvent.input(await screen.findByLabelText("Name on Grace's badge"), {
+    target: { value: 'G. Hopper' },
+  });
+  next();
+  fireEvent.change(await screen.findByLabelText('What does Grace eat?'), {
+    target: { value: 'vegan' },
+  });
+  next();
+
+  // Entered once the agenda is in, so the talks are there to pick.
+  fireEvent.click(await screen.findByRole('checkbox', { name: 'Flows as data' }));
+  next();
+
+  expect(
+    (await screen.findByText(/standard ticket/)).textContent?.replace(/\s+/g, ' ').trim()
+  ).toBe('Ada (ada@example.com), standard ticket, with Grace.');
+  expect(screen.getByText(/^Landed on:/).textContent).toBe(
+    'Landed on: attendee → ticket → company → ticket → badge → diet → sessions → review'
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: 'Register' }));
+  await screen.findByRole('heading', { name: 'You are registered' });
+};
+
+describe('the tutorial, rendered', () => {
+  beforeEach(() => {
+    // `persist` writes to localStorage; a session left by the other binding
+    // would be restored and start the walk in the wrong place.
+    localStorage.clear();
+  });
+
+  it('walks on React', async () => {
+    const view = render(<App />);
+    await walk();
+    view.unmount();
+  });
+
+  it('walks on Vue', async () => {
+    const view = mount(AppVue, { attachTo: document.body });
+    await walk();
+    view.unmount();
+  });
+});

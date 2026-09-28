@@ -84,7 +84,7 @@ const startOver = (): void => {
       <fieldset>
         <legend>Ticket</legend>
         <label v-for="k in ['standard', 'business']" :key="k">
-          <input v-model="kind" type="radio" :value="k" /> {{ k }}
+          <input v-model="kind" type="radio" :name="`${id}-kind`" :value="k" /> {{ k }}
         </label>
       </fieldset>
       <p v-for="(g, at) in guests" :key="g.id">

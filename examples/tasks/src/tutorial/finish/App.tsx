@@ -131,7 +131,13 @@ export function Registration(): ReactNode {
             <legend>Ticket</legend>
             {(['standard', 'business'] as const).map((k) => (
               <label key={k}>
-                <input type="radio" checked={kind === k} onChange={() => setKind(k)} /> {k}
+                <input
+                  type="radio"
+                  name={`${id}-kind`}
+                  checked={kind === k}
+                  onChange={() => setKind(k)}
+                />{' '}
+                {k}
               </label>
             ))}
           </fieldset>
