@@ -1,0 +1,7 @@
+no guests: attendee, ticket, review
+two guests: attendee, ticket, guests, review
+at: guests[g1] / badge
+at: guests[g1] / diet
+at: guests[g2] / badge
+at: review
+Grace eats: vegetarian

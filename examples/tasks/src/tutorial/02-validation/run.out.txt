@@ -1,0 +1,5 @@
+refused: invalid {"email":"Enter an email address."}
+at: attendee
+errors on attendee: {"email":"Enter an email address."}
+next: ok
+at: ticket
