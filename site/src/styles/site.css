@@ -1305,6 +1305,12 @@ svg.interactive .node {
   max-width: var(--measure);
 }
 
+/* Radio and checkbox options sit inline in a fieldset, and without a gap one
+   option's text runs into the next option's control. */
+.example-stage fieldset label {
+  margin-inline-end: var(--space-4);
+}
+
 /* The devtools panel carries its own theme as six custom properties, and left
    alone it paints its own light ground: in the dark theme that put the page's
    light text on a white panel at 1.18:1, across fifty-eight nodes.

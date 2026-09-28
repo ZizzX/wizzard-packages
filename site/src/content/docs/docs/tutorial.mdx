@@ -159,7 +159,7 @@ is this step rendered, and [Persistence](../persistence/) is the format undernea
 ## 7. A plugin of your own
 
 `persist` is a plugin, and nothing about it is privileged: a plugin is an object with a name and
-the hooks it needs. This one reports every step the wizard lands on, which is the shape of an
+the hooks it needs. This one reports every step a move lands on, which is the shape of an
 analytics event.
 
 <TutorialFile step="07-plugin" file="trail.ts" />
@@ -171,9 +171,10 @@ analytics event.
 <TutorialFile step="07-plugin" file="run.out.txt" />
 
 The refused `next()` is not in the trail: `afterNavigate` runs once a move has committed, so it
-sees only moves that happened, and it cannot undo one. A plugin that must stop a move refuses it
-from `beforeNavigate`. [Writing a plugin](../plugins/) lists every hook and the order they run
-in.
+sees only moves that happened, and it cannot undo one. A session `persist` restores is not a
+move either: the wizard below, reloaded, starts its trail at the step after the one it came
+back on. A plugin that must stop a move refuses it from `beforeNavigate`.
+[Writing a plugin](../plugins/) lists every hook and the order they run in.
 
 ## The wizard, rendered
 

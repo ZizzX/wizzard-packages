@@ -11,7 +11,7 @@ export interface OpenOptions {
   storage?: SyncStorage;
   /** Told once, at start, whether a saved session came back and why not. */
   onRestore?: (outcome: RestoreOutcome) => void;
-  /** Told every step the wizard lands on. */
+  /** Told every step a move lands on. */
   onStep?: (step: string) => void;
 }
 
