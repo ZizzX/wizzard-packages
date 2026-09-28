@@ -28,8 +28,8 @@ is the difference. The code and the output on this page are read from files in t
 and a test runs every script and compares what it prints, so a line here cannot say something
 the engine does not do.
 
-The scripts need nothing but `@wizzard-packages/core` - install it as
-[Getting started](../start/#install) shows - and a way to run TypeScript, such as `npx tsx run.ts`.
+The scripts need `@wizzard-packages/core` - install it as [Getting started](../start/#install)
+shows - and a way to run TypeScript, such as `npx tsx run.ts`. Step 6 adds the plugins package.
 The browser comes in at the end.
 
 ## 1. Two steps and a review
@@ -121,7 +121,7 @@ sub-flows](../groups/) covers the rest - what a nested flow can read about its i
 ## 5. A step that waits for its data
 
 The sessions a person can pick come from a server. `load` names a resolver the move waits on, so
-the step never becomes current with nothing to pick from.
+no move makes the step current with nothing to pick from.
 
 <TutorialFile step="05-load" file="flow.ts" />
 
@@ -142,6 +142,12 @@ move.
 ## 6. Keep the session across a reload
 
 The `persist` plugin writes the session on every change and reads it back when the wizard starts.
+It ships in its own package, beside the engine:
+
+```bash
+pnpm add @wizzard-packages/plugins@canary
+```
+
 In a browser it uses `localStorage`; the script hands it a `Map` behind the same three methods, so
 a reload can happen in one process.
 
@@ -155,6 +161,11 @@ a reload can happen in one process.
 `persist/nothing-stored` on the first visit. Writes are coalesced, and `destroy()` flushes the
 last one, as closing the page does in a browser. [Restore after reload](../restore-after-reload/)
 is this step rendered, and [Persistence](../persistence/) is the format underneath.
+
+A restore puts the wizard back on its step without entering it, so a step's `load` does not run
+again: a page reloaded on `sessions` comes back without the agenda step 5 fetched. The rendered
+wizard below checks for that once it mounts and enters `sessions` again with `go('sessions')`,
+which runs the load.
 
 ## 7. A plugin of your own
 
@@ -172,8 +183,8 @@ analytics event.
 
 The refused `next()` is not in the trail: `afterNavigate` runs once a move has committed, so it
 sees only moves that happened, and it cannot undo one. A session `persist` restores is not a
-move either: the wizard below, reloaded, starts its trail at the step after the one it came
-back on. A plugin that must stop a move refuses it from `beforeNavigate`.
+move either: the wizard below, reloaded, does not list the step it came back on - unless that
+is `sessions`, which it enters again to fetch the agenda. A plugin that must stop a move refuses it from `beforeNavigate`.
 [Writing a plugin](../plugins/) lists every hook and the order they run in.
 
 ## The wizard, rendered

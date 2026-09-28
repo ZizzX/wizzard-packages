@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { talks } from '../07-plugin/registry';
 import AppVue from './App.vue';
 import { App } from './App';
 
@@ -89,6 +90,33 @@ describe('the tutorial, rendered', () => {
     const view = mount(AppVue, { attachTo: document.body });
     await walk();
     view.unmount();
+  });
+
+  it.each([
+    ['React', () => render(<App />).unmount],
+    [
+      'Vue',
+      () => {
+        const view = mount(AppVue, { attachTo: document.body });
+        return () => view.unmount();
+      },
+    ],
+  ] as const)('brings the agenda back after a reload on sessions, on %s', async (_name, open) => {
+    let close = open();
+    fireEvent.input(await screen.findByLabelText('Name'), { target: { value: 'Ada' } });
+    fireEvent.input(screen.getByLabelText('Email'), { target: { value: 'ada@example.com' } });
+    next();
+    fireEvent.click(await screen.findByRole('radio', { name: 'standard' }));
+    next();
+    await screen.findByRole('checkbox', { name: 'Flows as data' });
+    close();
+
+    // A new page: the session is in storage, the agenda that `load` fetched is
+    // not. The restore lands on `sessions` without running its load.
+    talks.splice(0);
+    close = open();
+    await screen.findByRole('checkbox', { name: 'Flows as data' });
+    close();
   });
 
   it('keeps the React and the Vue session apart', async () => {

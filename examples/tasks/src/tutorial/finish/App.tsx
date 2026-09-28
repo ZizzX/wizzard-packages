@@ -9,12 +9,12 @@ import {
   useWizard,
   useWizardSelector,
 } from '@wizzard-packages/react';
-import { useId, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, useState, type ReactNode } from 'react';
 
 import { guest, registration, type Guest } from '../07-plugin/flow';
 import { registry, talks } from '../07-plugin/registry';
 import { trail } from '../07-plugin/trail';
-import { nextGuestId, storageKey, withoutGuest } from './guests';
+import { nextGuestId, reloadAgenda, storageKey, withoutGuest } from './guests';
 
 /**
  * The tutorial's wizard, rendered. The provider takes the options `openWizard`
@@ -53,6 +53,9 @@ export function App(): ReactNode {
 
 export function Registration(): ReactNode {
   const wizard = useWizard();
+  useEffect(() => {
+    reloadAgenda(wizard);
+  }, [wizard]);
   const { current, status } = useStep();
   const { next, back, canBack, isBusy, isLast } = useNavigation();
   const errors = useErrors();
