@@ -40,14 +40,21 @@ const walk = async (): Promise<void> => {
   fireEvent.click(await screen.findByRole('radio', { name: 'standard' }));
   next();
 
-  // Inside the group: the step knows whose pass it is.
+  // Inside the group: the step knows whose pass it is, and a field whose path
+  // names the guest shows what was typed into it - read back, not just written.
   fireEvent.input(await screen.findByLabelText("Name on Grace's badge"), {
     target: { value: 'G. Hopper' },
   });
+  await screen.findByDisplayValue('G. Hopper');
   next();
   fireEvent.change(await screen.findByLabelText('What does Grace eat?'), {
     target: { value: 'vegan' },
   });
+  await screen.findByDisplayValue('Vegan');
+  fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+  await screen.findByDisplayValue('G. Hopper');
+  next();
+  await screen.findByDisplayValue('Vegan');
   next();
 
   // Entered once the agenda is in, so the talks are there to pick.
@@ -58,7 +65,7 @@ const walk = async (): Promise<void> => {
     (await screen.findByText(/standard ticket/)).textContent?.replace(/\s+/g, ' ').trim()
   ).toBe('Ada (ada@example.com), standard ticket, with Grace.');
   expect(screen.getByText(/^Landed on:/).textContent).toBe(
-    'Landed on: attendee → ticket → company → ticket → badge → diet → sessions → review'
+    'Landed on: attendee → ticket → company → ticket → badge → diet → badge → diet → sessions → review'
   );
 
   fireEvent.click(screen.getByRole('button', { name: 'Register' }));

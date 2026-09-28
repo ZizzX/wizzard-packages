@@ -68,6 +68,9 @@ export interface BindingHarness {
  *   item-input  writes that same path
  *   add-item    appends `{ id: 'p<n+1>' }` to `data.passengers`
  *   remove-item drops `data.passengers[0]`
+ *   keyed-value `notes.<item-key>`, read through the binding's own field API - a
+ *               path that changes whenever the current item does
+ *   keyed-input writes that same path
  */
 
 const flow: FlowDefinition = {
@@ -393,6 +396,29 @@ export function describeBindingContract(harness: BindingHarness): void {
 
       expect(probe.text('item-key')).toBe('p2');
       expect(probe.text('item-name')).toBe('Bo');
+      probe.unmount();
+    });
+
+    it('reads a field whose path names the current item, not the first item', async () => {
+      // A path built from the item the person is on is a different path on the
+      // next item. A binding that pins the path it first saw shows the first
+      // item's answer on every item, and a controlled input bound to it drops
+      // each keystroke.
+      const probe = await enter('p1', 'p2');
+      await probe.fill('keyed-input', 'window');
+      expect(probe.text('keyed-value')).toBe('window');
+
+      await probe.click('next');
+      await probe.click('next');
+      expect(probe.text('item-key')).toBe('p2');
+      expect(probe.text('keyed-value')).toBe('');
+
+      await probe.fill('keyed-input', 'aisle');
+      expect(probe.text('keyed-value')).toBe('aisle');
+
+      await probe.click('back');
+      expect(probe.text('item-key')).toBe('p1');
+      expect(probe.text('keyed-value')).toBe('window');
       probe.unmount();
     });
 

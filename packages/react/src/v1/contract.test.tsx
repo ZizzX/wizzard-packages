@@ -44,6 +44,9 @@ function Probe(): ReactElement {
   const itemKey = [...stack].reverse().find((frame) => frame.key !== undefined)?.key ?? '';
   const itemIndex = itemKey === '' ? -1 : items.findIndex((p) => p.id === itemKey);
   const itemName = itemIndex < 0 ? '' : (items[itemIndex]?.name ?? '');
+  // A hook argument that changes between renders, which is how React code
+  // names the item it is on.
+  const [note, setNote] = useField<string | undefined>(`notes.${itemKey || '-'}`);
 
   return (
     <div>
@@ -116,6 +119,14 @@ function Probe(): ReactElement {
         value={itemName}
         onChange={(event) => {
           if (itemIndex >= 0) wizard.set(`passengers.${itemIndex}.name`, event.target.value);
+        }}
+      />
+      <span data-testid="keyed-value">{note ?? ''}</span>
+      <input
+        data-testid="keyed-input"
+        value={note ?? ''}
+        onChange={(event) => {
+          if (itemKey !== '') setNote(event.target.value);
         }}
       />
       <button
