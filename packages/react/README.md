@@ -102,7 +102,7 @@ generated from them, so what you paste is what is tested.
 | ----------------------- | ----------------------------------------------------------------------------------- |
 | `useStep()`             | `current`, `isFirst`, `isLast`, `progress` and the rest of the step's derived state |
 | `useNavigation()`       | `next`, `back`, `go`, `cancel`, `canBack`, `isBusy`, `isLast`                       |
-| `useField<T>(path)`     | `[value, setValue]`, addressing the same paths the flow does                        |
+| `useField<T>(path)`     | `[value, setValue]` at a flow path, which may change between renders                |
 | `useErrors(stepId?)`    | the error map for a step, or for the current one                                    |
 | `useWizardSelector(fn)` | one derived value, re-rendering only when it changes                                |
 | `useWizard()`           | the engine itself, for anything the hooks above do not cover                        |

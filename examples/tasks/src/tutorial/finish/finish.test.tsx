@@ -74,8 +74,8 @@ const walk = async (): Promise<void> => {
 
 describe('the tutorial, rendered', () => {
   beforeEach(() => {
-    // `persist` writes to localStorage; a session left by the other binding
-    // would be restored and start the walk in the wrong place.
+    // `persist` writes to localStorage; a session left by an earlier test would
+    // be restored and start the walk in the wrong place.
     localStorage.clear();
   });
 
@@ -89,5 +89,21 @@ describe('the tutorial, rendered', () => {
     const view = mount(AppVue, { attachTo: document.body });
     await walk();
     view.unmount();
+  });
+
+  it('keeps the React and the Vue session apart', async () => {
+    // The page mounts both at once. Under one key the idle one would restore,
+    // and later overwrite, the progress made in the other tab.
+    const react = render(<App />);
+    fireEvent.input(await screen.findByLabelText('Name'), { target: { value: 'Ada' } });
+    fireEvent.input(screen.getByLabelText('Email'), { target: { value: 'ada@example.com' } });
+    next();
+    await screen.findByRole('radio', { name: 'business' });
+    // Unmounting flushes the pending write, as leaving the page does.
+    react.unmount();
+
+    const vue = mount(AppVue, { attachTo: document.body });
+    expect(((await screen.findByLabelText('Name')) as HTMLInputElement).value).toBe('');
+    vue.unmount();
   });
 });

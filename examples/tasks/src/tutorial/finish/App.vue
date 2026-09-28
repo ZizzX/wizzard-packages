@@ -8,7 +8,7 @@ import Wizard from './Wizard.vue';
 import { guest, registration } from '../07-plugin/flow';
 import { registry } from '../07-plugin/registry';
 import { trail } from '../07-plugin/trail';
-import { STORAGE_KEY } from './guests';
+import { storageKey } from './guests';
 
 /**
  * The tutorial's wizard, rendered. `provideWizard` takes the options
@@ -23,7 +23,7 @@ const plugins =
   typeof window === 'undefined'
     ? []
     : [
-        persist({ key: STORAGE_KEY, version: 1 }),
+        persist({ key: storageKey('vue'), version: 1 }),
         trail((step) => {
           landed.value = [...landed.value, step];
         }),

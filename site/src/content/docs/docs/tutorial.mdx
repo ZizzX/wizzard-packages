@@ -180,7 +180,7 @@ back on. A plugin that must stop a move refuses it from `beforeNavigate`.
 
 Everything above, drawn by a binding. `App` hands the provider the options `openWizard` passed to
 `createWizard`, and the components ask which step is current and draw that one. The session is
-kept in this browser, so leave it half done and reload the page.
+kept in this browser, one per tab, so leave it half done and reload the page.
 
 <RunnableExample
   reactSources={[

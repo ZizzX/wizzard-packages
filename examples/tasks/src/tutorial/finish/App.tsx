@@ -14,7 +14,7 @@ import { useId, useMemo, useState, type ReactNode } from 'react';
 import { guest, registration, type Guest } from '../07-plugin/flow';
 import { registry, talks } from '../07-plugin/registry';
 import { trail } from '../07-plugin/trail';
-import { STORAGE_KEY, nextGuestId, withoutGuest } from './guests';
+import { nextGuestId, storageKey, withoutGuest } from './guests';
 
 /**
  * The tutorial's wizard, rendered. The provider takes the options `openWizard`
@@ -31,7 +31,7 @@ export function App(): ReactNode {
       typeof window === 'undefined'
         ? []
         : [
-            persist({ key: STORAGE_KEY, version: 1 }),
+            persist({ key: storageKey('react'), version: 1 }),
             trail((step) => setLanded((steps) => [...steps, step])),
           ],
     []

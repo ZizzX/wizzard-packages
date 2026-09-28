@@ -2,8 +2,13 @@ import type { Wizard } from '@wizzard-packages/core';
 
 import type { Guest } from '../07-plugin/flow';
 
-/** Where the rendered tutorial keeps its session: one key for this page. */
-export const STORAGE_KEY = 'wizzard-tutorial-registration';
+/**
+ * Where the rendered tutorial keeps its session, one key per binding. The page
+ * mounts the React and the Vue wizard at once; under one key the one left idle
+ * in its tab would write its older session over the other's progress.
+ */
+export const storageKey = (binding: 'react' | 'vue'): string =>
+  `wizzard-tutorial-registration-${binding}`;
 
 /**
  * A key no guest has, and no guest's answers still sit under. The key is what
