@@ -1,3 +1,9 @@
+<script lang="ts">
+// A counter rather than Vue's `useId`, which arrived in 3.5: the binding
+// supports 3.3, and this file is meant to be copied.
+let made = 0;
+</script>
+
 <script setup lang="ts">
 import {
   useErrors,
@@ -7,7 +13,7 @@ import {
   useWizard,
   useWizardSelector,
 } from '@wizzard-packages/vue';
-import { computed, useId } from 'vue';
+import { computed } from 'vue';
 
 import type { Guest } from '../07-plugin/flow';
 import { talks } from '../07-plugin/registry';
@@ -17,7 +23,8 @@ const wizard = useWizard();
 const { current, status } = useStep();
 const { next, back, canBack, isBusy, isLast } = useNavigation();
 const errors = useErrors();
-const id = useId();
+// One per mounted form: the React and Vue renderings share the page.
+const id = `registration-${(made += 1)}`;
 
 // Inside the group the stack carries the guest's key; outside it, nothing does.
 const key = useWizardSelector((s) => s.stack.find((f) => f.key !== undefined)?.key ?? null);

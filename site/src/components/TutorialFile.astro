@@ -34,7 +34,7 @@ const read = (at: string): string | undefined => files[`${ROOT}/${at}/${file}`];
 const now = read(step);
 if (now === undefined) {
   throw new Error(
-    `[wizzard] The tutorial page names ${step}/${file}, which does not exist. ` +
+    `The tutorial page names ${step}/${file}, which does not exist. ` +
       'The page and examples/tasks/src/tutorial have drifted apart. ' +
       'Rename the file or the reference so the two agree.'
   );
