@@ -206,6 +206,12 @@ body {
   display: none;
 }
 
+/* Below 50rem search, version and theme do not fit one row beside the wordmark
+   at 390px, and the version is the one a reader there can do without. */
+.site-version {
+  display: none;
+}
+
 /* The same links, opened with the documentation's menu on a phone. */
 .sidebar-content .site-nav {
   padding-bottom: var(--space-4);
@@ -249,7 +255,8 @@ body {
   }
 
   [data-has-sidebar] .header .site-header .site-nav,
-  [data-has-sidebar] .header .site-theme {
+  [data-has-sidebar] .header .site-theme,
+  .site-version {
     display: flex;
   }
 

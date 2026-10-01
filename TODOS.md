@@ -79,12 +79,6 @@ want longer.
 the reason it is deferred, not the effort.
 **Effort:** human S / CC ~15m. **Blocked by:** S6.
 
-### 7. Versioned documentation
-
-**What:** the site serves docs per released version.
-**Why:** needed once 1.x and 2.x coexist; one version is honest until then.
-**Effort:** human M / CC ~30m.
-
 ### 8. Asynchronous storage in `/persist`
 
 **What:** allow IndexedDB or a remote endpoint as the storage.
