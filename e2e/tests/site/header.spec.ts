@@ -37,6 +37,11 @@ test.describe('the top bar', () => {
       await expect(bar.locator('.site-nav')).toBeVisible();
       await expect(bar.locator('button[data-open-modal]')).toBeVisible();
       await expect(bar.locator('starlight-theme-select select')).toBeVisible();
+      // Versioning starts at 1.0.0: 0.x was torn down, not archived (#60).
+      const version = bar.getByRole('combobox', { name: 'Documentation version' });
+      await expect(version).toBeVisible();
+      await expect(version).toHaveValue('1.0.0');
+      await expect(version.locator('option')).toHaveText(['1.0.0']);
 
       const marked = bar.locator('.site-nav a[aria-current]');
       if (current) {
@@ -130,6 +135,15 @@ test.describe('the top bar on a touch screen', () => {
           .map((node) => node.textContent?.trim())
       );
       expect(narrow).toEqual([]);
+    });
+  }
+
+  /** The version select beside search and theme pushed the page 27px wide. */
+  for (const path of ['', 'docs/start/', '404']) {
+    test(`the bar on /${path} fits the screen`, async ({ page }) => {
+      await page.goto(path);
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+      expect(overflow).toBe(0);
     });
   }
 

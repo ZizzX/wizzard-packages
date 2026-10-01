@@ -76,6 +76,58 @@ Exit prerelease mode after the final `next` release:
 pnpm changeset pre exit
 ```
 
+## Cutting a docs version
+
+The site is versioned from 1.0.0, and 0.x has no docs version: it was torn down, not archived.
+While there is one version, `site/src/components/VersionSelect.astro` lists only it. A release that
+changes what the docs teach - a minor or a major - cuts a version first, so readers of the outgoing
+one keep its pages; a patch fixes the docs in place.
+
+The steps below were tried against Starlight 0.42 with `starlight-versions` 0.10.1, cutting `1.0`
+under a current `1.1`. The plugin refuses to run without an archived version, which is why it is not
+installed before the first cut.
+
+1. On the commit whose docs still describe the outgoing version - before the new release's docs
+   land - add the plugin: `pnpm -F @wizzard-packages/site add -D starlight-versions`.
+2. In `site/src/content.config.ts`, add
+   `versions: defineCollection({ loader: docsVersionsLoader() })`, imported from
+   `starlight-versions/loader`.
+3. In `site/astro.config.mjs`, add it to `plugins` after `starlightTypeDoc(...)`. The order matters:
+   it copies what typedoc wrote.
+
+   ```js
+   starlightVersions({
+     current: { label: '1.1' },
+     versions: [{ slug: '1.0', label: '1.0.0' }],
+     exclude: ['errors/**'],
+   }),
+   ```
+
+   `errors/**` stays out. Every message the library prints ends in `/errors/<code>/` with no version
+   in it, so one page per code serves every version, and a page stays while any supported release
+   still prints its code.
+
+4. Build the site. The first build copies `src/content/docs/` into `src/content/docs/1.0/` and writes
+   that version's sidebar to `src/content/versions/1.0.json`. Commit both, including
+   `1.0/docs/api/`: the current API reference is generated and gitignored, but the archive cannot be
+   regenerated from old sources. `deploy-site.yml` replaces the whole `gh-pages` branch on every
+   deploy, so the source tree is the only place an old version lives.
+5. Freeze the archive's code. Its `.mdx` pages still import `@examples/*?raw` and the islands from
+   the live tree, so an archived page would show the new version's code. Copy the listings they
+   import into `site/src/versions/1.0/` and point the archive's imports there. The islands run the
+   workspace packages, which are the new version: where an archived example uses an API that
+   changed, replace its island with the frozen listing.
+6. Swap the select. `SiteHeader.astro` imports Starlight's `Search` and `ThemeSelect` directly, so
+   the plugin's overrides do not reach the top bar. They only reach Starlight's phone menu, which
+   gets the plugin's select by itself. On Starlight pages, render
+   `starlight-versions/components/VersionSelect.astro` instead of the hand-written select, and
+   `VersionSearch.astro` instead of `Search`, so search stays inside the version being read.
+   Outside Starlight (the home page, examples, the inspector) both read `starlightRoute` and throw,
+   so gate them the way `SiteNav.astro` works out `inDocs`: those pages keep Starlight's `Search`
+   and show no version, because they have none.
+7. Update `e2e/tests/site/header.spec.ts` to the new entries, and assert that
+   `/1.0/docs/start/` opens with `1.0.0` selected.
+
 ## Troubleshooting
 
 - **E404/E403 from npm**: confirm `NPM_TOKEN` is valid and has publish rights.

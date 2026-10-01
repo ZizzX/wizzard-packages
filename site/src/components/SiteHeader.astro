@@ -2,6 +2,7 @@
 import Search from '@astrojs/starlight/components/Search.astro';
 import ThemeSelect from '@astrojs/starlight/components/ThemeSelect.astro';
 import SiteNav from './SiteNav.astro';
+import VersionSelect from './VersionSelect.astro';
 
 /**
  * The top bar of every page on the site: the hand-written pages render it
@@ -23,6 +24,7 @@ interface Props {
   <SiteNav current={Astro.props.current} />
   <div class="site-tools">
     <Search />
+    <VersionSelect />
     <div class="site-theme"><ThemeSelect /></div>
   </div>
 </div>

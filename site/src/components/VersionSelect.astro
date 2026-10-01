@@ -1,0 +1,25 @@
+---
+import Select from '@astrojs/starlight/components/Select.astro';
+
+/**
+ * The release these pages describe. Versioning starts at 1.0.0 and 0.x has no
+ * entry: it was torn down, not archived. There is one version, so the select
+ * has nowhere to go yet; cutting the second one replaces this component with
+ * `starlight-versions`' own, which knows each page's address in every version -
+ * `docs/RELEASE.md`, "Cutting a docs version", is the procedure.
+ */
+const versions = ['1.0.0'];
+---
+
+<div class="site-version">
+  <Select
+    icon="seti:clock"
+    label="Documentation version"
+    options={versions.map((version, index) => ({
+      label: version,
+      value: version,
+      selected: index === 0,
+    }))}
+    width="6.25em"
+  />
+</div>
