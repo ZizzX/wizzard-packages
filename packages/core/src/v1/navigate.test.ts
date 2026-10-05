@@ -1020,6 +1020,24 @@ describe('runNav — clearOnLeave', () => {
     company: { name: 'Acme', vat: 'NO123' },
   };
 
+  // A move onto the stack it left is an entry, not a departure: nothing is
+  // recorded and nothing is cleared, which is what lets start() enter a
+  // restored step again without changing where back() goes.
+  it('records and clears nothing on a move to the step it stands on', async () => {
+    const host = makeHost({
+      ...on('company'),
+      data: filled,
+      history: [[{ flow: 'booking', step: 'trip' }]],
+      completed: ['trip'],
+    });
+    expect(
+      (await runNav({ flow: branching }, host, { type: 'go', to: 'company', force: true })).ok
+    ).toBe(true);
+    expect(host.read().data).toBe(filled);
+    expect(host.read().history).toEqual([[{ flow: 'booking', step: 'trip' }]]);
+    expect(host.read().completed).toEqual(['trip']);
+  });
+
   it('keeps the data of a step it leaves, by default', async () => {
     const host = makeHost({ ...on('trip'), data: filled });
     await runNav({ flow: branching }, host, { type: 'next' });

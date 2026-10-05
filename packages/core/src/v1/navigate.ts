@@ -249,20 +249,21 @@ function leave(flow: FlowDefinition, from: string, data: WizardState['data']): W
  * item's newer record has to cut there, not at that newer record, or the dead
  * one stays and the next `back()` lands on the same step again.
  */
+const sameStack = (a: readonly Frame[], b: readonly Frame[]): boolean =>
+  a.length === b.length &&
+  a.every((f, i) => {
+    const other = b[i];
+    return f.flow === other?.flow && f.step === other.step && f.key === other.key;
+  });
+
 function rewind(
   history: WizardState['history'],
   landed: readonly Frame[],
   target: string
 ): WizardState['history'] {
-  const same = (stack: readonly Frame[]): boolean =>
-    stack.length === landed.length &&
-    stack.every((f, i) => {
-      const other = landed[i];
-      return f.flow === other?.flow && f.step === other.step && f.key === other.key;
-    });
   for (let i = history.length - 1; i >= 0; i--) {
     const stack = history[i];
-    if (stack !== undefined && same(stack)) return history.slice(0, i);
+    if (stack !== undefined && sameStack(stack, landed)) return history.slice(0, i);
   }
   for (let i = history.length - 1; i >= 0; i--) {
     const stack = history[i];
@@ -517,6 +518,11 @@ async function pipeline(
     const landed = move
       ? move.stack
       : [...before.stack.slice(0, -1), { flow: at.flow.id, step: target }];
+    // A move onto the stack it left - `start()` entering a restored step again,
+    // or `go()` to the current step - loads and guards it like any entry, and
+    // records nothing: it was not left, so it is neither history nor done, and
+    // its data is not cleared.
+    const stays = from !== null && sameStack(landed, before.stack);
     host.write(
       commit(before, {
         status: 'idle',
@@ -526,15 +532,16 @@ async function pipeline(
         // `no-target`, and would make a history-driven `back()` inside a repeat
         // oscillate between two items.
         history:
-          from === null
+          from === null || stays
             ? before.history
             : forward
               ? [...before.history, before.stack]
               : rewind(before.history, landed, target),
         visited: add(before.visited, target),
-        completed: forward && from !== null ? add(before.completed, from) : before.completed,
+        completed:
+          forward && from !== null && !stays ? add(before.completed, from) : before.completed,
         busy: before.busy.filter((id) => id !== target),
-        data: from === null ? before.data : leave(at.flow, from, before.data),
+        data: from === null || stays ? before.data : leave(at.flow, from, before.data),
       })
     );
 

@@ -162,10 +162,9 @@ a reload can happen in one process.
 last one, as closing the page does in a browser. [Restore after reload](../restore-after-reload/)
 is this step rendered, and [Persistence](../persistence/) is the format underneath.
 
-A restore puts the wizard back on its step without entering it, so a step's `load` does not run
-again: a page reloaded on `sessions` comes back without the agenda step 5 fetched. The rendered
-wizard below checks for that once it mounts and enters `sessions` again with `go('sessions')`,
-which runs the load.
+A restore puts the wizard back on its step before `start()`, and `start()` enters a step that
+loads again, in place: a page reloaded on `sessions` fetches the agenda step 5 loads before the
+step reads as ready, and `back()` still goes where it went before the reload.
 
 ## 7. A plugin of your own
 

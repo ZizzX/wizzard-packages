@@ -155,7 +155,10 @@ export default [
   // 6.95 to 7 kB on 2026-10-05, measured 6965 B: a backward move cuts the history
   // at the record it landed on, matched frame by frame, not at the newest record
   // of the same step id - inside a repeat that id is on every item (T-075).
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '7 kB', gzip: true },
+  // 7 to 7.05 kB on 2026-10-05, measured 7044 B: `start()` enters a restored step
+  // that loads again, in place, so its `load` runs before the step reads as
+  // ready, and a move onto the stack it left records and clears nothing (T-078).
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '7.05 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a

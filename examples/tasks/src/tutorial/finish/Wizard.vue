@@ -13,16 +13,13 @@ import {
   useWizard,
   useWizardSelector,
 } from '@wizzard-packages/vue';
-import { computed, onMounted } from 'vue';
+import { computed } from 'vue';
 
 import type { Guest } from '../07-plugin/flow';
 import { talks } from '../07-plugin/registry';
-import { nextGuestId, reloadAgenda, withoutGuest } from './guests';
+import { nextGuestId, withoutGuest } from './guests';
 
 const wizard = useWizard();
-onMounted(() => {
-  reloadAgenda(wizard);
-});
 const { current, status } = useStep();
 const { next, back, canBack, isBusy, isLast } = useNavigation();
 const errors = useErrors();

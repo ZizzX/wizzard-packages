@@ -342,6 +342,9 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
   });
 
   let attempts = 0;
+  // Whether a move has committed in this engine's life. A session restored
+  // before `start()` stands on a step this page never entered.
+  let moved = false;
   const attempt = async (
     intent: NavIntent,
     opts: { validate?: boolean } | undefined,
@@ -357,6 +360,7 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
     report({ phase: 'start' });
     try {
       const result = await runNav(navContext(), { read: () => state, write }, intent, opts ?? {});
+      if (result.ok) moved = true;
       report({ phase: 'end', result });
       return result;
     } catch (error) {
@@ -392,8 +396,24 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
     // stack, and answering ok there would leave the wizard on no step for
     // good. That start is simply tried again.
     const current = state.stack[state.stack.length - 1]?.step ?? null;
-    if (current !== null || state.status === 'done') {
-      return Promise.resolve({ ok: true, from: current, to: current ?? END });
+    if (current === null && state.status === 'done') {
+      return Promise.resolve({ ok: true, from: null, to: END });
+    }
+    if (current !== null) {
+      // Restored onto a step that loads, and not entered yet: enter it again
+      // in place, so its `load` runs before anything reads the step as ready.
+      // A refusal or a throw leaves it current, and the next start() retries.
+      const step: StepDef | undefined = at(state).flow.steps[current];
+      const loads = step !== undefined && (step.deferred === true || step.load !== undefined);
+      if (moved || !loads) return Promise.resolve({ ok: true, from: current, to: current });
+      starting = navigate(
+        { type: 'go', to: current, force: true },
+        { validate: false },
+        'start'
+      ).finally(() => {
+        starting = undefined;
+      });
+      return starting;
     }
 
     // A `next()` or `go()` from the empty stack is already on its way. A

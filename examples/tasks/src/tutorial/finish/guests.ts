@@ -1,7 +1,6 @@
 import type { Wizard } from '@wizzard-packages/core';
 
 import type { Guest } from '../07-plugin/flow';
-import { talks } from '../07-plugin/registry';
 
 /**
  * Where the rendered tutorial keeps its session, one key per binding. The page
@@ -37,15 +36,4 @@ export const withoutGuest = (wizard: Wizard, id: string): void => {
     wizard.set('ticket.guests', guests);
     wizard.set('guests', answers);
   });
-};
-
-/**
- * A session restored onto `sessions` comes back without the agenda: the step's
- * `load` ran in the page that saved it, and `start()` does not run it again for
- * a wizard that is already on a step. Entering the step once more does.
- */
-export const reloadAgenda = (wizard: Wizard): void => {
-  if (wizard.getSnapshot().current === 'sessions' && talks.length === 0) {
-    void wizard.go('sessions');
-  }
 };
