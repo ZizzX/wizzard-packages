@@ -807,6 +807,44 @@ describe('runNav — the busy marker', () => {
     expect((await second).ok).toBe(true);
     expect(host.read().busy).toEqual([]);
   });
+
+  // The overtaken move's way out through the catch: it must leave alone the
+  // marker the newer move set, because the lock is no longer its own.
+  it("stays when an overtaken move's loader throws while the newer one loads", async () => {
+    const fail = deferred<void>();
+    const gate = deferred<void>();
+    let call = 0;
+    const host = makeHost(on('trip'));
+    const ctx: NavContext = {
+      ...loading([]),
+      hooks: [
+        {
+          name: 'server',
+          loadStep: async () => {
+            if (call++ === 0) {
+              await fail.promise;
+              throw new Error('offline');
+            }
+            await gate.promise;
+          },
+        },
+      ],
+    };
+    const first = runNav(ctx, host, { type: 'next' });
+    await loadingAt(host, ['payment']);
+    const second = runNav(ctx, host, { type: 'go', to: 'payment', force: true });
+    await vi.waitFor(() => {
+      expect(call).toBe(2);
+    });
+
+    fail.resolve();
+    await expect(first).rejects.toThrow('offline');
+    expect(host.read().busy).toEqual(['payment']);
+
+    gate.resolve();
+    expect((await second).ok).toBe(true);
+    expect(host.read().busy).toEqual([]);
+  });
 });
 
 describe('runNav — bookkeeping', () => {
