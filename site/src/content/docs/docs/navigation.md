@@ -47,7 +47,8 @@ whose `when` still holds, so a branch that closed behind the user is skipped rat
 revisited. `'auto'` is that same walk, written out.
 
 The history the wizard keeps is a different thing. It records the stack at each move, which is
-what restores a position inside nested groups on the way back; it does not choose the target. The
+what restores a position inside nested groups on the way back - into a group from the step after
+it as well, where its last item stopped; it does not choose the target. The
 distinction shows after a forced jump: `go('summary', { force: true })` from the first step and
 then `back()` lands on whatever precedes `summary` in `order`, not on the step the jump came
 from.

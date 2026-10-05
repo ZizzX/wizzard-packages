@@ -316,6 +316,82 @@ describe('4.6 back() across a group boundary', () => {
     expect(move).toMatchObject({ to: 'who' });
     expect((move as { stack: readonly Frame[] }).stack).toEqual([{ flow: 'booking', step: 'who' }]);
   });
+  // Entering from behind is the mirror of leaving: back() from the step after
+  // the group returns to where the last item stopped, as the history records
+  // it. go() into the group is the way to start it over (4.7).
+  it('enters from behind where the last item stopped, not at its first step', async () => {
+    const wizard = await enterGroup(booking(), { passengers: [{ id: 'p1' }, { id: 'p2' }] });
+    await wizard.next(); // p1/meal
+    await wizard.next(); // p2/seat
+    await wizard.next(); // p2/meal
+    await wizard.next(); // review
+    expect(stepOf(wizard)).toBe('review');
+
+    await wizard.back();
+    expect(stepOf(wizard)).toBe('meal');
+    expect(keyOf(wizard)).toBe('p2');
+
+    await wizard.back();
+    expect(stepOf(wizard)).toBe('seat');
+    expect(keyOf(wizard)).toBe('p2');
+  });
+
+  it('skips a recorded position whose item is gone, and lands on the last one alive', async () => {
+    const wizard = await enterGroup(booking(), { passengers: [{ id: 'p1' }, { id: 'p2' }] });
+    await wizard.next(); // p1/meal
+    await wizard.next(); // p2/seat
+    await wizard.next(); // p2/meal
+    await wizard.next(); // review
+    wizard.set('passengers', [{ id: 'p1' }]);
+
+    await wizard.back();
+    expect(stepOf(wizard)).toBe('meal');
+    expect(keyOf(wizard)).toBe('p1');
+  });
+
+  it('reads the newest position inside the group, not the newest of all, on an on.back', async () => {
+    const flow: FlowDefinition = {
+      ...booking(),
+      order: ['who', 'each', 'extra', 'review'],
+      steps: { ...booking().steps, extra: {}, review: { on: { back: 'each' } } },
+    };
+    const wizard = await enterGroup(flow, { passengers: [{ id: 'p1' }, { id: 'p2' }] });
+    await wizard.next(); // p1/meal
+    await wizard.next(); // p2/seat
+    await wizard.next(); // p2/meal
+    await wizard.next(); // extra
+    await wizard.next(); // review
+    expect(stepOf(wizard)).toBe('review');
+
+    await wizard.back();
+    expect(stepOf(wizard)).toBe('meal');
+    expect(keyOf(wizard)).toBe('p2');
+  });
+
+  it('enters from the start when the history never stood inside the group', () => {
+    const state: WizardState = {
+      ...initialState({ passengers }),
+      stack: [{ flow: 'booking', step: 'review' }],
+    };
+    const move = step(booking(), state, { type: 'back' });
+    expect(move).toMatchObject({ to: 'seat' });
+    expect((move as { stack: readonly Frame[] }).stack).toEqual([
+      { flow: 'booking', step: 'each', key: 'p1' },
+      { flow: 'passenger', step: 'seat' },
+    ]);
+  });
+
+  it('still starts the group over on go(), whatever the history holds', async () => {
+    const wizard = await enterGroup(booking(), { passengers: [{ id: 'p1' }, { id: 'p2' }] });
+    await wizard.next(); // p1/meal
+    await wizard.next(); // p2/seat
+    await wizard.next(); // p2/meal
+    await wizard.next(); // review
+
+    await wizard.go('each');
+    expect(stepOf(wizard)).toBe('seat');
+    expect(keyOf(wizard)).toBe('p1');
+  });
 });
 
 describe('4.7 go() into a group, and out of one', () => {

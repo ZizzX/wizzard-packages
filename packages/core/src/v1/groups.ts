@@ -502,12 +502,11 @@ function forward(
 }
 
 /**
- * `back()`. History-driven once the stack is deeper than one frame (4.6).
+ * `back()`. History-driven once the stack is deeper than one frame, and when
+ * it leads into a group from behind (4.6).
  *
  * `order` cannot answer this: the step before "passenger 3, seat" is
  * "passenger 2, meal", and `order` does not know which item you came from.
- * A recorded stack whose top frame is dead is skipped rather than restored,
- * because 4.9 does not repair history and a dead item must never come back.
  */
 function retreat(
   levels: Level[],
@@ -517,21 +516,8 @@ function retreat(
   subFlows?: SubFlows
 ): Move | Refusal | null {
   if (levels.length > 1 || state.stack.length > 1) {
-    for (let i = state.history.length - 1; i >= 0; i--) {
-      const recorded = state.history[i];
-      if (recorded === undefined || recorded.length === 0) continue;
-
-      const alive = walk(root, { ...state, stack: recorded }, registry, subFlows);
-      if (alive.length !== recorded.length) continue;
-
-      const top = alive[alive.length - 1];
-      const frame = top?.frame;
-      if (top === undefined || frame === undefined) continue;
-      const step = top.flow.steps[frame.step];
-      if (step === undefined || isGroup(step)) continue;
-
-      return { stack: framesOf(alive), to: frame.step, flow: top.flow, scope: top.scope };
-    }
+    const recorded = fromHistory(root, state, () => true, registry, subFlows);
+    if (recorded) return recorded;
 
     // Nothing usable recorded — a restored snapshot, most likely. Leave the
     // innermost sub-flow and resolve backwards from the group step in its
@@ -546,7 +532,65 @@ function retreat(
   const level = levels[levels.length - 1];
   if (level === undefined) return null;
   const to = resolveBack(level.flow, stateAt(state, level.frame), level.scope, registry);
-  return to === null ? null : settle(levels, to, state, registry, subFlows);
+  return to === null ? null : behind(levels, to, root, state, registry, subFlows);
+}
+
+/**
+ * The newest recorded stack `accept` takes whose frames are all still alive
+ * and whose top is a step, not a group. A recorded stack whose top frame is
+ * dead is skipped rather than restored, because 4.9 does not repair history
+ * and a dead item must never come back.
+ */
+function fromHistory(
+  root: FlowDefinition,
+  state: WizardState,
+  accept: (recorded: readonly Frame[]) => boolean,
+  registry?: Registry,
+  subFlows?: SubFlows
+): Move | null {
+  for (let i = state.history.length - 1; i >= 0; i--) {
+    const recorded = state.history[i];
+    if (recorded === undefined || recorded.length === 0 || !accept(recorded)) continue;
+
+    const alive = walk(root, { ...state, stack: recorded }, registry, subFlows);
+    if (alive.length !== recorded.length) continue;
+
+    const top = alive[alive.length - 1];
+    const frame = top?.frame;
+    if (top === undefined || frame === undefined) continue;
+    const step = top.flow.steps[frame.step];
+    if (step === undefined || isGroup(step)) continue;
+
+    return { stack: framesOf(alive), to: frame.step, flow: top.flow, scope: top.scope };
+  }
+  return null;
+}
+
+/**
+ * Where `back()` lands at the root once it resolved to `to`. A group entered
+ * from behind is the mirror of one left from its start: the newest position
+ * the history holds inside it, which is where its last item stopped. Without
+ * one - the group was jumped over - it is entered from the start, as `go()`
+ * enters it. Deeper, the history was already searched whole by `retreat`.
+ */
+function behind(
+  levels: Level[],
+  to: string,
+  root: FlowDefinition,
+  state: WizardState,
+  registry?: Registry,
+  subFlows?: SubFlows
+): Move | Refusal | null {
+  const group = root.steps[to];
+  if (group !== undefined && isGroup(group)) {
+    const inside = (recorded: readonly Frame[]): boolean => {
+      const entered = recorded[0] as Frame | undefined;
+      return recorded.length > 1 && entered?.flow === root.id && entered.step === to;
+    };
+    const recorded = fromHistory(root, state, inside, registry, subFlows);
+    if (recorded) return recorded;
+  }
+  return settle(levels, to, state, registry, subFlows);
 }
 
 /**

@@ -185,7 +185,10 @@ export default [
   // into this entry.
   // 3.9 to 4.15 kB on 2026-09-17, measured 4118 B: a `when` that throws is read as
   // false and logged as `when-threw` (see `core-v1`); reachability is bundled here.
-  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '4.15 kB', gzip: true },
+  // 4.15 to 4.2 kB on 2026-10-05, measured 4182 B: `back()` into a group from the
+  // step after it restores the newest recorded position inside the group, where
+  // its last item stopped, instead of entering at the first item (T-075).
+  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '4.2 kB', gzip: true },
 
   // The recorded-session checker. Its own entry because replay is a devtools and
   // documentation concern: an application that only runs a wizard never needs to

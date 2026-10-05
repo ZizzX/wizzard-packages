@@ -108,6 +108,11 @@ The enclosing groups are in `stack`, one frame each - `{ flow, step, key }` - wi
 step last. That is also what a snapshot stores, and why a repeat needs a `version`: the frames
 name keys of a list the next session may have changed.
 
+`back()` follows the history across a group's edges. From the first step of an item it lands where
+the previous item stopped, and from the first step of the first item it leaves the group. From the
+step after the group it goes back in where the last item stopped, skipping items that have since
+been removed. `go()` to the group step starts it over at its first item.
+
 ## Where to go next
 
 [The flow](../flow/) has the field-by-field shape of a group step beside every other kind.
