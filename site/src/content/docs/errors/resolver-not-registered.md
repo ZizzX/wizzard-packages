@@ -37,4 +37,5 @@ Refusing is deliberate. Treating an unknown name as `false` would make a `when` 
 step and a `validate` silently pass, which is the failure that is hardest to see. To catch the
 mismatch before the wizard runs, pass the registry to `validateFlow` or `assertFlow`: both report a
 `$ref` the registry does not hold, with its path, as a problem with the code
-`resolver-not-registered`.
+`resolver-not-registered`. A `$ref` in a step's `ui`, in another `$ref`'s `args` or beside a flow's
+`steps` is your data - a JSON Schema's, say - and is never looked up, so it is not reported.
