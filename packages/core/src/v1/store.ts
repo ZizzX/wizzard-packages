@@ -8,6 +8,7 @@ import {
   type Hooks,
   type NavContext,
   type NavIntent,
+  type NavOptions,
   type NavResult,
   type SubFlows,
   type Traversal,
@@ -347,7 +348,7 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
   let moved = false;
   const attempt = async (
     intent: NavIntent,
-    opts: { validate?: boolean } | undefined,
+    opts: NavOptions | undefined,
     source: 'call' | 'start'
   ): Promise<NavResult> => {
     const own = new AbortController();
@@ -372,7 +373,7 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
   };
   const navigate = (
     intent: NavIntent,
-    opts?: { validate?: boolean },
+    opts?: NavOptions,
     source: 'call' | 'start' = 'call'
   ): Promise<NavResult> => (moving = attempt(intent, opts, source));
 
@@ -396,8 +397,8 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
     // stack, and answering ok there would leave the wizard on no step for
     // good. That start is simply tried again.
     const current = state.stack[state.stack.length - 1]?.step ?? null;
-    if (current === null && state.status === 'done') {
-      return Promise.resolve({ ok: true, from: null, to: END });
+    if (state.status === 'done') {
+      return Promise.resolve({ ok: true, from: current, to: current ?? END });
     }
     let first: NavIntent = { type: 'next' };
     if (current !== null) {
@@ -429,7 +430,7 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
           })
         : destroyed
           ? Promise.resolve(dead)
-          : navigate(first, { validate: false }, 'start')
+          : navigate(first, { validate: false, stay: current !== null }, 'start')
     ).finally(() => {
       starting = undefined;
     });

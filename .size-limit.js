@@ -155,9 +155,9 @@ export default [
   // 6.95 to 7 kB on 2026-10-05, measured 6965 B: a backward move cuts the history
   // at the record it landed on, matched frame by frame, not at the newest record
   // of the same step id - inside a repeat that id is on every item (T-075).
-  // 7 to 7.1 kB on 2026-10-05, measured 7052 B: `start()` enters a restored step
-  // that loads again, in place, so its `load` runs before the step reads as
-  // ready, and a move onto the stack it left records and clears nothing; both
+  // 7 to 7.1 kB on 2026-10-05, measured 7056 B: `start()` enters a restored step
+  // that loads again, in place, running only its `load` and enter guard and
+  // recording nothing, so the load runs before the step reads as ready; both
   // branches of `start()` wait for a move already on its way and move nothing
   // once the engine is destroyed (T-078).
   { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '7.1 kB', gzip: true },

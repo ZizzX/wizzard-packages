@@ -1020,22 +1020,98 @@ describe('runNav — clearOnLeave', () => {
     company: { name: 'Acme', vat: 'NO123' },
   };
 
-  // A move onto the stack it left is an entry, not a departure: nothing is
-  // recorded and nothing is cleared, which is what lets start() enter a
-  // restored step again without changing where back() goes.
-  it('records and clears nothing on a move to the step it stands on', async () => {
+  // `start()` entering a restored step again stays on it: an entry, not a
+  // departure, so nothing is recorded and nothing is cleared, and back() goes
+  // where it went before the reload.
+  it('records and clears nothing when it stays on the step it stands on', async () => {
     const host = makeHost({
       ...on('company'),
       data: filled,
       history: [[{ flow: 'booking', step: 'trip' }]],
       completed: ['trip'],
     });
-    expect(
-      (await runNav({ flow: branching }, host, { type: 'go', to: 'company', force: true })).ok
-    ).toBe(true);
+    const stay = await runNav(
+      { flow: branching },
+      host,
+      { type: 'go', to: 'company', force: true },
+      { stay: true }
+    );
+    expect(stay.ok).toBe(true);
     expect(host.read().data).toBe(filled);
     expect(host.read().history).toEqual([[{ flow: 'booking', step: 'trip' }]]);
     expect(host.read().completed).toEqual(['trip']);
+  });
+
+  // Only that re-entry stays. A move the application makes onto the step it
+  // stands on - go() to it, or an on.next that names it - leaves it first.
+  it('leaves the step on a move the application makes onto it', async () => {
+    const host = makeHost({
+      ...on('company'),
+      data: filled,
+      history: [[{ flow: 'booking', step: 'trip' }]],
+      completed: ['trip'],
+    });
+    await runNav({ flow: branching }, host, { type: 'go', to: 'company', force: true });
+    expect(host.read().data).toEqual({ payer: 'business', trip: { city: 'Oslo' } });
+    expect(host.read().history).toEqual([
+      [{ flow: 'booking', step: 'trip' }],
+      [{ flow: 'booking', step: 'company' }],
+    ]);
+    expect(host.read().completed).toEqual(['trip', 'company']);
+  });
+
+  // Staying is not a move, so nothing that watches a step being left or a
+  // move being made sees it: no plugin hook, no exit guard, no `when`. The
+  // step is current whatever they would say; only filling it is left to do.
+  it('runs only the load and the enter guard when it stays', async () => {
+    const seen: string[] = [];
+    const flow: FlowDefinition = {
+      ...branching,
+      steps: {
+        ...branching.steps,
+        company: { when: false, load: { $ref: 'org' }, guards: { exit: false, enter: true } },
+      },
+    };
+    const hooks: Hooks[] = [
+      {
+        name: 'p',
+        beforeNavigate: () => {
+          seen.push('before');
+          return false;
+        },
+        afterNavigate: () => {
+          seen.push('after');
+        },
+      },
+    ];
+    const load = (): Promise<void> => {
+      seen.push('load');
+      return Promise.resolve();
+    };
+    const host = makeHost(on('company'));
+    const stay = await runNav(
+      { flow, hooks, load },
+      host,
+      { type: 'go', to: 'company', force: true },
+      { stay: true }
+    );
+    expect(stay.ok).toBe(true);
+    expect(seen).toEqual(['load']);
+
+    const company = flow.steps.company;
+    const refused = await runNav(
+      {
+        flow: {
+          ...flow,
+          steps: { ...flow.steps, company: { ...company, guards: { enter: false } } },
+        },
+        load,
+      },
+      makeHost(on('company')),
+      { type: 'go', to: 'company', force: true },
+      { stay: true }
+    );
+    expect(refused).toMatchObject({ ok: false, reason: 'blocked', by: 'company' });
   });
 
   it('keeps the data of a step it leaves, by default', async () => {

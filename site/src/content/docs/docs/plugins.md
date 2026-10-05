@@ -80,6 +80,10 @@ one entry per navigation, belongs in `onAttempt` or `afterNavigate` rather than 
 `afterNavigate` runs after that landing commit, so it cannot undo a move; a plugin that must prevent one
 does it in `beforeNavigate`.
 
+`start()` entering a step that a restored session stands on is not a move: the step is not left,
+so only steps 5 to 7 run. `beforeNavigate` and `afterNavigate` do not see it; `onAttempt` does, with
+`source: 'start'`.
+
 ## When a plugin throws
 
 The engine keeps running, and says what it dropped.

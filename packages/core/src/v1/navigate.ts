@@ -64,6 +64,14 @@ export type NavIntent =
   | { type: 'back' }
   | { type: 'go'; to: string; force?: boolean };
 
+/**
+ * `stay` is `start()` entering a restored step again, in place: the step is
+ * current already, so only its `load` and enter guard run. It is not left, so
+ * no plugin hook, exit guard or `when` sees a move, and nothing is recorded -
+ * no history, nothing completed, no data cleared.
+ */
+export type NavOptions = { validate?: boolean; stay?: boolean };
+
 /** What a plugin may answer from beforeNavigate. */
 export type NavDecision = void | false | { block: string } | { redirect: string };
 
@@ -249,21 +257,20 @@ function leave(flow: FlowDefinition, from: string, data: WizardState['data']): W
  * item's newer record has to cut there, not at that newer record, or the dead
  * one stays and the next `back()` lands on the same step again.
  */
-const sameStack = (a: readonly Frame[], b: readonly Frame[]): boolean =>
-  a.length === b.length &&
-  a.every((f, i) => {
-    const other = b[i];
-    return f.flow === other?.flow && f.step === other.step && f.key === other.key;
-  });
-
 function rewind(
   history: WizardState['history'],
   landed: readonly Frame[],
   target: string
 ): WizardState['history'] {
+  const same = (stack: readonly Frame[]): boolean =>
+    stack.length === landed.length &&
+    stack.every((f, i) => {
+      const other = landed[i];
+      return f.flow === other?.flow && f.step === other.step && f.key === other.key;
+    });
   for (let i = history.length - 1; i >= 0; i--) {
     const stack = history[i];
-    if (stack !== undefined && sameStack(stack, landed)) return history.slice(0, i);
+    if (stack !== undefined && same(stack)) return history.slice(0, i);
   }
   for (let i = history.length - 1; i >= 0; i--) {
     const stack = history[i];
@@ -279,7 +286,7 @@ export async function runNav(
   ctx: NavContext,
   host: NavHost,
   intent: NavIntent,
-  opts: { validate?: boolean } = {}
+  opts: NavOptions = {}
 ): Promise<NavResult> {
   // Every refusal gets its code here, once, rather than at each of the dozen
   // places below that refuse: the code is the reason, so it cannot disagree.
@@ -293,9 +300,10 @@ async function pipeline(
   ctx: NavContext,
   host: NavHost,
   intent: NavIntent,
-  opts: { validate?: boolean }
+  opts: NavOptions
 ): Promise<Moved | Refused> {
   const { flow, groups: traversal, registry, subFlows } = ctx;
+  const stay = opts.stay === true;
 
   // 0. Acquire.
   const { state: locked, token } = beginNav(host.read());
@@ -351,7 +359,7 @@ async function pipeline(
     // group resolves `next` and skips the frames the move should push or pop.
     let want: NavIntent = intent;
     for (const h of ctx.hooks ?? []) {
-      if (!h.beforeNavigate || !live(h)) continue;
+      if (!h.beforeNavigate || !live(h) || stay) continue;
       const decision = await h.beforeNavigate({
         from,
         to: intent.type === 'go' ? intent.to : null,
@@ -400,7 +408,7 @@ async function pipeline(
     };
 
     // 3. Exit guard.
-    if (from !== null) {
+    if (from !== null && !stay) {
       const exit = at.flow.steps[from]?.guards?.exit;
       const allowed = await testAsync(exit, at.scope, registry);
       if (stale()) return superseded;
@@ -441,7 +449,7 @@ async function pipeline(
     const step = where.flow.steps[target];
     if (!step) return fail({ ok: false, reason: 'no-target' });
 
-    if (!enterable(where.flow, target, where.scope, registry)) {
+    if (!stay && !enterable(where.flow, target, where.scope, registry)) {
       return fail({ ok: false, reason: 'not-reachable', by: target });
     }
     const active = reachableOnPath(where.flow, state, where.scope, registry);
@@ -518,11 +526,6 @@ async function pipeline(
     const landed = move
       ? move.stack
       : [...before.stack.slice(0, -1), { flow: at.flow.id, step: target }];
-    // A move onto the stack it left - `start()` entering a restored step again,
-    // or `go()` to the current step - loads and guards it like any entry, and
-    // records nothing: it was not left, so it is neither history nor done, and
-    // its data is not cleared.
-    const stays = from !== null && sameStack(landed, before.stack);
     host.write(
       commit(before, {
         status: 'idle',
@@ -532,21 +535,21 @@ async function pipeline(
         // `no-target`, and would make a history-driven `back()` inside a repeat
         // oscillate between two items.
         history:
-          from === null || stays
+          from === null || stay
             ? before.history
             : forward
               ? [...before.history, before.stack]
               : rewind(before.history, landed, target),
         visited: add(before.visited, target),
         completed:
-          forward && from !== null && !stays ? add(before.completed, from) : before.completed,
+          forward && from !== null && !stay ? add(before.completed, from) : before.completed,
         busy: before.busy.filter((id) => id !== target),
-        data: from === null || stays ? before.data : leave(at.flow, from, before.data),
+        data: from === null || stay ? before.data : leave(at.flow, from, before.data),
       })
     );
 
     // 10. afterNavigate. Cannot fail the navigation that already happened.
-    after(target);
+    if (!stay) after(target);
 
     return { ok: true, from, to: target };
   } catch (error) {

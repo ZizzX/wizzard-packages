@@ -533,6 +533,44 @@ describe('start', () => {
     expect(calls).toBe(0);
   });
 
+  // The restored step is not being left, so a guard that asks before leaving
+  // it - a confirm dialog, say - is not asked on reload, and its load runs.
+  it('enters a restored step without asking its exit guard', async () => {
+    let calls = 0;
+    const w = createWizard({
+      flow: {
+        ...loadingFlow,
+        steps: { ...loadingFlow.steps, b: { load: { $ref: 'fill' }, guards: { exit: false } } },
+      },
+      registry: {
+        fill: () => {
+          calls += 1;
+        },
+      },
+      plugins: [restoring('b')],
+    });
+    expect(await w.start()).toMatchObject({ ok: true, to: 'b' });
+    expect(calls).toBe(1);
+  });
+
+  // A finished wizard keeps its last step on the stack. It is not part-way
+  // through, so there is nothing to enter, and it stays finished.
+  it('leaves a finished wizard finished', async () => {
+    let calls = 0;
+    const w = createWizard({
+      flow: loadingFlow,
+      registry: {
+        fill: () => {
+          calls += 1;
+        },
+      },
+      state: { ...initialState({}), stack: [{ flow: 'f', step: 'b' }], status: 'done' },
+    });
+    expect(await w.start()).toMatchObject({ ok: true, to: 'b' });
+    expect(w.getState().status).toBe('done');
+    expect(calls).toBe(0);
+  });
+
   it('enters a restored step once, and not one that does not load', async () => {
     let calls = 0;
     const registry = {

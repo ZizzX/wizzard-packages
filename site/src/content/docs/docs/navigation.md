@@ -39,8 +39,7 @@ with no reachable step has finished - calling it again is not a move: it answers
 already is. Until then it is not, so a first move that threw or was refused leaves the wizard
 unstarted, and the next `start()` tries again. A session restored onto a step that loads has not
 landed in this page yet: `start()` enters that step again, in place, so its `load` runs, and is
-idempotent once that entry or any other move has committed. A `start()` called while a `next()` or `go()` from
-the empty stack is still on its way does not step over it: it waits for that move, then answers
+idempotent once that entry or any other move has committed. A `start()` called while a move is still on its way does not step over it: it waits for that move, then answers
 from wherever the move left the wizard, running the first move itself if it left it unstarted.
 
 `back()` resolves its target from the definition rather than from where the user has been. A step
