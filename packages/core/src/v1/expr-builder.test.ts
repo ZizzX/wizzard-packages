@@ -65,8 +65,10 @@ const scope: Scope = {
   ctx: { x: [1, 2, 3] },
   loop: { index: 2, item: { k: 'v' }, key: 'v' },
 };
+// `len` reads arbitrary JSON args, so it never coerces them: `String({ toString: 0 })`
+// throws, since an own `toString` that is not a function hides the one it inherits.
 const registry: Registry = {
-  len: (a) => (Array.isArray(a) ? a.length : String(a ?? '').length),
+  len: (a) => (Array.isArray(a) || typeof a === 'string' ? a.length : 0),
   sum: (_, s) => (s.ctx.x as number[]).reduce((t, n) => t + n, 0),
 };
 
@@ -85,7 +87,12 @@ describe('expression builder', () => {
         const roundTripped = JSON.parse(JSON.stringify(built)) as Expr;
         expect(roundTripped).toEqual(built);
         expect(evaluate(built, scope, registry)).toEqual(evaluate(json, scope, registry));
-      })
+      }),
+      {
+        examples: [
+          [{ built: b.ref('len', { toString: 0 }), json: { $ref: 'len', args: { toString: 0 } } }],
+        ],
+      }
     );
   });
 
