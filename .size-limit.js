@@ -148,7 +148,11 @@ export default [
   // `next()` finishes the wizard, asking the traversal inside a group as
   // `canBack` does, instead of reading the end of `active` - false on a branch
   // that finishes, true on the last step of an item that leads to the next one.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '6.9 kB', gzip: true },
+  // 6.9 to 6.95 kB on 2026-10-05, measured 6907 B: a step's `load` is handed the
+  // move's AbortSignal and `destroy()` aborts every move still running (T-068),
+  // and the `busy` marker is cleared on every way out of a move, not only by its
+  // commit, so `isBusy` no longer sticks after a cancelled or failed load (T-069).
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '6.95 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a
