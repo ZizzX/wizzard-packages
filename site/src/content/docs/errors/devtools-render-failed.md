@@ -13,6 +13,8 @@ the layout prop to use the built-in layout, or record a session and attach it to
 Shown by the Graph tab in place of the graph. It is an error boundary around the renderer
 alone, so the diagnostic strip, the State tab, the Activity tab and the export keep working;
 a graph that cannot be drawn is not a reason to lose the refusal that was being diagnosed.
+The same line goes to the console, followed by the thrown error and the React component
+stack, which names the component that threw.
 
 Two causes, in order of likelihood. A `layout` prop that threw or returned something the
 renderer cannot read: the built-in `layoutGraph` is the way to confirm it, since removing the

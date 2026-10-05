@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { dataA, flowA, registryA } from '../../../contract/fixtures';
 import { devtools } from './headless';
+import { renderFailed } from './messages';
 import { WizardDevtools } from './WizardDevtools';
 
 /**
@@ -149,12 +150,20 @@ describe('<WizardDevtools/>', () => {
     const boom = (): never => {
       throw new Error('layout exploded');
     };
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     render(<WizardDevtools wizard={wizard} plugin={plugin} layout={boom as never} />);
     await act(async () => {
       await wizard.start();
     });
 
     expect(screen.getByText(/the graph could not be drawn: layout exploded/)).toBeTruthy();
+    /** The console line is the panel's line, so it names the page too; the stack follows it. */
+    expect(consoleError).toHaveBeenCalledWith(
+      renderFailed('layout exploded'),
+      expect.any(Error),
+      expect.any(String)
+    );
+    consoleError.mockRestore();
     fireEvent.click(screen.getByRole('tab', { name: 'State' }));
     expect(screen.getByText(/rev \d+/)).toBeTruthy();
 

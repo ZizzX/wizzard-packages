@@ -65,7 +65,7 @@ describe('messages', () => {
     for (const file of sources(join(ROOT, 'packages', 'devtools', 'src'))) {
       if (file.endsWith(join('src', 'messages.ts'))) continue;
       const text = readFileSync(file, 'utf8');
-      for (const match of text.matchAll(/`\[wizzard][^`]*`/g)) {
+      for (const match of text.matchAll(/['"`]\[wizzard][^\n]*/g)) {
         inline.push(`${file}: ${match[0]}`);
       }
     }
