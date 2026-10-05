@@ -82,5 +82,5 @@ through `wizard.set` is written anyway. A plugin's `loadStep` is handed the sign
 its own work on it.
 
 A loader that throws is different: the exception is not a refusal. The wizard returns to idle on
-the step it was on, and the promise from `next()` rejects with whatever the loader threw, for
-the caller to catch and retry. [API behaviour](../api-behaviour/) sets out that division.
+the step it was on - unless a newer move has overtaken this one, which then settles it - and the
+promise from `next()` rejects with whatever the loader threw, for the caller to catch and retry. [API behaviour](../api-behaviour/) sets out that division.
