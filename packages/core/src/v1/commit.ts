@@ -35,7 +35,10 @@ export function beginNav(state: WizardState): { state: WizardState; token: numbe
   // the selector cache and the snapshot cache both - so a lock that changed
   // `status` while leaving `rev` alone was invisible: `getState()` said busy
   // while `getSnapshot().isBusy` stayed false, and no spinner could ever show.
-  return { state: { ...state, nav: token, status: 'busy', rev: state.rev + 1 }, token };
+  // `busy` empties here: a move this one supersedes will never commit, so its
+  // loading marker means nothing, and the move holding the lock is then the
+  // only one that can have put a marker there.
+  return { state: { ...state, nav: token, status: 'busy', busy: [], rev: state.rev + 1 }, token };
 }
 
 /** True when this navigation is still the current one. */

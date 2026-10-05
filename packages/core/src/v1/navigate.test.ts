@@ -720,6 +720,199 @@ describe('runNav — races', () => {
   });
 });
 
+// The marker phase 6 sets is cleared on every way out, not only by the commit:
+// a button bound to `isBusy` must come back after a move that never lands.
+describe('runNav — the busy marker', () => {
+  /** Waits until phase 6 has set the marker, so the move is really loading. */
+  const loadingAt = (host: TestHost, busy: string[]): Promise<void> =>
+    vi.waitFor(() => {
+      expect(host.read().busy).toEqual(busy);
+    });
+
+  const loading = (gates: { promise: Promise<void> }[]): NavContext => {
+    let call = 0;
+    return {
+      flow: { ...flow, steps: { ...flow.steps, payment: { deferred: true } } },
+      hooks: [
+        {
+          name: 'server',
+          loadStep: async () => {
+            await gates[call++]?.promise;
+          },
+        },
+      ],
+    };
+  };
+
+  it('is cleared when the move is aborted while it loads', async () => {
+    const controller = new AbortController();
+    const gate = deferred<void>();
+    const host = makeHost(on('trip'));
+    const running = runNav({ ...loading([gate]), signal: controller.signal }, host, {
+      type: 'next',
+    });
+    await loadingAt(host, ['payment']);
+    controller.abort();
+    gate.resolve();
+
+    expect((await running).ok).toBe(false);
+    expect(host.read().busy).toEqual([]);
+  });
+
+  it('is cleared when the loader throws', async () => {
+    const host = makeHost(on('trip'));
+    const ctx: NavContext = {
+      ...loading([]),
+      hooks: [
+        {
+          name: 'server',
+          loadStep: () => Promise.reject(new Error('offline')),
+        },
+      ],
+    };
+
+    await expect(runNav(ctx, host, { type: 'next' })).rejects.toThrow('offline');
+    expect(host.read().busy).toEqual([]);
+    expect(host.read().status).toBe('idle');
+  });
+
+  it('is cleared when a newer move elsewhere overtakes the load', async () => {
+    const gate = deferred<void>();
+    const host = makeHost(on('trip'));
+    const first = runNav(loading([gate]), host, { type: 'next' });
+    await loadingAt(host, ['payment']);
+    await runNav(base, host, { type: 'go', to: 'trip', force: true });
+    gate.resolve();
+
+    expect((await first).ok).toBe(false);
+    expect(host.read().busy).toEqual([]);
+  });
+
+  // The overtaken move may be waiting at any await of the pipeline - before
+  // phase 6 marks anything, or after - and leaves through the stale check that
+  // follows it. None may touch the marker the newer move, loading the same
+  // step, has set by then.
+  it.each(['beforeNavigate', 'validate', 'exit', 'loadStep', 'load', 'guard'] as const)(
+    'stays while a newer move loads the same step, the overtaken one waiting in %s',
+    async (where) => {
+      const overtaken = deferred<void>();
+      const newer = deferred<void>();
+      let started = false;
+      let loading = false;
+      /** The overtaken move waits at `where`; the newer one waits in its loadStep. */
+      const wait = async (at: typeof where): Promise<void> => {
+        // Read once: the overtaken move wakes after the newer one has started.
+        const isNewer = started;
+        if (!isNewer && at === where) await overtaken.promise;
+        if (isNewer && at === 'loadStep') {
+          loading = true;
+          await newer.promise;
+        }
+      };
+      const reached = new Set<string>();
+      const at = async (point: typeof where): Promise<void> => {
+        if (!started) reached.add(point);
+        await wait(point);
+      };
+      const host = makeHost(on('trip'));
+      const ctx: NavContext = {
+        flow: {
+          ...flow,
+          steps: {
+            ...flow.steps,
+            trip: { guards: { exit: { $ref: 'leave' } } },
+            payment: {
+              deferred: true,
+              load: { $ref: 'seats' },
+              guards: { enter: { $ref: 'open' } },
+            },
+          },
+        },
+        registry: {
+          leave: async () => {
+            await at('exit');
+            return true;
+          },
+          open: async () => {
+            await at('guard');
+            return true;
+          },
+        },
+        hooks: [
+          {
+            name: 'server',
+            beforeNavigate: async () => {
+              await at('beforeNavigate');
+            },
+            loadStep: () => at('loadStep'),
+          },
+        ],
+        validate: async () => {
+          await at('validate');
+          return null;
+        },
+        load: () => at('load'),
+      };
+      const first = runNav(ctx, host, { type: 'next' });
+      await vi.waitFor(() => {
+        expect(reached.has(where)).toBe(true);
+      });
+      started = true;
+      const second = runNav(ctx, host, { type: 'go', to: 'payment', force: true });
+      await vi.waitFor(() => {
+        expect(loading).toBe(true);
+      });
+      expect(host.read().busy).toEqual(['payment']);
+
+      overtaken.resolve();
+      expect((await first).ok).toBe(false);
+      expect(host.read().busy).toEqual(['payment']);
+
+      newer.resolve();
+      expect((await second).ok).toBe(true);
+      expect(host.read().busy).toEqual([]);
+    }
+  );
+
+  // The overtaken move's way out through the catch: it must leave alone the
+  // marker the newer move set, because the lock is no longer its own.
+  it("stays when an overtaken move's loader throws while the newer one loads", async () => {
+    const fail = deferred<void>();
+    const gate = deferred<void>();
+    let call = 0;
+    const host = makeHost(on('trip'));
+    const ctx: NavContext = {
+      ...loading([]),
+      hooks: [
+        {
+          name: 'server',
+          loadStep: async () => {
+            if (call++ === 0) {
+              await fail.promise;
+              throw new Error('offline');
+            }
+            await gate.promise;
+          },
+        },
+      ],
+    };
+    const first = runNav(ctx, host, { type: 'next' });
+    await loadingAt(host, ['payment']);
+    const second = runNav(ctx, host, { type: 'go', to: 'payment', force: true });
+    await vi.waitFor(() => {
+      expect(call).toBe(2);
+    });
+
+    fail.resolve();
+    await expect(first).rejects.toThrow('offline');
+    expect(host.read().busy).toEqual(['payment']);
+
+    gate.resolve();
+    expect((await second).ok).toBe(true);
+    expect(host.read().busy).toEqual([]);
+  });
+});
+
 describe('runNav — bookkeeping', () => {
   it('bumps rev on every write so memoized selectors invalidate', async () => {
     const host = makeHost(on('trip'));

@@ -311,9 +311,16 @@ async function pipeline(
     }
   };
 
-  /** Releases the lock without touching anything a newer navigation may own. */
+  /**
+   * Releases the lock without touching anything a newer navigation may own.
+   * Holding the lock, this move set any `busy` marker there is, so it clears
+   * them: a move that never commits must not leave a step loading.
+   */
+  const release = (): void => {
+    if (!stale()) host.write(commit(host.read(), { status: 'idle', busy: [] }));
+  };
   const fail = (result: Refused): Refused => {
-    if (!stale()) host.write(commit(host.read(), { status: 'idle' }));
+    release();
     return result;
   };
 
@@ -516,7 +523,7 @@ async function pipeline(
 
     return { ok: true, from, to: target };
   } catch (error) {
-    if (!stale()) host.write(commit(host.read(), { status: 'idle' }));
+    release();
     throw error;
   }
 }

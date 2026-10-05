@@ -63,10 +63,10 @@ shape while it runs.
 The step being entered is added to `busy`, and `isBusy` is true while the move runs, which is
 what disables a Next button without any state of your own.
 
-The marker is removed by the commit that lands the move. A move that never commits - one that is
-superseded, cancelled, or ends in a loader throwing - leaves the step in `busy`, so a button
-bound to `isBusy` alone stays disabled after a failed load. Until that is fixed, pair it with
-the result of the call: re-enable on anything that is not `{ ok: true }`.
+The marker goes on every way out: with the commit that lands the move, and when a move never
+commits - it is cancelled, refused, or its loader throws. A move a newer one overtakes loses its
+marker the moment the newer move starts, and the newer move sets and clears its own. A button
+bound to `isBusy` alone therefore comes back after a failed load as well as after a successful one.
 
 A move that takes time can be overtaken. Every wait is followed by a check, and neither outcome
 is an exception:
@@ -84,5 +84,5 @@ that ignores the signal runs on, and whatever it writes to a store, a cache or t
 wizard is destroyed, and only its result is dropped.
 
 A loader that throws is different: the exception is not a refusal. The wizard returns to idle on
-the step it was on, and the promise from `next()` rejects with whatever the loader threw, for
-the caller to catch and retry. [API behaviour](../api-behaviour/) sets out that division.
+the step it was on - unless a newer move has overtaken this one, which then settles it - and the
+promise from `next()` rejects with whatever the loader threw, for the caller to catch and retry. [API behaviour](../api-behaviour/) sets out that division.
