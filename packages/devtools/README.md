@@ -184,6 +184,10 @@ Every message ends in the URL of the page that explains it,
 `devtools-no-wizard`, `devtools-no-plugin`, `devtools-render-failed`, `devtools-stopped`,
 `devtools-export-failed`, `devtools-bundle-unsupported`.
 
+A graph that cannot be drawn shows `devtools-render-failed` in the Graph tab and writes the
+same line to the console, followed by the thrown error and the React component stack that
+names the component that threw.
+
 ## License
 
 MIT
