@@ -65,8 +65,11 @@ const scope: Scope = {
   ctx: { x: [1, 2, 3] },
   loop: { index: 2, item: { k: 'v' }, key: 'v' },
 };
+// `len` measures its args as JSON text, so it reads all of them - a builder that drops
+// or changes one is seen - and never coerces them: `String({ toString: 0 })` throws,
+// since neither that `toString` nor the inherited `valueOf` yields a primitive.
 const registry: Registry = {
-  len: (a) => (Array.isArray(a) ? a.length : String(a ?? '').length),
+  len: (a) => JSON.stringify(a ?? null).length,
   sum: (_, s) => (s.ctx.x as number[]).reduce((t, n) => t + n, 0),
 };
 
@@ -85,7 +88,12 @@ describe('expression builder', () => {
         const roundTripped = JSON.parse(JSON.stringify(built)) as Expr;
         expect(roundTripped).toEqual(built);
         expect(evaluate(built, scope, registry)).toEqual(evaluate(json, scope, registry));
-      })
+      }),
+      {
+        examples: [
+          [{ built: b.ref('len', { toString: 0 }), json: { $ref: 'len', args: { toString: 0 } } }],
+        ],
+      }
     );
   });
 
