@@ -533,6 +533,25 @@ describe('start', () => {
     expect(calls).toBe(0);
   });
 
+  it('enters a restored deferred step, so its body loads', async () => {
+    const loaded: string[] = [];
+    const w = createWizard({
+      flow: { ...loadingFlow, steps: { ...loadingFlow.steps, b: { deferred: true } } },
+      plugins: [
+        restoring('b'),
+        {
+          name: 'host',
+          loadStep: (id) => {
+            loaded.push(id);
+            return Promise.resolve();
+          },
+        },
+      ],
+    });
+    expect(await w.start()).toMatchObject({ ok: true, to: 'b' });
+    expect(loaded).toEqual(['b']);
+  });
+
   // The restored step is not being left, so a guard that asks before leaving
   // it - a confirm dialog, say - is not asked on reload, and its load runs.
   it('enters a restored step without asking its exit guard', async () => {

@@ -115,7 +115,9 @@ export interface Wizard<F extends FlowDefinition = FlowDefinition> {
   /**
    * Enters the first reachable step. A fresh wizard has an empty stack, so
    * until this runs there is no current step and a UI has nothing to draw.
-   * Idempotent: once a step is current, this reports it and navigates nowhere.
+   * A step restored before this runs that loads - a `load`, or `deferred` -
+   * is entered again, in place, so its load runs. Then idempotent: once a step
+   * is current and entered, this reports it and navigates nowhere.
    */
   start: () => Promise<NavResult>;
   next: (opts?: { validate?: boolean }) => Promise<NavResult>;
