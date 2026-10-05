@@ -12,9 +12,11 @@ import {
   useErrors,
   useField,
   useNavigation,
+  useOptionalWizard,
   useStep,
   useWizard,
   useWizardSelector,
+  useWizardSnapshot,
   WizardProvider,
 } from './index';
 
@@ -47,6 +49,9 @@ function Probe(): ReactElement {
   // A hook argument that changes between renders, which is how React code
   // names the item it is on.
   const [note, setNote] = useField<string | undefined>(`notes.${itemKey || '-'}`);
+  const optional = useOptionalWizard();
+  const snapshot = useWizardSnapshot();
+  const selected = useWizardSelector((s) => s.current);
 
   return (
     <div>
@@ -60,6 +65,13 @@ function Probe(): ReactElement {
           .join(', ')}
       </span>
       <span data-testid="refusal">{refusal}</span>
+      <span data-testid="index">{step.index}</span>
+      <span data-testid="is-first">{step.isFirst ? 'yes' : 'no'}</span>
+      <span data-testid="active">{step.active.join(',')}</span>
+      <span data-testid="status">{step.status}</span>
+      <span data-testid="snapshot-step">{snapshot.current ?? ''}</span>
+      <span data-testid="selected-step">{selected ?? ''}</span>
+      <span data-testid="optional">{optional === wizard ? 'same' : 'other'}</span>
       <span data-testid="name-value">{name ?? ''}</span>
       <input
         data-testid="name-input"
@@ -168,6 +180,11 @@ function Bare(): ReactElement {
   return <span />;
 }
 
+function BareOptional({ onRead }: { onRead: (wizard: unknown) => void }): ReactElement {
+  onRead(useOptionalWizard());
+  return <span />;
+}
+
 const harness: BindingHarness = {
   name: 'react',
   outsideProvider: () => {
@@ -190,6 +207,18 @@ const harness: BindingHarness = {
       cleanup();
     }
     return caught;
+  },
+  optionalOutsideProvider: () => {
+    let read: unknown;
+    render(
+      <BareOptional
+        onRead={(wizard) => {
+          read = wizard;
+        }}
+      />
+    );
+    cleanup();
+    return read;
   },
   mount: async ({ flow, registry, data, groups, subFlows }) => {
     // Counted with Profiler rather than inside the component: a render-phase

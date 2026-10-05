@@ -13,8 +13,10 @@ import {
   useErrors,
   useField,
   useNavigation,
+  useOptionalWizard,
   useStep,
   useWizard,
+  useWizardSelector,
   useWizardSnapshot,
 } from './index';
 
@@ -80,6 +82,8 @@ const ProbeComponent = defineComponent({
     const itemName = computed(() =>
       itemIndex.value < 0 ? '' : (items.value[itemIndex.value]?.name ?? '')
     );
+    const optional = useOptionalWizard();
+    const selected = useWizardSelector((s) => s.current);
 
     return () =>
       h('div', [
@@ -95,6 +99,13 @@ const ProbeComponent = defineComponent({
             .join(', ')
         ),
         h('span', { 'data-testid': 'refusal' }, refusal.value),
+        h('span', { 'data-testid': 'index' }, String(step.index.value)),
+        h('span', { 'data-testid': 'is-first' }, step.isFirst.value ? 'yes' : 'no'),
+        h('span', { 'data-testid': 'active' }, step.active.value.join(',')),
+        h('span', { 'data-testid': 'status' }, step.status.value),
+        h('span', { 'data-testid': 'snapshot-step' }, snapshot.value.current ?? ''),
+        h('span', { 'data-testid': 'selected-step' }, selected.value ?? ''),
+        h('span', { 'data-testid': 'optional' }, optional === wizard ? 'same' : 'other'),
         h('span', { 'data-testid': 'name-value' }, name.value ?? ''),
         h('input', {
           'data-testid': 'name-input',
@@ -187,26 +198,40 @@ const ProbeComponent = defineComponent({
   },
 });
 
+/** Calls one hook in `setup` with no provider above it. */
+const Bare = defineComponent({
+  props: { use: { type: Function, required: true } },
+  setup(props) {
+    props.use();
+    return () => h('span');
+  },
+});
+
 const harness: BindingHarness = {
   name: 'vue',
   outsideProvider: () => {
-    const Bare = defineComponent({
-      setup() {
-        useWizard();
-        return () => h('span');
-      },
-    });
     // With no app error handler Vue rethrows a setup error out of mount, and
     // warns about it first; the test asserts on the error, so the warning is noise.
     const quiet = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     try {
-      mount(Bare).unmount();
+      mount(Bare, { props: { use: useWizard } }).unmount();
       return undefined;
     } catch (error) {
       return error;
     } finally {
       quiet.mockRestore();
     }
+  },
+  optionalOutsideProvider: () => {
+    let read: unknown;
+    mount(Bare, {
+      props: {
+        use: () => {
+          read = useOptionalWizard();
+        },
+      },
+    }).unmount();
+    return read;
   },
   mount: async ({ flow, registry, data, groups, subFlows }) => {
     const Root = defineComponent({

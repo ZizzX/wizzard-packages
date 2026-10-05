@@ -49,6 +49,8 @@ export interface BindingHarness {
    * returns whatever that threw - `undefined` if nothing did.
    */
   outsideProvider: () => unknown;
+  /** What `useOptionalWizard` returns with no provider above it. */
+  optionalOutsideProvider: () => unknown;
 }
 
 /**
@@ -58,6 +60,11 @@ export interface BindingHarness {
  *   go-first    jumps to `breadcrumbs[0]`, the step a crumb would name
  *   go-missing  jumps at a step the flow does not have, for the refused case
  *   refusal     `<code> <url>` of the last refused `next()`, or ''
+ *   index, is-first, status   `useStep()`'s own fields; is-first is yes/no
+ *   active      `useStep().active`, joined by ','
+ *   snapshot-step  `current`, read through `useWizardSnapshot`
+ *   selected-step  `current`, read through `useWizardSelector`
+ *   optional    'same' when `useOptionalWizard` returns the wizard `useWizard` does
  *
  * And, for the repeat group below - all of it read from the engine, never kept
  * beside it, because a binding that remembers which item it is on is the 0.x
@@ -143,6 +150,12 @@ export function describeBindingContract(harness: BindingHarness): void {
       expect((error as WizardError).fix).not.toBe('');
     });
 
+    // Its sibling for a component that can work without a wizard, such as a
+    // diagnostic panel: no provider is an answer, not a failure.
+    it('hands useOptionalWizard null outside a provider', () => {
+      expect(harness.optionalOutsideProvider()).toBeNull();
+    });
+
     it('says why the wizard did not start, with a page', async () => {
       const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
       const probe = await harness.mount({
@@ -195,6 +208,27 @@ export function describeBindingContract(harness: BindingHarness): void {
 
       await probe.click('next');
       expect(probe.text('progress')).toBe('50');
+      probe.unmount();
+    });
+
+    // Every hook a stepper reads its position from, answering together. A field
+    // one binding forgot to wire reads stale here while `step` moves on.
+    it('reports the position through every hook that exposes it', async () => {
+      const probe = await mount({ name: 'Ann', wantsTwo: false });
+      expect(probe.text('optional')).toBe('same');
+      expect(probe.text('active')).toBe('one,three');
+      expect(probe.text('index')).toBe('0');
+      expect(probe.text('is-first')).toBe('yes');
+      expect(probe.text('status')).toBe('idle');
+
+      await probe.click('next');
+      expect(probe.text('index')).toBe('1');
+      expect(probe.text('is-first')).toBe('no');
+      expect(probe.text('snapshot-step')).toBe('three');
+      expect(probe.text('selected-step')).toBe('three');
+
+      await probe.click('next');
+      await until(() => probe.text('status') === 'done', 'the wizard to finish');
       probe.unmount();
     });
 
@@ -302,6 +336,26 @@ export function describeBindingContract(harness: BindingHarness): void {
       await moving;
       await until(() => probe.text('busy') === 'no', 'the wizard to stop being busy');
       expect(probe.text('step')).toBe('three');
+      probe.unmount();
+    });
+
+    // Two clicks before the first navigation lands. Both start from the same
+    // step, so the wizard moves once; a binding that queued them, or remembered
+    // a step of its own, would move twice and, on this flow, finish.
+    it('moves once when Next is clicked twice in a row', async () => {
+      const probe = await harness.mount({
+        flow: slowFlow,
+        registry: slowRegistry,
+        data: { name: 'Ann' },
+      });
+      await until(() => probe.text('busy') === 'no', 'the start navigation to land');
+
+      await probe.click('next');
+      await probe.click('next');
+      await until(() => probe.text('busy') === 'no', 'both clicks to settle');
+
+      expect(probe.text('step')).toBe('three');
+      expect(probe.text('status')).toBe('idle');
       probe.unmount();
     });
 

@@ -301,19 +301,20 @@ describe('instanceof across copies of the class', () => {
   });
 });
 
+/** Source files under `dir`, tests left out. */
+const sources = (dir: string): string[] =>
+  readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) return sources(path);
+    return /\.tsx?$/.test(entry.name) && !entry.name.includes('.test.') ? [path] : [];
+  });
+
 /**
  * The format lint. A throw that bypasses the class is a message with no code,
  * no fix and no page, so the source of the engine and both bindings may not
  * contain one. Re-throwing a caught value is not a new failure and is allowed.
  */
 describe('every throw in v1', () => {
-  const sources = (dir: string): string[] =>
-    readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-      const path = join(dir, entry.name);
-      if (entry.isDirectory()) return sources(path);
-      return /\.tsx?$/.test(entry.name) && !entry.name.includes('.test.') ? [path] : [];
-    });
-
   it('goes through WizardError', () => {
     const dirs = ['core', 'react', 'vue'].map((pkg) => join(ROOT, 'packages', pkg, 'src', 'v1'));
     const bare = dirs
@@ -325,5 +326,46 @@ describe('every throw in v1', () => {
         )
       );
     expect(bare).toEqual([]);
+  });
+});
+
+/**
+ * The other half of "the page it points at exists". The cases above check the
+ * codes a test provokes; this one reads every code the source can link to, so
+ * a failure nobody has a case for yet still cannot ship a dead link. Codes are
+ * written in a handful of shapes, and each one is matched here. Where a code
+ * is built from a variable - `validateFlow`'s and `checkSession`'s problems,
+ * the devtools messages - the test beside it checks its own pages.
+ */
+describe('every page the source links to', () => {
+  it('exists', () => {
+    const dirs = readdirSync(join(ROOT, 'packages'))
+      .map((pkg) => join(ROOT, 'packages', pkg, 'src'))
+      .filter(existsSync);
+    const text = dirs
+      .flatMap(sources)
+      .map((file) => readFileSync(file, 'utf8'))
+      .join('\n');
+
+    const shapes = [
+      /(?:explain|pageFor|new WizardError)\(\s*'([a-z][a-z-]+)'/g,
+      /\/errors\/([a-z][a-z-]+)/g,
+      /\$\{DOCS\}\/?([a-z][a-z-]+)/g,
+    ];
+    const codes = new Set(shapes.flatMap((shape) => Array.from(text.matchAll(shape), (m) => m[1])));
+    // `runNav` names a refusal `nav-<reason>`, so the reasons are the codes.
+    const reasons = /export type NavReason =([^;]+);/.exec(text)?.[1] ?? '';
+    for (const [, reason] of reasons.matchAll(/'([a-z-]+)'/g)) codes.add(`nav-${reason}`);
+    // Persist links `<DOCS>/<code>` with the slash made a dash: `persist/x` is `persist-x`.
+    for (const [, scope, name] of text.matchAll(/(?<![.\w])warn\(\s*'([a-z]+)\/([a-z-]+)'/g)) {
+      codes.add(`${scope}-${name}`);
+    }
+
+    // A floor, so a shape that stops matching shows up as a short list here
+    // rather than as a check that quietly passes on nothing.
+    expect(codes.size).toBeGreaterThan(20);
+    const errors = join(ROOT, 'site', 'src', 'content', 'docs', 'errors');
+    const missing = [...codes].filter((code) => !existsSync(join(errors, `${code}.md`)));
+    expect(missing).toEqual([]);
   });
 });
