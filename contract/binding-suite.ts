@@ -60,7 +60,8 @@ export interface BindingHarness {
  *   go-first    jumps to `breadcrumbs[0]`, the step a crumb would name
  *   go-missing  jumps at a step the flow does not have, for the refused case
  *   refusal     `<code> <url>` of the last refused `next()`, or ''
- *   index, is-first, status   `useStep()`'s own fields; is-first is yes/no
+ *   index, is-first, is-last, status   `useStep()`'s own fields; is-first and
+ *               is-last are yes/no
  *   active      `useStep().active`, joined by ','
  *   snapshot-step  `current`, read through `useWizardSnapshot`
  *   selected-step  `current`, read through `useWizardSelector`
@@ -230,6 +231,49 @@ export function describeBindingContract(harness: BindingHarness): void {
       await probe.click('next');
       await until(() => probe.text('status') === 'done', 'the wizard to finish');
       probe.unmount();
+    });
+
+    // isLast answers whether next() finishes the wizard, not where the step sits
+    // in order: a branch with no on.next finishes from outside order, and a step
+    // sent to @end finishes from the middle of it.
+    it('reads isLast from where next() goes, not from the position in order', async () => {
+      // `company` is a branch outside order on purpose, reached only from
+      // `trip`; validateFlow notes it as step-not-in-order, which is the case.
+      const branching: FlowDefinition = {
+        id: 'branching',
+        order: ['trip', 'stop', 'payment'],
+        steps: {
+          trip: { label: 'Trip', on: { next: 'company' } },
+          company: { label: 'Company' },
+          stop: { label: 'Stop', on: { next: '@end' } },
+          payment: { label: 'Payment' },
+        },
+        policy: 'free',
+      };
+      const probe = await harness.mount({ flow: branching });
+      expect(probe.text('step')).toBe('trip');
+      expect(probe.text('is-last')).toBe('no');
+
+      await probe.click('next');
+      expect(probe.text('step')).toBe('company');
+      expect(probe.text('is-last')).toBe('yes');
+      await probe.click('next');
+      await until(() => probe.text('status') === 'done', 'the wizard to finish from the branch');
+      probe.unmount();
+
+      const ending = await harness.mount({
+        flow: {
+          id: 'ending',
+          order: ['stop', 'payment'],
+          steps: { stop: branching.steps.stop!, payment: branching.steps.payment! },
+          policy: 'free',
+        },
+      });
+      expect(ending.text('step')).toBe('stop');
+      expect(ending.text('is-last')).toBe('yes');
+      await ending.click('next');
+      await until(() => ending.text('status') === 'done', 'the wizard to finish mid-order');
+      ending.unmount();
     });
 
     it('goes back, and says so before you try', async () => {
@@ -416,6 +460,46 @@ export function describeBindingContract(harness: BindingHarness): void {
       expect(probe.text('item-key')).toBe('p2');
       expect(probe.text('item-index')).toBe('1');
       probe.unmount();
+    });
+
+    // The last step of an item is not the last step while another item follows:
+    // next() from it enters that item. Only the last step of the last item, in a
+    // group nothing comes after, finishes the wizard; with a step after the
+    // group, that step is the last one.
+    it('reads isLast as true only on the last step of the last item', async () => {
+      const at = async (probe: Probe, step: string, key: string, last: string): Promise<void> => {
+        expect(`${probe.text('step')} ${probe.text('item-key')} ${probe.text('is-last')}`).toBe(
+          `${step} ${key} ${last}`
+        );
+        await probe.click('next');
+      };
+
+      const alone = await harness.mount({
+        flow: {
+          id: 'trip-alone',
+          order: ['passengers'],
+          steps: { passengers: tripFlow.steps.passengers! },
+          policy: 'free',
+        },
+        data: people('p1', 'p2'),
+        groups,
+        subFlows: subFlowsC,
+      });
+      await at(alone, 'seat', 'p1', 'no');
+      await at(alone, 'meal', 'p1', 'no');
+      await at(alone, 'seat', 'p2', 'no');
+      await at(alone, 'meal', 'p2', 'yes');
+      await until(() => alone.text('status') === 'done', 'the wizard to finish from the group');
+      alone.unmount();
+
+      const followed = await enter('p1', 'p2');
+      await at(followed, 'seat', 'p1', 'no');
+      await at(followed, 'meal', 'p1', 'no');
+      await at(followed, 'seat', 'p2', 'no');
+      await at(followed, 'meal', 'p2', 'no');
+      await at(followed, 'review', '', 'yes');
+      await until(() => followed.text('status') === 'done', 'the wizard to finish after the group');
+      followed.unmount();
     });
 
     it('stays on the current item when another one is removed', async () => {
