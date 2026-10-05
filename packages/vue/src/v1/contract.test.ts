@@ -101,6 +101,7 @@ const ProbeComponent = defineComponent({
         h('span', { 'data-testid': 'refusal' }, refusal.value),
         h('span', { 'data-testid': 'index' }, String(step.index.value)),
         h('span', { 'data-testid': 'is-first' }, step.isFirst.value ? 'yes' : 'no'),
+        h('span', { 'data-testid': 'is-last' }, step.isLast.value ? 'yes' : 'no'),
         h('span', { 'data-testid': 'active' }, step.active.value.join(',')),
         h('span', { 'data-testid': 'status' }, step.status.value),
         h('span', { 'data-testid': 'snapshot-step' }, snapshot.value.current ?? ''),

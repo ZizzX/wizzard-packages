@@ -67,6 +67,7 @@ function Probe(): ReactElement {
       <span data-testid="refusal">{refusal}</span>
       <span data-testid="index">{step.index}</span>
       <span data-testid="is-first">{step.isFirst ? 'yes' : 'no'}</span>
+      <span data-testid="is-last">{step.isLast ? 'yes' : 'no'}</span>
       <span data-testid="active">{step.active.join(',')}</span>
       <span data-testid="status">{step.status}</span>
       <span data-testid="snapshot-step">{snapshot.current ?? ''}</span>
