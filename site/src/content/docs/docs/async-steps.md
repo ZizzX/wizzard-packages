@@ -26,10 +26,11 @@ registry: {
 ```
 
 The resolver receives the `args` from the definition, the scope the target sits in, and the
-move's `AbortSignal`. `cancel()` aborts the move in flight and `destroy()` every move still
-running, so a request handed the signal stops with them. A newer move that overtakes this one
-does not abort it, and neither does a `cancel()` after that: it reaches the newer move. Inside a repeat group
-the scope is the target's own, so `loop.item` is the item being entered, not the one being left.
+move's `AbortSignal`. `cancel()` aborts the latest move while it runs, and `destroy()` every move
+still running, so a request handed the signal stops with them. A newer move that overtakes this
+one does not abort it, and a later `cancel()` reaches only that newer move - nothing at all once
+it has settled. Inside a repeat group the scope is the target's own, so `loop.item` is the item
+being entered, not the one being left.
 
 What it returns is discarded. `load` is a gate, not a fetch that fills the step: the engine
 waits for the promise and moves on. Where the data lands is yours to decide - a store, a cache,
