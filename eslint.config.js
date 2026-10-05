@@ -13,7 +13,6 @@ import vueParser from 'vue-eslint-parser';
  *   3. type-aware strict rules for shipped library source
  *   4. framework-specific rules (react hooks, vue)
  *   5. relaxed rules for tests, examples and e2e
- *   6. LEGACY QUARANTINE — shrink this list, never grow it
  */
 export default [
   {
@@ -169,31 +168,6 @@ export default [
           message: 'State is written only in commit.ts.',
         },
       ],
-    },
-  },
-
-  // ── LEGACY QUARANTINE ───────────────────────────────────────────────────────
-  // What is left after the 0.x teardown: the devtools panel, which predates the
-  // standard and is held to it by its own task. Remove the entry the moment
-  // that lands. Never add one.
-  {
-    files: ['packages/devtools/src/**'],
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unnecessary-condition': 'off',
-      '@typescript-eslint/consistent-type-imports': 'off',
-      '@typescript-eslint/switch-exhaustiveness-check': 'off',
-      'import-x/order': 'off',
-      'object-shorthand': 'off',
-      eqeqeq: 'warn',
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
-      'no-duplicate-imports': 'off',
-      'no-case-declarations': 'off',
-      '@typescript-eslint/no-empty-object-type': 'off',
-      '@typescript-eslint/no-floating-promises': 'off',
-      '@typescript-eslint/no-misused-promises': 'off',
-      'react-hooks/refs': 'off',
-      'react-hooks/set-state-in-effect': 'off',
     },
   },
 ];

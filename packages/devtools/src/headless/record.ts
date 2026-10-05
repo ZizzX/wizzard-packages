@@ -1,8 +1,7 @@
-import { checkSession } from '@wizzard-packages/core/session';
-import type { RecordedSession } from '@wizzard-packages/core/session';
-import type { FlowDefinition, SubFlows, Wizard, WizardState } from '@wizzard-packages/core';
+import { checkSession, type RecordedSession } from '@wizzard-packages/core/session';
 
 import type { DevtoolsPlugin, Outcome } from './plugin';
+import type { FlowDefinition, SubFlows, Wizard, WizardState } from '@wizzard-packages/core';
 
 /**
  * Records a wizard into a bundle another developer can replay without the
@@ -67,8 +66,18 @@ export interface Recorder {
 
 const DOCS = 'https://zizzx.github.io/wizzard-packages/errors/devtools-export-failed';
 
+/** What was thrown, as its message when it has one: a `throw null` has no `.message` to read. */
+const messageOf = (error: unknown): unknown =>
+  (error as { message?: unknown } | null | undefined)?.message ?? error;
+
 const isBundle = (v: unknown): v is SessionBundle => {
-  const b = v as Partial<SessionBundle> | null;
+  // Read as the untrusted value it is: any field may be missing or of any type.
+  const b = v as {
+    version?: unknown;
+    flow?: { id?: unknown; steps?: unknown };
+    outcomes?: unknown;
+    session?: { flow?: unknown; frames?: unknown };
+  } | null;
   return (
     typeof b === 'object' &&
     b !== null &&
@@ -92,7 +101,8 @@ export function recordSession(wizard: WizardLike, options: RecordOptions = {}): 
   let capped: BundleMeta['capped'] = false;
   let stopped: BundleMeta['stopped'] = null;
   let stopping = false;
-  let ended = false;
+  // Widened: `take` below can end the recording before `subscribe` is reached.
+  let ended = false as boolean;
 
   // Only attempts that end during the recording belong to it. The plugin's
   // ring holds the ones that ended before; anything else it shows is new.
@@ -186,7 +196,7 @@ export function recordSession(wizard: WizardLike, options: RecordOptions = {}): 
       try {
         copy = JSON.parse(JSON.stringify(raw)) as SessionBundle;
       } catch (error) {
-        const detail = String((error as Error).message ?? error).split('\n')[0] ?? '';
+        const detail = String(messageOf(error)).split('\n')[0] ?? '';
         const cause = /circular|cyclic/i.test(detail)
           ? 'holds a circular reference'
           : 'cannot be serialised as JSON';
@@ -200,7 +210,7 @@ export function recordSession(wizard: WizardLike, options: RecordOptions = {}): 
           out = redact(copy);
         } catch (error) {
           throw new Error(
-            `[wizzard] export stopped: redact threw ${String((error as Error).message ?? error)}. Nothing was copied. The hook must return a SessionBundle; fix it, or remove it to export unredacted development data. ${DOCS}`
+            `[wizzard] export stopped: redact threw ${String(messageOf(error))}. Nothing was copied. The hook must return a SessionBundle; fix it, or remove it to export unredacted development data. ${DOCS}`
           );
         }
         if (!isBundle(out)) {
@@ -209,7 +219,9 @@ export function recordSession(wizard: WizardLike, options: RecordOptions = {}): 
           );
         }
         // The frames are what a reader replays, so the reader's own check runs here.
-        const problem = checkSession(out.session, out.flow, out.subFlows)[0];
+        const problem = checkSession(out.session, out.flow, out.subFlows)[0] as
+          | ReturnType<typeof checkSession>[number]
+          | undefined;
         if (problem !== undefined) {
           throw new Error(
             `[wizzard] export stopped: redact returned a session checkSession rejects (${problem.path}, ${problem.code}). Nothing was copied. The hook must keep every frame a state of the recorded flow; fix it, or remove it to export unredacted development data. ${DOCS}`

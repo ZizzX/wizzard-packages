@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+
 import type { Recorder, SessionBundle } from './headless';
 
 /**
@@ -84,7 +84,8 @@ export function ExportPreview({
       area.current?.select();
     };
     try {
-      const clipboard = navigator?.clipboard;
+      // Absent outside a secure context, whatever the DOM types say.
+      const clipboard = navigator.clipboard as Clipboard | undefined;
       if (!clipboard) {
         fallback();
         return;
