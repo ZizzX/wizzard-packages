@@ -288,36 +288,40 @@ describe('validation', () => {
 describe('navigation through the store', () => {
   // cancel() stops the work as well as the move: the loader holds the signal
   // the move was given, and can hand it to fetch.
-  it("hands a step's load the move's signal, and aborts it on cancel()", async () => {
-    let received: AbortSignal | undefined;
-    let release = (): void => undefined;
-    const w = createWizard({
-      flow: { id: 'f', order: ['a', 'b'], steps: { a: {}, b: { load: { $ref: 'seats' } } } },
-      registry: {
-        seats: (_args, _scope, signal) => {
-          received = signal;
-          return new Promise<void>((resolve) => {
-            release = resolve;
-          });
+  it.each(['cancel', 'destroy'] as const)(
+    "hands a step's load the move's signal, and aborts it on %s()",
+    async (stop) => {
+      let received: AbortSignal | undefined;
+      let release = (): void => undefined;
+      const w = createWizard({
+        flow: { id: 'f', order: ['a', 'b'], steps: { a: {}, b: { load: { $ref: 'seats' } } } },
+        registry: {
+          seats: (_args, _scope, signal) => {
+            received = signal;
+            return new Promise<void>((resolve) => {
+              release = resolve;
+            });
+          },
         },
-      },
-    });
-    await w.start();
+      });
+      await w.start();
 
-    const moving = w.next();
-    await vi.waitFor(() => {
-      expect(received).toBeDefined();
-    });
-    expect(received?.aborted).toBe(false);
-    w.cancel();
-    expect(received?.aborted).toBe(true);
-    release();
-    expect((await moving).ok).toBe(false);
-  });
+      const moving = w.next();
+      await vi.waitFor(() => {
+        expect(received).toBeDefined();
+      });
+      expect(received?.aborted).toBe(false);
+      w[stop]();
+      expect(received?.aborted).toBe(true);
+      release();
+      expect((await moving).ok).toBe(false);
+    }
+  );
 
   // A newer move takes over without cancelling: the overtaken loader keeps an
-  // unaborted signal and runs on, and only its result is dropped.
-  it('leaves the signal of a move a newer one overtakes unaborted', async () => {
+  // unaborted signal and runs on, and only its result is dropped - until the
+  // wizard is destroyed, which stops every move still running.
+  it('leaves the signal of a move a newer one overtakes unaborted, until destroy()', async () => {
     let received: AbortSignal | undefined;
     let release = (): void => undefined;
     const w = createWizard({
@@ -343,9 +347,12 @@ describe('navigation through the store', () => {
       expect(received).toBeDefined();
     });
     expect((await w.go('c')).ok).toBe(true);
+    w.cancel();
     expect(received?.aborted).toBe(false);
+    w.destroy();
+    expect(received?.aborted).toBe(true);
     release();
-    expect(await overtaken).toMatchObject({ ok: false, reason: 'superseded' });
+    expect((await overtaken).ok).toBe(false);
   });
 
   it('walks the reachable steps and back again', async () => {

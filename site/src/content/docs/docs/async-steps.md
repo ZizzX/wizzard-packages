@@ -26,8 +26,9 @@ registry: {
 ```
 
 The resolver receives the `args` from the definition, the scope the target sits in, and the
-move's `AbortSignal`. `cancel()` and `destroy()` abort it, so a request handed the signal stops
-with the move it belongs to; a newer move that overtakes this one does not. Inside a repeat group
+move's `AbortSignal`. `cancel()` aborts the move in flight and `destroy()` every move still
+running, so a request handed the signal stops with them. A newer move that overtakes this one
+does not abort it, and neither does a `cancel()` after that: it reaches the newer move. Inside a repeat group
 the scope is the target's own, so `loop.item` is the item being entered, not the one being left.
 
 What it returns is discarded. `load` is a gate, not a fetch that fills the step: the engine
@@ -78,8 +79,8 @@ Both come back from `next()` as `{ ok: false, reason }`. What they guarantee is 
 is not committed, so the wizard does not land on the step. A `load` resolver or a plugin's
 `loadStep` that was cancelled is handed an aborted signal and can stop its own work on it; one
 that ignores the signal runs on, and whatever it writes to a store, a cache or through
-`wizard.set` is written anyway. A superseded move aborts nothing: its loader finishes, and only
-its result is dropped.
+`wizard.set` is written anyway. A superseded move aborts nothing: its loader finishes unless the
+wizard is destroyed, and only its result is dropped.
 
 A loader that throws is different: the exception is not a refusal. The wizard returns to idle on
 the step it was on, and the promise from `next()` rejects with whatever the loader threw, for
