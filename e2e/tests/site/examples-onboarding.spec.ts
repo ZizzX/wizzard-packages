@@ -88,6 +88,59 @@ test.describe('R-A onboarding', () => {
     expect(body).not.toContain('123456');
   });
 
+  for (const [name, path] of [
+    ['React', REACT],
+    ['Vue', VUE],
+  ] as const) {
+    test(`walks back across the branch on ${name}, and submits only the route it ends on`, async ({
+      page,
+    }) => {
+      await page.goto(path);
+      await expect(page.getByRole('button', { name: 'Next' })).toBeEnabled();
+
+      await page.getByLabel('Email').fill('ada@example.com');
+      await page.getByRole('button', { name: 'Business' }).click();
+      await page.getByRole('button', { name: 'Next' }).click();
+      await page.getByLabel('Six-digit code').fill('123456');
+      await page.getByRole('button', { name: 'Next' }).click();
+      await page.getByLabel('Company name').fill('Acme');
+      await page.getByLabel('VAT number').fill('GB123');
+      await page.getByRole('button', { name: 'Next' }).click();
+      await expect(page.getByRole('heading', { name: 'Payment' })).toBeVisible();
+
+      // Back to a step keeps its answers.
+      await page.getByRole('button', { name: 'Back' }).click();
+      await expect(page.getByRole('heading', { name: 'Company details' })).toBeVisible();
+      await expect(page.getByLabel('Company name')).toHaveValue('Acme');
+
+      // Except the code: `clearOnLeave` dropped it when the step was left.
+      await page.getByRole('button', { name: 'Back' }).click();
+      await expect(page.getByRole('heading', { name: 'Verify your email' })).toBeVisible();
+      await expect(page.getByLabel('Six-digit code')).toHaveValue('');
+
+      await page.getByRole('button', { name: 'Back' }).click();
+      await expect(page.getByRole('heading', { name: 'Your details' })).toBeVisible();
+      await page.getByRole('button', { name: 'Personal' }).click();
+      await expect(page.locator('.app-state')).toContainText('details → verify → payment → review');
+
+      await page.getByRole('button', { name: 'Next' }).click();
+      await page.getByLabel('Six-digit code').fill('654321');
+      await page.getByRole('button', { name: 'Next' }).click();
+      // Company is off the route now, so `next` from verify lands on payment.
+      await expect(page.getByRole('heading', { name: 'Payment' })).toBeVisible();
+      await page.getByLabel('Card number').fill('4242424242424242');
+      await page.getByRole('button', { name: 'Next' }).click();
+
+      // The company answers are still in the data, and off the route, so they
+      // are not submitted.
+      await expect(page.getByRole('heading', { name: 'Review' })).toBeVisible();
+      const body = await page.locator('.app-data').innerText();
+      expect(body).toContain('"payment"');
+      expect(body).not.toContain('Acme');
+      expect(body).not.toContain('654321');
+    });
+  }
+
   test('can be walked without a mouse, and says where it went', async ({ page }) => {
     await page.goto(REACT);
     await expect(page.getByRole('button', { name: 'Next' })).toBeEnabled();

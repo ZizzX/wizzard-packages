@@ -59,6 +59,32 @@ test.describe('the inspector', () => {
     await expect(graph).not.toBeFocused();
   });
 
+  test('takes Company off the route when the payer changes, and walks the new route', async ({
+    page,
+  }) => {
+    await page.goto('inspector/');
+    await expect(page.getByRole('button', { name: 'Next' })).toBeEnabled();
+
+    const company = page.locator('#node-company');
+    const state = page.locator('.mirror tr', { hasText: 'Company' }).locator('td').nth(1);
+    await expect(company).not.toHaveClass(/\bskipped\b/);
+    await expect(state).not.toHaveText('skipped');
+
+    await page.getByRole('button', { name: 'Personal' }).click();
+    await expect(company).toHaveClass(/\bskipped\b/);
+    await expect(state).toHaveText('skipped');
+
+    // The graph is not a picture of the route, it is the route: Next from the
+    // first step now lands on payment.
+    await page.getByLabel('Email').fill('ada@example.com');
+    await page.getByRole('button', { name: 'Next' }).click();
+    await expect(page.getByLabel('Card number')).toBeVisible();
+    await expect(page.locator('#node-payment')).toHaveClass(/\bactive\b/);
+
+    await page.getByRole('button', { name: 'Business' }).click();
+    await expect(company).not.toHaveClass(/\bskipped\b/);
+  });
+
   test('scrubs a recorded run with the keyboard', async ({ page }) => {
     await page.goto('inspector/');
     await page.getByRole('button', { name: 'Replay' }).click();
@@ -84,6 +110,28 @@ test.describe('the inspector', () => {
     await page.getByRole('button', { name: 'Draw this flow' }).click();
 
     await expect(page.getByRole('alert')).toContainText(/line \d+, column \d+/);
+    expect(await nodes.count()).toBe(before);
+  });
+
+  test('refuses a paste past a million characters before it reads it', async ({ page }) => {
+    await page.goto('inspector/');
+    const nodes = page.locator('.node');
+    await expect(nodes.first()).toBeVisible();
+    const before = await nodes.count();
+
+    // Valid JSON, and a flow the preview would draw at any smaller size: what
+    // refuses it is the length, not the parser or the flow rules.
+    const big = JSON.stringify({
+      id: 'big',
+      order: ['one'],
+      steps: { one: { label: 'x'.repeat(1_000_000) } },
+    });
+    await page.getByText('Paste your own flow').click();
+    await page.getByLabel(/A flow is JSON/).fill(big);
+    await page.getByRole('button', { name: 'Draw this flow' }).click();
+
+    await expect(page.getByRole('alert')).toContainText('reads up to');
+    await expect(page.getByText(/structure preview/)).toBeHidden();
     expect(await nodes.count()).toBe(before);
   });
 
