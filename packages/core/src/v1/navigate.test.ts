@@ -720,6 +720,95 @@ describe('runNav — races', () => {
   });
 });
 
+// The marker phase 6 sets is cleared on every way out, not only by the commit:
+// a button bound to `isBusy` must come back after a move that never lands.
+describe('runNav — the busy marker', () => {
+  /** Waits until phase 6 has set the marker, so the move is really loading. */
+  const loadingAt = (host: TestHost, busy: string[]): Promise<void> =>
+    vi.waitFor(() => {
+      expect(host.read().busy).toEqual(busy);
+    });
+
+  const loading = (gates: { promise: Promise<void> }[]): NavContext => {
+    let call = 0;
+    return {
+      flow: { ...flow, steps: { ...flow.steps, payment: { deferred: true } } },
+      hooks: [
+        {
+          name: 'server',
+          loadStep: async () => {
+            await gates[call++]?.promise;
+          },
+        },
+      ],
+    };
+  };
+
+  it('is cleared when the move is aborted while it loads', async () => {
+    const controller = new AbortController();
+    const gate = deferred<void>();
+    const host = makeHost(on('trip'));
+    const running = runNav({ ...loading([gate]), signal: controller.signal }, host, {
+      type: 'next',
+    });
+    await loadingAt(host, ['payment']);
+    controller.abort();
+    gate.resolve();
+
+    expect((await running).ok).toBe(false);
+    expect(host.read().busy).toEqual([]);
+  });
+
+  it('is cleared when the loader throws', async () => {
+    const host = makeHost(on('trip'));
+    const ctx: NavContext = {
+      ...loading([]),
+      hooks: [
+        {
+          name: 'server',
+          loadStep: () => Promise.reject(new Error('offline')),
+        },
+      ],
+    };
+
+    await expect(runNav(ctx, host, { type: 'next' })).rejects.toThrow('offline');
+    expect(host.read().busy).toEqual([]);
+    expect(host.read().status).toBe('idle');
+  });
+
+  it('is cleared when a newer move elsewhere overtakes the load', async () => {
+    const gate = deferred<void>();
+    const host = makeHost(on('trip'));
+    const first = runNav(loading([gate]), host, { type: 'next' });
+    await loadingAt(host, ['payment']);
+    await runNav(base, host, { type: 'go', to: 'trip', force: true });
+    gate.resolve();
+
+    expect((await first).ok).toBe(false);
+    expect(host.read().busy).toEqual([]);
+  });
+
+  it('stays while a newer move loads the same step, and goes with its commit', async () => {
+    const gates = [deferred<void>(), deferred<void>()];
+    const host = makeHost(on('trip'));
+    const ctx = loading(gates);
+    const first = runNav(ctx, host, { type: 'next' });
+    await loadingAt(host, ['payment']);
+    const second = runNav(ctx, host, { type: 'go', to: 'payment', force: true });
+    await vi.waitFor(() => {
+      expect(host.writes.filter((w) => w.busy.length > 0)).toHaveLength(2);
+    });
+
+    gates[0]?.resolve();
+    expect((await first).ok).toBe(false);
+    expect(host.read().busy).toEqual(['payment']);
+
+    gates[1]?.resolve();
+    expect((await second).ok).toBe(true);
+    expect(host.read().busy).toEqual([]);
+  });
+});
+
 describe('runNav — bookkeeping', () => {
   it('bumps rev on every write so memoized selectors invalidate', async () => {
     const host = makeHost(on('trip'));

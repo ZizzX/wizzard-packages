@@ -62,10 +62,10 @@ shape while it runs.
 The step being entered is added to `busy`, and `isBusy` is true while the move runs, which is
 what disables a Next button without any state of your own.
 
-The marker is removed by the commit that lands the move. A move that never commits - one that is
-superseded, cancelled, or ends in a loader throwing - leaves the step in `busy`, so a button
-bound to `isBusy` alone stays disabled after a failed load. Until that is fixed, pair it with
-the result of the call: re-enable on anything that is not `{ ok: true }`.
+The marker goes on every way out: with the commit that lands the move, and when a move never
+commits - it is cancelled, refused, or its loader throws. A move a newer one overtakes leaves the
+marker to the newer move, which clears it when it settles. A button bound to `isBusy` alone
+therefore comes back after a failed load as well as after a successful one.
 
 A move that takes time can be overtaken. Every wait is followed by a check, and neither outcome
 is an exception:
