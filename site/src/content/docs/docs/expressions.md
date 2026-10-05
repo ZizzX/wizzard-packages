@@ -82,7 +82,9 @@ const registry = {
 ```
 
 A resolver takes the `args` from the `$ref` and the scope, in that order:
-`(args: Json | undefined, scope: Scope) => unknown`. Most ignore the first.
+`(args: Json | undefined, scope: Scope, signal?: AbortSignal) => unknown`. Most ignore the first.
+Only a step's `load` is handed the third, the signal of the move it runs in; see
+[Loading a step](../async-steps/).
 
 Two evaluators exist because two situations exist. `evaluate` is synchronous and throws
 a [`resolver-is-async`](../../errors/resolver-is-async/) error if a resolver hands back a promise; `evaluateAsync` awaits it and short-circuits

@@ -202,6 +202,10 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
   let batching = false;
   let dirtyWhileBatching = false;
   let controller: AbortController | undefined;
+  // Every move still running, the overtaken ones too: `cancel()` stops the
+  // latest, and `destroy()` stops all of them, since nothing they started
+  // has a wizard to report to any more.
+  const running = new Set<AbortController>();
   let starting: Promise<NavResult> | undefined;
   // The latest move, whoever made it. `start()` waits on it rather than
   // stepping over a move that has not landed yet.
@@ -285,12 +289,13 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
     fallback: unknown,
     scope: Scope,
     op: string,
-    stepId: string
+    stepId: string,
+    signal?: AbortSignal
   ): Promise<unknown> => {
     if (!ref) return fallback;
     const fn = registry?.[ref.$ref];
     if (!fn) throw notRegistered(ref.$ref, op, `steps.${stepId}`);
-    return await fn(ref.args, scope);
+    return await fn(ref.args, scope, signal);
   };
 
   /**
@@ -323,13 +328,14 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
       return destroyed ? [] : plugins.filter((h) => !disabled.has(h.name));
     },
     validate: (stepId) => validateStep(stepId),
-    load: async (stepId, load, scope) => {
+    load: async (stepId, load, scope, signal) => {
       await resolverFor(
         load as { $ref: string; args?: Json } | undefined,
         undefined,
         scope,
         'load',
-        stepId
+        stepId,
+        signal
       );
     },
     signal: controller?.signal,
@@ -341,7 +347,9 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
     opts: { validate?: boolean } | undefined,
     source: 'call' | 'start'
   ): Promise<NavResult> => {
-    controller = new AbortController();
+    const own = new AbortController();
+    controller = own;
+    running.add(own);
     const id = ++attempts;
     const report = (phase: AttemptPhase): void => {
       dispatch('onAttempt', (h) => h.onAttempt?.({ id, intent, source, rev: state.rev, ...phase }));
@@ -354,6 +362,8 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
     } catch (error) {
       report({ phase: 'error', error });
       throw error;
+    } finally {
+      running.delete(own);
     }
   };
   const navigate = (
@@ -569,7 +579,7 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
 
     destroy() {
       destroyed = true;
-      controller?.abort();
+      for (const c of running) c.abort();
       listeners.clear();
       // One teardown that throws must not strand the rest: the list is already
       // spliced, so an early exit would leak every plugin after the failure.

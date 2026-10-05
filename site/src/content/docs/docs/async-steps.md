@@ -19,16 +19,17 @@ steps: {
 
 ```ts
 registry: {
-  seatMap: async (args, scope) => {
-    store.seats = await (await fetch(`/seats/${args.plane}`)).json();
+  seatMap: async (args, scope, signal) => {
+    store.seats = await (await fetch(`/seats/${args.plane}`, { signal })).json();
   },
 }
 ```
 
-The resolver receives the `args` from the definition and the scope the target sits in - and
-those two only: a `load` resolver is not handed the move's `AbortSignal`, so a request it starts
-runs to completion even when the move it belongs to is cancelled. Only a plugin's `loadStep`
-gets a signal. Inside a repeat group the scope is the target's own, so `loop.item` is the item
+The resolver receives the `args` from the definition, the scope the target sits in, and the
+move's `AbortSignal`. `cancel()` aborts the latest move while it runs, and `destroy()` every move
+still running, so a request handed the signal stops with them. A newer move that overtakes this
+one does not abort it, and a later `cancel()` reaches only that newer move - nothing at all once
+it has settled. Inside a repeat group the scope is the target's own, so `loop.item` is the item
 being entered, not the one being left.
 
 What it returns is discarded. `load` is a gate, not a fetch that fills the step: the engine
@@ -70,16 +71,17 @@ the result of the call: re-enable on anything that is not `{ ok: true }`.
 A move that takes time can be overtaken. Every wait is followed by a check, and neither outcome
 is an exception:
 
-| Result                                           | Meaning                                                                            |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------- |
-| [`nav-superseded`](../../errors/nav-superseded/) | a newer move started while this one waited; nothing was committed                  |
-| [`nav-aborted`](../../errors/nav-aborted/)       | `cancel()` or `destroy()` stopped it; a plugin's `loadStep` signal was aborted too |
+| Result                                           | Meaning                                                                                     |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| [`nav-superseded`](../../errors/nav-superseded/) | a newer move started while this one waited; nothing was committed                           |
+| [`nav-aborted`](../../errors/nav-aborted/)       | `cancel()` or `destroy()` stopped it; the signal `load` and `loadStep` hold was aborted too |
 
 Both come back from `next()` as `{ ok: false, reason }`. What they guarantee is narrow: the move
-is not committed, so the wizard does not land on the step. A `load` resolver already running is
-not stopped - it has no signal to stop on - and whatever it writes to a store, a cache or
-through `wizard.set` is written anyway. A plugin's `loadStep` is handed the signal and can stop
-its own work on it.
+is not committed, so the wizard does not land on the step. A `load` resolver or a plugin's
+`loadStep` that was cancelled is handed an aborted signal and can stop its own work on it; one
+that ignores the signal runs on, and whatever it writes to a store, a cache or through
+`wizard.set` is written anyway. A superseded move aborts nothing: its loader finishes unless the
+wizard is destroyed, and only its result is dropped.
 
 A loader that throws is different: the exception is not a refusal. The wizard returns to idle on
 the step it was on, and the promise from `next()` rejects with whatever the loader threw, for
