@@ -170,9 +170,9 @@ tests until `build` runs.
 `pnpm size` budgets are a ratchet: they sit just above current size, so any growth fails the
 build. Raise a budget only with a stated reason in the PR.
 
-The ESLint config has a **legacy quarantine** block, now down to the old marketing site and
-the devtools panel, which are held to a lower standard. Remove an entry when its replacement
-lands. Never add one.
+The ESLint config once had a **legacy quarantine** block that held 0.x code and the devtools
+panel to a lower standard. It is gone: every source directory meets the same rules. Never bring
+one back; a rule that is wrong for one line is disabled on that line, with the reason beside it.
 
 ## Issue tracking
 

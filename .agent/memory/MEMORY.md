@@ -4,7 +4,7 @@
 - [npm scope @wizzard is unavailable](npm-scope-wizzard-unavailable.md) — why packages stay on `@wizzard-packages/*`.
 - [v1 is flow-as-data](wizzard-v1-flow-as-data.md) — the one architectural decision everything follows from.
 - [0.x duplication diagnosis](wizzard-0x-duplication-diagnosis.md) — the numbers that justify a rewrite.
-- [ESLint legacy quarantine](eslint-legacy-quarantine.md) — how strict gates were adopted without breaking CI.
+- [ESLint legacy quarantine](eslint-legacy-quarantine.md) — how strict gates were adopted without breaking CI; closed in T-066, and how its last errors were fixed.
 - [Yup speaks Standard Schema](yup-speaks-standard-schema.md) — why the planned Yup shim was never built.
 - [Release PR needs manual approval](release-pr-needs-manual-approval.md) — `action_required` is not a failure.
 - [NPM token blocks publishing](npm-token-rotation-blocks-publishing.md) — RESOLVED: the E404 -> EOTP -> working diagnosis chain.
