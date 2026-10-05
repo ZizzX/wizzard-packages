@@ -132,7 +132,8 @@ with <code dir="auto">on.back</code> goes there. Otherwise the resolver walks <c
 whose <code dir="auto">when</code> still holds, so a branch that closed behind the user is skipped rather than
 revisited. <code dir="auto">'auto'</code> is that same walk, written out.</p>
 <p>The history the wizard keeps is a different thing. It records the stack at each move, which is
-what restores a position inside nested groups on the way back; it does not choose the target. The
+what restores a position inside nested groups on the way back - into a group from the step after
+it as well, where its last item stopped; it does not choose the target. The
 distinction shows after a forced jump: <code dir="auto">go('summary', { force: true })</code> from the first step and
 then <code dir="auto">back()</code> lands on whatever precedes <code dir="auto">summary</code> in <code dir="auto">order</code>, not on the step the jump came
 from.</p>

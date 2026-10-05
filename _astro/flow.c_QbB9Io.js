@@ -1,0 +1,1 @@
+import{a as e,u as t}from"./dist.C8otkqJz.js";var n=e({id:`signup`,order:[`name`,`review`],steps:{name:t({label:`Your name`}),review:t({label:`Review`})}});export{n as t};
