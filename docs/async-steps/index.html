@@ -104,10 +104,10 @@ shape while it runs.</p>
 <div class="sl-heading-wrapper level-h2"><h2 id="while-it-loads">While it loads</h2><a class="sl-anchor-link" href="#while-it-loads"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “While it loads”</span></a></div>
 <p>The step being entered is added to <code dir="auto">busy</code>, and <code dir="auto">isBusy</code> is true while the move runs, which is
 what disables a Next button without any state of your own.</p>
-<p>The marker is removed by the commit that lands the move. A move that never commits - one that is
-superseded, cancelled, or ends in a loader throwing - leaves the step in <code dir="auto">busy</code>, so a button
-bound to <code dir="auto">isBusy</code> alone stays disabled after a failed load. Until that is fixed, pair it with
-the result of the call: re-enable on anything that is not <code dir="auto">{ ok: true }</code>.</p>
+<p>The marker goes on every way out: with the commit that lands the move, and when a move never
+commits - it is cancelled, refused, or its loader throws. A move a newer one overtakes loses its
+marker the moment the newer move starts, and the newer move sets and clears its own. A button
+bound to <code dir="auto">isBusy</code> alone therefore comes back after a failed load as well as after a successful one.</p>
 <p>A move that takes time can be overtaken. Every wait is followed by a check, and neither outcome
 is an exception:</p>
 <table>
@@ -135,6 +135,6 @@ that ignores the signal runs on, and whatever it writes to a store, a cache or t
 <code dir="auto">wizard.set</code> is written anyway. A superseded move aborts nothing: its loader finishes unless the
 wizard is destroyed, and only its result is dropped.</p>
 <p>A loader that throws is different: the exception is not a refusal. The wizard returns to idle on
-the step it was on, and the promise from <code dir="auto">next()</code> rejects with whatever the loader threw, for
-the caller to catch and retry. <a href="../api-behaviour/">API behaviour</a> sets out that division.</p>
+the step it was on - unless a newer move has overtaken this one, which then settles it - and the
+promise from <code dir="auto">next()</code> rejects with whatever the loader threw, for the caller to catch and retry. <a href="../api-behaviour/">API behaviour</a> sets out that division.</p>
 </div><footer class="sl-flex astro-6kykamrt"><div class="meta sl-flex astro-6kykamrt"></div><div class="pagination-links print:hidden astro-3evjzgrr" dir="ltr"><a href="/wizzard-packages/docs/validation/" rel="prev" class="astro-3evjzgrr"><svg aria-hidden="true" class="astro-3evjzgrr astro-ac6ikqru" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"/></svg><span class="astro-3evjzgrr">Previous<br class="astro-3evjzgrr"><span class="link-title astro-3evjzgrr">Validation</span></span></a><a href="/wizzard-packages/docs/persistence/" rel="next" class="astro-3evjzgrr"><svg aria-hidden="true" class="astro-3evjzgrr astro-ac6ikqru" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"/></svg><span class="astro-3evjzgrr">Next<br class="astro-3evjzgrr"><span class="link-title astro-3evjzgrr">Persistence</span></span></a></div></footer></div></div></main></div></div></div></div></body></html>
