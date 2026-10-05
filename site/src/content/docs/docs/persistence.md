@@ -53,6 +53,16 @@ if (result.restored) {
 }
 ```
 
+A restored wizard stands on its step without having entered it in this page. `start()` enters a
+step that loads - one with a `load`, or a `deferred` one - again, in place: the loader runs while
+`isBusy` is true, and nothing is added to the history, so `back()` still goes where it went before.
+The step is not being left, so nothing else runs: no plugin's `beforeNavigate` or `afterNavigate`,
+no exit guard, no `when`. If the load throws or the enter guard refuses, the step stays current and
+the next `start()` tries again. A step that loads nothing is simply current. A wizard passed in
+through `state` with `status: 'done'` is not entered again: it stays finished. A snapshot does not
+carry `status`, so a persisted wizard that finished comes back `idle` on its last step, and that
+step, if it loads, loads again like any other restored step.
+
 | `reason`                | What was wrong                                                            |
 | ----------------------- | ------------------------------------------------------------------------- |
 | `snapshot/unreadable`   | Not a snapshot: wrong shape, or not an object at all.                     |

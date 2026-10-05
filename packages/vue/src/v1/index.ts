@@ -60,7 +60,7 @@ export function provideWizard<F extends FlowDefinition>(
       // A first step whose loader fails is an ordinary network error. Dropping
       // the promise would turn it into an unhandled rejection instead.
       console.error(
-        '[wizzard] the wizard could not start. Its first move threw, so no step is shown. ' +
+        '[wizzard] the wizard could not start. Its first move threw, so no step is ready. ' +
           'Fix what threw, logged below, and call start() again or mount the wizard again. ' +
           'https://zizzx.github.io/wizzard-packages/errors/start-failed',
         error

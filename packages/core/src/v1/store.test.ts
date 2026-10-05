@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { pageFor } from './diagnostic';
 import type { FlowDefinition } from './flow';
 import type { Attempt, Hooks } from './navigate';
-import type { WizardState } from './state';
+import { initialState, type WizardState } from './state';
 import { createWizard } from './store';
 
 const flow: FlowDefinition = {
@@ -421,6 +421,202 @@ describe('patchFlow', () => {
 });
 
 describe('start', () => {
+  // persist restores in a plugin's init, before start(); the restored step was
+  // never entered in this engine's life.
+  const restoring = (step: string): Hooks => ({
+    name: 'restore',
+    init: ({ commit }) => {
+      commit({
+        stack: [{ flow: 'f', step }],
+        visited: ['a', step],
+        history: [[{ flow: 'f', step: 'a' }]],
+      });
+    },
+  });
+  const loadingFlow: FlowDefinition = {
+    id: 'f',
+    order: ['a', 'b', 'c'],
+    steps: { a: {}, b: { load: { $ref: 'fill' } }, c: {} },
+  };
+
+  it('enters a restored step that loads again, in place, and records nothing', async () => {
+    let busyWhileLoading = false;
+    const w = createWizard({
+      flow: loadingFlow,
+      registry: {
+        fill: () => {
+          busyWhileLoading = w.getSnapshot().isBusy;
+        },
+      },
+      plugins: [restoring('b')],
+    });
+
+    expect(await w.start()).toMatchObject({ ok: true, to: 'b' });
+    expect(busyWhileLoading).toBe(true);
+    expect(w.getState().stack).toEqual([{ flow: 'f', step: 'b' }]);
+    expect(w.getState().history).toEqual([[{ flow: 'f', step: 'a' }]]);
+    expect(w.getState().completed).toEqual([]);
+    expect(w.getSnapshot().isBusy).toBe(false);
+  });
+
+  it('enters a step restored through the state option the same way', async () => {
+    let calls = 0;
+    const w = createWizard({
+      flow: loadingFlow,
+      registry: {
+        fill: () => {
+          calls += 1;
+        },
+      },
+      state: { ...initialState({}), stack: [{ flow: 'f', step: 'b' }], status: 'idle' },
+    });
+    expect(await w.start()).toMatchObject({ ok: true, to: 'b' });
+    expect(calls).toBe(1);
+  });
+
+  it('stays on the restored step when its load throws, and the next start() tries again', async () => {
+    let calls = 0;
+    const w = createWizard({
+      flow: loadingFlow,
+      registry: {
+        fill: () => {
+          calls += 1;
+          if (calls === 1) throw new Error('offline');
+        },
+      },
+      plugins: [restoring('b')],
+    });
+
+    await expect(w.start()).rejects.toThrow('offline');
+    expect(w.getState().stack).toEqual([{ flow: 'f', step: 'b' }]);
+    expect(w.getState().status).toBe('idle');
+
+    expect((await w.start()).ok).toBe(true);
+    expect(calls).toBe(2);
+  });
+
+  // A move the person already started is theirs: start() waits for it rather
+  // than superseding it, and then has nothing left to enter.
+  it('waits for a move already on its way instead of entering the restored step', async () => {
+    let calls = 0;
+    const w = createWizard({
+      flow: loadingFlow,
+      registry: {
+        fill: () => {
+          calls += 1;
+        },
+      },
+      plugins: [restoring('b')],
+    });
+    const moving = w.next();
+    const started = w.start();
+
+    expect((await moving).ok).toBe(true);
+    expect(await started).toMatchObject({ ok: true, to: 'c' });
+    expect(w.getSnapshot().current).toBe('c');
+    expect(calls).toBe(0);
+  });
+
+  it('moves nothing on a destroyed engine', async () => {
+    let calls = 0;
+    const w = createWizard({
+      flow: loadingFlow,
+      registry: {
+        fill: () => {
+          calls += 1;
+        },
+      },
+      plugins: [restoring('b')],
+    });
+    w.destroy();
+    expect(await w.start()).toMatchObject({ ok: false, reason: 'aborted' });
+    expect(calls).toBe(0);
+  });
+
+  it('enters a restored deferred step, so its body loads', async () => {
+    const loaded: string[] = [];
+    const w = createWizard({
+      flow: { ...loadingFlow, steps: { ...loadingFlow.steps, b: { deferred: true } } },
+      plugins: [
+        restoring('b'),
+        {
+          name: 'host',
+          loadStep: (id) => {
+            loaded.push(id);
+            return Promise.resolve();
+          },
+        },
+      ],
+    });
+    expect(await w.start()).toMatchObject({ ok: true, to: 'b' });
+    expect(loaded).toEqual(['b']);
+  });
+
+  // The restored step is not being left, so a guard that asks before leaving
+  // it - a confirm dialog, say - is not asked on reload, and its load runs.
+  it('enters a restored step without asking its exit guard', async () => {
+    let calls = 0;
+    const w = createWizard({
+      flow: {
+        ...loadingFlow,
+        steps: { ...loadingFlow.steps, b: { load: { $ref: 'fill' }, guards: { exit: false } } },
+      },
+      registry: {
+        fill: () => {
+          calls += 1;
+        },
+      },
+      plugins: [restoring('b')],
+    });
+    expect(await w.start()).toMatchObject({ ok: true, to: 'b' });
+    expect(calls).toBe(1);
+  });
+
+  // Only start() stays. The option reaches next() and go() untyped at runtime,
+  // and a real move must still be recorded.
+  it('records a move the application makes, whatever options it passes', async () => {
+    const w = createWizard({ flow: loadingFlow, registry: { fill: () => undefined } });
+    await w.start();
+    await w.next({ stay: true } as never);
+    expect(w.getState().history).toEqual([[{ flow: 'f', step: 'a' }]]);
+    expect(w.getState().completed).toEqual(['a']);
+  });
+
+  // A finished wizard keeps its last step on the stack. It is not part-way
+  // through, so there is nothing to enter, and it stays finished.
+  it('leaves a finished wizard finished', async () => {
+    let calls = 0;
+    const w = createWizard({
+      flow: loadingFlow,
+      registry: {
+        fill: () => {
+          calls += 1;
+        },
+      },
+      state: { ...initialState({}), stack: [{ flow: 'f', step: 'b' }], status: 'done' },
+    });
+    expect(await w.start()).toMatchObject({ ok: true, to: 'b' });
+    expect(w.getState().status).toBe('done');
+    expect(calls).toBe(0);
+  });
+
+  it('enters a restored step once, and not one that does not load', async () => {
+    let calls = 0;
+    const registry = {
+      fill: () => {
+        calls += 1;
+      },
+    };
+    const w = createWizard({ flow: loadingFlow, registry, plugins: [restoring('b')] });
+    await w.start();
+    await w.start();
+    expect(calls).toBe(1);
+
+    const plain = createWizard({ flow: loadingFlow, registry, plugins: [restoring('c')] });
+    expect(await plain.start()).toMatchObject({ ok: true, to: 'c' });
+    expect(calls).toBe(1);
+  });
+
   it('enters the first reachable step, which a fresh wizard is not on', () => {
     const w = make();
     expect(w.getSnapshot().current).toBeNull();

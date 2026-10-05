@@ -1,6 +1,7 @@
 import {
   WizardError,
   type FlowDefinition,
+  type Hooks,
   type SubFlows,
   type Traversal,
 } from '@wizzard-packages/core';
@@ -43,6 +44,8 @@ export interface BindingHarness {
     groups?: Traversal;
     /** Sub-flow definitions a string `GroupStep.flow` names. */
     subFlows?: SubFlows;
+    /** Forwarded to `createWizard` untouched; a plugin's `init` can restore a session. */
+    plugins?: readonly Hooks[];
   }) => Promise<Probe>;
   /**
    * Renders a component that calls `useWizard` with no provider above it, and
@@ -274,6 +277,41 @@ export function describeBindingContract(harness: BindingHarness): void {
       await ending.click('next');
       await until(() => ending.text('status') === 'done', 'the wizard to finish mid-order');
       ending.unmount();
+    });
+
+    // A session restored before start() stands on a step this page never
+    // entered. A binding starts the wizard on mount, and that start enters a
+    // step that loads again, so the step is never current without its data.
+    it('runs the load of a restored step on mount, and stays on it', async () => {
+      let loads = 0;
+      const restored: FlowDefinition = {
+        id: 'restored',
+        order: ['first', 'second'],
+        steps: { first: {}, second: { load: { $ref: 'fill' } } },
+        policy: 'free',
+      };
+      const probe = await harness.mount({
+        flow: restored,
+        registry: {
+          fill: () => {
+            loads += 1;
+          },
+        },
+        plugins: [
+          {
+            name: 'restore',
+            init: ({ commit }) => {
+              commit({
+                stack: [{ flow: 'restored', step: 'second' }],
+                visited: ['first', 'second'],
+              });
+            },
+          },
+        ],
+      });
+      await until(() => loads === 1 && probe.text('busy') === 'no', 'the restored step to load');
+      expect(probe.text('step')).toBe('second');
+      probe.unmount();
     });
 
     it('goes back, and says so before you try', async () => {

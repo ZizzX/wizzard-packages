@@ -234,10 +234,10 @@ const harness: BindingHarness = {
     }).unmount();
     return read;
   },
-  mount: async ({ flow, registry, data, groups, subFlows }) => {
+  mount: async ({ flow, registry, data, groups, subFlows, plugins }) => {
     const Root = defineComponent({
       setup() {
-        provideWizard({ flow, registry, data, groups, subFlows });
+        provideWizard({ flow, registry, data, groups, subFlows, plugins });
         return () => h(ProbeComponent);
       },
     });

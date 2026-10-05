@@ -112,7 +112,7 @@ export function WizardProvider({ wizard, children, ...options }: WizardProviderP
   useIsomorphicLayoutEffect(() => {
     engine.start().catch((error: unknown) => {
       console.error(
-        '[wizzard] the wizard could not start. Its first move threw, so no step is shown. ' +
+        '[wizzard] the wizard could not start. Its first move threw, so no step is ready. ' +
           'Fix what threw, logged below, and call start() again or mount the wizard again. ' +
           'https://zizzx.github.io/wizzard-packages/errors/start-failed',
         error

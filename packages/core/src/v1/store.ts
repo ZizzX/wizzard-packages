@@ -8,6 +8,7 @@ import {
   type Hooks,
   type NavContext,
   type NavIntent,
+  type NavOptions,
   type NavResult,
   type SubFlows,
   type Traversal,
@@ -114,7 +115,9 @@ export interface Wizard<F extends FlowDefinition = FlowDefinition> {
   /**
    * Enters the first reachable step. A fresh wizard has an empty stack, so
    * until this runs there is no current step and a UI has nothing to draw.
-   * Idempotent: once a step is current, this reports it and navigates nowhere.
+   * A step restored before this runs that loads - a `load`, or `deferred` -
+   * is entered again, in place, so its load runs. Then idempotent: once a step
+   * is current and entered, this reports it and navigates nowhere.
    */
   start: () => Promise<NavResult>;
   next: (opts?: { validate?: boolean }) => Promise<NavResult>;
@@ -342,9 +345,12 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
   });
 
   let attempts = 0;
+  // Whether a move has committed in this engine's life. A session restored
+  // before `start()` stands on a step this page never entered.
+  let moved = false;
   const attempt = async (
     intent: NavIntent,
-    opts: { validate?: boolean } | undefined,
+    opts: NavOptions | undefined,
     source: 'call' | 'start'
   ): Promise<NavResult> => {
     const own = new AbortController();
@@ -356,7 +362,11 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
     };
     report({ phase: 'start' });
     try {
-      const result = await runNav(navContext(), { read: () => state, write }, intent, opts ?? {});
+      // `stay` is start()'s alone. A caller's options pass through `next` and
+      // `go` untyped at runtime, and a move that stays records nothing.
+      const own = source === 'start' ? (opts ?? {}) : { validate: opts?.validate };
+      const result = await runNav(navContext(), { read: () => state, write }, intent, own);
+      if (result.ok) moved = true;
       report({ phase: 'end', result });
       return result;
     } catch (error) {
@@ -368,7 +378,7 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
   };
   const navigate = (
     intent: NavIntent,
-    opts?: { validate?: boolean },
+    opts?: NavOptions,
     source: 'call' | 'start' = 'call'
   ): Promise<NavResult> => (moving = attempt(intent, opts, source));
 
@@ -392,25 +402,40 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
     // stack, and answering ok there would leave the wizard on no step for
     // good. That start is simply tried again.
     const current = state.stack[state.stack.length - 1]?.step ?? null;
-    if (current !== null || state.status === 'done') {
+    if (state.status === 'done') {
       return Promise.resolve({ ok: true, from: current, to: current ?? END });
     }
+    let first: NavIntent = { type: 'next' };
+    if (current !== null) {
+      // Restored onto a step that loads, and not entered yet: enter it again
+      // in place, so its `load` runs before anything reads the step as ready.
+      // A refusal or a throw leaves it current, and the next start() retries.
+      const step: StepDef | undefined = at(state).flow.steps[current];
+      const loads = step !== undefined && (step.deferred === true || step.load !== undefined);
+      if (moved || !loads) return Promise.resolve({ ok: true, from: current, to: current });
+      first = { type: 'go', to: current, force: true };
+    }
 
-    // A `next()` or `go()` from the empty stack is already on its way. A
-    // start now would supersede it, and answering ok would claim a step that
-    // move may never land on. Wait for it, then ask again: it either placed
-    // the wizard somewhere, or left it unstarted and the first move runs.
+    // A move is already on its way. A start now would supersede it, and
+    // answering ok would claim a step that move may never land on. Wait for
+    // it, then ask again: it either placed the wizard somewhere, or left it
+    // where it was and the first move runs. Nothing may move a dead engine.
+    const dead: NavResult = {
+      ok: false,
+      reason: 'aborted',
+      code: 'nav-aborted',
+      url: pageFor('nav-aborted'),
+    };
     const pending = state.status === 'busy' ? moving : undefined;
     starting = (
       pending
         ? pending.catch(settled).then((): Promise<NavResult> | NavResult => {
             starting = undefined;
-            // Destroyed while it waited: nothing may move a dead engine.
-            return destroyed
-              ? { ok: false, reason: 'aborted', code: 'nav-aborted', url: pageFor('nav-aborted') }
-              : start();
+            return destroyed ? dead : start();
           })
-        : navigate({ type: 'next' }, { validate: false }, 'start')
+        : destroyed
+          ? Promise.resolve(dead)
+          : navigate(first, { validate: false, stay: current !== null }, 'start')
     ).finally(() => {
       starting = undefined;
     });

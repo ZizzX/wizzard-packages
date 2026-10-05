@@ -42,6 +42,10 @@ throws [`resolver-not-registered`](../../errors/resolver-not-registered/) with `
 a transition's condition, `repeat.over` and a group's `input`, all of which are evaluated
 synchronously. A step's guards are awaited, so a resolver behind `guards.enter` may be async.
 
+A session restored before `start()` - by `persist`, or through `createWizard({ state })` - is on
+its step without having entered it, so the loader has not run in this page. `start()` enters such
+a step again, in place, and runs its `load`; [Persistence](../persistence/) has the details.
+
 ## `deferred`
 
 `deferred: true` marks a step whose body arrives from the host rather than from the definition.

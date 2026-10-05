@@ -221,7 +221,7 @@ const harness: BindingHarness = {
     cleanup();
     return read;
   },
-  mount: async ({ flow, registry, data, groups, subFlows }) => {
+  mount: async ({ flow, registry, data, groups, subFlows, plugins }) => {
     // Counted with Profiler rather than inside the component: a render-phase
     // side effect is exactly what the hooks lint exists to stop, and onRender
     // fires after commit, which is what we actually want to count.
@@ -239,6 +239,7 @@ const harness: BindingHarness = {
           data={data}
           groups={groups}
           subFlows={subFlows}
+          plugins={plugins}
         >
           <Probe />
         </WizardProvider>
