@@ -87,6 +87,11 @@ the code. <code dir="auto">fix</code> is the third sentence on its own, for a li
 resolver the registry does not hold, an expression object whose key is not an operator, an
 <code dir="auto">order</code> entry with no matching step, a step carrying both <code dir="auto">when</code> and <code dir="auto">on.next</code> where only one of
 them will be honoured.</p>
+<p>It reads a <code dir="auto">$ref</code> as a resolver and a <code dir="auto">$get</code> as a path only where the engine evaluates them: a
+step’s expressions, its <code dir="auto">load</code> and its <code dir="auto">validate</code>. A step’s <code dir="auto">ui</code>, the <code dir="auto">args</code> of a <code dir="auto">$ref</code> and the
+fields beside a flow’s <code dir="auto">steps</code>, such as <code dir="auto">schema</code> and <code dir="auto">meta</code>, are your data and are handed on
+untouched, so a JSON Schema’s <code dir="auto">$ref</code> there is not reported. In those, only a function or a cycle
+is a problem, because either one stops the flow from being stored or sent.</p>
 <p>A group whose <code dir="auto">flow</code> is an inline definition is checked like the root - its <code dir="auto">order</code> and each of
 its steps - and its transitions are read against its own <code dir="auto">steps</code>: inside a sub-flow, <code dir="auto">on.next</code> names a step of that
 sub-flow. A sub-flow named by a string is a definition <code dir="auto">validateFlow</code> was not handed, so it is
