@@ -269,7 +269,9 @@ function collect(
     } else {
       // An operand the evaluator refuses for its shape is data from here down:
       // it stops at the shape and never reads what the operand holds, so a
-      // `$ref` inside one is not a resolver it would look up.
+      // `$ref` inside one is not a resolver it would look up. So are a step's
+      // `ui` and a `$ref`'s `args`: the engine hands both on and evaluates
+      // neither, so a JSON Schema's `$ref` there is the host's.
       const inExpr = role === Role.Expr || role === Role.Step;
       visit(
         child,
@@ -281,12 +283,16 @@ function collect(
             : Role.Data
           : role === Role.Steps
             ? Role.Step
-            : inExpr && OPERATORS.includes(key) && invalidOperandText(key, child)
+            : inExpr &&
+                ((OPERATORS.includes(key) && invalidOperandText(key, child)) ||
+                  (key === 'args' && '$ref' in value))
               ? Role.Data
               : role === Role.Step
                 ? key === 'flow'
                   ? Role.Flow
-                  : Role.Expr
+                  : key === 'ui'
+                    ? Role.Data
+                    : Role.Expr
                 : role
       );
     }

@@ -135,6 +135,23 @@ describe('validateFlow', () => {
     ]);
   });
 
+  it("reads a $ref or $get in a step's ui, or in a $ref's args, as host data", () => {
+    const flow = {
+      id: 'f',
+      steps: {
+        a: {
+          when: { $and: [{ $ref: 'isVip', args: { $ref: '#/tiers', at: { $get: 'tier' } } }] },
+          load: { $ref: 'fetchUser', args: { $get: 'user.id' } },
+          guards: { enter: { $ref: 'missing' } },
+          ui: { $ref: '#/definitions/user', properties: { name: { $get: 'user.name' } } },
+        },
+      },
+    };
+    expect(
+      problems(flow as unknown as FlowDefinition, { isVip: () => true, fetchUser: () => null })
+    ).toEqual(['steps.a.guards.enter: no resolver is registered as "missing"']);
+  });
+
   it('reports a reference back to the flow once, and an object used twice not at all', () => {
     const shared = { label: 'x' };
     const flow = {
@@ -701,10 +718,10 @@ describe('validateFlow and a deeply nested expression', () => {
   // Each problem's path is joined from the frames above it, so without a cap a
   // deep document with a problem at every leaf costs depth times width.
   it('keeps the end of a path deeper than its cap', () => {
-    let ui: unknown = Array.from({ length: 3 }, () => ({ $get: 'zz' }));
+    let ui: unknown = Array.from({ length: 3 }, () => () => 0);
     for (let i = 0; i < 20_000; i++) ui = [ui];
     const found = validateFlow(flowWith(true, ui));
-    expect(found.map((p) => p.code)).toEqual(Array(3).fill('get-unknown-root'));
+    expect(found.map((p) => p.code)).toEqual(Array(3).fill('flow-not-serializable'));
     for (const p of found) {
       expect(p.path.startsWith('...')).toBe(true);
       expect(p.path.length).toBeLessThanOrEqual(515);

@@ -73,7 +73,9 @@ not move" are different questions and the second one is what you render. `subscr
 value, or one data path.
 
 Anything a flow cannot serialize — a validator, a predicate, an async guard — is a **named**
-entry in `registry`, so `JSON.stringify(flow)` always round-trips.
+entry in `registry`, so `JSON.stringify(flow)` always round-trips. A `$ref` names a resolver
+only where the engine evaluates it; a step's `ui` and a `$ref`'s `args` are handed on untouched,
+so a JSON Schema's own `$ref` can live there and `validateFlow` does not read it as one.
 
 What throws is a mistake in the program, never an outcome of the wizard: a `$ref` the registry
 does not hold, a group step with no traversal installed. Every such failure is a `WizardError`

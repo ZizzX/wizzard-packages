@@ -54,7 +54,7 @@ Both kinds share the same base:
 | `guards`       | `{ enter?: Expr; exit?: Expr }`                          | Refuse entry or exit without removing the step.       |
 | `on`           | `{ next?: Target \| Target[]; back?: Target \| 'auto' }` | Where this step leads.                                |
 | `slice`        | `string`                                                 | The subtree of `data` this step owns.                 |
-| `ui`           | `Json`                                                   | Carried through untouched, for your renderer.         |
+| `ui`           | `Json`                                                   | Passed untouched to your renderer, never evaluated.   |
 | `load`         | `{ $ref: string; args?: Json }`                          | A resolver run on entry.                              |
 | `deferred`     | `boolean`                                                | The step is reached, but not counted as pending work. |
 | `clearOnLeave` | `readonly string[] \| true`                              | Data to drop when the step is left.                   |
