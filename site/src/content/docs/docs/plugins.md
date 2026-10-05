@@ -81,7 +81,8 @@ one entry per navigation, belongs in `onAttempt` or `afterNavigate` rather than 
 does it in `beforeNavigate`.
 
 `start()` entering a step that a restored session stands on is not a move: the step is not left,
-so only steps 5 to 7 run. `beforeNavigate` and `afterNavigate` do not see it; `onAttempt` does, with
+so steps 1 to 3 do not run, the target is not checked for reachability or policy, and steps 5 to
+7 run as on any entry. `beforeNavigate` and `afterNavigate` do not see it; `onAttempt` does, with
 `source: 'start'`.
 
 ## When a plugin throws

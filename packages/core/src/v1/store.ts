@@ -360,7 +360,10 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
     };
     report({ phase: 'start' });
     try {
-      const result = await runNav(navContext(), { read: () => state, write }, intent, opts ?? {});
+      // `stay` is start()'s alone. A caller's options pass through `next` and
+      // `go` untyped at runtime, and a move that stays records nothing.
+      const own = source === 'start' ? (opts ?? {}) : { validate: opts?.validate };
+      const result = await runNav(navContext(), { read: () => state, write }, intent, own);
       if (result.ok) moved = true;
       report({ phase: 'end', result });
       return result;

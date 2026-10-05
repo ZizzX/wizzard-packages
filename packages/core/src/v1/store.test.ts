@@ -553,6 +553,16 @@ describe('start', () => {
     expect(calls).toBe(1);
   });
 
+  // Only start() stays. The option reaches next() and go() untyped at runtime,
+  // and a real move must still be recorded.
+  it('records a move the application makes, whatever options it passes', async () => {
+    const w = createWizard({ flow: loadingFlow, registry: { fill: () => undefined } });
+    await w.start();
+    await w.next({ stay: true } as never);
+    expect(w.getState().history).toEqual([[{ flow: 'f', step: 'a' }]]);
+    expect(w.getState().completed).toEqual(['a']);
+  });
+
   // A finished wizard keeps its last step on the stack. It is not part-way
   // through, so there is nothing to enter, and it stays finished.
   it('leaves a finished wizard finished', async () => {
