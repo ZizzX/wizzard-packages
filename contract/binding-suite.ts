@@ -60,7 +60,8 @@ export interface BindingHarness {
  *   go-first    jumps to `breadcrumbs[0]`, the step a crumb would name
  *   go-missing  jumps at a step the flow does not have, for the refused case
  *   refusal     `<code> <url>` of the last refused `next()`, or ''
- *   index, is-first, status   `useStep()`'s own fields; is-first is yes/no
+ *   index, is-first, is-last, status   `useStep()`'s own fields; is-first and
+ *               is-last are yes/no
  *   active      `useStep().active`, joined by ','
  *   snapshot-step  `current`, read through `useWizardSnapshot`
  *   selected-step  `current`, read through `useWizardSelector`
@@ -230,6 +231,40 @@ export function describeBindingContract(harness: BindingHarness): void {
       await probe.click('next');
       await until(() => probe.text('status') === 'done', 'the wizard to finish');
       probe.unmount();
+    });
+
+    // isLast answers whether next() finishes the wizard, not where the step sits
+    // in order: a branch with no on.next finishes from outside order, and a step
+    // sent to @end finishes from the middle of it.
+    it('reads isLast from where next() goes, not from the position in order', async () => {
+      const branching: FlowDefinition = {
+        id: 'branching',
+        order: ['trip', 'stop', 'payment'],
+        steps: {
+          trip: { label: 'Trip', on: { next: 'company' } },
+          company: { label: 'Company' },
+          stop: { label: 'Stop', on: { next: '@end' } },
+          payment: { label: 'Payment' },
+        },
+        policy: 'free',
+      };
+      const probe = await harness.mount({ flow: branching });
+      expect(probe.text('step')).toBe('trip');
+      expect(probe.text('is-last')).toBe('no');
+
+      await probe.click('next');
+      expect(probe.text('step')).toBe('company');
+      expect(probe.text('is-last')).toBe('yes');
+      await probe.click('next');
+      await until(() => probe.text('status') === 'done', 'the wizard to finish from the branch');
+      probe.unmount();
+
+      const ending = await harness.mount({ flow: { ...branching, order: ['stop', 'payment'] } });
+      expect(ending.text('step')).toBe('stop');
+      expect(ending.text('is-last')).toBe('yes');
+      await ending.click('next');
+      await until(() => ending.text('status') === 'done', 'the wizard to finish mid-order');
+      ending.unmount();
     });
 
     it('goes back, and says so before you try', async () => {
@@ -415,6 +450,30 @@ export function describeBindingContract(harness: BindingHarness): void {
       expect(probe.text('step')).toBe('seat');
       expect(probe.text('item-key')).toBe('p2');
       expect(probe.text('item-index')).toBe('1');
+      probe.unmount();
+    });
+
+    // The last step of an item is not the last step while another item follows:
+    // next() from it enters that item. Only the last step of the last item, in a
+    // group nothing comes after, finishes the wizard.
+    it('reads isLast as true only on the last step of the last item', async () => {
+      const probe = await harness.mount({
+        flow: { ...tripFlow, order: ['passengers'] },
+        data: people('p1', 'p2'),
+        groups,
+        subFlows: subFlowsC,
+      });
+      expect(probe.text('is-last')).toBe('no');
+      await probe.click('next');
+      expect(probe.text('step')).toBe('meal');
+      expect(probe.text('item-key')).toBe('p1');
+      expect(probe.text('is-last')).toBe('no');
+
+      await probe.click('next');
+      await probe.click('next');
+      expect(probe.text('step')).toBe('meal');
+      expect(probe.text('item-key')).toBe('p2');
+      expect(probe.text('is-last')).toBe('yes');
       probe.unmount();
     });
 
