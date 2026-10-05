@@ -159,6 +159,7 @@ describe('<WizardDevtools/>', () => {
     expect(screen.getByText(/the graph could not be drawn: layout exploded/)).toBeTruthy();
     /** The console line is the panel's line, so it names the page too; the stack follows it. */
     expect(consoleError).toHaveBeenCalledWith(
+      '%s',
       renderFailed('layout exploded'),
       expect.any(Error),
       expect.any(String)

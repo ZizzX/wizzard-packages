@@ -43,9 +43,11 @@ export class GraphBoundary extends Component<Props, State> {
      * The host's console is where a stack belongs; the panel shows the message.
      * Swallowing it entirely would hide the one trace that names the component.
      * The console gets the panel's line too, so it carries the page to read.
+     * `'%s'` keeps it a value: the detail is the thrower's text, and a `%c` in
+     * it would otherwise be read as a format and swallow the error after it.
      */
     try {
-      console.error(renderFailed(detail(error)), error, info.componentStack);
+      console.error('%s', renderFailed(detail(error)), error, info.componentStack);
     } catch {
       /* a console that throws is not this panel's problem */
     }
