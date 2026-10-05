@@ -243,8 +243,27 @@ function leave(flow: FlowDefinition, from: string, data: WizardState['data']): W
  * to drop `[b]`'s record as well, or `canBack` keeps offering a step `back()`
  * would refuse. A target no record names — an `on.back` to somewhere never
  * visited — pops one, which is all there is to go on.
+ *
+ * The record landed on is matched whole first, frame by frame: inside a
+ * repeat the same step id is on every item, and a move that skipped a removed
+ * item's newer record has to cut there, not at that newer record, or the dead
+ * one stays and the next `back()` lands on the same step again.
  */
-function rewind(history: WizardState['history'], target: string): WizardState['history'] {
+function rewind(
+  history: WizardState['history'],
+  landed: readonly Frame[],
+  target: string
+): WizardState['history'] {
+  const same = (stack: readonly Frame[]): boolean =>
+    stack.length === landed.length &&
+    stack.every((f, i) => {
+      const other = landed[i];
+      return f.flow === other?.flow && f.step === other.step && f.key === other.key;
+    });
+  for (let i = history.length - 1; i >= 0; i--) {
+    const stack = history[i];
+    if (stack !== undefined && same(stack)) return history.slice(0, i);
+  }
   for (let i = history.length - 1; i >= 0; i--) {
     const stack = history[i];
     if (stack !== undefined && stack[stack.length - 1]?.step === target) return history.slice(0, i);
@@ -495,12 +514,13 @@ async function pipeline(
     }
 
     // 9. Commit. One write, one notification.
+    const landed = move
+      ? move.stack
+      : [...before.stack.slice(0, -1), { flow: at.flow.id, step: target }];
     host.write(
       commit(before, {
         status: 'idle',
-        stack: move
-          ? move.stack
-          : [...before.stack.slice(0, -1), { flow: at.flow.id, step: target }],
+        stack: landed,
         // A back stack only grows going forward. Appending on a backward move
         // too left `canBack` true at the first step while `back()` answered
         // `no-target`, and would make a history-driven `back()` inside a repeat
@@ -510,7 +530,7 @@ async function pipeline(
             ? before.history
             : forward
               ? [...before.history, before.stack]
-              : rewind(before.history, target),
+              : rewind(before.history, landed, target),
         visited: add(before.visited, target),
         completed: forward && from !== null ? add(before.completed, from) : before.completed,
         busy: before.busy.filter((id) => id !== target),

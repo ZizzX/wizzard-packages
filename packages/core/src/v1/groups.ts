@@ -571,7 +571,8 @@ function fromHistory(
  * from behind is the mirror of one left from its start: the newest position
  * the history holds inside it, which is where its last item stopped. Without
  * one - the group was jumped over - it is entered from the start, as `go()`
- * enters it. Deeper, the history was already searched whole by `retreat`.
+ * enters it. Deeper, `retreat` restores from the whole history before it gets
+ * here, and an inner group it jumped over is not entered from behind (T-082).
  */
 function behind(
   levels: Level[],

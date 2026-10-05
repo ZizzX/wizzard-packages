@@ -152,7 +152,10 @@ export default [
   // move's AbortSignal and `destroy()` aborts every move still running (T-068),
   // and the `busy` marker is cleared on every way out of a move, not only by its
   // commit, so `isBusy` no longer sticks after a cancelled or failed load (T-069).
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '6.95 kB', gzip: true },
+  // 6.95 to 7 kB on 2026-10-05, measured 6965 B: a backward move cuts the history
+  // at the record it landed on, matched frame by frame, not at the newest record
+  // of the same step id - inside a repeat that id is on every item (T-075).
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '7 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a
