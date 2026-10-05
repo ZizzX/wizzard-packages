@@ -284,7 +284,16 @@ async function runAsync(
   throw unknownOperator(e, 'evaluateAsync');
 }
 
-export type AsyncResolver = (args: Json | undefined, scope: Scope) => unknown | Promise<unknown>;
+/**
+ * A resolver that may be awaited. `signal` is handed to a step's `load` and is
+ * aborted when its move is cancelled or the wizard destroyed, so a request it
+ * started can stop; everywhere else it is absent.
+ */
+export type AsyncResolver = (
+  args: Json | undefined,
+  scope: Scope,
+  signal?: AbortSignal
+) => unknown | Promise<unknown>;
 export type AsyncRegistry = Readonly<Record<string, AsyncResolver>>;
 
 /** Evaluates to a boolean, awaiting `$ref`. An absent expression is `true`. */

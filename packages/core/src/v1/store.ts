@@ -285,12 +285,13 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
     fallback: unknown,
     scope: Scope,
     op: string,
-    stepId: string
+    stepId: string,
+    signal?: AbortSignal
   ): Promise<unknown> => {
     if (!ref) return fallback;
     const fn = registry?.[ref.$ref];
     if (!fn) throw notRegistered(ref.$ref, op, `steps.${stepId}`);
-    return await fn(ref.args, scope);
+    return await fn(ref.args, scope, signal);
   };
 
   /**
@@ -323,13 +324,14 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
       return destroyed ? [] : plugins.filter((h) => !disabled.has(h.name));
     },
     validate: (stepId) => validateStep(stepId),
-    load: async (stepId, load, scope) => {
+    load: async (stepId, load, scope, signal) => {
       await resolverFor(
         load as { $ref: string; args?: Json } | undefined,
         undefined,
         scope,
         'load',
-        stepId
+        stepId,
+        signal
       );
     },
     signal: controller?.signal,

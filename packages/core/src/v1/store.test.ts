@@ -286,6 +286,68 @@ describe('validation', () => {
 });
 
 describe('navigation through the store', () => {
+  // cancel() stops the work as well as the move: the loader holds the signal
+  // the move was given, and can hand it to fetch.
+  it("hands a step's load the move's signal, and aborts it on cancel()", async () => {
+    let received: AbortSignal | undefined;
+    let release = (): void => undefined;
+    const w = createWizard({
+      flow: { id: 'f', order: ['a', 'b'], steps: { a: {}, b: { load: { $ref: 'seats' } } } },
+      registry: {
+        seats: (_args, _scope, signal) => {
+          received = signal;
+          return new Promise<void>((resolve) => {
+            release = resolve;
+          });
+        },
+      },
+    });
+    await w.start();
+
+    const moving = w.next();
+    await vi.waitFor(() => {
+      expect(received).toBeDefined();
+    });
+    expect(received?.aborted).toBe(false);
+    w.cancel();
+    expect(received?.aborted).toBe(true);
+    release();
+    expect((await moving).ok).toBe(false);
+  });
+
+  // A newer move takes over without cancelling: the overtaken loader keeps an
+  // unaborted signal and runs on, and only its result is dropped.
+  it('leaves the signal of a move a newer one overtakes unaborted', async () => {
+    let received: AbortSignal | undefined;
+    let release = (): void => undefined;
+    const w = createWizard({
+      flow: {
+        id: 'f',
+        order: ['a', 'b', 'c'],
+        steps: { a: {}, b: { load: { $ref: 'seats' } }, c: {} },
+        policy: 'free',
+      },
+      registry: {
+        seats: (_args, _scope, signal) => {
+          received = signal;
+          return new Promise<void>((resolve) => {
+            release = resolve;
+          });
+        },
+      },
+    });
+    await w.start();
+
+    const overtaken = w.next();
+    await vi.waitFor(() => {
+      expect(received).toBeDefined();
+    });
+    expect((await w.go('c')).ok).toBe(true);
+    expect(received?.aborted).toBe(false);
+    release();
+    expect(await overtaken).toMatchObject({ ok: false, reason: 'superseded' });
+  });
+
   it('walks the reachable steps and back again', async () => {
     const w = make({ payer: 'private', name: 'Ann' });
 

@@ -39,7 +39,7 @@ The engine `createWizard` returns, whole. The bindings' hooks are views over thi
 | `next(opts?)`                   | Forward, by `on.next` or by `order`. `{ validate: false }` skips the leaving validator.      |
 | `back()`                        | Backward, by `on.back` or by `order`.                                                        |
 | `go(to, opts?)`                 | Jumps, if `policy` allows it or `force: true` is given. `to` may be `END`.                   |
-| `cancel()`                      | Aborts the move in flight.                                                                   |
+| `cancel()`                      | Aborts the move in flight, and the signal its `load` and `loadStep` were handed.             |
 | `get(path)`                     | Reads `data` at a dot path. `undefined` before anything is written there.                    |
 | `set(path, value)`              | Replaces the value at that path.                                                             |
 | `patch(partial)`                | Merges shallowly into `data`.                                                                |
