@@ -238,6 +238,13 @@ actually reached -- including a branch inside the sub-flow -- not on the sub-flo
 _ordered_ step. From the first step of the first item, `back()` leaves the group and lands on
 the step before it in the parent.
 
+**Entering from behind** (T-075, decision D-021). When `back()` from a step of the root resolves to a
+group -- by `order` or by `on.back` -- it restores the newest recorded stack inside that group, so
+from the step after the group it lands where the last item stopped. Recorded stacks of items that
+are gone are skipped as above. With nothing recorded inside -- the group was jumped over -- it
+enters from the start, as `go()` does. `go()` into a group always starts it over (4.7), which is
+the way a host offers "fill this in again".
+
 ### 4.7 `go()` into a group, and out of one
 
 `go` accepts `StepIdOf<F>` (`store.ts:73-76`), the keys of the root flow's `steps`. A step inside
