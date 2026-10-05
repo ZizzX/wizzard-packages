@@ -65,10 +65,11 @@ const scope: Scope = {
   ctx: { x: [1, 2, 3] },
   loop: { index: 2, item: { k: 'v' }, key: 'v' },
 };
-// `len` reads arbitrary JSON args, so it never coerces them: `String({ toString: 0 })`
-// throws, since an own `toString` that is not a function hides the one it inherits.
+// `len` measures its args as JSON text, so it reads all of them - a builder that drops
+// or changes one is seen - and never coerces them: `String({ toString: 0 })` throws,
+// since neither that `toString` nor the inherited `valueOf` yields a primitive.
 const registry: Registry = {
-  len: (a) => (Array.isArray(a) || typeof a === 'string' ? a.length : 0),
+  len: (a) => JSON.stringify(a ?? null).length,
   sum: (_, s) => (s.ctx.x as number[]).reduce((t, n) => t + n, 0),
 };
 
