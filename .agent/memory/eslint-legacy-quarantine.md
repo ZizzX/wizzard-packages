@@ -18,4 +18,12 @@ thresholds are set just past current measurements, so they can only ratchet up.
 code scheduled for deletion. The quarantine list makes the debt visible and shrinks measurably.
 
 **How to apply:** delete a quarantine entry the moment its v1 replacement lands; never add one.
+
+**Closed 2026-10-05 (T-066):** the last entry, `packages/devtools/src/**`, was removed and the
+block with it. Of 97 errors, 75 were import order and duplicate imports (autofix plus merging
+into inline `type` imports). The 19 `no-unnecessary-condition` hits were nearly all real guards
+on index access, which is typed non-undefined because `noUncheckedIndexedAccess` is off repo-wide:
+the fix is `as T | undefined` on the read, never deleting the guard. Two of the three
+`set-state-in-effect` hits were prop-change resets, rewritten as render-time adjustment; the
+third, reading `sessionStorage` after mount for hydration, carries a line disable with its reason.
 Related: [[wizzard-0x-duplication-diagnosis]].

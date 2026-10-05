@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
-import type { KeyboardEvent, ReactNode } from 'react';
-import type { NavIntent, NavResult } from '@wizzard-packages/core';
+import { useMemo, type KeyboardEvent, type ReactNode } from 'react';
+
+import { noPlugin } from './messages';
+
 import type { Outcome, Pending } from './headless';
 import type { CommitRow } from './useObserved';
-import { noPlugin } from './messages';
+import type { NavIntent, NavResult } from '@wizzard-packages/core';
 
 /**
  * Activity: one ordered list of what the wizard did - commits it made, moves
@@ -108,7 +109,7 @@ export function ActivityView({
     event.preventDefault();
     const at = rows.findIndex((row) => row.key === selected);
     const next = at === -1 ? rows.length - 1 : at + (event.key === 'ArrowDown' ? 1 : -1);
-    const row = rows[Math.min(rows.length - 1, Math.max(0, next))];
+    const row = rows[Math.min(rows.length - 1, Math.max(0, next))] as ActivityRow | undefined;
     if (row) onSelect(row);
   };
 

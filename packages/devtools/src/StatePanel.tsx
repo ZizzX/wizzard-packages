@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
-import type { ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
+
+import { diffState, type Change } from './headless';
+
 import type { WizardState } from '@wizzard-packages/core';
-import { diffState } from './headless';
-import type { Change } from './headless';
 
 /**
  * The State tab: what the observed commit holds, and what it changed.
@@ -30,7 +30,8 @@ const print = (value: unknown): string => {
   if (value === null) return 'null';
   if (typeof value === 'string') return value;
   try {
-    return JSON.stringify(value) ?? String(value);
+    // `undefined`, a function or a symbol stringifies to undefined, not to a string.
+    return (JSON.stringify(value) as string | undefined) ?? String(value);
   } catch {
     return String(value);
   }
@@ -54,7 +55,7 @@ function Value({ value }: { value: unknown }): ReactNode {
 
 function Rows({ changes, onLift }: { changes: readonly Change[]; onLift: () => void }): ReactNode {
   /** `diffState` closes a capped list with one row carrying the count. */
-  const closing = changes[changes.length - 1];
+  const closing = changes[changes.length - 1] as Change | undefined;
   const hidden = closing?.hidden ?? 0;
   const rows = hidden > 0 ? changes.slice(0, -1) : changes;
   return (
