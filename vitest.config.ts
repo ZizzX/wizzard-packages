@@ -16,23 +16,26 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text-summary', 'lcov'],
       include: ['packages/*/src/**/*.{ts,tsx}'],
-      exclude: [
-        'packages/ui/**',
-        '**/*.test.*',
-        '**/*.spec.*',
-        '**/setupTests.ts',
-        '**/index.ts',
-        '**/types.ts',
-      ],
-      // A ratchet, not a target: these sit just under what the 0.x suite covers
-      // today, so coverage can only go up. v1 `core` is held to 90% separately
-      // once it exists — most of the gap here is the untested context-free path
-      // that v1 deletes outright.
+      // `index.ts` is not excluded: in v1 it is not a barrel but the code - the
+      // whole Vue binding lives in one, and leaving it out hid a third of that
+      // binding's functions from this report.
+      exclude: ['**/*.test.*', '**/*.spec.*', '**/setupTests.ts'],
+      // A ratchet, not a target: each number sits just under what the suite
+      // measures, so coverage can only go up. The margin is for the property
+      // tests, whose random inputs move a branch or two between runs. `core` is
+      // held to its own line because an engine bug is every wizard's bug, and
+      // the launch plan asks 90% of it.
       thresholds: {
-        statements: 38,
-        branches: 28,
-        functions: 34,
-        lines: 40,
+        statements: 92,
+        branches: 87,
+        functions: 91,
+        lines: 94,
+        'packages/core/src/**': {
+          statements: 95,
+          branches: 93,
+          functions: 97,
+          lines: 98,
+        },
       },
     },
   },
