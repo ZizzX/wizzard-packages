@@ -1,26 +1,29 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
-import { buildGraph } from '@wizzard-packages/core/graph';
-import type { FlowGraph, GraphNode } from '@wizzard-packages/core/graph';
+import {
+  isGroup,
+  type Frame,
+  type FlowDefinition,
+  type SubFlows,
+  type WizardState,
+} from '@wizzard-packages/core';
+import { buildGraph, type FlowGraph, type GraphNode } from '@wizzard-packages/core/graph';
 import { knownFlows } from '@wizzard-packages/core/session';
-import { isGroup } from '@wizzard-packages/core';
-import type { Frame, FlowDefinition, SubFlows, WizardState } from '@wizzard-packages/core';
 import { useOptionalWizard } from '@wizzard-packages/react';
-import { ActivityView, intentText, outcomeText } from './ActivityView';
-import type { ActivityRow } from './ActivityView';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+
+import { ActivityView, intentText, outcomeText, type ActivityRow } from './ActivityView';
 import { GraphBoundary } from './boundary';
 import { ExportPreview } from './ExportPreview';
-import { FlowGraphView } from './FlowGraphView';
-import type { GraphView, LayoutInfo, TakenEdge } from './FlowGraphView';
-import { recordSession } from './headless';
-import type {
-  DevtoolsPlugin,
-  PositionedGraph,
-  Recorder,
-  SessionBundle,
-  WizardLike,
+import { FlowGraphView, type GraphView, type LayoutInfo, type TakenEdge } from './FlowGraphView';
+import {
+  recordSession,
+  type DevtoolsPlugin,
+  type Outcome,
+  type PositionedGraph,
+  type Recorder,
+  type SessionBundle,
+  type WizardLike,
 } from './headless';
 import { Inspector } from './Inspector';
 import { noWizard } from './messages';
@@ -69,7 +72,7 @@ const crumbText = (state: WizardState | null, rootId: string): string => {
   const enclosing = state.stack
     .slice(0, -1)
     .map((frame) => `${frame.step}${frame.key ? `[${frame.key}]` : ''}`);
-  const top = state.stack[state.stack.length - 1];
+  const top = state.stack[state.stack.length - 1] as Frame | undefined;
   return [rootId, ...enclosing, top?.step ?? ''].filter(Boolean).join(' › ');
 };
 
@@ -94,7 +97,9 @@ function resolveFlow(
   let owner = known.get((state.stack[0] as Frame).flow) ?? root;
 
   for (let depth = 0; depth + 1 < state.stack.length; depth++) {
-    const step = owner.steps[(state.stack[depth] as Frame).step];
+    const step = owner.steps[(state.stack[depth] as Frame).step] as
+      | FlowDefinition['steps'][string]
+      | undefined;
     if (!step || !isGroup(step)) return owner;
     const child = typeof step.flow === 'string' ? known.get(step.flow) : step.flow;
     if (!child) return owner;
@@ -162,6 +167,10 @@ export function WizardDevtools({
 
   useEffect(() => {
     try {
+      // Read after mount, not in the initial state: the server render cannot
+      // see the storage, and a first client render that disagreed with it
+      // would fail hydration.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLegendOpen(sessionStorage.getItem(LEGEND_KEY) === 'open');
     } catch {
       /* a browser that refuses storage keeps the legend closed */
@@ -186,11 +195,15 @@ export function WizardDevtools({
     };
   }, [recorder]);
 
-  useEffect(() => {
+  // Adjusted during render rather than in an effect, so no frame ever shows a
+  // recorder of the previous wizard; the effect above stops it.
+  const [recordedWizard, setRecordedWizard] = useState(wizard);
+  if (recordedWizard !== wizard) {
+    setRecordedWizard(wizard);
     setRecorder(null);
     setRecording(false);
     setExporting(false);
-  }, [wizard]);
+  }
 
   const onLegendToggle = (open: boolean): void => {
     setLegendOpen(open);
@@ -267,9 +280,11 @@ export function WizardDevtools({
     null) as GraphNode | null;
 
   /** Fit is the default view; a graph changes size, so the box follows it. */
-  useEffect(() => {
+  const [fittedGraph, setFittedGraph] = useState(graph);
+  if (fittedGraph !== graph) {
+    setFittedGraph(graph);
     setView((current) => ({ ...current, scale: 1, cx: null, cy: null }));
-  }, [graph]);
+  }
 
   const positionedCentre = useCallback(
     (next: Partial<GraphView>) => setView((current) => ({ ...current, ...next })),
@@ -314,7 +329,7 @@ export function WizardDevtools({
       ? 'not-installed'
       : null;
 
-  const latest = observed.outcomes[observed.outcomes.length - 1];
+  const latest = observed.outcomes[observed.outcomes.length - 1] as Outcome | undefined;
   const newer = observed.commits.filter((row) => row.rev > (observedState?.rev ?? -1)).length;
   const outcomeLine = observed.pending
     ? `… ${intentText(observed.pending.intent)} pending`

@@ -1,8 +1,9 @@
-import type { ReactNode } from 'react';
-import type { FlowGraph, GraphNode } from '@wizzard-packages/core/graph';
-import { isSync, test } from '@wizzard-packages/core';
-import type { WizardState } from '@wizzard-packages/core';
+import { isSync, test, type WizardState } from '@wizzard-packages/core';
+
 import { formatExpr } from './headless';
+
+import type { FlowGraph, GraphNode } from '@wizzard-packages/core/graph';
+import type { ReactNode } from 'react';
 
 /**
  * The node inspector. It reads the observed state - live, or the pinned row's

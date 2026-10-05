@@ -1,8 +1,15 @@
 import { useCallback, useMemo, useRef, useSyncExternalStore } from 'react';
-import type { FlowDefinition, WizardState } from '@wizzard-packages/core';
-import { diffState } from './headless';
-import type { DevtoolsPlugin, Outcome, Pending, WizardLike } from './headless';
+
+import {
+  diffState,
+  type DevtoolsPlugin,
+  type Outcome,
+  type Pending,
+  type WizardLike,
+} from './headless';
 import { stopped } from './messages';
+
+import type { FlowDefinition, WizardState } from '@wizzard-packages/core';
 
 /**
  * One snapshot over both sources the panel reads - the wizard and the plugin -
@@ -101,7 +108,7 @@ function createObserver(
    */
   const record = (state: WizardState, flow: FlowDefinition): void => {
     if (state.status === 'busy') return;
-    const last = commits[commits.length - 1];
+    const last = commits[commits.length - 1] as CommitRow | undefined;
     if (last && last.rev === state.rev) return;
     const row: CommitRow = {
       rev: state.rev,

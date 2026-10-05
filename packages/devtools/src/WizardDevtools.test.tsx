@@ -4,7 +4,7 @@ import { WizardProvider } from '@wizzard-packages/react';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { dataA, flowA, registryA } from '../../../contract/fixtures';
+import { dataA, dataB, flowA, flowB, registryA, registryB } from '../../../contract/fixtures';
 import { devtools } from './headless';
 import { renderFailed } from './messages';
 import { WizardDevtools } from './WizardDevtools';
@@ -226,6 +226,32 @@ describe('<WizardDevtools/>', () => {
 
     expect(screen.queryByText(/devtools has no wizard/)).toBeNull();
     expect(screen.getByRole('application')).toBeTruthy();
+  });
+
+  // A bundle carries one wizard, and a graph is fitted to the flow it draws:
+  // both reset the moment the panel is pointed at another wizard.
+  it('drops the recording and fits the new graph when the wizard prop changes', async () => {
+    const a = setup();
+    const b = devtools();
+    const other = createWizard({ flow: flowB, registry: registryB, data: dataB, plugins: [b] });
+    const fitted = render(<WizardDevtools wizard={other} plugin={b} />);
+    await act(async () => {
+      await other.start();
+    });
+    const fit = screen.getByRole('application').getAttribute('viewBox');
+    fitted.unmount();
+
+    const view = render(<WizardDevtools wizard={a.wizard} plugin={a.plugin} />);
+    await act(async () => {
+      await a.wizard.start();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Record' }));
+    expect(screen.getByRole('button', { name: /^Stop/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Zoom in' }));
+
+    view.rerender(<WizardDevtools wizard={other} plugin={b} />);
+    expect(screen.getByRole('button', { name: 'Record' })).toBeTruthy();
+    expect(screen.getByRole('application').getAttribute('viewBox')).toBe(fit);
   });
 
   it('records a session and previews the bundle without copying it', async () => {

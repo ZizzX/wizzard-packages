@@ -1,7 +1,7 @@
 import { add, beginNav, commit, isCurrent } from './commit';
 import { explain, guard, pageFor } from './diagnostic';
 import { testAsync, type AsyncRegistry, type Registry, type Scope } from './expr';
-import { END, type FlowDefinition, type StepDef } from './flow';
+import { END, type FlowDefinition } from './flow';
 import { unsetPath } from './path';
 import { allowedByPolicy, enterable, reachableOnPath, resolveBack, resolveNext } from './resolve';
 
@@ -124,8 +124,12 @@ export interface Hooks {
    * Observation only, like `onCommit`: throwing disables the plugin.
    */
   onAttempt?: (attempt: Attempt) => void;
-  /** Supplies the body of a deferred step, typically over the network. */
-  loadStep?: (stepId: string, signal: AbortSignal) => Promise<StepDef | undefined>;
+  /**
+   * Work to finish before a deferred step is entered, typically fetching its
+   * body over the network. The engine awaits it and reads nothing back: a flow
+   * changes shape only through `patchFlow`, so the body is installed there.
+   */
+  loadStep?: (stepId: string, signal: AbortSignal) => Promise<void>;
 }
 
 /** What a plugin is handed at `init`. Deliberately small: read, and write once. */

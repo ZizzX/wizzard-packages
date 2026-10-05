@@ -1,8 +1,15 @@
-import { useCallback, useEffect, useMemo } from 'react';
-import type { KeyboardEvent, ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, type KeyboardEvent, type ReactNode } from 'react';
+
+import {
+  formatExpr,
+  layoutGraph,
+  NODE_W,
+  type Positioned,
+  type PositionedEdge,
+  type PositionedGraph,
+} from './headless';
+
 import type { FlowGraph, GraphNode } from '@wizzard-packages/core/graph';
-import { formatExpr, layoutGraph, NODE_W } from './headless';
-import type { Positioned, PositionedEdge, PositionedGraph } from './headless';
 
 /**
  * The graph, drawn. Everything it shows comes from the `FlowGraph` and the
@@ -268,7 +275,7 @@ export function FlowGraphView({
 
   const onKeyDown = useCallback(
     (event: KeyboardEvent<SVGSVGElement>): void => {
-      const keys: Record<string, () => void> = {
+      const keys: Partial<Record<string, () => void>> = {
         ArrowDown: () => move(1),
         ArrowRight: () => move(1),
         ArrowUp: () => move(-1),
