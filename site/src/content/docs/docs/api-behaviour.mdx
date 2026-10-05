@@ -35,7 +35,7 @@ The engine `createWizard` returns, whole. The bindings' hooks are views over thi
 
 | Method                          | Does                                                                                         |
 | ------------------------------- | -------------------------------------------------------------------------------------------- |
-| `start()`                       | Enters the first reachable step. Idempotent: a wizard already on a step stays there.         |
+| `start()`                       | Enters the first reachable step, or a restored step that loads. Then idempotent.             |
 | `next(opts?)`                   | Forward, by `on.next` or by `order`. `{ validate: false }` skips the leaving validator.      |
 | `back()`                        | Backward, by `on.back` or by `order`.                                                        |
 | `go(to, opts?)`                 | Jumps, if `policy` allows it or `force: true` is given. `to` may be `END`.                   |

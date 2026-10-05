@@ -495,6 +495,44 @@ describe('start', () => {
     expect(calls).toBe(2);
   });
 
+  // A move the person already started is theirs: start() waits for it rather
+  // than superseding it, and then has nothing left to enter.
+  it('waits for a move already on its way instead of entering the restored step', async () => {
+    let calls = 0;
+    const w = createWizard({
+      flow: loadingFlow,
+      registry: {
+        fill: () => {
+          calls += 1;
+        },
+      },
+      plugins: [restoring('b')],
+    });
+    const moving = w.next();
+    const started = w.start();
+
+    expect((await moving).ok).toBe(true);
+    expect(await started).toMatchObject({ ok: true, to: 'c' });
+    expect(w.getSnapshot().current).toBe('c');
+    expect(calls).toBe(0);
+  });
+
+  it('moves nothing on a destroyed engine', async () => {
+    let calls = 0;
+    const w = createWizard({
+      flow: loadingFlow,
+      registry: {
+        fill: () => {
+          calls += 1;
+        },
+      },
+      plugins: [restoring('b')],
+    });
+    w.destroy();
+    expect(await w.start()).toMatchObject({ ok: false, reason: 'aborted' });
+    expect(calls).toBe(0);
+  });
+
   it('enters a restored step once, and not one that does not load', async () => {
     let calls = 0;
     const registry = {

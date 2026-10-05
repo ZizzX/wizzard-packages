@@ -399,6 +399,7 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
     if (current === null && state.status === 'done') {
       return Promise.resolve({ ok: true, from: null, to: END });
     }
+    let first: NavIntent = { type: 'next' };
     if (current !== null) {
       // Restored onto a step that loads, and not entered yet: enter it again
       // in place, so its `load` runs before anything reads the step as ready.
@@ -406,31 +407,29 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
       const step: StepDef | undefined = at(state).flow.steps[current];
       const loads = step !== undefined && (step.deferred === true || step.load !== undefined);
       if (moved || !loads) return Promise.resolve({ ok: true, from: current, to: current });
-      starting = navigate(
-        { type: 'go', to: current, force: true },
-        { validate: false },
-        'start'
-      ).finally(() => {
-        starting = undefined;
-      });
-      return starting;
+      first = { type: 'go', to: current, force: true };
     }
 
-    // A `next()` or `go()` from the empty stack is already on its way. A
-    // start now would supersede it, and answering ok would claim a step that
-    // move may never land on. Wait for it, then ask again: it either placed
-    // the wizard somewhere, or left it unstarted and the first move runs.
+    // A move is already on its way. A start now would supersede it, and
+    // answering ok would claim a step that move may never land on. Wait for
+    // it, then ask again: it either placed the wizard somewhere, or left it
+    // where it was and the first move runs. Nothing may move a dead engine.
+    const dead: NavResult = {
+      ok: false,
+      reason: 'aborted',
+      code: 'nav-aborted',
+      url: pageFor('nav-aborted'),
+    };
     const pending = state.status === 'busy' ? moving : undefined;
     starting = (
       pending
         ? pending.catch(settled).then((): Promise<NavResult> | NavResult => {
             starting = undefined;
-            // Destroyed while it waited: nothing may move a dead engine.
-            return destroyed
-              ? { ok: false, reason: 'aborted', code: 'nav-aborted', url: pageFor('nav-aborted') }
-              : start();
+            return destroyed ? dead : start();
           })
-        : navigate({ type: 'next' }, { validate: false }, 'start')
+        : destroyed
+          ? Promise.resolve(dead)
+          : navigate(first, { validate: false }, 'start')
     ).finally(() => {
       starting = undefined;
     });
