@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
 
 import { END, type FlowDefinition } from './flow';
 import { pageFor } from './diagnostic';
@@ -667,7 +667,6 @@ describe('runNav — races', () => {
         name: 'server',
         loadStep: async () => {
           await gate.promise;
-          return undefined;
         },
       },
     ];
@@ -688,6 +687,12 @@ describe('runNav — races', () => {
     expect(host.read().status).toBe('idle');
   });
 
+  // The flow changes only through patchFlow, so nothing a plugin resolves
+  // here could be applied; the type says so rather than promising a StepDef.
+  it('types loadStep as work to await, with nothing read back', () => {
+    expectTypeOf<NonNullable<Hooks['loadStep']>>().returns.toEqualTypeOf<Promise<void>>();
+  });
+
   it('flags the step busy while it loads, and clears it afterwards', async () => {
     const gate = deferred<void>();
     let busyDuringLoad: readonly string[] = [];
@@ -702,7 +707,6 @@ describe('runNav — races', () => {
           // Sampled here because this is the only moment the flag is meant to be set.
           busyDuringLoad = host.read().busy;
           await gate.promise;
-          return undefined;
         },
       },
     ];

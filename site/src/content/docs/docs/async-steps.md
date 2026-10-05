@@ -52,10 +52,10 @@ steps: {
 }
 ```
 
-Today that is all `deferred` does: the engine awaits the plugins and continues. The definition a
-`loadStep` returns is not applied to the flow - a plugin that fetches a step body installs it
-with [`patchFlow`](../server-driven/), which is also how a server-driven flow changes shape
-while it runs.
+That is all `deferred` does: the engine awaits the plugins and continues. `loadStep` returns
+`Promise<void>`, and the engine reads nothing back from it - a plugin that fetches a step body
+installs it with [`patchFlow`](../server-driven/), which is also how a server-driven flow changes
+shape while it runs.
 
 ## While it loads
 
