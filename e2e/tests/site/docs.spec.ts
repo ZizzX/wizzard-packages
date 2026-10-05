@@ -123,6 +123,26 @@ for (const theme of ['dark', 'light'] as const) {
       });
     }
 
+    // The site's own pages share the theme with the documentation, and are not
+    // Starlight's, so there is no sidebar to wait for. The hero is a `client:load`
+    // island; Astro drops `ssr` from it once it has hydrated.
+    for (const [name, path] of [
+      ['The home page', ''],
+      ['The examples index', 'examples/'],
+    ] as const) {
+      test(`${name} has no accessibility violations`, async ({ page }) => {
+        await page.goto(path);
+        await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+        await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
+        await settled(page);
+
+        const results = await new AxeBuilder({ page })
+          .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+          .analyze();
+        expect(results.violations).toEqual([]);
+      });
+    }
+
     /**
      * axe skips a colour-contrast check it cannot resolve a background for, so
      * the pairing that actually broke is asserted directly rather than being
