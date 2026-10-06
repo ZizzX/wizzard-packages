@@ -78,8 +78,8 @@
 for another move to finish answers it too when the wizard is destroyed meanwhile, rather than
 starting a wizard nothing is listening to any more.</p>
 <p><code dir="auto">cancel()</code> aborts the signal a step’s <code dir="auto">load</code> and a plugin’s <code dir="auto">loadStep</code> receive, so a request that
-honours it stops too. The move checks the signal before it commits, and the wizard stays on the
-step it was leaving.</p>
+honours it stops too. A loader that has not started when the move is called off never starts. The
+move checks the signal before it commits, and the wizard stays on the step it was leaving.</p>
 <p>The application asked for this, so there is usually nothing to fix. If you see it without calling
 <code dir="auto">cancel()</code>, the wizard was destroyed mid-move - by code that owns it, or by the component that
 created it unmounting.</p>
