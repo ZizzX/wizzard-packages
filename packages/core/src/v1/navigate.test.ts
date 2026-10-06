@@ -759,6 +759,74 @@ describe('runNav — races', () => {
     expect(host.read().busy).toEqual([]);
   });
 
+  it('starts no further loader once a newer move overtakes it during one', async () => {
+    const gate = deferred<void>();
+    const called: string[] = [];
+    const ctx: NavContext = {
+      flow: { ...flow, steps: { ...flow.steps, payment: { deferred: true } } },
+      hooks: [
+        {
+          name: 'one',
+          loadStep: async () => {
+            called.push('one');
+            await gate.promise;
+          },
+        },
+        {
+          name: 'two',
+          loadStep: () => {
+            called.push('two');
+            return Promise.resolve();
+          },
+        },
+      ],
+    };
+
+    const running = runNav(ctx, host, { type: 'next' });
+    await vi.waitFor(() => {
+      expect(called).toEqual(['one']);
+    });
+    await runNav({ flow }, host, { type: 'go', to: 'trip', force: true });
+    gate.resolve();
+
+    expect(await running).toMatchObject({ ok: false, reason: 'superseded' });
+    expect(called).toEqual(['one']);
+  });
+
+  // Called off and overtaken at once, by the same listener: the newer move
+  // owns the lock, so this one answers superseded, as it would after any await.
+  it('answers superseded when the busy write both calls the move off and overtakes it', async () => {
+    const controller = new AbortController();
+    const called: string[] = [];
+    let newer: Promise<unknown> | undefined;
+    const watching: NavHost = {
+      read: host.read,
+      write: (next) => {
+        host.write(next);
+        if (newer === undefined && next.busy.includes('payment')) {
+          controller.abort();
+          newer = runNav({ flow }, host, { type: 'go', to: 'trip', force: true });
+        }
+      },
+    };
+    const ctx: NavContext = {
+      flow: { ...flow, steps: { ...flow.steps, payment: { load: { $ref: 'seats' } } } },
+      load: () => {
+        called.push('load');
+        return Promise.resolve();
+      },
+      signal: controller.signal,
+    };
+
+    expect(await runNav(ctx, watching, { type: 'next' })).toMatchObject({
+      ok: false,
+      reason: 'superseded',
+    });
+    await newer;
+    expect(called).toEqual([]);
+    expect(host.read().stack).toEqual([{ flow: 'booking', step: 'trip' }]);
+  });
+
   it('starts no further loader once the move is called off during one', async () => {
     const controller = new AbortController();
     const gate = deferred<void>();

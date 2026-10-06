@@ -479,14 +479,16 @@ async function pipeline(
         // listener never hears an abort that came before it was added - even
         // one a listener of the busy write above made - so a loader would run
         // holding a signal that never aborts; and an abort while one loader
-        // runs must not start the next.
+        // runs must not start the next. Overtaken is asked first, as after
+        // every await: a newer move owns the lock, and this one writes nothing.
         if (step.deferred === true) {
           for (const h of ctx.hooks ?? []) {
+            if (stale()) return superseded;
             if (calledOff()) return fail(aborted);
             if (h.loadStep && live(h)) await h.loadStep(target, controller.signal);
-            if (stale()) return superseded;
           }
         }
+        if (stale()) return superseded;
         if (calledOff()) return fail(aborted);
         if (step.load !== undefined && ctx.load) {
           await ctx.load(target, step.load, where.scope, controller.signal);
