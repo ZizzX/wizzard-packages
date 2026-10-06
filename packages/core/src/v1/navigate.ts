@@ -354,6 +354,9 @@ async function pipeline(
     return result;
   };
 
+  // Set just before the write that carries the move's answer. From then on
+  // the move has landed, and a throw is not the answer to it.
+  let committed = false;
   try {
     // 1. beforeNavigate. Plugins run in registration order and may veto.
     // A redirect replaces the intent rather than overriding the answer to it:
@@ -386,6 +389,7 @@ async function pipeline(
       const now = host.read();
       if (errors && Object.keys(errors).length > 0) {
         // The one early commit: these errors are the result the caller asked for.
+        committed = true;
         host.write(commit(now, { status: 'idle', errors: { ...now.errors, [from]: errors } }));
         return { ok: false, reason: 'invalid', by: from, errors };
       }
@@ -436,6 +440,7 @@ async function pipeline(
     if (target === null || move === null) return fail({ ok: false, reason: 'no-target' });
 
     if (target === END) {
+      committed = true;
       host.write(
         commit(state, {
           status: 'done',
@@ -541,6 +546,7 @@ async function pipeline(
     const landed = move
       ? move.stack
       : [...before.stack.slice(0, -1), { flow: at.flow.id, step: target }];
+    committed = true;
     host.write(
       commit(before, {
         status: 'idle',
@@ -571,9 +577,12 @@ async function pipeline(
     // A step that threw after the move was overtaken or called off answers
     // like one that resolved: those win over what it said. A loader that
     // honours the signal rejects exactly then - fetch throws an AbortError -
-    // and that is the cancel, not a failure.
-    if (stale()) return superseded;
-    if (calledOff()) return fail(aborted);
+    // and that is the cancel, not a failure. Not once the move has written
+    // its answer: a listener of that write threw, and the move did land.
+    if (!committed) {
+      if (stale()) return superseded;
+      if (calledOff()) return fail(aborted);
+    }
     release();
     throw error;
   }

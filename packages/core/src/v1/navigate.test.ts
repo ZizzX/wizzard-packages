@@ -824,6 +824,41 @@ describe('runNav — races', () => {
     expect(host.read().status).toBe('idle');
   });
 
+  // Once the move has written its answer, a listener of that write that
+  // throws is the application's error, even when the same listener moved again
+  // or called cancel() first: the move did land, so it is not answered as
+  // refused. The answer is the first write that does not hold the lock.
+  it.each([
+    ['lands', 'cancels', { type: 'next' }, undefined],
+    ['lands', 'moves on', { type: 'next' }, undefined],
+    ['finishes', 'cancels', { type: 'go', to: END, force: true }, undefined],
+    ['is refused as invalid', 'cancels', { type: 'next' }, { name: 'required' }],
+  ] as const)(
+    'rethrows a listener of the write that %s, when it %s and then throws',
+    async (_, does, intent, errors) => {
+      const controller = new AbortController();
+      let thrown = false;
+      const watching: NavHost = {
+        read: host.read,
+        write: (next) => {
+          host.write(next);
+          if (thrown || next.status === 'busy') return;
+          thrown = true;
+          if (does === 'cancels') controller.abort();
+          else void runNav({ flow }, host, { type: 'go', to: 'trip', force: true });
+          throw new TypeError('listener broke');
+        },
+      };
+      const ctx: NavContext = {
+        flow,
+        validate: () => Promise.resolve(errors ?? null),
+        signal: controller.signal,
+      };
+
+      await expect(runNav(ctx, watching, intent)).rejects.toThrow('listener broke');
+    }
+  );
+
   it.each([
     ['its validation fails', {}],
     ['its exit guard refuses', { trip: { guards: { exit: { $ref: 'no' } } } }],
