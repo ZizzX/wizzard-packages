@@ -466,9 +466,6 @@ async function pipeline(
 
     // 6. Load. The only phase that may take real time.
     if (step.deferred === true || step.load !== undefined) {
-      // Called off already: the listener below never hears an abort that came
-      // before it, so a loader would run holding a signal that never aborts.
-      if (calledOff()) return fail(aborted);
       const busyAt = host.read();
       host.write(commit(busyAt, { busy: add(busyAt.busy, target) }));
 
@@ -478,12 +475,19 @@ async function pipeline(
       };
       ctx.signal?.addEventListener('abort', onAbort, { once: true });
       try {
+        // Asked before each loader starts, not once before them all. The
+        // listener never hears an abort that came before it was added - even
+        // one a listener of the busy write above made - so a loader would run
+        // holding a signal that never aborts; and an abort while one loader
+        // runs must not start the next.
         if (step.deferred === true) {
           for (const h of ctx.hooks ?? []) {
+            if (calledOff()) return fail(aborted);
             if (h.loadStep && live(h)) await h.loadStep(target, controller.signal);
             if (stale()) return superseded;
           }
         }
+        if (calledOff()) return fail(aborted);
         if (step.load !== undefined && ctx.load) {
           await ctx.load(target, step.load, where.scope, controller.signal);
         }
