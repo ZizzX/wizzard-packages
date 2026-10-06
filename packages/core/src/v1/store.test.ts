@@ -286,6 +286,62 @@ describe('validation', () => {
 });
 
 describe('navigation through the store', () => {
+  // The pattern the docs recommend: a loader hands the signal to its request,
+  // which rejects the moment cancel() aborts it. The move answers, not throws.
+  it('answers cancel() with aborted when the loader honours the signal', async () => {
+    let loading = false;
+    const w = createWizard({
+      flow: { id: 'f', order: ['a', 'b'], steps: { a: {}, b: { load: { $ref: 'seats' } } } },
+      registry: {
+        seats: (_args, _scope, signal) =>
+          new Promise<void>((_, reject) => {
+            loading = true;
+            signal?.addEventListener('abort', () => {
+              reject(new DOMException('The operation was aborted.', 'AbortError'));
+            });
+          }),
+      },
+    });
+    await w.start();
+
+    const moving = w.next();
+    await vi.waitFor(() => {
+      expect(loading).toBe(true);
+    });
+    w.cancel();
+    expect(await moving).toMatchObject({ ok: false, reason: 'aborted' });
+    expect(w.getSnapshot().current).toBe('a');
+    expect(w.getSnapshot().isBusy).toBe(false);
+  });
+
+  // cancel() while the step being left validates: the move is called off, so
+  // its errors are not the caller's result, and none are written.
+  it('writes no errors for a move cancelled while it validates', async () => {
+    let release = (): void => undefined;
+    const w = createWizard({
+      flow: { id: 'f', order: ['a', 'b'], steps: { a: { validate: { $ref: 'rules' } }, b: {} } },
+      registry: {
+        rules: () =>
+          new Promise<Record<string, string>>((resolve) => {
+            release = () => {
+              resolve({ name: 'required' });
+            };
+          }),
+      },
+    });
+    await w.start();
+
+    const moving = w.next();
+    await vi.waitFor(() => {
+      expect(w.getState().status).toBe('busy');
+    });
+    w.cancel();
+    release();
+    expect(await moving).toMatchObject({ ok: false, reason: 'aborted' });
+    expect(w.getState().errors).toEqual({});
+    expect(w.getSnapshot().current).toBe('a');
+  });
+
   // Called off before it loads: the loader never starts, rather than running
   // with a signal that can no longer tell it to stop.
   it.each(['cancel', 'destroy'] as const)('starts no load once %s() came first', async (stop) => {

@@ -354,6 +354,9 @@ async function pipeline(
     return result;
   };
 
+  // Set just before the write that carries the move's answer. From then on
+  // the move has landed, and a throw is not the answer to it.
+  let committed = false;
   try {
     // 1. beforeNavigate. Plugins run in registration order and may veto.
     // A redirect replaces the intent rather than overriding the answer to it:
@@ -368,6 +371,7 @@ async function pipeline(
         state: host.read(),
       });
       if (stale()) return superseded;
+      if (calledOff()) return fail(aborted);
       if (decision === false) return fail({ ok: false, reason: 'blocked', by: h.name });
       if (decision && 'block' in decision) {
         return fail({ ok: false, reason: 'blocked', by: decision.block });
@@ -381,9 +385,11 @@ async function pipeline(
     if (forward && from !== null && opts.validate !== false && ctx.validate) {
       const errors = await ctx.validate(from, host.read());
       if (stale()) return superseded;
+      if (calledOff()) return fail(aborted);
       const now = host.read();
       if (errors && Object.keys(errors).length > 0) {
         // The one early commit: these errors are the result the caller asked for.
+        committed = true;
         host.write(commit(now, { status: 'idle', errors: { ...now.errors, [from]: errors } }));
         return { ok: false, reason: 'invalid', by: from, errors };
       }
@@ -414,6 +420,7 @@ async function pipeline(
       const exit = at.flow.steps[from]?.guards?.exit;
       const allowed = await testAsync(exit, at.scope, registry);
       if (stale()) return superseded;
+      if (calledOff()) return fail(aborted);
       if (!allowed) return fail({ ok: false, reason: 'blocked', by: from });
     }
 
@@ -433,6 +440,7 @@ async function pipeline(
     if (target === null || move === null) return fail({ ok: false, reason: 'no-target' });
 
     if (target === END) {
+      committed = true;
       host.write(
         commit(state, {
           status: 'done',
@@ -509,10 +517,11 @@ async function pipeline(
       registry
     );
     if (stale()) return superseded;
-    if (!canEnter) return fail({ ok: false, reason: 'blocked', by: target });
-
-    // 8. Last check before anything is written.
+    // 8. Called off: answered before the guard's verdict, as after every
+    // await. Nothing below awaits, so it is also the last check before
+    // anything is written.
     if (calledOff()) return fail(aborted);
+    if (!canEnter) return fail({ ok: false, reason: 'blocked', by: target });
 
     // The state phase 9 commits from, read here because phase 8 needs it too
     // and the recheck between them is pure.
@@ -537,6 +546,7 @@ async function pipeline(
     const landed = move
       ? move.stack
       : [...before.stack.slice(0, -1), { flow: at.flow.id, step: target }];
+    committed = true;
     host.write(
       commit(before, {
         status: 'idle',
@@ -564,7 +574,18 @@ async function pipeline(
 
     return { ok: true, from, to: target };
   } catch (error) {
-    release();
+    // A step that threw after the move was overtaken or called off answers
+    // like one that resolved: those win over what it said. A loader that
+    // honours the signal rejects exactly then - fetch throws an AbortError -
+    // and that is the cancel, not a failure. Not once the move has written
+    // its answer: a listener of that write threw, the move did land, and that
+    // write already released the lock - releasing again would turn a finished
+    // wizard back to idle.
+    if (!committed) {
+      if (stale()) return superseded;
+      if (calledOff()) return fail(aborted);
+      release();
+    }
     throw error;
   }
 }

@@ -99,7 +99,9 @@ The engine keeps running, and says what it dropped.
   [`plugin-teardown-failed`](../../errors/plugin-teardown-failed/), and the other teardowns still
   run.
 - `beforeNavigate` and `loadStep` throwing is not caught: the move is abandoned, the wizard
-  returns to idle, and the exception reaches whoever called `next()`. The plugin stays enabled -
+  returns to idle, and the exception reaches whoever called `next()` - unless the move was
+  overtaken or cancelled by then, when it answers `superseded` or `aborted` and `onAttempt`
+  reports an `end`, not an `error`. The plugin stays enabled -
   a network failure in a loader is the caller's to handle, not a reason to switch persistence off.
 
 A plugin that means to refuse should return a refusal rather than throw. [API

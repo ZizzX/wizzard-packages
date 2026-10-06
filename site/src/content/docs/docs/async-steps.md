@@ -27,7 +27,8 @@ registry: {
 
 The resolver receives the `args` from the definition, the scope the target sits in, and the
 move's `AbortSignal`. `cancel()` aborts the latest move while it runs, and `destroy()` every move
-still running, so a request handed the signal stops with them. A loader that has not started when
+still running, so a request handed the signal stops with them, and the move answers `aborted`
+rather than throwing the request's `AbortError`. A loader that has not started when
 the move is called off never starts: neither `load` nor any `loadStep`, whether the move had not
 reached its load yet or was waiting on an earlier `loadStep`. A newer move that overtakes this
 one does not abort it, and a later `cancel()` reaches only that newer move - nothing at all once
@@ -89,6 +90,8 @@ that ignores the signal runs on, and whatever it writes to a store, a cache or t
 `wizard.set` is written anyway. A superseded move aborts nothing: its loader finishes unless the
 wizard is destroyed, and only its result is dropped.
 
-A loader that throws is different: the exception is not a refusal. The wizard returns to idle on
-the step it was on - unless a newer move has overtaken this one, which then settles it - and the
-promise from `next()` rejects with whatever the loader threw, for the caller to catch and retry. [API behaviour](../api-behaviour/) sets out that division.
+A loader that throws is different: the exception is not a refusal. The wizard returns to idle on the
+step it was on, and the promise from `next()` rejects with whatever the loader threw, for the caller
+to catch and retry. A move that was overtaken or cancelled by then answers `superseded` or `aborted`
+instead, and the failure, an `AbortError` included, is not rethrown. [API
+behaviour](../api-behaviour/) sets out that division.

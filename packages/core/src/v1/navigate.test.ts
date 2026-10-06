@@ -759,6 +759,143 @@ describe('runNav — races', () => {
     expect(host.read().busy).toEqual([]);
   });
 
+  // Called off while an earlier phase awaited: the move stops right there.
+  // Nothing after it runs, nothing is written, and the answer is aborted
+  // whatever that phase would have answered.
+  it('stops after a beforeNavigate that calls it off, before anything else runs', async () => {
+    const controller = new AbortController();
+    const called: string[] = [];
+    const ctx: NavContext = {
+      flow,
+      hooks: [
+        {
+          name: 'cancels',
+          beforeNavigate: () => {
+            controller.abort();
+          },
+        },
+        {
+          name: 'later',
+          beforeNavigate: () => {
+            called.push('later');
+          },
+        },
+      ],
+      validate: () => {
+        called.push('validate');
+        return Promise.resolve({ name: 'required' });
+      },
+      signal: controller.signal,
+    };
+
+    expect(await runNav(ctx, host, { type: 'next' })).toMatchObject({
+      ok: false,
+      reason: 'aborted',
+    });
+    expect(called).toEqual([]);
+    expect(host.read().errors).toEqual({});
+    expect(host.read().status).toBe('idle');
+  });
+
+  // A loader that honours the signal rejects as soon as it is aborted - fetch
+  // throws an AbortError. That rejection is the cancel, not a failure: the
+  // move answers aborted rather than throwing it.
+  it('answers aborted, not the rejection, when a loader rejects because it was called off', async () => {
+    const controller = new AbortController();
+    const ctx: NavContext = {
+      flow: { ...flow, steps: { ...flow.steps, payment: { load: { $ref: 'seats' } } } },
+      load: (_id, _load, _scope, signal) =>
+        new Promise<void>((_, reject) => {
+          signal.addEventListener('abort', () => {
+            reject(new DOMException('The operation was aborted.', 'AbortError'));
+          });
+        }),
+      signal: controller.signal,
+    };
+
+    const running = runNav(ctx, host, { type: 'next' });
+    await vi.waitFor(() => {
+      expect(host.read().busy).toEqual(['payment']);
+    });
+    controller.abort();
+
+    expect(await running).toMatchObject({ ok: false, reason: 'aborted' });
+    expect(host.read().busy).toEqual([]);
+    expect(host.read().status).toBe('idle');
+  });
+
+  // Once the move has written its answer, a listener of that write that
+  // throws is the application's error, even when the same listener moved again
+  // or called cancel() first: the move did land, so it is not answered as
+  // refused. The answer is the first write that does not hold the lock.
+  it.each([
+    ['lands', 'cancels', { type: 'next' }, undefined, 'idle'],
+    ['lands', 'moves on', { type: 'next' }, undefined, undefined],
+    ['finishes', 'cancels', { type: 'go', to: END, force: true }, undefined, 'done'],
+    ['is refused as invalid', 'cancels', { type: 'next' }, { name: 'required' }, 'idle'],
+  ] as const)(
+    'rethrows a listener of the write that %s, when it %s and then throws',
+    async (_, does, intent, errors, status) => {
+      const controller = new AbortController();
+      let thrown = false;
+      const watching: NavHost = {
+        read: host.read,
+        write: (next) => {
+          host.write(next);
+          if (thrown || next.status === 'busy') return;
+          thrown = true;
+          if (does === 'cancels') controller.abort();
+          else void runNav({ flow }, host, { type: 'go', to: 'trip', force: true });
+          throw new TypeError('listener broke');
+        },
+      };
+      const ctx: NavContext = {
+        flow,
+        validate: () => Promise.resolve(errors ?? null),
+        signal: controller.signal,
+      };
+
+      await expect(runNav(ctx, watching, intent)).rejects.toThrow('listener broke');
+      // The answer stands: a finished wizard stays finished.
+      if (status !== undefined) expect(host.read().status).toBe(status);
+    }
+  );
+
+  it.each([
+    ['its validation fails', {}],
+    ['its exit guard refuses', { trip: { guards: { exit: { $ref: 'no' } } } }],
+    ['its enter guard refuses', { payment: { guards: { enter: { $ref: 'no' } } } }],
+  ] as const)(
+    'answers aborted, not the refusal, when it is called off while %s',
+    async (what, steps) => {
+      const controller = new AbortController();
+      const refuse = (): Promise<false> => {
+        controller.abort();
+        return Promise.resolve(false);
+      };
+      const ctx: NavContext = {
+        flow: { ...flow, steps: { ...flow.steps, ...steps } },
+        registry: { no: refuse },
+        validate:
+          what === 'its validation fails'
+            ? () => {
+                controller.abort();
+                return Promise.resolve({ name: 'required' });
+              }
+            : undefined,
+        signal: controller.signal,
+      };
+
+      expect(await runNav(ctx, host, { type: 'next' })).toMatchObject({
+        ok: false,
+        reason: 'aborted',
+      });
+      expect(host.read().errors).toEqual({});
+      expect(host.read().stack).toEqual([{ flow: 'booking', step: 'trip' }]);
+      expect(host.read().status).toBe('idle');
+    }
+  );
+
   it('starts no further loader once a newer move overtakes it during one', async () => {
     const gate = deferred<void>();
     const called: string[] = [];
@@ -1074,8 +1211,9 @@ describe('runNav — the busy marker', () => {
     }
   );
 
-  // The overtaken move's way out through the catch: it must leave alone the
-  // marker the newer move set, because the lock is no longer its own.
+  // The overtaken move's way out through the catch: it answers superseded, as
+  // it would had its loader resolved, and leaves alone the marker the newer
+  // move set, because the lock is no longer its own.
   it("stays when an overtaken move's loader throws while the newer one loads", async () => {
     const fail = deferred<void>();
     const gate = deferred<void>();
@@ -1104,7 +1242,7 @@ describe('runNav — the busy marker', () => {
     });
 
     fail.resolve();
-    await expect(first).rejects.toThrow('offline');
+    expect(await first).toMatchObject({ ok: false, reason: 'superseded' });
     expect(host.read().busy).toEqual(['payment']);
 
     gate.resolve();
