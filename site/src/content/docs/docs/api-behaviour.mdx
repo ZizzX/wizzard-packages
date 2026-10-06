@@ -187,15 +187,14 @@ though each entry is bundled on its own and carries its own copy.
 
 Some failures happen where nothing called the library and nothing could catch a throw: inside a
 plugin's hook or a listener, while the wizard is torn down, or when a provider starts the wizard on
-mount. Those
-are logged with `console.error` in the same four sentences, with what was thrown as the second
-argument, and the wizard carries on.
+mount. Those are logged with `console.error` in the same four sentences, with what was thrown as the
+second argument, and the wizard carries on.
 
 | What failed                                                                 | What happens next                              | Code                                                               |
 | --------------------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------ |
 | a plugin's `init` threw, or its `onCommit` or `onAttempt` threw or rejected | the plugin is switched off, reported once      | [plugin-disabled](../../errors/plugin-disabled/)                   |
 | a plugin's `afterNavigate` threw or rejected                                | the move stands, the plugin stays on           | [after-navigate-threw](../../errors/after-navigate-threw/)         |
-| a listener passed to `subscribe`, `select` or `watch` threw or rejected     | the change stands, every other listener runs   | [listener-threw](../../errors/listener-threw/)                     |
+| a function passed to `subscribe`, `select` or `watch` threw or rejected     | the change stands, every other listener runs   | [listener-threw](../../errors/listener-threw/)                     |
 | a teardown threw or rejected during `destroy()`                             | the other teardowns still run                  | [plugin-teardown-failed](../../errors/plugin-teardown-failed/)     |
 | the provider's first move threw on mount                                    | no step is ready until `start()` runs again    | [start-failed](../../errors/start-failed/)                         |
 | `persist()`'s `onRestore` threw or rejected                                 | the outcome stands, logged with `console.warn` | [persist-on-restore-threw](../../errors/persist-on-restore-threw/) |

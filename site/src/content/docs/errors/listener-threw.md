@@ -9,8 +9,10 @@ listener still hears it. Fix that function, or catch inside it. …/errors/liste
 ```
 
 Printed with `console.error` by `createWizard` from `@wizzard-packages/core`, with what was thrown
-as the second argument, each time it throws. The function is the listener, or for `select` also
-the selector or the `equals` it was given: both run on every change, before the listener is called.
+as the second argument, each time it throws on a change. The function is the listener, or for
+`select` also the selector or the `equals` it was given: both run on every change, before the
+listener is called. The selector's first call, made by `select()` itself, throws to its caller and
+subscribes nothing.
 
 A listener is called inside the write that changed the state, and a move writes more than once: it
 takes the lock, may mark a step as loading, and then lands or releases. A throw that escaped there

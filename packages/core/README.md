@@ -94,9 +94,9 @@ instead and carries on. A plugin that throws in `init`, or throws or rejects in 
 `onAttempt`, is switched off for good (`plugin-disabled`); one that fails in `afterNavigate` is
 reported and stays on, because the move has already happened (`after-navigate-threw`); a teardown
 that fails during `destroy()` is reported and the rest still run (`plugin-teardown-failed`). A
-listener of `subscribe`, `select` or `watch` that throws is reported and stays subscribed, and the
-write it was told about stands, so a move it heard still lands and every other listener still hears
-the change (`listener-threw`).
+function passed to `subscribe`, `select` or `watch` that throws when a change arrives is reported
+and stays subscribed, and the write stands, so a move it heard still lands and every other listener
+still hears the change (`listener-threw`).
 
 ## Entries
 
