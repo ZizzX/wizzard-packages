@@ -368,6 +368,7 @@ async function pipeline(
         state: host.read(),
       });
       if (stale()) return superseded;
+      if (calledOff()) return fail(aborted);
       if (decision === false) return fail({ ok: false, reason: 'blocked', by: h.name });
       if (decision && 'block' in decision) {
         return fail({ ok: false, reason: 'blocked', by: decision.block });
@@ -381,6 +382,7 @@ async function pipeline(
     if (forward && from !== null && opts.validate !== false && ctx.validate) {
       const errors = await ctx.validate(from, host.read());
       if (stale()) return superseded;
+      if (calledOff()) return fail(aborted);
       const now = host.read();
       if (errors && Object.keys(errors).length > 0) {
         // The one early commit: these errors are the result the caller asked for.
@@ -414,6 +416,7 @@ async function pipeline(
       const exit = at.flow.steps[from]?.guards?.exit;
       const allowed = await testAsync(exit, at.scope, registry);
       if (stale()) return superseded;
+      if (calledOff()) return fail(aborted);
       if (!allowed) return fail({ ok: false, reason: 'blocked', by: from });
     }
 
@@ -509,10 +512,11 @@ async function pipeline(
       registry
     );
     if (stale()) return superseded;
-    if (!canEnter) return fail({ ok: false, reason: 'blocked', by: target });
-
-    // 8. Last check before anything is written.
+    // 8. Called off: answered before the guard's verdict, as after every
+    // await. Nothing below awaits, so it is also the last check before
+    // anything is written.
     if (calledOff()) return fail(aborted);
+    if (!canEnter) return fail({ ok: false, reason: 'blocked', by: target });
 
     // The state phase 9 commits from, read here because phase 8 needs it too
     // and the recheck between them is pure.

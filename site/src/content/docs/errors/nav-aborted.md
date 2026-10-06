@@ -12,6 +12,11 @@ Returned, not thrown, by the `next()`, `back()` or `go()` that was in flight whe
 for another move to finish answers it too when the wizard is destroyed meanwhile, rather than
 starting a wizard nothing is listening to any more.
 
+The move stops at the first point it checks after the call: the end of whatever it was awaiting -
+a plugin's `beforeNavigate`, the step's validator, a guard, a loader. Nothing after that runs, and
+the answer is `aborted` even when that step would have refused: a validator that returned errors
+writes none, and a guard that said no is not reported as `blocked`.
+
 `cancel()` aborts the signal a step's `load` and a plugin's `loadStep` receive, so a request that
 honours it stops too. A loader that has not started when the move is called off never starts. The
 move checks the signal before it commits, and the wizard stays on the step it was leaving.

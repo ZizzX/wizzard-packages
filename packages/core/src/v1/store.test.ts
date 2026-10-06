@@ -286,6 +286,34 @@ describe('validation', () => {
 });
 
 describe('navigation through the store', () => {
+  // cancel() while the step being left validates: the move is called off, so
+  // its errors are not the caller's result, and none are written.
+  it('writes no errors for a move cancelled while it validates', async () => {
+    let release = (): void => undefined;
+    const w = createWizard({
+      flow: { id: 'f', order: ['a', 'b'], steps: { a: { validate: { $ref: 'rules' } }, b: {} } },
+      registry: {
+        rules: () =>
+          new Promise<Record<string, string>>((resolve) => {
+            release = () => {
+              resolve({ name: 'required' });
+            };
+          }),
+      },
+    });
+    await w.start();
+
+    const moving = w.next();
+    await vi.waitFor(() => {
+      expect(w.getState().status).toBe('busy');
+    });
+    w.cancel();
+    release();
+    expect(await moving).toMatchObject({ ok: false, reason: 'aborted' });
+    expect(w.getState().errors).toEqual({});
+    expect(w.getSnapshot().current).toBe('a');
+  });
+
   // Called off before it loads: the loader never starts, rather than running
   // with a signal that can no longer tell it to stop.
   it.each(['cancel', 'destroy'] as const)('starts no load once %s() came first', async (stop) => {

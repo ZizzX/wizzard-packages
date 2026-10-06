@@ -759,6 +759,79 @@ describe('runNav — races', () => {
     expect(host.read().busy).toEqual([]);
   });
 
+  // Called off while an earlier phase awaited: the move stops right there.
+  // Nothing after it runs, nothing is written, and the answer is aborted
+  // whatever that phase would have answered.
+  it('stops after a beforeNavigate that calls it off, before anything else runs', async () => {
+    const controller = new AbortController();
+    const called: string[] = [];
+    const ctx: NavContext = {
+      flow,
+      hooks: [
+        {
+          name: 'cancels',
+          beforeNavigate: () => {
+            controller.abort();
+          },
+        },
+        {
+          name: 'later',
+          beforeNavigate: () => {
+            called.push('later');
+          },
+        },
+      ],
+      validate: () => {
+        called.push('validate');
+        return Promise.resolve({ name: 'required' });
+      },
+      signal: controller.signal,
+    };
+
+    expect(await runNav(ctx, host, { type: 'next' })).toMatchObject({
+      ok: false,
+      reason: 'aborted',
+    });
+    expect(called).toEqual([]);
+    expect(host.read().errors).toEqual({});
+    expect(host.read().status).toBe('idle');
+  });
+
+  it.each([
+    ['its validation fails', {}],
+    ['its exit guard refuses', { trip: { guards: { exit: { $ref: 'no' } } } }],
+    ['its enter guard refuses', { payment: { guards: { enter: { $ref: 'no' } } } }],
+  ] as const)(
+    'answers aborted, not the refusal, when it is called off while %s',
+    async (what, steps) => {
+      const controller = new AbortController();
+      const refuse = (): Promise<false> => {
+        controller.abort();
+        return Promise.resolve(false);
+      };
+      const ctx: NavContext = {
+        flow: { ...flow, steps: { ...flow.steps, ...steps } },
+        registry: { no: refuse },
+        validate:
+          what === 'its validation fails'
+            ? () => {
+                controller.abort();
+                return Promise.resolve({ name: 'required' });
+              }
+            : undefined,
+        signal: controller.signal,
+      };
+
+      expect(await runNav(ctx, host, { type: 'next' })).toMatchObject({
+        ok: false,
+        reason: 'aborted',
+      });
+      expect(host.read().errors).toEqual({});
+      expect(host.read().stack).toEqual([{ flow: 'booking', step: 'trip' }]);
+      expect(host.read().status).toBe('idle');
+    }
+  );
+
   it('starts no further loader once a newer move overtakes it during one', async () => {
     const gate = deferred<void>();
     const called: string[] = [];
