@@ -165,10 +165,11 @@ comparisons and <code dir="auto">$in</code> a list of two, and <code dir="auto">
 <a href="../../errors/expr-invalid-operand/"><code dir="auto">expr-invalid-operand</code></a> instead of failing inside with a bare
 <code dir="auto">TypeError</code>, and <code dir="auto">validateFlow</code> reports the same code before the flow runs.</p>
 <p>Where an expression throws decides what the engine does with it. A <code dir="auto">when</code>, a step’s or a
-transition’s, is read as <code dir="auto">false</code> and the step is left out, with <a href="../../errors/when-threw/"><code dir="auto">when-threw</code></a>
-logged once - reachability runs over every step on every move and on every snapshot, so one that
-threw would otherwise stop the whole wizard. A guard throws to the caller of the move it decides.
-A <code dir="auto">repeat.over</code> is read as no items and an <code dir="auto">input</code> as <code dir="auto">undefined</code>.</p>
+transition’s, is read as <code dir="auto">false</code> and the step is left out, with
+<a href="../../errors/when-threw/"><code dir="auto">when-threw</code></a> logged once - reachability runs over every step on every
+move and on every snapshot, so one that threw would otherwise stop the whole wizard. A guard throws
+to the caller of the move it decides, unless that move was overtaken or cancelled by then. A
+<code dir="auto">repeat.over</code> is read as no items and an <code dir="auto">input</code> as <code dir="auto">undefined</code>.</p>
 <p>An expression nests at most 256 levels, counting every object and every list on the way down:
 <code dir="auto">{ $not: e }</code> is one level above <code dir="auto">e</code>, and <code dir="auto">{ $and: [e] }</code> two, the object and its list. Nothing
 written by hand or by a generator comes near that. The limit is there for a pasted or hostile

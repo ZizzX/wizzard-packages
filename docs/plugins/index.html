@@ -194,7 +194,9 @@ a plugin that failed once has no state the engine can trust.</li>
 <a href="../../errors/plugin-teardown-failed/"><code dir="auto">plugin-teardown-failed</code></a>, and the other teardowns still
 run.</li>
 <li><code dir="auto">beforeNavigate</code> and <code dir="auto">loadStep</code> throwing is not caught: the move is abandoned, the wizard
-returns to idle, and the exception reaches whoever called <code dir="auto">next()</code>. The plugin stays enabled -
+returns to idle, and the exception reaches whoever called <code dir="auto">next()</code> - unless the move was
+overtaken or cancelled by then, when it answers <code dir="auto">superseded</code> or <code dir="auto">aborted</code> and <code dir="auto">onAttempt</code>
+reports an <code dir="auto">end</code>, not an <code dir="auto">error</code>. The plugin stays enabled -
 a network failure in a loader is the caller’s to handle, not a reason to switch persistence off.</li>
 </ul>
 <p>A plugin that means to refuse should return a refusal rather than throw. <a href="../api-behaviour/">API

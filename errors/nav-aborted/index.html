@@ -77,6 +77,11 @@
 <code dir="auto">destroy()</code> was called. Nothing is written, and neither call returns anything. A <code dir="auto">start()</code> waiting
 for another move to finish answers it too when the wizard is destroyed meanwhile, rather than
 starting a wizard nothing is listening to any more.</p>
+<p>The move stops at the first point it checks after the call: the end of whatever it was awaiting -
+a plugin’s <code dir="auto">beforeNavigate</code>, the step’s validator, a guard, a loader. Nothing after that runs, and
+the answer is <code dir="auto">aborted</code> even when that step would have refused or thrown: a validator that returned
+errors writes none, a guard that said no is not reported as <code dir="auto">blocked</code>, and a loader that rejects -
+as <code dir="auto">fetch</code> does with an <code dir="auto">AbortError</code> once its signal is aborted - is not rethrown.</p>
 <p><code dir="auto">cancel()</code> aborts the signal a step’s <code dir="auto">load</code> and a plugin’s <code dir="auto">loadStep</code> receive, so a request that
 honours it stops too. A loader that has not started when the move is called off never starts. The
 move checks the signal before it commits, and the wizard stays on the step it was leaving.</p>
