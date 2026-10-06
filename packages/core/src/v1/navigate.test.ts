@@ -687,6 +687,206 @@ describe('runNav — races', () => {
     expect(host.read().status).toBe('idle');
   });
 
+  // Called off before it loads: neither loader starts. Starting one would hand
+  // it a signal that never aborts - the listener that forwards an abort is
+  // added after the abort already happened - so it could not tell its work is
+  // unwanted.
+  it('calls no loader once the move was aborted before it loads', async () => {
+    const controller = new AbortController();
+    const called: string[] = [];
+    const ctx: NavContext = {
+      flow: {
+        ...flow,
+        steps: { ...flow.steps, payment: { deferred: true, load: { $ref: 'seats' } } },
+      },
+      hooks: [
+        {
+          name: 'cancels',
+          beforeNavigate: () => {
+            controller.abort();
+          },
+        },
+        {
+          name: 'server',
+          loadStep: () => {
+            called.push('loadStep');
+            return Promise.resolve();
+          },
+        },
+      ],
+      load: () => {
+        called.push('load');
+        return Promise.resolve();
+      },
+      signal: controller.signal,
+    };
+
+    expect(await runNav(ctx, host, { type: 'next' })).toMatchObject({
+      ok: false,
+      reason: 'aborted',
+    });
+    expect(called).toEqual([]);
+    expect(host.read().busy).toEqual([]);
+    expect(host.read().status).toBe('idle');
+  });
+
+  // A listener of the busy write can call the move off too - after any check
+  // made before that write, and before the abort can be forwarded.
+  it('starts no loader when the busy write itself calls the move off', async () => {
+    const controller = new AbortController();
+    const called: string[] = [];
+    const watching: NavHost = {
+      read: host.read,
+      write: (next) => {
+        host.write(next);
+        if (next.busy.includes('payment')) controller.abort();
+      },
+    };
+    const ctx: NavContext = {
+      flow: { ...flow, steps: { ...flow.steps, payment: { load: { $ref: 'seats' } } } },
+      load: () => {
+        called.push('load');
+        return Promise.resolve();
+      },
+      signal: controller.signal,
+    };
+
+    expect(await runNav(ctx, watching, { type: 'next' })).toMatchObject({
+      ok: false,
+      reason: 'aborted',
+    });
+    expect(called).toEqual([]);
+    expect(host.read().busy).toEqual([]);
+  });
+
+  it('starts no further loader once a newer move overtakes it during one', async () => {
+    const gate = deferred<void>();
+    const called: string[] = [];
+    const ctx: NavContext = {
+      flow: { ...flow, steps: { ...flow.steps, payment: { deferred: true } } },
+      hooks: [
+        {
+          name: 'one',
+          loadStep: async () => {
+            called.push('one');
+            await gate.promise;
+          },
+        },
+        {
+          name: 'two',
+          loadStep: () => {
+            called.push('two');
+            return Promise.resolve();
+          },
+        },
+      ],
+    };
+
+    const running = runNav(ctx, host, { type: 'next' });
+    await vi.waitFor(() => {
+      expect(called).toEqual(['one']);
+    });
+    await runNav({ flow }, host, { type: 'go', to: 'trip', force: true });
+    gate.resolve();
+
+    expect(await running).toMatchObject({ ok: false, reason: 'superseded' });
+    expect(called).toEqual(['one']);
+  });
+
+  // Called off and overtaken at once, by the same listener: the newer move
+  // owns the lock, so this one answers superseded, as it would after any await.
+  // Both before `load` and before each `loadStep`.
+  it.each([
+    ['load', { load: { $ref: 'seats' } }],
+    ['loadStep', { deferred: true }],
+  ] as const)(
+    'answers superseded when the busy write both calls the move off and overtakes it, before %s',
+    async (_, payment) => {
+      const controller = new AbortController();
+      const called: string[] = [];
+      let newer: Promise<unknown> | undefined;
+      const watching: NavHost = {
+        read: host.read,
+        write: (next) => {
+          host.write(next);
+          if (newer === undefined && next.busy.includes('payment')) {
+            controller.abort();
+            newer = runNav({ flow }, host, { type: 'go', to: 'trip', force: true });
+          }
+        },
+      };
+      const ctx: NavContext = {
+        flow: { ...flow, steps: { ...flow.steps, payment } },
+        hooks: [
+          {
+            name: 'server',
+            loadStep: () => {
+              called.push('loadStep');
+              return Promise.resolve();
+            },
+          },
+        ],
+        load: () => {
+          called.push('load');
+          return Promise.resolve();
+        },
+        signal: controller.signal,
+      };
+
+      expect(await runNav(ctx, watching, { type: 'next' })).toMatchObject({
+        ok: false,
+        reason: 'superseded',
+      });
+      await newer;
+      expect(called).toEqual([]);
+      expect(host.read().stack).toEqual([{ flow: 'booking', step: 'trip' }]);
+    }
+  );
+
+  it('starts no further loader once the move is called off during one', async () => {
+    const controller = new AbortController();
+    const gate = deferred<void>();
+    const called: string[] = [];
+    const ctx: NavContext = {
+      flow: {
+        ...flow,
+        steps: { ...flow.steps, payment: { deferred: true, load: { $ref: 'seats' } } },
+      },
+      hooks: [
+        {
+          name: 'one',
+          loadStep: async () => {
+            called.push('one');
+            await gate.promise;
+          },
+        },
+        {
+          name: 'two',
+          loadStep: () => {
+            called.push('two');
+            return Promise.resolve();
+          },
+        },
+      ],
+      load: () => {
+        called.push('load');
+        return Promise.resolve();
+      },
+      signal: controller.signal,
+    };
+
+    const running = runNav(ctx, host, { type: 'next' });
+    await vi.waitFor(() => {
+      expect(called).toEqual(['one']);
+    });
+    controller.abort();
+    gate.resolve();
+
+    expect(await running).toMatchObject({ ok: false, reason: 'aborted' });
+    expect(called).toEqual(['one']);
+    expect(host.read().busy).toEqual([]);
+  });
+
   // The flow changes only through patchFlow, so nothing a plugin resolves
   // here could be applied; the type says so rather than promising a StepDef.
   it('types loadStep as work to await, with nothing read back', () => {
