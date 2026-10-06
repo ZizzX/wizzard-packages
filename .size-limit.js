@@ -161,7 +161,7 @@ export default [
   // `start()` may enter in place, whatever options a caller passes; both
   // branches of `start()` wait for a move already on its way and move nothing
   // once the engine is destroyed (T-078).
-  // 7.1 to 7.2 kB on 2026-10-06, measured 7163 B: a listener of `subscribe`,
+  // 7.1 to 7.2 kB on 2026-10-06, measured 7165 B: a listener of `subscribe`,
   // `select` or `watch` that throws is logged as `listener-threw` and passed
   // over, instead of becoming the answer to the move whose write it heard and
   // keeping every listener after it - a binding's too - from hearing the change.

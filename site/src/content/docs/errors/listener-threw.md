@@ -4,12 +4,13 @@ description: A listener passed to subscribe, select or watch threw, inside the w
 ---
 
 ```
-[wizzard] a listener passed to subscribe, select or watch threw. The change stands, and every other
-listener still hears it. Fix the listener, or catch inside it. …/errors/listener-threw
+[wizzard] a function passed to subscribe, select or watch threw. The change stands, and every other
+listener still hears it. Fix that function, or catch inside it. …/errors/listener-threw
 ```
 
-Printed with `console.error` by `createWizard` from `@wizzard-packages/core`, with what the listener
-threw as the second argument, each time it throws.
+Printed with `console.error` by `createWizard` from `@wizzard-packages/core`, with what was thrown
+as the second argument, each time it throws. The function is the listener, or for `select` also
+the selector or the `equals` it was given: both run on every change, before the listener is called.
 
 A listener is called inside the write that changed the state, and a move writes more than once: it
 takes the lock, may mark a step as loading, and then lands or releases. A throw that escaped there
@@ -20,5 +21,5 @@ and the one that threw stays subscribed: it runs again on the next change, and i
 there it throws and prints this again. A listener whose promise rejects is reported the same way,
 when it rejects.
 
-Read the error logged beside the message. Fix the listener, or wrap its body in a `try` if what it
+Read the error logged beside the message. Fix the function, or wrap its body in a `try` if what it
 calls is allowed to fail.

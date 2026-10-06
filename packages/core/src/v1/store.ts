@@ -158,6 +158,19 @@ export interface Wizard<F extends FlowDefinition = FlowDefinition> {
 
 const strictEquals = <T>(a: T, b: T): boolean => a === b;
 const settled = (): void => undefined;
+// One function for every listener on every write, so a write allocates no
+// report of its own. A `select` selector or `equals` runs inside its wrapper,
+// which is why the message names a function rather than the listener.
+const listenerThrew = (error: unknown): void => {
+  console.error(
+    explain('listener-threw', [
+      'a function passed to subscribe, select or watch threw',
+      'The change stands, and every other listener still hears it',
+      'Fix that function, or catch inside it',
+    ]),
+    error
+  );
+};
 
 export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>): Wizard<F> {
   // Widened on purpose: `patchFlow` replaces it with something that is no longer `F`.
@@ -234,18 +247,7 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
       dirtyWhileBatching = true;
       return;
     }
-    for (const l of listeners) {
-      guard(l, (error) => {
-        console.error(
-          explain('listener-threw', [
-            'a listener passed to subscribe, select or watch threw',
-            'The change stands, and every other listener still hears it',
-            'Fix the listener, or catch inside it',
-          ]),
-          error
-        );
-      });
-    }
+    for (const l of listeners) guard(l, listenerThrew);
   };
 
   /**
