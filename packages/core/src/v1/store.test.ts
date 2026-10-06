@@ -182,6 +182,78 @@ describe('subscriptions', () => {
     w.set('name', 'Bo');
     expect(listener).not.toHaveBeenCalled();
   });
+
+  // A listener runs inside the write, and a move writes several times. One
+  // that throws must not become the move's answer, nor keep the listeners
+  // after it - a binding's among them - from hearing the change.
+  it('lands the move and notifies every other listener when one throws', async () => {
+    const errors: unknown[][] = [];
+    const spy = vi.spyOn(console, 'error').mockImplementation((...args) => errors.push(args));
+    const landed: unknown[] = [];
+    const phases: string[] = [];
+    const w = createWizard({
+      flow,
+      registry,
+      data: { payer: 'private', name: 'Ann' },
+      plugins: [
+        {
+          name: 'log',
+          afterNavigate: (e) => landed.push(e.to),
+          onAttempt: (a) => phases.push(a.phase),
+        },
+      ],
+    });
+    await w.start();
+    const statuses: string[] = [];
+    w.subscribe(() => {
+      throw new TypeError('listener broke');
+    });
+    w.subscribe(() => statuses.push(w.getState().status));
+
+    expect(await w.next()).toEqual({ ok: true, from: 'trip', to: 'payment' });
+    expect(statuses).toEqual(['busy', 'idle']);
+    expect(landed).toEqual(['trip', 'payment']);
+    expect(phases).toEqual(['start', 'end', 'start', 'end']);
+    expect(errors).toEqual([
+      [expect.stringContaining(pageFor('listener-threw')), expect.any(TypeError)],
+      [expect.stringContaining(pageFor('listener-threw')), expect.any(TypeError)],
+    ]);
+    spy.mockRestore();
+  });
+
+  it('answers aborted when a listener cancels the move and then throws', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const w = make();
+    await w.start();
+    w.subscribe(() => {
+      if (w.getState().status !== 'busy') return;
+      w.cancel();
+      throw new TypeError('listener broke');
+    });
+
+    expect(await w.next()).toMatchObject({ ok: false, reason: 'aborted' });
+    expect(w.getState().status).toBe('idle');
+    expect(w.getSnapshot().current).toBe('trip');
+    spy.mockRestore();
+  });
+
+  it('releases the lock once when a listener of the release throws', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const w = createWizard({
+      flow,
+      registry,
+      plugins: [{ name: 'gate', beforeNavigate: () => false }],
+    });
+    const statuses: string[] = [];
+    w.subscribe(() => {
+      statuses.push(w.getState().status);
+      if (w.getState().status === 'idle') throw new TypeError('listener broke');
+    });
+
+    expect(await w.next()).toMatchObject({ ok: false, reason: 'blocked', by: 'gate' });
+    expect(statuses).toEqual(['busy', 'idle']);
+    spy.mockRestore();
+  });
 });
 
 describe('data', () => {

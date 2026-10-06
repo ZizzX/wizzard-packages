@@ -223,12 +223,29 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
   let snapshotRev = -1;
   let snapshot: Snapshot | undefined;
 
+  /**
+   * A listener runs inside the write, and a move writes several times, so one
+   * that throws is reported and passed over rather than becoming the answer to
+   * the move - and the listeners after it, a binding's among them, still hear
+   * the change. It stays subscribed, like a plugin's `afterNavigate`.
+   */
   const notify = (): void => {
     if (batching) {
       dirtyWhileBatching = true;
       return;
     }
-    for (const l of listeners) l();
+    for (const l of listeners) {
+      guard(l, (error) => {
+        console.error(
+          explain('listener-threw', [
+            'a listener passed to subscribe, select or watch threw',
+            'The change stands and every other listener heard it',
+            'Fix the listener, or catch inside it',
+          ]),
+          error
+        );
+      });
+    }
   };
 
   /**
