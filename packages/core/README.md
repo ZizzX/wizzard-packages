@@ -93,7 +93,10 @@ A plugin's failure has no caller to throw to, so the engine logs it in the same 
 instead and carries on. A plugin that throws in `init`, or throws or rejects in `onCommit` or
 `onAttempt`, is switched off for good (`plugin-disabled`); one that fails in `afterNavigate` is
 reported and stays on, because the move has already happened (`after-navigate-threw`); a teardown
-that fails during `destroy()` is reported and the rest still run (`plugin-teardown-failed`).
+that fails during `destroy()` is reported and the rest still run (`plugin-teardown-failed`). A
+function passed to `subscribe`, `select` or `watch` that throws when a change arrives is reported
+and stays subscribed, and the write stands, so a move it heard still lands and every other listener
+still hears the change (`listener-threw`).
 
 ## Entries
 

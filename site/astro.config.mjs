@@ -166,6 +166,7 @@ export default defineConfig({
             { label: 'plugin-disabled', link: '/errors/plugin-disabled/' },
             { label: 'after-navigate-threw', link: '/errors/after-navigate-threw/' },
             { label: 'plugin-teardown-failed', link: '/errors/plugin-teardown-failed/' },
+            { label: 'listener-threw', link: '/errors/listener-threw/' },
             { label: 'nav-invalid', link: '/errors/nav-invalid/' },
             { label: 'nav-blocked', link: '/errors/nav-blocked/' },
             { label: 'nav-no-target', link: '/errors/nav-no-target/' },

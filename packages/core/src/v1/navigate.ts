@@ -578,9 +578,10 @@ async function pipeline(
     // like one that resolved: those win over what it said. A loader that
     // honours the signal rejects exactly then - fetch throws an AbortError -
     // and that is the cancel, not a failure. Not once the move has written
-    // its answer: a listener of that write threw, the move did land, and that
-    // write already released the lock - releasing again would turn a finished
-    // wizard back to idle.
+    // its answer: the host's `write` threw after storing it - the store's
+    // never does, it passes over a listener that throws, but a host handed to
+    // `runNav` may - so the move did land, and that write already released
+    // the lock. Releasing again would turn a finished wizard back to idle.
     if (!committed) {
       if (stale()) return superseded;
       if (calledOff()) return fail(aborted);

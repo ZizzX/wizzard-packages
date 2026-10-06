@@ -17,10 +17,10 @@ import type { FlowDefinition, WizardState } from '@wizzard-packages/core';
  * pair a new commit with the outcome list from before it, and the strip would
  * then say a move succeeded while the state below it is the refused one.
  *
- * Every callback registered here runs under a catch. The engine calls its
- * subscribers bare, so a throwing listener would surface inside the host's own
- * `set()`; on a failure the panel unsubscribes, keeps what it has, and reports
- * it (`devtools-stopped`).
+ * Every callback registered here runs under a catch. The engine passes over a
+ * listener that throws (`listener-threw`) but keeps it subscribed, so it would
+ * throw and be logged again on every commit; on a failure the panel
+ * unsubscribes, keeps what it has, and reports it once (`devtools-stopped`).
  */
 
 /** A settled commit, kept with what it takes to draw it after later commits arrive. */
