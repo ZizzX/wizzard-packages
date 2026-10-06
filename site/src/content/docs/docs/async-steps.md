@@ -93,5 +93,5 @@ wizard is destroyed, and only its result is dropped.
 A loader that throws is different: the exception is not a refusal. The wizard returns to idle on the
 step it was on, and the promise from `next()` rejects with whatever the loader threw, for the caller
 to catch and retry. A move that was overtaken or cancelled by then answers `superseded` or `aborted`
-instead - the newer move settles the wizard, and the failure, an `AbortError` included, belongs to a
-move nobody is waiting for. [API behaviour](../api-behaviour/) sets out that division.
+instead, and the failure, an `AbortError` included, is not rethrown. [API
+behaviour](../api-behaviour/) sets out that division.

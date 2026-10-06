@@ -829,13 +829,13 @@ describe('runNav — races', () => {
   // or called cancel() first: the move did land, so it is not answered as
   // refused. The answer is the first write that does not hold the lock.
   it.each([
-    ['lands', 'cancels', { type: 'next' }, undefined],
-    ['lands', 'moves on', { type: 'next' }, undefined],
-    ['finishes', 'cancels', { type: 'go', to: END, force: true }, undefined],
-    ['is refused as invalid', 'cancels', { type: 'next' }, { name: 'required' }],
+    ['lands', 'cancels', { type: 'next' }, undefined, 'idle'],
+    ['lands', 'moves on', { type: 'next' }, undefined, undefined],
+    ['finishes', 'cancels', { type: 'go', to: END, force: true }, undefined, 'done'],
+    ['is refused as invalid', 'cancels', { type: 'next' }, { name: 'required' }, 'idle'],
   ] as const)(
     'rethrows a listener of the write that %s, when it %s and then throws',
-    async (_, does, intent, errors) => {
+    async (_, does, intent, errors, status) => {
       const controller = new AbortController();
       let thrown = false;
       const watching: NavHost = {
@@ -856,6 +856,8 @@ describe('runNav — races', () => {
       };
 
       await expect(runNav(ctx, watching, intent)).rejects.toThrow('listener broke');
+      // The answer stands: a finished wizard stays finished.
+      if (status !== undefined) expect(host.read().status).toBe(status);
     }
   );
 
