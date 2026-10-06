@@ -4,8 +4,8 @@ description: A listener passed to subscribe, select or watch threw, inside the w
 ---
 
 ```
-[wizzard] a listener passed to subscribe, select or watch threw. The change stands and every other
-listener heard it. Fix the listener, or catch inside it. …/errors/listener-threw
+[wizzard] a listener passed to subscribe, select or watch threw. The change stands, and every other
+listener still hears it. Fix the listener, or catch inside it. …/errors/listener-threw
 ```
 
 Printed with `console.error` by `createWizard` from `@wizzard-packages/core`, with what the listener

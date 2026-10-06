@@ -221,6 +221,30 @@ describe('subscriptions', () => {
     spy.mockRestore();
   });
 
+  it.each(['subscribe', 'select', 'watch'] as const)(
+    'reports a %s listener whose promise rejects',
+    async (kind) => {
+      const errors: unknown[][] = [];
+      const spy = vi.spyOn(console, 'error').mockImplementation((...args) => errors.push(args));
+      const w = make();
+      const listener = async (): Promise<void> => {
+        await Promise.resolve();
+        throw new TypeError('listener broke');
+      };
+      if (kind === 'subscribe') w.subscribe(listener);
+      if (kind === 'select') w.select((s) => s.data.name, listener);
+      if (kind === 'watch') w.watch('name', listener);
+
+      w.set('name', 'Bo');
+      await vi.waitFor(() => {
+        expect(errors).toEqual([
+          [expect.stringContaining(pageFor('listener-threw')), expect.any(TypeError)],
+        ]);
+      });
+      spy.mockRestore();
+    }
+  );
+
   it('answers aborted when a listener cancels the move and then throws', async () => {
     const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const w = make();

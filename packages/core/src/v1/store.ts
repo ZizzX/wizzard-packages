@@ -239,7 +239,7 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
         console.error(
           explain('listener-threw', [
             'a listener passed to subscribe, select or watch threw',
-            'The change stands and every other listener heard it',
+            'The change stands, and every other listener still hears it',
             'Fix the listener, or catch inside it',
           ]),
           error
@@ -495,7 +495,9 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
         const nextValue = selector(getSnapshot());
         if (equals(previous, nextValue)) return;
         previous = nextValue;
-        listener(nextValue);
+        // Returned, so a promise the listener rejects reaches the guard in
+        // `notify` - `watch` below does the same.
+        return listener(nextValue);
       };
       listeners.add(wrapped);
       return () => listeners.delete(wrapped);
@@ -507,7 +509,7 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
         const nextValue = getPath(state.data, path);
         if (previous === nextValue) return;
         previous = nextValue;
-        listener(nextValue);
+        return listener(nextValue);
       };
       listeners.add(wrapped);
       return () => listeners.delete(wrapped);
