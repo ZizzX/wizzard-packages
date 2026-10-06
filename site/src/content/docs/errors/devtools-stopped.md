@@ -11,11 +11,12 @@ issue if it happens again. …/errors/devtools-stopped
 
 Shown in the diagnostic strip. The panel keeps what it had; it stops subscribing.
 
-The engine calls its subscribers bare, so a listener that throws surfaces inside the host's
-own `set()` or navigation. Devtools registers several - the store subscription, the plugin's
-subscription, `onRecord`, the legend's `sessionStorage` read - and each runs under its own
-catch. When one throws, the panel unsubscribes rather than throwing into the host: the
-diagnostic tool never becomes the fault. The plugin catches inside its hook bodies for the
+The engine passes over a listener that throws and logs [`listener-threw`](../listener-threw/),
+but that listener stays subscribed and throws again on every commit. Devtools registers several -
+the store subscription, the plugin's subscription, `onRecord`, the legend's `sessionStorage` read -
+and each runs under its own catch. When one throws, the panel unsubscribes and says so here once,
+rather than leaving a broken listener behind to log on every change: the diagnostic tool never
+becomes the fault. The plugin catches inside its hook bodies for the
 same reason, so the engine's `fail()` never has to disable it for a devtools bug.
 
 The wizard is unaffected in every case: it committed what it was going to commit before the
