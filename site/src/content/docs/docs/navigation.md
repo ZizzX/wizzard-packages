@@ -91,7 +91,8 @@ finally resolves. A double-clicked button produces one move and one refusal, nev
 
 `superseded` and `aborted` are checked after every await, before what the awaited step said, so
 they win over it: a move that was overtaken or cancelled while its validator ran answers that, not
-`invalid`, and writes no errors.
+`invalid`, and writes no errors, and one whose validator or loader threw by then answers that
+rather than throwing.
 
 ## Refusals are values, not errors
 

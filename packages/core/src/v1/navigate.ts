@@ -568,6 +568,12 @@ async function pipeline(
 
     return { ok: true, from, to: target };
   } catch (error) {
+    // A step that threw after the move was overtaken or called off answers
+    // like one that resolved: those win over what it said. A loader that
+    // honours the signal rejects exactly then - fetch throws an AbortError -
+    // and that is the cancel, not a failure.
+    if (stale()) return superseded;
+    if (calledOff()) return fail(aborted);
     release();
     throw error;
   }

@@ -797,6 +797,33 @@ describe('runNav — races', () => {
     expect(host.read().status).toBe('idle');
   });
 
+  // A loader that honours the signal rejects as soon as it is aborted - fetch
+  // throws an AbortError. That rejection is the cancel, not a failure: the
+  // move answers aborted rather than throwing it.
+  it('answers aborted, not the rejection, when a loader rejects because it was called off', async () => {
+    const controller = new AbortController();
+    const ctx: NavContext = {
+      flow: { ...flow, steps: { ...flow.steps, payment: { load: { $ref: 'seats' } } } },
+      load: (_id, _load, _scope, signal) =>
+        new Promise<void>((_, reject) => {
+          signal.addEventListener('abort', () => {
+            reject(new DOMException('The operation was aborted.', 'AbortError'));
+          });
+        }),
+      signal: controller.signal,
+    };
+
+    const running = runNav(ctx, host, { type: 'next' });
+    await vi.waitFor(() => {
+      expect(host.read().busy).toEqual(['payment']);
+    });
+    controller.abort();
+
+    expect(await running).toMatchObject({ ok: false, reason: 'aborted' });
+    expect(host.read().busy).toEqual([]);
+    expect(host.read().status).toBe('idle');
+  });
+
   it.each([
     ['its validation fails', {}],
     ['its exit guard refuses', { trip: { guards: { exit: { $ref: 'no' } } } }],
@@ -1147,8 +1174,9 @@ describe('runNav — the busy marker', () => {
     }
   );
 
-  // The overtaken move's way out through the catch: it must leave alone the
-  // marker the newer move set, because the lock is no longer its own.
+  // The overtaken move's way out through the catch: it answers superseded, as
+  // it would had its loader resolved, and leaves alone the marker the newer
+  // move set, because the lock is no longer its own.
   it("stays when an overtaken move's loader throws while the newer one loads", async () => {
     const fail = deferred<void>();
     const gate = deferred<void>();
@@ -1177,7 +1205,7 @@ describe('runNav — the busy marker', () => {
     });
 
     fail.resolve();
-    await expect(first).rejects.toThrow('offline');
+    expect(await first).toMatchObject({ ok: false, reason: 'superseded' });
     expect(host.read().busy).toEqual(['payment']);
 
     gate.resolve();

@@ -286,6 +286,34 @@ describe('validation', () => {
 });
 
 describe('navigation through the store', () => {
+  // The pattern the docs recommend: a loader hands the signal to its request,
+  // which rejects the moment cancel() aborts it. The move answers, not throws.
+  it('answers cancel() with aborted when the loader honours the signal', async () => {
+    let loading = false;
+    const w = createWizard({
+      flow: { id: 'f', order: ['a', 'b'], steps: { a: {}, b: { load: { $ref: 'seats' } } } },
+      registry: {
+        seats: (_args, _scope, signal) =>
+          new Promise<void>((_, reject) => {
+            loading = true;
+            signal?.addEventListener('abort', () => {
+              reject(new DOMException('The operation was aborted.', 'AbortError'));
+            });
+          }),
+      },
+    });
+    await w.start();
+
+    const moving = w.next();
+    await vi.waitFor(() => {
+      expect(loading).toBe(true);
+    });
+    w.cancel();
+    expect(await moving).toMatchObject({ ok: false, reason: 'aborted' });
+    expect(w.getSnapshot().current).toBe('a');
+    expect(w.getSnapshot().isBusy).toBe(false);
+  });
+
   // cancel() while the step being left validates: the move is called off, so
   // its errors are not the caller's result, and none are written.
   it('writes no errors for a move cancelled while it validates', async () => {
