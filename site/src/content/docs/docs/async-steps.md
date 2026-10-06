@@ -27,7 +27,8 @@ registry: {
 
 The resolver receives the `args` from the definition, the scope the target sits in, and the
 move's `AbortSignal`. `cancel()` aborts the latest move while it runs, and `destroy()` every move
-still running, so a request handed the signal stops with them. A newer move that overtakes this
+still running, so a request handed the signal stops with them. A move called off before it reaches
+the load calls neither `load` nor `loadStep`. A newer move that overtakes this
 one does not abort it, and a later `cancel()` reaches only that newer move - nothing at all once
 it has settled. Inside a repeat group the scope is the target's own, so `loop.item` is the item
 being entered, not the one being left.

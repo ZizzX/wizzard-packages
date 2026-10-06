@@ -312,6 +312,8 @@ async function pipeline(
   const from = currentOf(locked);
   const forward = intent.type !== 'back';
   const stale = (): boolean => !isCurrent(host.read(), token);
+  /** Whether `cancel()` or `destroy()` aborted this move. Read again after every await. */
+  const calledOff = (): boolean => ctx.signal?.aborted === true;
   /** Whether `h` is still enabled now, not when the move began. */
   const live = (h: Hooks): boolean => ctx.hooks?.includes(h) === true;
 
@@ -464,6 +466,9 @@ async function pipeline(
 
     // 6. Load. The only phase that may take real time.
     if (step.deferred === true || step.load !== undefined) {
+      // Called off already: the listener below never hears an abort that came
+      // before it, so a loader would run holding a signal that never aborts.
+      if (calledOff()) return fail(aborted);
       const busyAt = host.read();
       host.write(commit(busyAt, { busy: add(busyAt.busy, target) }));
 
@@ -487,7 +492,7 @@ async function pipeline(
       }
 
       if (stale()) return superseded;
-      if (ctx.signal?.aborted === true) return fail(aborted);
+      if (calledOff()) return fail(aborted);
     }
 
     // 7. Enter guard. A group move brings its own scope, because the target's
@@ -501,7 +506,7 @@ async function pipeline(
     if (!canEnter) return fail({ ok: false, reason: 'blocked', by: target });
 
     // 8. Last check before anything is written.
-    if (ctx.signal?.aborted === true) return fail(aborted);
+    if (calledOff()) return fail(aborted);
 
     // The state phase 9 commits from, read here because phase 8 needs it too
     // and the recheck between them is pure.

@@ -286,6 +286,39 @@ describe('validation', () => {
 });
 
 describe('navigation through the store', () => {
+  // Called off before it loads: the loader never starts, rather than running
+  // with a signal that can no longer tell it to stop.
+  it.each(['cancel', 'destroy'] as const)('starts no load once %s() came first', async (stop) => {
+    let calls = 0;
+    let release = (): void => undefined;
+    const w = createWizard({
+      flow: { id: 'f', order: ['a', 'b'], steps: { a: {}, b: { load: { $ref: 'seats' } } } },
+      registry: {
+        seats: () => {
+          calls += 1;
+        },
+      },
+      plugins: [
+        {
+          name: 'asks',
+          beforeNavigate: ({ from }) =>
+            from === null
+              ? undefined
+              : new Promise<void>((resolve) => {
+                  release = resolve;
+                }),
+        },
+      ],
+    });
+    await w.start();
+
+    const moving = w.next();
+    w[stop]();
+    release();
+    expect(await moving).toMatchObject({ ok: false, reason: 'aborted' });
+    expect(calls).toBe(0);
+  });
+
   // cancel() stops the work as well as the move: the loader holds the signal
   // the move was given, and can hand it to fetch.
   it.each(['cancel', 'destroy'] as const)(

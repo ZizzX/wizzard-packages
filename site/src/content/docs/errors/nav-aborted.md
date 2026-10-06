@@ -13,7 +13,7 @@ for another move to finish answers it too when the wizard is destroyed meanwhile
 starting a wizard nothing is listening to any more.
 
 `cancel()` aborts the signal a step's `load` and a plugin's `loadStep` receive, so a request that
-honours it stops too. The move checks the signal before it commits, and the wizard stays on the
+honours it stops too. A move called off before it reaches the load does not start either of them. The move checks the signal before it commits, and the wizard stays on the
 step it was leaving.
 
 The application asked for this, so there is usually nothing to fix. If you see it without calling

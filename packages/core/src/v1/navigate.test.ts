@@ -687,6 +687,49 @@ describe('runNav — races', () => {
     expect(host.read().status).toBe('idle');
   });
 
+  // Called off before it loads: neither loader starts. Starting one would hand
+  // it a signal that never aborts - the listener that forwards an abort is
+  // added after the abort already happened - so it could not tell its work is
+  // unwanted.
+  it('calls no loader once the move was aborted before it loads', async () => {
+    const controller = new AbortController();
+    const called: string[] = [];
+    const ctx: NavContext = {
+      flow: {
+        ...flow,
+        steps: { ...flow.steps, payment: { deferred: true, load: { $ref: 'seats' } } },
+      },
+      hooks: [
+        {
+          name: 'cancels',
+          beforeNavigate: () => {
+            controller.abort();
+          },
+        },
+        {
+          name: 'server',
+          loadStep: () => {
+            called.push('loadStep');
+            return Promise.resolve();
+          },
+        },
+      ],
+      load: () => {
+        called.push('load');
+        return Promise.resolve();
+      },
+      signal: controller.signal,
+    };
+
+    expect(await runNav(ctx, host, { type: 'next' })).toMatchObject({
+      ok: false,
+      reason: 'aborted',
+    });
+    expect(called).toEqual([]);
+    expect(host.read().busy).toEqual([]);
+    expect(host.read().status).toBe('idle');
+  });
+
   // The flow changes only through patchFlow, so nothing a plugin resolves
   // here could be applied; the type says so rather than promising a StepDef.
   it('types loadStep as work to await, with nothing read back', () => {
