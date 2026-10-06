@@ -795,37 +795,53 @@ describe('runNav — races', () => {
 
   // Called off and overtaken at once, by the same listener: the newer move
   // owns the lock, so this one answers superseded, as it would after any await.
-  it('answers superseded when the busy write both calls the move off and overtakes it', async () => {
-    const controller = new AbortController();
-    const called: string[] = [];
-    let newer: Promise<unknown> | undefined;
-    const watching: NavHost = {
-      read: host.read,
-      write: (next) => {
-        host.write(next);
-        if (newer === undefined && next.busy.includes('payment')) {
-          controller.abort();
-          newer = runNav({ flow }, host, { type: 'go', to: 'trip', force: true });
-        }
-      },
-    };
-    const ctx: NavContext = {
-      flow: { ...flow, steps: { ...flow.steps, payment: { load: { $ref: 'seats' } } } },
-      load: () => {
-        called.push('load');
-        return Promise.resolve();
-      },
-      signal: controller.signal,
-    };
+  // Both before `load` and before each `loadStep`.
+  it.each([
+    ['load', { load: { $ref: 'seats' } }],
+    ['loadStep', { deferred: true }],
+  ] as const)(
+    'answers superseded when the busy write both calls the move off and overtakes it, before %s',
+    async (_, payment) => {
+      const controller = new AbortController();
+      const called: string[] = [];
+      let newer: Promise<unknown> | undefined;
+      const watching: NavHost = {
+        read: host.read,
+        write: (next) => {
+          host.write(next);
+          if (newer === undefined && next.busy.includes('payment')) {
+            controller.abort();
+            newer = runNav({ flow }, host, { type: 'go', to: 'trip', force: true });
+          }
+        },
+      };
+      const ctx: NavContext = {
+        flow: { ...flow, steps: { ...flow.steps, payment } },
+        hooks: [
+          {
+            name: 'server',
+            loadStep: () => {
+              called.push('loadStep');
+              return Promise.resolve();
+            },
+          },
+        ],
+        load: () => {
+          called.push('load');
+          return Promise.resolve();
+        },
+        signal: controller.signal,
+      };
 
-    expect(await runNav(ctx, watching, { type: 'next' })).toMatchObject({
-      ok: false,
-      reason: 'superseded',
-    });
-    await newer;
-    expect(called).toEqual([]);
-    expect(host.read().stack).toEqual([{ flow: 'booking', step: 'trip' }]);
-  });
+      expect(await runNav(ctx, watching, { type: 'next' })).toMatchObject({
+        ok: false,
+        reason: 'superseded',
+      });
+      await newer;
+      expect(called).toEqual([]);
+      expect(host.read().stack).toEqual([{ flow: 'booking', step: 'trip' }]);
+    }
+  );
 
   it('starts no further loader once the move is called off during one', async () => {
     const controller = new AbortController();
