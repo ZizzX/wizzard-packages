@@ -46,14 +46,15 @@ const TARGET = String.raw`(?:<([^<>\n]*)>|((?:[^()\s]|\([^()\s]*\))+))`;
 const INLINE = new RegExp(String.raw`\]\(\s*${TARGET}`, 'g');
 const DEFINITION = new RegExp(String.raw`^\s*\[[^\]]+\]:\s*${TARGET}`);
 
-/** A `%` that does not start an escape is a character of the name, not an error. */
-const decode = (path) => {
-  try {
-    return decodeURIComponent(path);
-  } catch {
-    return path;
-  }
-};
+/** Each run of escapes is decoded on its own, so a `%` that starts none stays part of the name. */
+const decode = (path) =>
+  path.replace(/(%[\da-f]{2})+/gi, (run) => {
+    try {
+      return decodeURIComponent(run);
+    } catch {
+      return run;
+    }
+  });
 
 /** `docs/flow.md` is served at `/docs/flow/`, an `index` at its folder. */
 const routeOf = (path) =>
@@ -72,43 +73,65 @@ export const routes = (root) => {
   return found;
 };
 
-/** Inline links and reference definitions, with their line, outside code. */
+/** A code span opens on a whole run of backticks and closes on a run of the same length. */
+const SPAN = /(?<!`)(`+)(?!`)(.*?[^`])\1(?!`)/g;
+
+/** Inline links and reference definitions, with their line, outside code and comments. */
 export const links = (text) => {
   const found = [];
-  /** The open fence's marker: it closes on the same character, at least as long, with nothing after. */
+  /**
+   * The open fence and how deep in quotes it sits. It closes on the same
+   * character, at least as long, at the same depth, with nothing after.
+   */
   let fence = null;
+  /** Inside a comment that started a line and has not closed yet. */
   let comment = false;
   text.split(/\r?\n/).forEach((raw, index) => {
-    const marker = raw.match(/^[\s>]*(`{3,}|~{3,})(.*)$/);
-    if (marker && !fence) fence = marker[1];
-    else if (
-      marker &&
-      marker[1][0] === fence[0] &&
-      marker[1].length >= fence.length &&
-      !marker[2].trim()
-    )
-      fence = null;
-    if (fence || marker) return;
     let line = raw;
     if (comment) {
       const end = line.indexOf('-->');
       if (end < 0) return;
       [comment, line] = [false, line.slice(end + 3)];
     }
-    line = line.replace(/<!--.*?-->/g, '');
-    if (line.includes('<!--')) [comment, line] = [true, line.slice(0, line.indexOf('<!--'))];
-    line = line.replace(/(?<!`)(`+)(?!`)(.*?[^`])\1(?!`)/g, '');
-    const add = (match) => found.push({ line: index + 1, target: match[1] ?? match[2] });
-    for (const match of line.matchAll(INLINE)) add(match);
-    const definition = line.match(DEFINITION);
-    if (definition) add(definition);
+    const marker = line.match(/^([\s>]*)(`{3,}|~{3,})(.*)$/);
+    const depth = marker?.[1].split('>').length;
+    // A backtick fence cannot carry a backtick after it: ```a``` is a code span.
+    if (marker && !fence && !(marker[2][0] === '`' && marker[3].includes('`')))
+      fence = { marker: marker[2], depth };
+    else if (
+      fence &&
+      marker &&
+      marker[2][0] === fence.marker[0] &&
+      marker[2].length >= fence.marker.length &&
+      depth === fence.depth &&
+      !marker[3].trim()
+    )
+      fence = null;
+    else if (!fence) {
+      // Spans first: a `<!--` written in one is text, not the start of a comment.
+      line = line.replace(SPAN, '').replace(/<!--.*?-->/g, '');
+      if (/^ {0,3}<!--/.test(line)) {
+        comment = true;
+        return;
+      }
+      const add = (match) => found.push({ line: index + 1, target: match[1] ?? match[2] });
+      for (const match of line.matchAll(INLINE)) add(match);
+      const definition = line.match(DEFINITION);
+      if (definition) add(definition);
+    }
   });
   return found;
 };
 
 /** Why `target`, written in `file`, leads nowhere - or `null` when it leads somewhere. */
 const deadEnd = (root, pages, file, target) => {
-  const page = (path) => {
+  const page = (url, base) => {
+    let path;
+    try {
+      path = new URL(url, base).pathname;
+    } catch {
+      return 'is not a URL';
+    }
     if (!path.startsWith(`${BASE}/`)) return 'is outside the site';
     const route = path.slice(BASE.length).replace(/\/?$/, '/');
     if (route.startsWith(GENERATED) && !existsSync(join(root, CONTENT, GENERATED))) return null;
@@ -118,13 +141,12 @@ const deadEnd = (root, pages, file, target) => {
 
   const repo = target.match(REPO);
   if (repo) return missing(join(root, decode(repo[1])));
-  if (target.startsWith(SITE)) return page(new URL(target).pathname);
+  if (target.startsWith(SITE)) return page(target);
   if (/^[a-z][a-z\d+.-]*:/i.test(target)) return null;
   const path = decode(target.replace(/[#?].*$/, ''));
   // A page links to another page by URL; an image beside it is still a file.
   if (file.startsWith(`${CONTENT}/`) && !/\.\w+$/.test(path)) {
-    const from = `https://site${BASE}${routeOf(file.slice(CONTENT.length + 1))}`;
-    return page(new URL(target, from).pathname);
+    return page(target, `https://site${BASE}${routeOf(file.slice(CONTENT.length + 1))}`);
   }
   return missing(path.startsWith('/') ? join(root, path) : join(root, dirname(file), path));
 };

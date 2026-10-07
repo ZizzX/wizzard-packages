@@ -23,6 +23,8 @@ const scratch = (files: Record<string, string>): string[] => {
     'docs/RELEASE.md': '# Release',
     'docs/with space.md': '',
     'docs/a(1).md': '',
+    'docs/50%.md': '',
+    'docs/a b%.md': '',
     'site/src/content/docs/docs/graph.png': '',
     'site/src/content/docs/docs/flow.md': '# The flow',
     'site/src/content/docs/errors/nav-blocked.md': '# nav-blocked',
@@ -130,7 +132,14 @@ describe('check-links', () => {
   });
 
   it('reads a % that starts no escape as part of the name', () => {
-    expect(dead({ 'README.md': '[p](50%.md)' })).toEqual(['50%.md']);
+    expect(dead({ 'README.md': '[p](docs/50%.md) [s](docs/a%20b%.md) [g](docs/60%.md)' })).toEqual([
+      'docs/60%.md',
+    ]);
+  });
+
+  it('reports a target that is not a URL instead of failing on it', () => {
+    const files = scratch({ 'site/src/content/docs/docs/navigation.md': '[x](//[)' });
+    expect(deadLinks(tree, files)).toMatchObject([{ target: '//[', why: 'is not a URL' }]);
   });
 
   it('takes a link into the generated API reference on trust until the site is built', () => {
@@ -153,6 +162,38 @@ describe('check-links', () => {
       '```',
     ].join('\n');
     expect(dead({ 'README.md': text })).toEqual(['docs/gone-3.md', 'docs/gone-4.md']);
+  });
+
+  it('opens a comment only where one starts a line, and reads on after it', () => {
+    const text = [
+      'Write `<!--` to open a comment.',
+      '[a](docs/gone-1.md)',
+      '[<!--](docs/gone-2.md)',
+      '    <!-- indented, so code rather than a comment',
+      '[b](docs/gone-3.md)',
+      '<!--',
+      '```',
+      '-->',
+      '[c](docs/gone-4.md)',
+    ];
+    expect(dead({ 'README.md': text.join('\n') })).toEqual([
+      'docs/gone-1.md',
+      'docs/gone-2.md',
+      'docs/gone-3.md',
+      'docs/gone-4.md',
+    ]);
+  });
+
+  it('reads a line of backtick code as text, not as a fence', () => {
+    expect(dead({ 'README.md': '```a``` and ```b`c\n[a](docs/GONE.md)' })).toEqual([
+      'docs/GONE.md',
+    ]);
+  });
+
+  it('closes a fence only at the quote depth it opened at', () => {
+    expect(
+      dead({ 'README.md': '```\n> ```\n[in](docs/GONE.md)\n```\n[out](docs/gone-1.md)' })
+    ).toEqual(['docs/gone-1.md']);
   });
 
   it('skips a fence inside a list item or a quote', () => {
