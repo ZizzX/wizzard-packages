@@ -63,14 +63,17 @@ through `state` with `status: 'done'` is not entered again: it stays finished. A
 carry `status`, so a persisted wizard that finished comes back `idle` on its last step, and that
 step, if it loads, loads again like any other restored step.
 
-| `reason`                | What was wrong                                                                                                 |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `snapshot/unreadable`   | Not a snapshot: wrong shape, or not an object at all.                                                          |
-| `snapshot/version`      | Written in an older snapshot format that `migrate` did not bring forward.                                      |
-| `snapshot/other-flow`   | Taken against a different flow `id`, a different flow `version`, or a different `version` option of `persist`. |
-| `snapshot/unknown-step` | Names a step this definition no longer has.                                                                    |
-| `snapshot/unstorable`   | Holds something that cannot survive the round trip.                                                            |
-| `snapshot/too-large`    | Past the size or nesting limit.                                                                                |
+| `reason`                | What was wrong                                                                          |
+| ----------------------- | --------------------------------------------------------------------------------------- |
+| `snapshot/unreadable`   | Not a snapshot: wrong shape, or not an object at all.                                   |
+| `snapshot/version`      | Written in an older snapshot format that `migrate` did not bring forward.               |
+| `snapshot/other-flow`   | Taken against a different flow `id`, or a different flow `version` when both carry one. |
+| `snapshot/unknown-step` | Names a step this definition no longer has.                                             |
+| `snapshot/unstorable`   | Holds something that cannot survive the round trip.                                     |
+| `snapshot/too-large`    | Past the size or nesting limit.                                                         |
+
+`persist` reports `snapshot/other-flow` for one more case, before these checks run: its own
+`version` option is set, and the stored session was written under another value or none.
 
 Every one of these is a reason to start the user cleanly rather than to drop them into a step
 that no longer exists. Refusing loudly at restore is the point of the format carrying `flow`
@@ -86,7 +89,7 @@ Two different versions live in a stored session, and only one of them `migrate` 
 
 `v` is the version of the snapshot format itself, which this library owns; it is `1` today.
 `version` is the flow's own, which you own. A snapshot whose `version` does not match the
-definition's is refused with `snapshot/other-flow`, and no migration is consulted: a stored
+definition's, when both carry one, is refused with `snapshot/other-flow`, and no migration is consulted: a stored
 session of a flow that has since changed shape is a session for a different flow. Migrating that
 is a decision about your data, taken before the payload ever reaches `decodeSnapshot`.
 
