@@ -25,11 +25,11 @@ over the rest, and `pre-push` builds and runs the unit tests.
 
 ## Channels
 
-| Channel     | npm dist-tag | Published when                                                                                |
-| ----------- | ------------ | --------------------------------------------------------------------------------------------- |
-| Canary      | `canary`     | every merge to `main` that touches `packages/` or `.changeset/`, while a changeset is pending |
-| Pre-release | `next`       | while a changesets pre-release mode is active                                                 |
-| Stable      | `latest`     | when the release PR, opened by running Release by hand, is merged                             |
+| Channel     | npm dist-tag | Published when                                                                                                             |
+| ----------- | ------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| Canary      | `canary`     | every merge to `main` that touches `packages/` or `.changeset/`, while a changeset is pending and no pre-release is active |
+| Pre-release | `next`       | while a changesets pre-release mode is active                                                                              |
+| Stable      | `latest`     | when the release PR, opened by running Release by hand, is merged                                                          |
 
 Trying an unreleased change means installing it, not checking out a branch:
 

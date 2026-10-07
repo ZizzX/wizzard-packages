@@ -11,7 +11,7 @@ This document describes the release workflow for `@wizzard-packages/*`.
   version; every other package is versioned on its own.
 - CI creates git tags (`vX.Y.Z`) and GitHub releases after publish.
 - Every merge to `main` that touches `packages/` or `.changeset/` also publishes a snapshot under
-  the `canary` dist-tag, as long as a changeset is pending.
+  the `canary` dist-tag, as long as a changeset is pending and no pre-release is active.
 
 ## Preconditions
 
@@ -72,6 +72,8 @@ pnpm changeset
 
 Release the same way. While pre mode is active the release PR carries `-next.N` versions and its merge
 publishes under the `next` tag.
+While pre mode is active, the Canary workflow fails on a merge that would publish a snapshot instead
+of publishing it: `changeset version --snapshot` refuses to run in pre mode.
 Exit prerelease mode after the final `next` release:
 
 ```bash
