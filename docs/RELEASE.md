@@ -7,9 +7,11 @@ This document describes the release workflow for `@wizzard-packages/*`.
 - Releases are started by hand and published from the reviewed commit. `.github/workflows/publish.yml`
   run by hand opens the release PR; merging that PR publishes its own merge commit, and nothing else
   on `main` opens a release PR or publishes to `latest`.
-- Versioning is managed by Changesets with a fixed group for all `@wizzard-packages/*`.
+- Versioning is managed by Changesets. `core` and `react` are a fixed group and always share a
+  version; every other package is versioned on its own.
 - CI creates git tags (`vX.Y.Z`) and GitHub releases after publish.
-- Every merge to `main` also publishes a snapshot under the `canary` dist-tag.
+- Every merge to `main` that touches `packages/` or `.changeset/` also publishes a snapshot under
+  the `canary` dist-tag, as long as a changeset is pending and no pre-release is active.
 
 ## Preconditions
 
@@ -70,6 +72,8 @@ pnpm changeset
 
 Release the same way. While pre mode is active the release PR carries `-next.N` versions and its merge
 publishes under the `next` tag.
+While pre mode is active, the Canary workflow fails on a merge that would publish a snapshot instead
+of publishing it: `changeset version --snapshot` refuses to run in pre mode.
 Exit prerelease mode after the final `next` release:
 
 ```bash

@@ -24,6 +24,9 @@ leaves.
 
 ```
 
+If you cannot record one, paste the flow instead: the `FlowDefinition` JSON your wizard runs,
+and the steps that lead from its first step to the problem.
+
 ## Versions
 
 - `@wizzard-packages/core`:

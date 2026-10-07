@@ -70,6 +70,13 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # A deleted file or a renamed page leaves every link to it pointing at
+      # nothing. This fails on the link instead of on the reader who clicks it.
+      # It runs after the build because the site's API reference is generated
+      # there, and links into it are checked only once it exists.
+      - name: No dead links
+        run: pnpm links:check
+
       - name: Package lint
         run: pnpm publint
 
@@ -116,8 +123,8 @@ jobs:
         run: pnpm test:coverage
 
   # Runs beside build-test rather than after it, and split across shards: the
-  # suite alone took longer than the rest of CI. Every shard starts all four
-  # web servers, so every shard builds everything.
+  # suite alone took longer than the rest of CI. Every shard starts both web
+  # servers, so every shard builds everything.
   e2e:
     runs-on: ubuntu-latest
     strategy:
