@@ -162,7 +162,7 @@ coming from it, nothing in this table applies.
 | floating overlay, `position: fixed`       | docked; fills its container, so the container needs a height                                 |
 | Actions tab (`subscribeToActions`)        | Activity: commits and refusals; refusals need `devtools()` in `plugins`                      |
 | Jump (`RESTORE_SNAPSHOT`)                 | removed; rebuild a wizard from a state with `createWizard({ state })`                        |
-| `@wizzard-packages/react` as a dependency | a peer dependency; install it beside devtools                                                |
+| `@wizzard-packages/react` as a dependency | an optional peer dependency; install it beside devtools                                      |
 | no recording                              | `Record` → `Copy JSON`, or `recordSession()`; the file is a `SessionBundle` `version: 1`     |
 
 There is no codemod and no alias for the old name. The migration is a renamed import, two

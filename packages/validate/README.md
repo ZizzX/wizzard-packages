@@ -11,7 +11,7 @@ is yours: this package never bundles one.
 ## Install
 
 ```bash
-pnpm add @wizzard-packages/validate@canary
+pnpm add @wizzard-packages/core@canary @wizzard-packages/validate@canary
 ```
 
 ## Use
@@ -44,8 +44,9 @@ come back keyed by dot-path, one message per path.
 
 ## Supported
 
-Node 20.11+, TypeScript 5+. ESM and CJS, types for both. No peer dependencies;
-`@wizzard-packages/core` comes with this package.
+Node 20.11+, TypeScript 5+. ESM and CJS, types for both. No peer dependencies.
+`@wizzard-packages/core` is a dependency, installed beside it above so your own code can import
+the engine.
 
 ## Documentation
 

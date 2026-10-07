@@ -9,7 +9,7 @@ so a flow that persists nothing carries none of the code that would.
 ## Install
 
 ```bash
-pnpm add @wizzard-packages/plugins@canary
+pnpm add @wizzard-packages/core@canary @wizzard-packages/plugins@canary
 ```
 
 ## `/persist`
@@ -42,8 +42,9 @@ plugin never throws; a storage failure warns once and the wizard carries on.
 
 ## Supported
 
-Node 20.11+, TypeScript 5+. ESM and CJS, types for both. No peer dependencies;
-`@wizzard-packages/core` comes with this package.
+Node 20.11+, TypeScript 5+. ESM and CJS, types for both. No peer dependencies.
+`@wizzard-packages/core` is a dependency, installed beside it above so your own code can import
+the engine.
 
 ## Documentation
 

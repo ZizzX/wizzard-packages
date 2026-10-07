@@ -63,14 +63,14 @@ through `state` with `status: 'done'` is not entered again: it stays finished. A
 carry `status`, so a persisted wizard that finished comes back `idle` on its last step, and that
 step, if it loads, loads again like any other restored step.
 
-| `reason`                | What was wrong                                                            |
-| ----------------------- | ------------------------------------------------------------------------- |
-| `snapshot/unreadable`   | Not a snapshot: wrong shape, or not an object at all.                     |
-| `snapshot/version`      | Written in an older snapshot format that `migrate` did not bring forward. |
-| `snapshot/other-flow`   | Taken against a different flow `id`, or a different flow `version`.       |
-| `snapshot/unknown-step` | Names a step this definition no longer has.                               |
-| `snapshot/unstorable`   | Holds something that cannot survive the round trip.                       |
-| `snapshot/too-large`    | Past the size or nesting limit.                                           |
+| `reason`                | What was wrong                                                                                                 |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `snapshot/unreadable`   | Not a snapshot: wrong shape, or not an object at all.                                                          |
+| `snapshot/version`      | Written in an older snapshot format that `migrate` did not bring forward.                                      |
+| `snapshot/other-flow`   | Taken against a different flow `id`, a different flow `version`, or a different `version` option of `persist`. |
+| `snapshot/unknown-step` | Names a step this definition no longer has.                                                                    |
+| `snapshot/unstorable`   | Holds something that cannot survive the round trip.                                                            |
+| `snapshot/too-large`    | Past the size or nesting limit.                                                                                |
 
 Every one of these is a reason to start the user cleanly rather than to drop them into a step
 that no longer exists. Refusing loudly at restore is the point of the format carrying `flow`

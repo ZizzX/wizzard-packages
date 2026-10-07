@@ -13,7 +13,8 @@ refused, which change no state and are therefore invisible to everything else.
 pnpm add -D @wizzard-packages/devtools@canary
 ```
 
-The panel renders inside `@wizzard-packages/react`, so it goes beside the React binding.
+The panel imports `@wizzard-packages/react`, an optional peer, so install the React binding
+beside it.
 
 ## Use
 
