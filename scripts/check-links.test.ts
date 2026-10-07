@@ -253,9 +253,17 @@ describe('check-links', () => {
     expect(dead({ 'docs/x.mdx': text.join('\n') })).toEqual(['gone-1.md', 'gone-2.md']);
   });
 
-  it('skips front matter', () => {
+  it('skips front matter, and only front matter', () => {
     expect(
       dead({ 'README.md': '---\ntitle: a [x](docs/GONE.md)\n---\n\n[g](docs/gone-1.md)' })
     ).toEqual(['docs/gone-1.md']);
+    expect(
+      dead({ 'README.md': '---\n---\n[a](docs/gone-1.md)\n\n---\n\n[b](docs/gone-2.md)' })
+    ).toEqual(['docs/gone-1.md', 'docs/gone-2.md']);
+    expect(
+      dead({
+        'README.md': '---\ntitle: x\n--- \n[a](docs/gone-1.md)\n\n---\n\n[b](docs/gone-2.md)',
+      })
+    ).toEqual(['docs/gone-1.md', 'docs/gone-2.md']);
   });
 });

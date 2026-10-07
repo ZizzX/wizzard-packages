@@ -79,7 +79,10 @@ export const routes = (root) => {
 export const links = (text, isMdx = false) => {
   const found = [];
   // Front matter is YAML, not Markdown; blanking it keeps every line where it was.
-  const body = text.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, (yaml) => yaml.replace(/[^\n]/g, ''));
+  // The block closes on the first `---` line, which may come straight after the opener.
+  const body = text.replace(/^---[ \t]*\r?\n(?:---|[\s\S]*?\r?\n---)[ \t]*(?:\r?\n|$)/, (yaml) =>
+    yaml.replace(/[^\n]/g, '')
+  );
   let line = 1;
   for (const block of (isMdx ? mdx : markdown).parse(body, {})) {
     // A table cell has no position of its own; its row, read just before it, does.
