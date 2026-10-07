@@ -46,6 +46,11 @@ jobs:
       - name: Examples match the docs
         run: pnpm examples:check
 
+      # A deleted file or a renamed page leaves every link to it pointing at
+      # nothing. This fails on the link instead of on the reader who clicks it.
+      - name: No dead links
+        run: pnpm links:check
+
   # The packaging gates read the built artifacts and do not vary by Node
   # version, so they pay for their own build once instead of sitting at the end
   # of the Node 22 leg.
@@ -116,8 +121,8 @@ jobs:
         run: pnpm test:coverage
 
   # Runs beside build-test rather than after it, and split across shards: the
-  # suite alone took longer than the rest of CI. Every shard starts all four
-  # web servers, so every shard builds everything.
+  # suite alone took longer than the rest of CI. Every shard starts both web
+  # servers, so every shard builds everything.
   e2e:
     runs-on: ubuntu-latest
     strategy:

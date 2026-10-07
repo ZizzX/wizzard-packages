@@ -11,6 +11,7 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,mdx}\"",
     "examples:embed": "node scripts/embed-examples.mjs",
     "examples:check": "node scripts/embed-examples.mjs --check",
+    "links:check": "node scripts/check-links.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "verify": "pnpm lint && pnpm type-check && pnpm test:run",

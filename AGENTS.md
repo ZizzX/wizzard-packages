@@ -148,10 +148,10 @@ step in it must pass before a PR merges. Locally, before opening one:
 pnpm verify        # lint + type-check + test:run, the pre-PR command
 ```
 
-`verify` is a subset: it does not check formatting or the embedded examples, build, enforce
-coverage, check packaging or bundle size, or run e2e. When a change can move one of those, run
-that step of `ci.yml` too - `pnpm format:check`, `pnpm examples:check`, `pnpm build`,
-`pnpm test:coverage`, `pnpm check:pack`, `pnpm size`, `pnpm test:e2e`.
+`verify` is a subset: it does not check formatting, the embedded examples or the links, build,
+enforce coverage, check packaging or bundle size, or run e2e. When a change can move one of those,
+run that step of `ci.yml` too - `pnpm format:check`, `pnpm examples:check`, `pnpm links:check`,
+`pnpm build`, `pnpm test:coverage`, `pnpm check:pack`, `pnpm size`, `pnpm test:e2e`.
 
 Narrowed forms, in the order they are usually needed:
 
