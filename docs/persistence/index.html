@@ -114,11 +114,11 @@ step, if it loads, loads again like any other restored step.</p>
 </tr>
 <tr>
 <td><code dir="auto">snapshot/version</code></td>
-<td>Written in an older snapshot format that <code dir="auto">migrate</code> did not bring forward.</td>
+<td>Written by a snapshot format this build does not know, and <code dir="auto">migrate</code> did not bring it forward.</td>
 </tr>
 <tr>
 <td><code dir="auto">snapshot/other-flow</code></td>
-<td>Taken against a different flow <code dir="auto">id</code>, or a different flow <code dir="auto">version</code>.</td>
+<td>Taken against a different flow <code dir="auto">id</code>, or a different flow <code dir="auto">version</code> when both carry one.</td>
 </tr>
 <tr>
 <td><code dir="auto">snapshot/unknown-step</code></td>
@@ -134,6 +134,8 @@ step, if it loads, loads again like any other restored step.</p>
 </tr>
 </tbody>
 </table>
+<p><code dir="auto">persist</code> reports <code dir="auto">snapshot/other-flow</code> for one more case, before <code dir="auto">decodeSnapshot</code> runs: its own
+<code dir="auto">version</code> option is set, and the stored session was written under another value or none.</p>
 <p>Every one of these is a reason to start the user cleanly rather than to drop them into a step
 that no longer exists. Refusing loudly at restore is the point of the format carrying <code dir="auto">flow</code>
 and <code dir="auto">version</code> at all.</p>
@@ -144,7 +146,7 @@ continues from, and <code dir="auto">subFlows</code> supplies the definitions a 
 <p>Two different versions live in a stored session, and only one of them <code dir="auto">migrate</code> is about.</p>
 <p><code dir="auto">v</code> is the version of the snapshot format itself, which this library owns; it is <code dir="auto">1</code> today.
 <code dir="auto">version</code> is the flow’s own, which you own. A snapshot whose <code dir="auto">version</code> does not match the
-definition’s is refused with <code dir="auto">snapshot/other-flow</code>, and no migration is consulted: a stored
+definition’s, when both carry one, is refused with <code dir="auto">snapshot/other-flow</code>, and no migration is consulted: a stored
 session of a flow that has since changed shape is a session for a different flow. Migrating that
 is a decision about your data, taken before the payload ever reaches <code dir="auto">decodeSnapshot</code>.</p>
 <p><code dir="auto">migrate</code> is for the envelope. It runs while <code dir="auto">v</code> is behind the current format, once per hop, so
@@ -165,6 +167,43 @@ applications want instead: it reads on start, writes on every commit, coalesces 
 one per frame, and flushes what is pending when the page hides or the wizard is destroyed.</p>
 <div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="ts"><code><div class="ec-line"><div class="code"><span style="--0:#C792EA;--1:#8844AE">import</span><span style="--0:#D6DEEB;--1:#403F53"> { persist } </span><span style="--0:#C792EA;--1:#8844AE">from</span><span style="--0:#D6DEEB;--1:#403F53"> </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">@wizzard-packages/plugins/persist</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">;</span></div></div><div class="ec-line"><div class="code">
 </div></div><div class="ec-line"><div class="code"><span style="--0:#82AAFF;--1:#3B61B0">createWizard</span><span style="--0:#D6DEEB;--1:#403F53">({</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">flow: signup,</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#D6DEEB;--1:#403F53">  </span></span><span style="--0:#D6DEEB;--1:#403F53">plugins: [</span><span style="--0:#82AAFF;--1:#3B61B0">persist</span><span style="--0:#D6DEEB;--1:#403F53">({ key: </span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#ECC48D;--1:#984E4D">signup</span><span style="--0:#D9F5DD;--1:#111111">'</span><span style="--0:#D6DEEB;--1:#403F53">, version: </span><span style="--0:#82AAFF;--1:#3B61B0">APP_VERSION</span><span style="--0:#D6DEEB;--1:#403F53">, onRestore })],</span></div></div><div class="ec-line"><div class="code"><span style="--0:#D6DEEB;--1:#403F53">});</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="Copy to clipboard" data-copied="Copied!" data-code="import { persist } from &#x27;@wizzard-packages/plugins/persist&#x27;;createWizard({  flow: signup,  plugins: [persist({ key: &#x27;signup&#x27;, version: APP_VERSION, onRestore })],});"><div></div></button></div></figure></div>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code dir="auto">key</code></td>
+<td>The storage key. One per flow, or one per flow per user.</td>
+</tr>
+<tr>
+<td><code dir="auto">storage</code></td>
+<td>Where to put it. <code dir="auto">localStorage</code> by default; any synchronous store works.</td>
+</tr>
+<tr>
+<td><code dir="auto">version</code></td>
+<td>Your application’s version. Bump it when the meaning of the data changes: a session stored under another value, or none, is refused as <code dir="auto">snapshot/other-flow</code>, and <code dir="auto">migrate</code> does not see it.</td>
+</tr>
+<tr>
+<td><code dir="auto">migrate</code></td>
+<td>Upgrades a snapshot written in an older format, one hop at a time.</td>
+</tr>
+<tr>
+<td><code dir="auto">onRestore</code></td>
+<td>Hears what happened at startup: <code dir="auto">{ restored: true }</code> or the reason it was not.</td>
+</tr>
+</tbody>
+</table>
+<p>What it stores is the durable snapshot above, never the running state: a navigation in flight, a
+step that was loading and a validator’s errors all describe a moment, and restoring them is how a
+wizard comes back stuck.</p>
+<p>The plugin never throws. A browser that refuses storage, a quota that fills up, a value that was
+corrupted in place: each means this session is not coming back, and none of them is a reason to
+break the wizard someone is filling in now. Each failure warns once per code, names its cause,
+and the ones met at startup reach <code dir="auto">onRestore</code> as its reason.</p>
 <p><code dir="auto">onRestore</code> is how the outcome reaches your interface. It receives a <code dir="auto">RestoreOutcome</code>, which is
 <code dir="auto">{ restored: true }</code> or <code dir="auto">{ restored: false, reason }</code> - the reasons above, plus
 <code dir="auto">persist/nothing-stored</code> for a first visit and <code dir="auto">persist/unavailable</code> for a browser that refuses
