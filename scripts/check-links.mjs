@@ -15,9 +15,10 @@
  *   own pages                     resolves to from the page it is on
  *
  * Other hosts and anchors are not checked: an external page is not this
- * repository's to keep. Fenced code, code spans and HTML comments are skipped,
- * because `[a](b)` there is not a link; an indented code block is not, since
- * telling one from an indented list paragraph needs a Markdown parser.
+ * repository's to keep. Fenced code (in a list or a quote too), code spans and
+ * HTML comments are skipped, because `[a](b)` there is not a link. An indented
+ * code block is not skipped, since telling one from an indented list paragraph
+ * needs a Markdown parser, and a bare target holds parentheses one level deep.
  *
  *   node scripts/check-links.mjs
  */
@@ -45,6 +46,15 @@ const TARGET = String.raw`(?:<([^<>\n]*)>|((?:[^()\s]|\([^()\s]*\))+))`;
 const INLINE = new RegExp(String.raw`\]\(\s*${TARGET}`, 'g');
 const DEFINITION = new RegExp(String.raw`^\s*\[[^\]]+\]:\s*${TARGET}`);
 
+/** A `%` that does not start an escape is a character of the name, not an error. */
+const decode = (path) => {
+  try {
+    return decodeURIComponent(path);
+  } catch {
+    return path;
+  }
+};
+
 /** `docs/flow.md` is served at `/docs/flow/`, an `index` at its folder. */
 const routeOf = (path) =>
   `/${path.replace(/\.(mdx?|astro)$/, '').replace(/(^|\/)index$/, '')}/`.replace(/\/+/g, '/');
@@ -67,8 +77,9 @@ export const links = (text) => {
   const found = [];
   /** The open fence's marker: it closes on the same character, at least as long, with nothing after. */
   let fence = null;
+  let comment = false;
   text.split(/\r?\n/).forEach((raw, index) => {
-    const marker = raw.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
+    const marker = raw.match(/^[\s>]*(`{3,}|~{3,})(.*)$/);
     if (marker && !fence) fence = marker[1];
     else if (
       marker &&
@@ -78,7 +89,15 @@ export const links = (text) => {
     )
       fence = null;
     if (fence || marker) return;
-    const line = raw.replace(/<!--.*?-->/g, '').replace(/(`+)(.*?[^`])\1(?!`)/g, '');
+    let line = raw;
+    if (comment) {
+      const end = line.indexOf('-->');
+      if (end < 0) return;
+      [comment, line] = [false, line.slice(end + 3)];
+    }
+    line = line.replace(/<!--.*?-->/g, '');
+    if (line.includes('<!--')) [comment, line] = [true, line.slice(0, line.indexOf('<!--'))];
+    line = line.replace(/(?<!`)(`+)(?!`)(.*?[^`])\1(?!`)/g, '');
     const add = (match) => found.push({ line: index + 1, target: match[1] ?? match[2] });
     for (const match of line.matchAll(INLINE)) add(match);
     const definition = line.match(DEFINITION);
@@ -98,10 +117,10 @@ const deadEnd = (root, pages, file, target) => {
   const missing = (path) => (existsSync(path) ? null : 'is not a file in the repository');
 
   const repo = target.match(REPO);
-  if (repo) return missing(join(root, decodeURIComponent(repo[1])));
+  if (repo) return missing(join(root, decode(repo[1])));
   if (target.startsWith(SITE)) return page(new URL(target).pathname);
   if (/^[a-z][a-z\d+.-]*:/i.test(target)) return null;
-  const path = decodeURIComponent(target.replace(/[#?].*$/, ''));
+  const path = decode(target.replace(/[#?].*$/, ''));
   // A page links to another page by URL; an image beside it is still a file.
   if (file.startsWith(`${CONTENT}/`) && !/\.\w+$/.test(path)) {
     const from = `https://site${BASE}${routeOf(file.slice(CONTENT.length + 1))}`;

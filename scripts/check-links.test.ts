@@ -119,22 +119,54 @@ describe('check-links', () => {
     ]);
   });
 
+  it('checks a link into the generated API reference once the site is built', () => {
+    const site = 'https://zizzx.github.io/wizzard-packages';
+    expect(
+      dead({
+        'site/src/content/docs/docs/api/index.md': '',
+        'README.md': `[a](${site}/docs/api/) [g](${site}/docs/api/gone/)`,
+      })
+    ).toEqual([`${site}/docs/api/gone/`]);
+  });
+
+  it('reads a % that starts no escape as part of the name', () => {
+    expect(dead({ 'README.md': '[p](50%.md)' })).toEqual(['50%.md']);
+  });
+
   it('takes a link into the generated API reference on trust until the site is built', () => {
     expect(
       dead({ 'README.md': '[a](https://zizzx.github.io/wizzard-packages/docs/api/)' })
     ).toEqual([]);
   });
 
-  it('skips anchors, other hosts, code and comments', () => {
+  it('skips anchors, other hosts, code and comments, and reads on after them', () => {
     const text = [
       '[a](#install) [n](https://www.npmjs.com/package/x) [m](mailto:a@b.c)',
       '`[c](docs/GONE.md)` and ``a `b` [d](docs/GONE.md)``',
       '<!-- [h](docs/GONE.md) -->',
+      '<!-- a comment',
+      '[h](docs/GONE.md)',
+      '--> [after](docs/gone-3.md)',
+      '``[l](docs/gone-4.md)`',
       '```md',
       '[f](docs/GONE.md)',
       '```',
     ].join('\n');
-    expect(dead({ 'README.md': text })).toEqual([]);
+    expect(dead({ 'README.md': text })).toEqual(['docs/gone-3.md', 'docs/gone-4.md']);
+  });
+
+  it('skips a fence inside a list item or a quote', () => {
+    const text = [
+      '- item',
+      '',
+      '    ```',
+      '    [l](docs/GONE.md)',
+      '    ```',
+      '> ```',
+      '> [q](docs/GONE.md)',
+      '> ```',
+    ];
+    expect(dead({ 'README.md': text.join('\n') })).toEqual([]);
   });
 
   it('closes a fence only on the marker that opened it', () => {
