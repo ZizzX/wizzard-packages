@@ -15,14 +15,14 @@ produce a session this flow can continue.
 
 `<reason>` is the one `onRestore` receives in `{ restored: false, reason }`:
 
-| `reason`                | What was wrong                                                                                                                        |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `snapshot/unreadable`   | Not JSON, or JSON that is not an object, or not a snapshot at all.                                                                    |
-| `snapshot/version`      | Written by a snapshot format this build does not know, and `migrate` did not upgrade it.                                              |
-| `snapshot/other-flow`   | Taken against a different flow `id`, or a different flow `version` when both carry one, or stored under a different `version` option. |
-| `snapshot/unknown-step` | Names a step this definition no longer has.                                                                                           |
-| `snapshot/unstorable`   | Holds something that cannot survive the round trip.                                                                                   |
-| `snapshot/too-large`    | Past the size or nesting limit.                                                                                                       |
+| `reason`                | What was wrong                                                                                                                                       |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `snapshot/unreadable`   | Not JSON, or JSON that is not an object, or not a snapshot at all.                                                                                   |
+| `snapshot/version`      | Written by a snapshot format this build does not know, and `migrate` did not upgrade it.                                                             |
+| `snapshot/other-flow`   | Taken against a different flow `id`, or a different flow `version` when both carry one, or stored under a different `version` option, or under none. |
+| `snapshot/unknown-step` | Names a step this definition no longer has.                                                                                                          |
+| `snapshot/unstorable`   | Holds something that cannot survive the round trip.                                                                                                  |
+| `snapshot/too-large`    | Past the size or nesting limit.                                                                                                                      |
 
 Every one of them starts the person cleanly rather than dropping them into a step that no longer
 exists, and that is the intended behaviour: the warning is there so a developer who changed the
