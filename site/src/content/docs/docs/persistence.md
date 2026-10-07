@@ -125,6 +125,23 @@ createWizard({
 });
 ```
 
+| Option      | What it does                                                                   |
+| ----------- | ------------------------------------------------------------------------------ |
+| `key`       | The storage key. One per flow, or one per flow per user.                       |
+| `storage`   | Where to put it. `localStorage` by default; any synchronous store works.       |
+| `version`   | Your application's version. Bump it when the meaning of the data changes.      |
+| `migrate`   | Upgrades a snapshot written in an older format, one hop at a time.             |
+| `onRestore` | Hears what happened at startup: `{ restored: true }` or the reason it was not. |
+
+What it stores is the durable snapshot above, never the running state: a navigation in flight, a
+step that was loading and a validator's errors all describe a moment, and restoring them is how a
+wizard comes back stuck.
+
+The plugin never throws. A browser that refuses storage, a quota that fills up, a value that was
+corrupted in place: each means this session is not coming back, and none of them is a reason to
+break the wizard someone is filling in now. Each failure warns once per code, names its cause,
+and the ones met at startup reach `onRestore` as its reason.
+
 `onRestore` is how the outcome reaches your interface. It receives a `RestoreOutcome`, which is
 `{ restored: true }` or `{ restored: false, reason }` - the reasons above, plus
 `persist/nothing-stored` for a first visit and `persist/unavailable` for a browser that refuses

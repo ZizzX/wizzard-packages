@@ -77,6 +77,26 @@ Each level evaluates its expressions against a **scope**: `data`, `ctx`, and ins
 `loop`. The scope is computed on every read rather than stored, which is why an `input` value
 piped into a group reflects a change made upstream without leaving the group and coming back.
 
+## Packages and entry points
+
+| Import                                 | What it is                                                                  |
+| -------------------------------------- | --------------------------------------------------------------------------- |
+| `@wizzard-packages/core`               | the engine: types, expressions, navigation, selectors; `/v1` is the same    |
+| `@wizzard-packages/core/graph`         | a flow as `{ nodes, edges }`, for drawing it                                |
+| `@wizzard-packages/core/groups`        | traversal for repeated sub-flows                                            |
+| `@wizzard-packages/core/session`       | a recorded run, and the check that a replay matches it                      |
+| `@wizzard-packages/core/snapshot`      | serialize a run, and refuse stored JSON that cannot be trusted              |
+| `@wizzard-packages/core/expr`          | a builder for expressions, if you would rather not write the JSON           |
+| `@wizzard-packages/core/validate-flow` | checks a flow and its inline sub-flows, each problem with a code and a page |
+| `@wizzard-packages/react`, `/vue`      | the bindings: a provider and the same hooks in each                         |
+| `@wizzard-packages/validate`           | one adapter for every Standard Schema library                               |
+| `@wizzard-packages/plugins/persist`    | keeps a wizard across a reload                                              |
+| `@wizzard-packages/devtools`           | the panel; `/headless` is its recorder without React or the DOM             |
+
+The core's entries are separate because they are separate budgets: a wizard that never draws
+itself does not carry the code that would. `.size-limit.js` in the repository holds the budget of
+each, with the measurement that set it.
+
 ## Glossary
 
 Each word links to the page that explains it in full.

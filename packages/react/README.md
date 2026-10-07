@@ -1,13 +1,11 @@
 # @wizzard-packages/react
 
 ![npm](https://img.shields.io/npm/v/@wizzard-packages/react)
-![downloads](https://img.shields.io/npm/dm/@wizzard-packages/react)
 ![license](https://img.shields.io/npm/l/@wizzard-packages/react)
 
 The React binding for [`@wizzard-packages/core`](https://www.npmjs.com/package/@wizzard-packages/core).
 It bridges the engine into React and does nothing else: navigation, guards and validation are
-the engine's, so this package is a provider and eight hooks. That is why it is 1.04 kB gzipped
-against 8.48 kB for its 0.x equivalent — nothing was optimised, the logic moved.
+the engine's, so this package is a provider and eight hooks.
 
 ## Install
 
@@ -20,25 +18,11 @@ pnpm add @wizzard-packages/core@canary @wizzard-packages/react@canary
 
 <!-- /example -->
 
-React 18 or newer. The provider subscribes through `useSyncExternalStore`, so concurrent
-rendering and StrictMode's double mount are handled by the store rather than by an effect.
-
-The binding is a client module: its build opens with `'use client'`. Only a Server Components
-bundler, such as the Next.js App Router, reads that directive; in Vite, Remix, webpack or Node it
-does nothing, and there is nothing to configure.
-
-Under Server Components it lets a server component render `WizardProvider` without a wrapper file
-of your own, as long as every prop it passes is serializable: a `flow` crosses that boundary, a
-`registry`, `plugins` or a built `wizard` does not, because they carry functions. Build those, and
-call the hooks, inside a client component.
-
 ## Use
 
-Wrap the wizard, then read it. `WizardProvider` takes either a `wizard` you built with
-`createWizard` or the options to build one — passing `flow` alone is the common case, and the
-provider owns and destroys that instance. Passing both throws a `WizardError` with the code
-`provider-wizard-and-options`: a built wizard already has its options, so the extra ones would be
-ignored.
+`WizardProvider` takes a `flow` and owns the wizard it builds, or a `wizard` you built with
+`createWizard`. The hooks read it: `useStep`, `useNavigation`, `useField`, `useErrors`,
+`useWizardSelector`, `useWizardSnapshot`, `useWizard` and `useOptionalWizard`.
 
 <!-- example:quickstart-react -->
 
@@ -93,54 +77,26 @@ export function Wizard() {
 
 <!-- /example -->
 
-That file and the flow it imports are `examples/quickstart`, which CI runs — this block is
-generated from them, so what you paste is what is tested.
+The binding is a client module: its build opens with `'use client'`, which only a React Server
+Components bundler reads. There a server component can render `WizardProvider` with a `flow`;
+a `registry`, `plugins` or a built `wizard` carry functions, so build those in a client
+component.
 
-## Hooks
+## Supported
 
-| Hook                    | Returns                                                                             |
-| ----------------------- | ----------------------------------------------------------------------------------- |
-| `useStep()`             | `current`, `isFirst`, `isLast`, `progress` and the rest of the step's derived state |
-| `useNavigation()`       | `next`, `back`, `go`, `cancel`, `canBack`, `isBusy`, `isLast`                       |
-| `useField<T>(path)`     | `[value, setValue]` at a flow path, which may change between renders                |
-| `useErrors(stepId?)`    | the error map for a step, or for the current one                                    |
-| `useWizardSelector(fn)` | one derived value, re-rendering only when it changes                                |
-| `useWizard()`           | the engine itself, for anything the hooks above do not cover                        |
-
-Outside a `WizardProvider`, `useWizard()` and every hook built on it throw a `WizardError` with
-the code `provider-missing`. `useOptionalWizard()` returns `null` there instead, which is what a
-component rendered both inside and outside a wizard needs.
-
-The provider starts the wizard when it mounts. If that first move throws - a first step whose
-loader rejects is the usual case - there is no caller to throw to, so the provider logs
-`start-failed` with the cause and renders no current step. The wizard has not started, so once
-what threw is fixed, `useWizard().start()` runs the first move again - from a retry button, say -
-and so does mounting the provider again.
-
-Navigation is async and returns a result, not a boolean: `await next()` gives
-`{ ok: false, reason: 'blocked', by: 'age-check' }` when a guard refuses. Every `await` inside
-the engine re-checks a navigation epoch, so a validator that resolves after the user pressed
-Back cannot move them.
+React 18+, Node 20.11+, TypeScript 5+. ESM and CJS, types for both. `react` and `react-dom` are
+peer dependencies; `@wizzard-packages/core` comes with this package.
 
 ## Documentation
 
 [Getting started](https://zizzx.github.io/wizzard-packages/docs/start/) ·
-[The flow](https://zizzx.github.io/wizzard-packages/docs/flow/) ·
-[Navigation](https://zizzx.github.io/wizzard-packages/docs/navigation/) ·
 [Hooks](https://zizzx.github.io/wizzard-packages/docs/hooks/) ·
+[Navigation](https://zizzx.github.io/wizzard-packages/docs/navigation/) ·
 [Validation](https://zizzx.github.io/wizzard-packages/docs/validation/) ·
 [Persistence](https://zizzx.github.io/wizzard-packages/docs/persistence/)
 
-The same hooks, under the same names, are in
-[`@wizzard-packages/vue`](https://www.npmjs.com/package/@wizzard-packages/vue). A shared
-contract suite runs against both, which is what stops them drifting apart.
-
-## Upgrading from 0.x
-
-0.x was a different library with the same name: `createWizardFactory`, a store per wizard, and
-the branching in your components. Both lines export a `WizardProvider` with different props,
-so check the import path — v1 is `@wizzard-packages/react`. v1 is on the `canary` tag while
-the launch lands; the 0.x line on `latest` is being retired.
+The same hooks for Vue are in [`@wizzard-packages/vue`](https://www.npmjs.com/package/@wizzard-packages/vue).
+Coming from 0.x: [the migration guide](https://github.com/ZizzX/wizzard-packages/blob/main/docs/MIGRATION.md).
 
 ## License
 

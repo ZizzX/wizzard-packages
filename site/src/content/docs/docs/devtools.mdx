@@ -32,12 +32,21 @@ a subscriber at all: without this view a refused `next()` is invisible, which is
 moment someone opens devtools. The rows come from the plugin, and the header says so when the
 plugin is missing.
 
+The strip above the tabs answers without a tab change: where the wizard is, whether the panel is
+live or pinned, and the latest outcome. A refused `next()` reads
+`✗ next invalid · email: required` - the move, why it was refused, and the fields that refused
+it - and clicking it opens Activity. Selecting a row there pins the panel to the state that row
+happened in, so the graph, the state and the inspector all answer as of that moment. The inspector
+prints each step's `when` and whether it held, or `Not evaluated` where the panel cannot know:
+inside a repeat group, which has no loop scope to evaluate against, and for a `$ref`, which needs
+the registry the panel does not have.
+
 ## Mounting it
 
 Three steps, and two ways to get it wrong.
 
 ```bash
-npm i -D @wizzard-packages/devtools
+pnpm add -D @wizzard-packages/devtools@canary
 ```
 
 ```tsx
@@ -70,8 +79,10 @@ broken" rather than "the panel is zero pixels tall".
 
 ## It is a React panel
 
-`WizardDevtools` is a React component, and `react` is a peer dependency. A Vue application does
-not mount it.
+`WizardDevtools` is a React component. It needs `@wizzard-packages/core` 1.x, and for the panel
+`@wizzard-packages/react` 1.x with React 18 or newer, all as peer dependencies; the React ones
+are optional, because the headless entry below uses none of them. A Vue application does not
+mount the panel.
 
 What a Vue host uses instead is `@wizzard-packages/devtools/headless`, which is the same
 machinery without React or the DOM: `devtools()` installs into any wizard, and `recordSession`
@@ -80,7 +91,22 @@ anywhere - a test, a bug report, the inspector on this site.
 
 ```ts
 import { devtools, recordSession } from '@wizzard-packages/devtools/headless';
+import { writeFileSync } from 'node:fs';
+
+const dt = devtools();
+const wizard = createWizard({ flow, registry, plugins: [dt] });
+const recording = recordSession(wizard, { plugin: dt });
+
+await wizard.start();
+await wizard.next();
+
+recording.stop();
+writeFileSync('bundle.json', JSON.stringify(recording.bundle()));
 ```
+
+A bundle replays structure and data: the flow definition, every settled state, and the outcomes.
+It does not replay resolver behaviour - a named resolver is not in the bundle, so a flow that
+fetches its options shows the options it recorded.
 
 ## What the headless entry promises, and what it does not
 
@@ -93,6 +119,30 @@ a graph coordinates, `formatExpr`, which shortens an expression to a label, and 
 which lists what changed between two states, along with the types they use - `PositionedGraph`,
 `Positioned` and `Change`. They are exported because the docs needed them, and they may change
 in a minor release. Use them for a tool you can rebuild, not for something a user depends on.
+
+## Redaction
+
+`redact` runs once, at export, on a copy of the whole bundle:
+
+```tsx
+<WizardDevtools
+  plugin={dt}
+  redact={(bundle) => ({
+    ...bundle,
+    session: {
+      ...bundle.session,
+      frames: bundle.session.frames.map((frame) => ({
+        ...frame,
+        data: { ...frame.data, card: '[redacted]' },
+      })),
+    },
+  })}
+/>
+```
+
+Frames are unredacted in memory until export: the hook shapes what leaves, not what is kept. The
+export preview shows the counts, the size and whether the hook ran before anything is copied, and
+a hook that throws stops the export and copies nothing.
 
 ## What it never does
 
@@ -125,3 +175,20 @@ dependencies fails to build because the import has nothing to resolve. Gate the 
 
 The engine itself carries no reference to the panel - the plugin is something you pass in - so
 what a gate has to cover is the panel and its import, not the wizard.
+
+The panel is a client component. In the Next.js App Router, render it from a file that starts
+with `'use client'`;
+[`examples/next-app`](https://github.com/ZizzX/wizzard-packages/tree/main/examples/next-app) in
+the repository is a runnable setup.
+
+## Errors
+
+Every message ends in the URL of the page that explains it, one page per code:
+[`devtools-no-wizard`](../../errors/devtools-no-wizard/),
+[`devtools-no-plugin`](../../errors/devtools-no-plugin/),
+[`devtools-render-failed`](../../errors/devtools-render-failed/),
+[`devtools-stopped`](../../errors/devtools-stopped/),
+[`devtools-export-failed`](../../errors/devtools-export-failed/) and
+[`devtools-bundle-unsupported`](../../errors/devtools-bundle-unsupported/). A graph that cannot be
+drawn shows `devtools-render-failed` in the Graph tab and writes the same line to the console,
+followed by the thrown error and the React component stack that names the component that threw.
