@@ -227,10 +227,35 @@ describe('check-links', () => {
     expect(dead({ 'README.md': text })).toEqual(['docs/gone-1.md', 'docs/gone-2.md']);
   });
 
-  it('names the line a dead link is on, inside a paragraph too', () => {
-    scratch({ 'README.md': 'one\n\ntwo\nthree [g](GONE.md)' });
-    expect(deadLinks(tree, ['README.md'])).toEqual([
-      { file: 'README.md', line: 4, target: 'GONE.md', why: 'is not a file in the repository' },
+  it("names the line the dead link's paragraph or table row starts on", () => {
+    const text = 'one\n\ntwo `a\nb`\nthree [g](GONE.md)\n\n| a |\n| - |\n| x |\n| [t](GONE-2.md) |';
+    scratch({ 'README.md': text });
+    expect(deadLinks(tree, ['README.md'])).toMatchObject([
+      { line: 3, target: 'GONE.md' },
+      { line: 10, target: 'GONE-2.md' },
     ]);
+  });
+
+  it('reads MDX as MDX: an indent is not code, and Markdown inside JSX is Markdown', () => {
+    const text = [
+      '<Tabs>',
+      '  <TabItem>',
+      '',
+      '    [i](gone-1.md)',
+      '',
+      '  </TabItem>',
+      '</Tabs>',
+      '',
+      '<Tabs>',
+      '[j](gone-2.md)',
+      '</Tabs>',
+    ];
+    expect(dead({ 'docs/x.mdx': text.join('\n') })).toEqual(['gone-1.md', 'gone-2.md']);
+  });
+
+  it('skips front matter', () => {
+    expect(
+      dead({ 'README.md': '---\ntitle: a [x](docs/GONE.md)\n---\n\n[g](docs/gone-1.md)' })
+    ).toEqual(['docs/gone-1.md']);
   });
 });

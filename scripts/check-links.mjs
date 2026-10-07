@@ -17,7 +17,10 @@
  * Other hosts and anchors are not checked: an external page is not this
  * repository's to keep. Links are read by markdown-it - already in the tree
  * through typedoc - so what counts as code, a comment or a link is what
- * CommonMark says, not what a regular expression guesses.
+ * CommonMark says. MDX differs in two places it follows: an indent is not code,
+ * and Markdown inside a JSX element is still Markdown. A `{expression}` is read
+ * as text, and front matter is skipped. A dead link is reported at the line its
+ * paragraph, list item or table cell starts on.
  *
  *   node scripts/check-links.mjs
  */
@@ -43,6 +46,7 @@ const PAGES = 'site/src/pages';
 const GENERATED = '/docs/api/';
 
 const markdown = new MarkdownIt({ html: true });
+const mdx = new MarkdownIt({ html: true }).disable(['code', 'html_block']);
 
 /** Each run of escapes is decoded on its own, so a `%` that starts none stays part of the name. */
 const decode = (path) =>
@@ -71,14 +75,16 @@ export const routes = (root) => {
   return found;
 };
 
-/** Every link and image in a document, with the line it is on. */
-export const links = (text) => {
+/** Every link and image in a document, with the line its block starts on. */
+export const links = (text, isMdx = false) => {
   const found = [];
+  // Front matter is YAML, not Markdown; blanking it keeps every line where it was.
+  const body = text.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, (yaml) => yaml.replace(/[^\n]/g, ''));
   let line = 1;
-  for (const block of markdown.parse(text, {})) {
+  for (const block of (isMdx ? mdx : markdown).parse(body, {})) {
+    // A table cell has no position of its own; its row, read just before it, does.
     if (block.map) line = block.map[0] + 1;
     for (const token of block.children ?? []) {
-      if (token.type === 'softbreak' || token.type === 'hardbreak') line += 1;
       const target =
         token.type === 'link_open'
           ? token.attrGet('href')
@@ -123,10 +129,12 @@ const deadEnd = (root, pages, file, target) => {
 export const deadLinks = (root, files) => {
   const pages = routes(root);
   return files.flatMap((file) =>
-    links(readFileSync(join(root, file), 'utf8')).flatMap(({ line, target }) => {
-      const why = deadEnd(root, pages, file, target);
-      return why ? [{ file, line, target: decode(target), why }] : [];
-    })
+    links(readFileSync(join(root, file), 'utf8'), file.endsWith('.mdx')).flatMap(
+      ({ line, target }) => {
+        const why = deadEnd(root, pages, file, target);
+        return why ? [{ file, line, target: decode(target), why }] : [];
+      }
+    )
   );
 };
 
