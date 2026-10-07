@@ -46,11 +46,6 @@ jobs:
       - name: Examples match the docs
         run: pnpm examples:check
 
-      # A deleted file or a renamed page leaves every link to it pointing at
-      # nothing. This fails on the link instead of on the reader who clicks it.
-      - name: No dead links
-        run: pnpm links:check
-
   # The packaging gates read the built artifacts and do not vary by Node
   # version, so they pay for their own build once instead of sitting at the end
   # of the Node 22 leg.
@@ -74,6 +69,13 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      # A deleted file or a renamed page leaves every link to it pointing at
+      # nothing. This fails on the link instead of on the reader who clicks it.
+      # It runs after the build because the site's API reference is generated
+      # there, and links into it are checked only once it exists.
+      - name: No dead links
+        run: pnpm links:check
 
       - name: Package lint
         run: pnpm publint

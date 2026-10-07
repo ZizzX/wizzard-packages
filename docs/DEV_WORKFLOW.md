@@ -20,8 +20,8 @@ without your application. A pull request that finishes an issue says `Closes #N`
 An unfinished feature ships behind a config flag rather than waiting on a branch.
 
 The git hooks run on your machine: commitlint holds every commit message to Conventional
-Commits, `pre-commit` runs ESLint and Prettier over the staged files, and `pre-push` builds and
-runs the unit tests.
+Commits, `pre-commit` runs ESLint and Prettier over staged TypeScript and Vue files and Prettier
+over the rest, and `pre-push` builds and runs the unit tests.
 
 ## Channels
 
@@ -43,14 +43,14 @@ The documentation site is deployed from `main` on every merge.
 
 `.github/workflows/ci.yml` runs on pushes to `main` and on every PR, as four jobs:
 
-- `static`: `pnpm lint`, `pnpm format:check`, `pnpm examples:check` (the README snippets match
-  the files they are generated from) and `pnpm links:check` (no link points at a file or a site
-  page that is not there)
-- `packaging`: `pnpm build`, then `pnpm publint`, `pnpm attw` and `pnpm size` — packaging and
-  bundle budgets
+- `static`: `pnpm lint`, `pnpm format:check` and `pnpm examples:check` (the README snippets
+  match the files they are generated from)
+- `packaging`: `pnpm build`, then `pnpm links:check` (no link points at a file or a site page
+  that is not there, the generated API reference included), `pnpm publint`, `pnpm attw` and
+  `pnpm size` — packaging and bundle budgets
 - `build-test`, on Node 20 and 22: `pnpm type-check`, `pnpm build` and `pnpm test:coverage`,
-  whose coverage thresholds are enforced. The site sits out the Node 20 leg, because Astro needs
-  Node 22.12 or newer
+  whose coverage thresholds are enforced. The site's type-check and build sit out the Node 20
+  leg, because Astro needs Node 22.12 or newer
 - `e2e`: `pnpm test:e2e` in four shards — Playwright against the built documentation site and
   the Next.js app
 

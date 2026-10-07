@@ -21,9 +21,13 @@ const scratch = (files: Record<string, string>): string[] => {
   tree = mkdtempSync(join(tmpdir(), 'check-links-'));
   const all = {
     'docs/RELEASE.md': '# Release',
+    'docs/with space.md': '',
+    'docs/a(1).md': '',
+    'site/src/content/docs/docs/graph.png': '',
     'site/src/content/docs/docs/flow.md': '# The flow',
     'site/src/content/docs/errors/nav-blocked.md': '# nav-blocked',
     'site/src/pages/examples/index.astro': '',
+    'site/src/pages/examples/[slug].astro': '',
     ...files,
   };
   for (const [path, text] of Object.entries(all)) {
@@ -59,11 +63,22 @@ describe('check-links', () => {
     ]);
   });
 
-  it('follows a github.com link to this repository into the checkout', () => {
-    const repo = 'https://github.com/ZizzX/wizzard-packages/blob/main';
+  it('reads a target with spaces in angle brackets, or with parentheses in it', () => {
     expect(
-      dead({ 'README.md': `[r](${repo}/docs/RELEASE.md) [g](${repo}/docs/API_REFERENCE.md)` })
-    ).toEqual([`${repo}/docs/API_REFERENCE.md`]);
+      dead({
+        'README.md':
+          '[s](<docs/with space.md>) [p](docs/a(1).md) [e](docs/with%20space.md) [g](<docs/gone one.md>)',
+      })
+    ).toEqual(['docs/gone one.md']);
+  });
+
+  it('follows a github.com link to this repository into the checkout', () => {
+    const repo = 'https://github.com/ZizzX/wizzard-packages';
+    expect(
+      dead({
+        'README.md': `[r](${repo}/blob/main/docs/RELEASE.md) [s](${repo}/blob/main/docs/with%20space.md) [d](${repo}/tree/main/docs) [g](${repo}/blob/main/docs/API_REFERENCE.md) [t](${repo}/tree/main/legacy)`,
+      })
+    ).toEqual([`${repo}/blob/main/docs/API_REFERENCE.md`, `${repo}/tree/main/legacy`]);
   });
 
   it('asks the site for a page at a link to it', () => {
@@ -84,6 +99,19 @@ describe('check-links', () => {
     ).toEqual(['../gone/']);
   });
 
+  it('reads an image on a site page as a file beside it, not as a page', () => {
+    expect(
+      dead({ 'site/src/content/docs/docs/navigation.md': '![g](graph.png) ![m](missing.png)' })
+    ).toEqual(['missing.png']);
+  });
+
+  it('does not count a [slug] page as a route of its own', () => {
+    const site = 'https://zizzx.github.io/wizzard-packages';
+    expect(dead({ 'README.md': `[s](${site}/examples/[slug]/)` })).toEqual([
+      `${site}/examples/[slug]/`,
+    ]);
+  });
+
   it('finds a link on a site page that leaves the base path', () => {
     const files = scratch({ 'site/src/content/docs/docs/navigation.md': '[f](/docs/flow/)' });
     expect(deadLinks(tree, files)).toMatchObject([
@@ -97,15 +125,33 @@ describe('check-links', () => {
     ).toEqual([]);
   });
 
-  it('skips anchors, other hosts and code', () => {
+  it('skips anchors, other hosts, code and comments', () => {
     const text = [
       '[a](#install) [n](https://www.npmjs.com/package/x) [m](mailto:a@b.c)',
-      '`[c](docs/GONE.md)`',
+      '`[c](docs/GONE.md)` and ``a `b` [d](docs/GONE.md)``',
+      '<!-- [h](docs/GONE.md) -->',
       '```md',
       '[f](docs/GONE.md)',
       '```',
     ].join('\n');
     expect(dead({ 'README.md': text })).toEqual([]);
+  });
+
+  it('closes a fence only on the marker that opened it', () => {
+    const text = [
+      '~~~',
+      '```',
+      '[in](docs/GONE.md)',
+      '~~~',
+      '[out](docs/gone-1.md)',
+      '````md',
+      '```ts',
+      '[in](docs/GONE.md)',
+      '```',
+      '````',
+      '[out](docs/gone-2.md)',
+    ].join('\r\n');
+    expect(dead({ 'README.md': text })).toEqual(['docs/gone-1.md', 'docs/gone-2.md']);
   });
 
   it('names the line a dead link is on', () => {

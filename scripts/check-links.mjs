@@ -14,9 +14,10 @@
  *   a link inside the site's      the site builds a page at the URL it
  *   own pages                     resolves to from the page it is on
  *
- * Other hosts, anchors and code blocks are not checked: an external page is not
- * this repository's to keep, and a fence holds code, where `[a](b)` is not a
- * link.
+ * Other hosts and anchors are not checked: an external page is not this
+ * repository's to keep. Fenced code, code spans and HTML comments are skipped,
+ * because `[a](b)` there is not a link; an indented code block is not, since
+ * telling one from an indented list paragraph needs a Markdown parser.
  *
  *   node scripts/check-links.mjs
  */
@@ -34,9 +35,15 @@ const PAGES = 'site/src/pages';
 /**
  * typedoc writes the API reference into the content on every site build and git
  * ignores it, so a checkout that has not built the site has no page there to
- * find. A link below it is taken on trust until it has.
+ * find. A link below it is taken on trust until it has; CI runs this after the
+ * build, where the pages are there to check.
  */
 const GENERATED = '/docs/api/';
+
+/** A target in `<angle brackets>` may hold spaces; a bare one may hold balanced parentheses. */
+const TARGET = String.raw`(?:<([^<>\n]*)>|((?:[^()\s]|\([^()\s]*\))+))`;
+const INLINE = new RegExp(String.raw`\]\(\s*${TARGET}`, 'g');
+const DEFINITION = new RegExp(String.raw`^\s*\[[^\]]+\]:\s*${TARGET}`);
 
 /** `docs/flow.md` is served at `/docs/flow/`, an `index` at its folder. */
 const routeOf = (path) =>
@@ -58,18 +65,24 @@ export const routes = (root) => {
 /** Inline links and reference definitions, with their line, outside code. */
 export const links = (text) => {
   const found = [];
-  let fenced = false;
+  /** The open fence's marker: it closes on the same character, at least as long, with nothing after. */
+  let fence = null;
   text.split(/\r?\n/).forEach((raw, index) => {
-    if (/^\s*(```|~~~)/.test(raw)) {
-      fenced = !fenced;
-      return;
-    }
-    if (fenced) return;
-    const line = raw.replace(/`[^`]*`/g, '');
-    for (const match of line.matchAll(/\]\(\s*<?([^)\s>]+)/g))
-      found.push({ line: index + 1, target: match[1] });
-    const definition = line.match(/^\s*\[[^\]]+\]:\s*<?([^\s>]+)/);
-    if (definition) found.push({ line: index + 1, target: definition[1] });
+    const marker = raw.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
+    if (marker && !fence) fence = marker[1];
+    else if (
+      marker &&
+      marker[1][0] === fence[0] &&
+      marker[1].length >= fence.length &&
+      !marker[2].trim()
+    )
+      fence = null;
+    if (fence || marker) return;
+    const line = raw.replace(/<!--.*?-->/g, '').replace(/(`+)(.*?[^`])\1(?!`)/g, '');
+    const add = (match) => found.push({ line: index + 1, target: match[1] ?? match[2] });
+    for (const match of line.matchAll(INLINE)) add(match);
+    const definition = line.match(DEFINITION);
+    if (definition) add(definition);
   });
   return found;
 };
@@ -84,7 +97,6 @@ const deadEnd = (root, pages, file, target) => {
   };
   const missing = (path) => (existsSync(path) ? null : 'is not a file in the repository');
 
-  if (target.startsWith('#')) return null;
   const repo = target.match(REPO);
   if (repo) return missing(join(root, decodeURIComponent(repo[1])));
   if (target.startsWith(SITE)) return page(new URL(target).pathname);
