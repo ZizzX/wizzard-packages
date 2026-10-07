@@ -9,7 +9,7 @@
  *
  *   a relative path               the file exists, relative to the document
  *   a github.com link to this     the file exists in the checkout
- *   repository (blob or tree)
+ *   repository's main branch
  *   a link to the docs site       the site builds a page at that path
  *   a link inside the site's      the site builds a page at the URL it
  *   own pages                     resolves to from the page it is on
@@ -20,7 +20,8 @@
  * CommonMark says. MDX differs in two places it follows: an indent is not code,
  * and Markdown inside a JSX element is still Markdown. A `{expression}` is read
  * as text, and front matter is skipped. A dead link is reported at the line its
- * paragraph, list item or table cell starts on.
+ * paragraph, list item or table cell starts on. Only Markdown links are read:
+ * an HTML `<a href>` or a component's `href` prop is not.
  *
  *   node scripts/check-links.mjs
  */
@@ -34,7 +35,8 @@ import MarkdownIt from 'markdown-it';
 
 const SITE = 'https://zizzx.github.io/wizzard-packages/';
 const BASE = '/wizzard-packages';
-const REPO = /^https:\/\/github\.com\/ZizzX\/wizzard-packages\/(?:blob|tree)\/[^/]+\/([^#?]*)/;
+/** Only `main` is the checkout; a link pinned to another ref or a commit names a file of its own time. */
+const REPO = /^https:\/\/github\.com\/ZizzX\/wizzard-packages\/(?:blob|tree)\/main\/([^#?]*)/;
 const CONTENT = 'site/src/content/docs';
 const PAGES = 'site/src/pages';
 /**
@@ -58,6 +60,23 @@ const decode = (path) =>
     }
   });
 
+/**
+ * A content file's URL, as Astro makes it: each segment slugged the way
+ * github-slugger does - lowercase, punctuation but `-` and `_` dropped - so
+ * typedoc's `@wizzard-packages/vue/functions/useField.md` is served at
+ * `/wizzard-packages/vue/functions/usefield/`.
+ */
+const slug = (path) =>
+  path
+    .split('/')
+    .map((segment) =>
+      segment
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}\p{M}\s_-]/gu, '')
+        .replace(/\s/g, '-')
+    )
+    .join('/');
+
 /** `docs/flow.md` is served at `/docs/flow/`, an `index` at its folder. */
 const routeOf = (path) =>
   `/${path.replace(/\.(mdx?|astro)$/, '').replace(/(^|\/)index$/, '')}/`.replace(/\/+/g, '/');
@@ -69,8 +88,10 @@ export const routes = (root) => {
     if (!existsSync(join(root, base))) continue;
     for (const path of readdirSync(join(root, base), { recursive: true }))
       // A `[slug].astro` page builds whatever its code says; nothing here links to one.
-      if (/\.(mdx?|astro)$/.test(path) && !path.includes('['))
-        found.add(routeOf(path.split(sep).join('/')));
+      if (/\.(mdx?|astro)$/.test(path) && !path.includes('[')) {
+        const route = routeOf(path.split(sep).join('/'));
+        found.add(base === CONTENT ? slug(route) : route);
+      }
   }
   return found;
 };
@@ -103,12 +124,7 @@ export const links = (text, isMdx = false) => {
 /** Why `target`, written in `file`, leads nowhere - or `null` when it leads somewhere. */
 const deadEnd = (root, pages, file, target) => {
   const page = (url, base) => {
-    let path;
-    try {
-      path = new URL(url, base).pathname;
-    } catch {
-      return 'is not a URL';
-    }
+    const path = new URL(url, base).pathname;
     if (!path.startsWith(`${BASE}/`)) return 'is outside the site';
     const route = path.slice(BASE.length).replace(/\/?$/, '/');
     if (route.startsWith(GENERATED) && !existsSync(join(root, CONTENT, GENERATED))) return null;
@@ -119,10 +135,11 @@ const deadEnd = (root, pages, file, target) => {
   const repo = target.match(REPO);
   if (repo) return missing(join(root, decode(repo[1])));
   if (target.startsWith(SITE)) return page(target);
-  if (/^[a-z][a-z\d+.-]*:/i.test(target)) return null;
+  if (/^[a-z][a-z\d+.-]*:/i.test(target) || target.startsWith('//')) return null;
   const path = decode(target.replace(/[#?].*$/, ''));
-  // A page links to another page by URL; an image beside it is still a file.
-  if (file.startsWith(`${CONTENT}/`) && !/\.\w+$/.test(path)) {
+  // A page links to another page by URL - `flow.md` included, which the site serves as nothing -
+  // and an image beside it is still a file.
+  if (file.startsWith(`${CONTENT}/`) && !/\.(?!mdx?$)\w+$/.test(path)) {
     return page(target, `https://site${BASE}${routeOf(file.slice(CONTENT.length + 1))}`);
   }
   return missing(path.startsWith('/') ? join(root, path) : join(root, dirname(file), path));

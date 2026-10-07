@@ -73,6 +73,15 @@ describe('check-links', () => {
     ).toEqual(['docs/gone one.md']);
   });
 
+  it('leaves a github.com link pinned to another ref or a commit alone', () => {
+    const repo = 'https://github.com/ZizzX/wizzard-packages';
+    expect(
+      dead({
+        'README.md': `[s](${repo}/blob/3eecb995f0e1a2b3c4d5e6f708192a3b4c5d6e7f/old/deleted.ts) [b](${repo}/blob/feature/T-009/x/README.md) [p](//example.com/x)`,
+      })
+    ).toEqual([]);
+  });
+
   it('follows a github.com link to this repository into the checkout', () => {
     const repo = 'https://github.com/ZizzX/wizzard-packages';
     expect(
@@ -98,6 +107,22 @@ describe('check-links', () => {
           '[f](../flow/) [e](../../errors/nav-blocked/) [g](../gone/)',
       })
     ).toEqual(['../gone/']);
+  });
+
+  it("reads a site page's link to a .md file as a URL, which the site does not serve", () => {
+    expect(
+      dead({ 'site/src/content/docs/docs/navigation.md': '[f](flow.md) [g](./flow.md#x)' })
+    ).toEqual(['flow.md', './flow.md#x']);
+  });
+
+  it('serves a generated page at the URL Astro slugs it to', () => {
+    const api = 'https://zizzx.github.io/wizzard-packages/docs/api';
+    expect(
+      dead({
+        'site/src/content/docs/docs/api/@wizzard-packages/vue/functions/useWizardSelector.md': '',
+        'README.md': `[l](${api}/wizzard-packages/vue/functions/usewizardselector/) [c](${api}/@wizzard-packages/vue/functions/useWizardSelector/)`,
+      })
+    ).toEqual([`${api}/@wizzard-packages/vue/functions/useWizardSelector/`]);
   });
 
   it('reads an image on a site page as a file beside it, not as a page', () => {
@@ -134,11 +159,6 @@ describe('check-links', () => {
     expect(dead({ 'README.md': '[p](docs/50%.md) [s](docs/a%20b%.md) [g](docs/60%.md)' })).toEqual([
       'docs/60%.md',
     ]);
-  });
-
-  it('reports a target that is not a URL instead of failing on it', () => {
-    const files = scratch({ 'site/src/content/docs/docs/navigation.md': '[x](//[)' });
-    expect(deadLinks(tree, files)).toMatchObject([{ target: '//[', why: 'is not a URL' }]);
   });
 
   it('takes a link into the generated API reference on trust until the site is built', () => {
