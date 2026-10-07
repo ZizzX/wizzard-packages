@@ -99,6 +99,10 @@ A validator is a resolver, so a schema library is one adapter away.
 because Zod 3.24+, Zod 4, Valibot, ArkType, Effect and Yup 1.5+ all speak
 [Standard Schema](https://standardschema.dev):
 
+```bash
+pnpm add @wizzard-packages/validate@canary
+```
+
 ```ts
 import { createWizard } from '@wizzard-packages/core/v1';
 import { schema } from '@wizzard-packages/validate';

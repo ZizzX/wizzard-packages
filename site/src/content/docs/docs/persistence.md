@@ -63,14 +63,17 @@ through `state` with `status: 'done'` is not entered again: it stays finished. A
 carry `status`, so a persisted wizard that finished comes back `idle` on its last step, and that
 step, if it loads, loads again like any other restored step.
 
-| `reason`                | What was wrong                                                            |
-| ----------------------- | ------------------------------------------------------------------------- |
-| `snapshot/unreadable`   | Not a snapshot: wrong shape, or not an object at all.                     |
-| `snapshot/version`      | Written in an older snapshot format that `migrate` did not bring forward. |
-| `snapshot/other-flow`   | Taken against a different flow `id`, or a different flow `version`.       |
-| `snapshot/unknown-step` | Names a step this definition no longer has.                               |
-| `snapshot/unstorable`   | Holds something that cannot survive the round trip.                       |
-| `snapshot/too-large`    | Past the size or nesting limit.                                           |
+| `reason`                | What was wrong                                                                                 |
+| ----------------------- | ---------------------------------------------------------------------------------------------- |
+| `snapshot/unreadable`   | Not a snapshot: wrong shape, or not an object at all.                                          |
+| `snapshot/version`      | Written by a snapshot format this build does not know, and `migrate` did not bring it forward. |
+| `snapshot/other-flow`   | Taken against a different flow `id`, or a different flow `version` when both carry one.        |
+| `snapshot/unknown-step` | Names a step this definition no longer has.                                                    |
+| `snapshot/unstorable`   | Holds something that cannot survive the round trip.                                            |
+| `snapshot/too-large`    | Past the size or nesting limit.                                                                |
+
+`persist` reports `snapshot/other-flow` for one more case, before `decodeSnapshot` runs: its own
+`version` option is set, and the stored session was written under another value or none.
 
 Every one of these is a reason to start the user cleanly rather than to drop them into a step
 that no longer exists. Refusing loudly at restore is the point of the format carrying `flow`
@@ -86,7 +89,7 @@ Two different versions live in a stored session, and only one of them `migrate` 
 
 `v` is the version of the snapshot format itself, which this library owns; it is `1` today.
 `version` is the flow's own, which you own. A snapshot whose `version` does not match the
-definition's is refused with `snapshot/other-flow`, and no migration is consulted: a stored
+definition's, when both carry one, is refused with `snapshot/other-flow`, and no migration is consulted: a stored
 session of a flow that has since changed shape is a session for a different flow. Migrating that
 is a decision about your data, taken before the payload ever reaches `decodeSnapshot`.
 
@@ -124,6 +127,23 @@ createWizard({
   plugins: [persist({ key: 'signup', version: APP_VERSION, onRestore })],
 });
 ```
+
+| Option      | What it does                                                                                                                                                                                 |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `key`       | The storage key. One per flow, or one per flow per user.                                                                                                                                     |
+| `storage`   | Where to put it. `localStorage` by default; any synchronous store works.                                                                                                                     |
+| `version`   | Your application's version. Bump it when the meaning of the data changes: a session stored under another value, or none, is refused as `snapshot/other-flow`, and `migrate` does not see it. |
+| `migrate`   | Upgrades a snapshot written in an older format, one hop at a time.                                                                                                                           |
+| `onRestore` | Hears what happened at startup: `{ restored: true }` or the reason it was not.                                                                                                               |
+
+What it stores is the durable snapshot above, never the running state: a navigation in flight, a
+step that was loading and a validator's errors all describe a moment, and restoring them is how a
+wizard comes back stuck.
+
+The plugin never throws. A browser that refuses storage, a quota that fills up, a value that was
+corrupted in place: each means this session is not coming back, and none of them is a reason to
+break the wizard someone is filling in now. Each failure warns once per code, names its cause,
+and the ones met at startup reach `onRestore` as its reason.
 
 `onRestore` is how the outcome reaches your interface. It receives a `RestoreOutcome`, which is
 `{ restored: true }` or `{ restored: false, reason }` - the reasons above, plus

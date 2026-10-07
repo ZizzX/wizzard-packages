@@ -1,7 +1,16 @@
 # @wizzard-packages/plugins
 
-Plugins for [Wizzard](https://github.com/ZizzX/wizzard-packages) flows. One entry per
-concern, so a flow that persists nothing carries none of the code that would.
+![npm](https://img.shields.io/npm/v/@wizzard-packages/plugins)
+![license](https://img.shields.io/npm/l/@wizzard-packages/plugins)
+
+Plugins for [Wizzard](https://github.com/ZizzX/wizzard-packages) flows. One entry per concern,
+so a flow that persists nothing carries none of the code that would.
+
+## Install
+
+```bash
+pnpm add @wizzard-packages/core@canary @wizzard-packages/plugins@canary
+```
 
 ## `/persist`
 
@@ -27,37 +36,21 @@ const wizard = createWizard({
 });
 ```
 
-What is stored is the durable snapshot from `@wizzard-packages/core/snapshot`, never the
-running state: a navigation in flight, a step that was loading and a validator's errors all
-describe a moment, and restoring them is how a wizard comes back stuck.
-
-What is read is validated before it is installed. A snapshot from another flow, from an
-older version of it, or naming a step that no longer exists is refused with a reason rather
-than restored into something that looks plausible and is not.
-
-The plugin never throws. A browser that refuses storage, a quota that fills up, a value that
-was corrupted in place: each means this session is not coming back, and none of them is a
-reason to break the wizard someone is filling in right now. Every failure warns once, names
-its cause, and reaches `onRestore`. An `onRestore` that throws is caught the same way, and the
-plugin carries on.
-
-Writes are coalesced into one per frame, and whatever is pending is flushed when the wizard
-is destroyed — closing a tab does not wait for a timer.
-
-### Options
-
-| Option      | What it does                                                              |
-| ----------- | ------------------------------------------------------------------------- |
-| `key`       | Storage key. One per flow, or one per flow per user.                      |
-| `storage`   | Where to put it. `localStorage` by default; any synchronous store works.  |
-| `version`   | Your application's version. Bump it when the meaning of the data changes. |
-| `migrate`   | Upgrades a snapshot written by an older format, one hop at a time.        |
-| `onRestore` | What happened at startup: `{ restored: true }` or a reason.               |
+What is read back is validated before it is installed: a snapshot from another flow, from an
+older version of it, or naming a step that no longer exists is refused with a reason. The
+plugin never throws; a storage failure warns once and the wizard carries on.
 
 ## Supported
 
-Node 20.11+, TypeScript 5+. ESM and CJS, types for both.
+Node 20.11+, TypeScript 5+. ESM and CJS, types for both. No peer dependencies.
+`@wizzard-packages/core` is a dependency, installed beside it above so your own code can import
+the engine.
+
+## Documentation
+
+[Persistence](https://zizzx.github.io/wizzard-packages/docs/persistence/) covers the options, the refusal reasons and `onRestore`;
+[Restore after reload](https://zizzx.github.io/wizzard-packages/docs/restore-after-reload/) is a working page.
 
 ## License
 
-MIT © [ZizzX](https://github.com/ZizzX)
+MIT

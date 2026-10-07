@@ -52,6 +52,10 @@ Pick the binding you render with. The choice is remembered, here and on every ot
 
 The `@canary` tag is where v1 lives until the 1.0.0 release; it moves to `latest` then.
 
+Supported: Node 20.11 or newer, TypeScript 5 or newer, React 18 or newer, Vue 3.3 or newer.
+Every package ships ESM and CJS, with types for both. `react` and `react-dom` are peer
+dependencies of the React binding and `vue` of the Vue one; `core` depends on nothing.
+
 ### In a new app
 
 Any bundler will do. These are the templates the examples are built with:
