@@ -84,7 +84,7 @@ piped into a group reflects a change made upstream without leaving the group and
 | `@wizzard-packages/core`                           | the engine: types, expressions, navigation, selectors; `/v1` is the same    |
 | `@wizzard-packages/core/graph`                     | a flow as `{ nodes, edges }`, for drawing it                                |
 | `@wizzard-packages/core/groups`                    | traversal for repeated sub-flows                                            |
-| `@wizzard-packages/core/session`                   | a recorded run, and the check that a replay matches it                      |
+| `@wizzard-packages/core/session`                   | a recorded run, and the check that it still belongs to the flow             |
 | `@wizzard-packages/core/snapshot`                  | serialize a run, and refuse stored JSON that cannot be trusted              |
 | `@wizzard-packages/core/expr`                      | a builder for expressions, if you would rather not write the JSON           |
 | `@wizzard-packages/core/validate-flow`             | checks a flow and its inline sub-flows, each problem with a code and a page |

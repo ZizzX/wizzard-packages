@@ -85,7 +85,8 @@ component.
 ## Supported
 
 React 18+, Node 20.11+, TypeScript 5+. ESM and CJS, types for both. `react` and `react-dom` are
-peer dependencies; `@wizzard-packages/core` comes with this package.
+peer dependencies. `@wizzard-packages/core` is a dependency, installed beside it above so your
+own code can import the engine.
 
 ## Documentation
 

@@ -49,6 +49,8 @@ Three steps, and two ways to get it wrong.
 pnpm add -D @wizzard-packages/devtools@canary
 ```
 
+The panel renders inside `@wizzard-packages/react`, so it goes beside the React binding.
+
 ```tsx
 const dt = devtools();
 const wizard = createWizard({ flow: signup, plugins: [dt] });

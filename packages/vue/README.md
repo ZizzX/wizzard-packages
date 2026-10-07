@@ -86,8 +86,9 @@ const starting = computed(() => current.value === null);
 
 ## Supported
 
-Vue 3.3+, Node 20.11+, TypeScript 5+. ESM and CJS, types for both. `vue` is a peer dependency;
-`@wizzard-packages/core` comes with this package.
+Vue 3.3+, Node 20.11+, TypeScript 5+. ESM and CJS, types for both. `vue` is a peer dependency.
+`@wizzard-packages/core` is a dependency, installed beside it above so your own code can import
+the engine.
 
 ## Documentation
 

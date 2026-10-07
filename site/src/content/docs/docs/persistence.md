@@ -125,13 +125,13 @@ createWizard({
 });
 ```
 
-| Option      | What it does                                                                   |
-| ----------- | ------------------------------------------------------------------------------ |
-| `key`       | The storage key. One per flow, or one per flow per user.                       |
-| `storage`   | Where to put it. `localStorage` by default; any synchronous store works.       |
-| `version`   | Your application's version. Bump it when the meaning of the data changes.      |
-| `migrate`   | Upgrades a snapshot written in an older format, one hop at a time.             |
-| `onRestore` | Hears what happened at startup: `{ restored: true }` or the reason it was not. |
+| Option      | What it does                                                                                                                                                                       |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `key`       | The storage key. One per flow, or one per flow per user.                                                                                                                           |
+| `storage`   | Where to put it. `localStorage` by default; any synchronous store works.                                                                                                           |
+| `version`   | Your application's version. Bump it when the meaning of the data changes: a session stored under another value is refused as `snapshot/other-flow`, and `migrate` does not see it. |
+| `migrate`   | Upgrades a snapshot written in an older format, one hop at a time.                                                                                                                 |
+| `onRestore` | Hears what happened at startup: `{ restored: true }` or the reason it was not.                                                                                                     |
 
 What it stores is the durable snapshot above, never the running state: a navigation in flight, a
 step that was loading and a validator's errors all describe a moment, and restoring them is how a
