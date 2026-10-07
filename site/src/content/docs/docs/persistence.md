@@ -63,16 +63,16 @@ through `state` with `status: 'done'` is not entered again: it stays finished. A
 carry `status`, so a persisted wizard that finished comes back `idle` on its last step, and that
 step, if it loads, loads again like any other restored step.
 
-| `reason`                | What was wrong                                                                          |
-| ----------------------- | --------------------------------------------------------------------------------------- |
-| `snapshot/unreadable`   | Not a snapshot: wrong shape, or not an object at all.                                   |
-| `snapshot/version`      | Written in an older snapshot format that `migrate` did not bring forward.               |
-| `snapshot/other-flow`   | Taken against a different flow `id`, or a different flow `version` when both carry one. |
-| `snapshot/unknown-step` | Names a step this definition no longer has.                                             |
-| `snapshot/unstorable`   | Holds something that cannot survive the round trip.                                     |
-| `snapshot/too-large`    | Past the size or nesting limit.                                                         |
+| `reason`                | What was wrong                                                                                 |
+| ----------------------- | ---------------------------------------------------------------------------------------------- |
+| `snapshot/unreadable`   | Not a snapshot: wrong shape, or not an object at all.                                          |
+| `snapshot/version`      | Written by a snapshot format this build does not know, and `migrate` did not bring it forward. |
+| `snapshot/other-flow`   | Taken against a different flow `id`, or a different flow `version` when both carry one.        |
+| `snapshot/unknown-step` | Names a step this definition no longer has.                                                    |
+| `snapshot/unstorable`   | Holds something that cannot survive the round trip.                                            |
+| `snapshot/too-large`    | Past the size or nesting limit.                                                                |
 
-`persist` reports `snapshot/other-flow` for one more case, before these checks run: its own
+`persist` reports `snapshot/other-flow` for one more case, before `decodeSnapshot` runs: its own
 `version` option is set, and the stored session was written under another value or none.
 
 Every one of these is a reason to start the user cleanly rather than to drop them into a step
@@ -128,13 +128,13 @@ createWizard({
 });
 ```
 
-| Option      | What it does                                                                                                                                                                       |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `key`       | The storage key. One per flow, or one per flow per user.                                                                                                                           |
-| `storage`   | Where to put it. `localStorage` by default; any synchronous store works.                                                                                                           |
-| `version`   | Your application's version. Bump it when the meaning of the data changes: a session stored under another value is refused as `snapshot/other-flow`, and `migrate` does not see it. |
-| `migrate`   | Upgrades a snapshot written in an older format, one hop at a time.                                                                                                                 |
-| `onRestore` | Hears what happened at startup: `{ restored: true }` or the reason it was not.                                                                                                     |
+| Option      | What it does                                                                                                                                                                                 |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `key`       | The storage key. One per flow, or one per flow per user.                                                                                                                                     |
+| `storage`   | Where to put it. `localStorage` by default; any synchronous store works.                                                                                                                     |
+| `version`   | Your application's version. Bump it when the meaning of the data changes: a session stored under another value, or none, is refused as `snapshot/other-flow`, and `migrate` does not see it. |
+| `migrate`   | Upgrades a snapshot written in an older format, one hop at a time.                                                                                                                           |
+| `onRestore` | Hears what happened at startup: `{ restored: true }` or the reason it was not.                                                                                                               |
 
 What it stores is the durable snapshot above, never the running state: a navigation in flight, a
 step that was loading and a validator's errors all describe a moment, and restoring them is how a
