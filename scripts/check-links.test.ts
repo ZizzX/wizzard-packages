@@ -137,6 +137,28 @@ describe('check-links', () => {
     ).toEqual(['../gone/', 'https://zizzx.github.io/wizzard-packages/docs/½/']);
   });
 
+  it('builds neither an _-prefixed file nor an Index.astro as an index', () => {
+    const site = 'https://zizzx.github.io/wizzard-packages';
+    expect(
+      dead({
+        'site/src/content/docs/docs/_draft.md': '[g](../gone/)',
+        'site/src/pages/Foo/Index.astro': '',
+        'site/src/pages/_parts/card.astro': '',
+        'README.md': `[d](${site}/docs/_draft/) [f](${site}/Foo/) [i](${site}/Foo/Index/) [c](${site}/_parts/card/) [s](${site}/docs%2Fflow/)`,
+      })
+    ).toEqual([
+      `${site}/docs/_draft/`,
+      `${site}/Foo/`,
+      `${site}/_parts/card/`,
+      `${site}/docs/flow/`,
+    ]);
+  });
+
+  it('takes the repository root with a trailing slash', () => {
+    const files = scratch({ 'README.md': '[r](docs/RELEASE.md) [g](docs/GONE.md)' });
+    expect(deadLinks(`${tree}/`, files)).toMatchObject([{ target: 'docs/GONE.md' }]);
+  });
+
   it('reports a path that climbs out of the repository', () => {
     const files = scratch({ 'README.md': '[o](../../outside.md)' });
     expect(deadLinks(tree, files)).toMatchObject([{ why: 'is outside the repository' }]);

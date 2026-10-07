@@ -31,6 +31,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+import { slug as githubSlug } from 'github-slugger';
 import MarkdownIt from 'markdown-it';
 
 const SITE = 'https://zizzx.github.io/wizzard-packages/';
@@ -60,38 +61,29 @@ const decode = (path) =>
     }
   });
 
-/**
- * A content file's URL, as Astro makes it: each segment slugged the way
- * github-slugger does - lowercase, punctuation but `-` and `_` dropped - so
- * typedoc's `@wizzard-packages/vue/functions/useField.md` is served at
- * `/wizzard-packages/vue/functions/usefield/`.
- */
-const slug = (path) =>
-  path
-    .split('/')
-    .map((segment) =>
-      segment
-        .toLowerCase()
-        .replace(/[^\p{L}\p{Nd}\p{Nl}\p{M}\s_-]/gu, '')
-        .replace(/\s/g, '-')
-    )
-    .join('/');
-
-/** `docs/flow.md` is served at `/docs/flow/`, an `index` at its folder. */
-const routeOf = (path) =>
-  `/${path.replace(/\.(mdx?|astro)$/, '').replace(/(^|\/)index$/i, '')}/`.replace(/\/+/g, '/');
+/** A file under `base`, as the URL Astro serves it at, or `null` for one it does not build. */
+const routeOf = (base, file) => {
+  const parts = file.replace(/\.(mdx?|astro)$/, '').split('/');
+  // A `[slug].astro` page builds whatever its code says, and an `_`-prefixed file is not built.
+  if (parts.some((part) => part.includes('[')) || parts.at(-1).startsWith('_')) return null;
+  if (base === PAGES && parts.some((part) => part.startsWith('_'))) return null;
+  // Content is slugged segment by segment with github-slugger, as Astro does, so typedoc's
+  // `@wizzard-packages/vue/functions/useField.md` is served at `wizzard-packages/vue/functions/usefield/`;
+  // a page keeps its file name, `index` included.
+  const route = base === CONTENT ? parts.map((part) => githubSlug(part)) : parts;
+  if (route.at(-1) === 'index') route.pop();
+  return `/${route.join('/')}/`.replace(/\/+/g, '/');
+};
 
 /** Every page the site builds, as the path below the base it is served at. */
 export const routes = (root) => {
   const found = new Set();
   for (const base of [CONTENT, PAGES]) {
     if (!existsSync(join(root, base))) continue;
-    for (const path of readdirSync(join(root, base), { recursive: true }))
-      // A `[slug].astro` page builds whatever its code says; nothing here links to one.
-      if (/\.(mdx?|astro)$/.test(path) && !path.includes('[')) {
-        const route = routeOf(path.split(sep).join('/'));
-        found.add(base === CONTENT ? slug(route) : route);
-      }
+    for (const path of readdirSync(join(root, base), { recursive: true })) {
+      const route = /\.(mdx?|astro)$/.test(path) && routeOf(base, path.split(sep).join('/'));
+      if (route) found.add(route);
+    }
   }
   return found;
 };
@@ -124,7 +116,10 @@ export const links = (text, isMdx = false) => {
 /** Why `target`, written in `file`, leads nowhere - or `null` when it leads somewhere. */
 const deadEnd = (root, pages, file, target) => {
   const page = (url, base) => {
-    const path = decode(new URL(url, base).pathname);
+    const segments = new URL(url, base).pathname.split('/').map(decode);
+    // An encoded slash is part of a name, and no page has one.
+    if (segments.some((segment) => segment.includes('/'))) return 'is not a page the site builds';
+    const path = segments.join('/');
     if (!path.startsWith(`${BASE}/`)) return 'is outside the site';
     const route = path.slice(BASE.length).replace(/\/?$/, '/');
     if (route.startsWith(GENERATED) && !existsSync(join(root, CONTENT, GENERATED))) return null;
@@ -143,13 +138,16 @@ const deadEnd = (root, pages, file, target) => {
   // A page links to another page by URL - `flow.md` included, which the site serves as nothing -
   // and an image beside it is still a file.
   if (file.startsWith(`${CONTENT}/`) && !/\.(?!mdx?$)\w+$/.test(path)) {
-    return page(target, `https://site${BASE}${slug(routeOf(file.slice(CONTENT.length + 1)))}`);
+    const from = routeOf(CONTENT, file.slice(CONTENT.length + 1));
+    // A file the site does not build is never served, so neither are its links.
+    return from && page(target, `https://site${BASE}${from}`);
   }
   return missing(path.startsWith('/') ? join(root, path) : join(root, dirname(file), path));
 };
 
 /** Every dead link in `files`, paths relative to `root`. */
-export const deadLinks = (root, files) => {
+export const deadLinks = (base, files) => {
+  const root = resolve(base);
   const pages = routes(root);
   return files.flatMap((file) =>
     links(readFileSync(join(root, file), 'utf8'), file.endsWith('.mdx')).flatMap(
