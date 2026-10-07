@@ -125,6 +125,23 @@ describe('check-links', () => {
     ).toEqual([`${api}/@wizzard-packages/vue/functions/useWizardSelector/`]);
   });
 
+  it('slugs pages the way Astro does, and resolves links from the slugged URL', () => {
+    expect(
+      dead({
+        'site/src/content/docs/docs/Über uns.md': '',
+        'site/src/content/docs/docs/Guides/Index.md': '[u](../über-uns/) [o](other/) [g](../gone/)',
+        'site/src/content/docs/docs/Guides/other.md': '',
+        'site/src/content/docs/docs/½.md': '',
+        'README.md': '[h](https://zizzx.github.io/wizzard-packages/docs/½/)',
+      })
+    ).toEqual(['../gone/', 'https://zizzx.github.io/wizzard-packages/docs/½/']);
+  });
+
+  it('reports a path that climbs out of the repository', () => {
+    const files = scratch({ 'README.md': '[o](../../outside.md)' });
+    expect(deadLinks(tree, files)).toMatchObject([{ why: 'is outside the repository' }]);
+  });
+
   it('reads an image on a site page as a file beside it, not as a page', () => {
     expect(
       dead({ 'site/src/content/docs/docs/navigation.md': '![g](graph.png) ![m](missing.png)' })

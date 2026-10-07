@@ -72,14 +72,14 @@ const slug = (path) =>
     .map((segment) =>
       segment
         .toLowerCase()
-        .replace(/[^\p{L}\p{N}\p{M}\s_-]/gu, '')
+        .replace(/[^\p{L}\p{Nd}\p{Nl}\p{M}\s_-]/gu, '')
         .replace(/\s/g, '-')
     )
     .join('/');
 
 /** `docs/flow.md` is served at `/docs/flow/`, an `index` at its folder. */
 const routeOf = (path) =>
-  `/${path.replace(/\.(mdx?|astro)$/, '').replace(/(^|\/)index$/, '')}/`.replace(/\/+/g, '/');
+  `/${path.replace(/\.(mdx?|astro)$/, '').replace(/(^|\/)index$/i, '')}/`.replace(/\/+/g, '/');
 
 /** Every page the site builds, as the path below the base it is served at. */
 export const routes = (root) => {
@@ -124,13 +124,16 @@ export const links = (text, isMdx = false) => {
 /** Why `target`, written in `file`, leads nowhere - or `null` when it leads somewhere. */
 const deadEnd = (root, pages, file, target) => {
   const page = (url, base) => {
-    const path = new URL(url, base).pathname;
+    const path = decode(new URL(url, base).pathname);
     if (!path.startsWith(`${BASE}/`)) return 'is outside the site';
     const route = path.slice(BASE.length).replace(/\/?$/, '/');
     if (route.startsWith(GENERATED) && !existsSync(join(root, CONTENT, GENERATED))) return null;
     return pages.has(route) ? null : 'is not a page the site builds';
   };
-  const missing = (path) => (existsSync(path) ? null : 'is not a file in the repository');
+  const missing = (path) => {
+    if (path !== root && !path.startsWith(root + sep)) return 'is outside the repository';
+    return existsSync(path) ? null : 'is not a file in the repository';
+  };
 
   const repo = target.match(REPO);
   if (repo) return missing(join(root, decode(repo[1])));
@@ -140,7 +143,7 @@ const deadEnd = (root, pages, file, target) => {
   // A page links to another page by URL - `flow.md` included, which the site serves as nothing -
   // and an image beside it is still a file.
   if (file.startsWith(`${CONTENT}/`) && !/\.(?!mdx?$)\w+$/.test(path)) {
-    return page(target, `https://site${BASE}${routeOf(file.slice(CONTENT.length + 1))}`);
+    return page(target, `https://site${BASE}${slug(routeOf(file.slice(CONTENT.length + 1)))}`);
   }
   return missing(path.startsWith('/') ? join(root, path) : join(root, dirname(file), path));
 };
