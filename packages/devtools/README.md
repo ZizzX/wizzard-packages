@@ -27,7 +27,7 @@ import { signup } from './flow';
 import { Wizard } from './App';
 
 /**
- * The panel, wired the way the README's three steps describe it.
+ * The panel, wired the way the documentation's three steps describe it.
  *
  * Two things are easy to get wrong and both are here: the same `devtools()`
  * object goes to `createWizard` and to the panel - two instances leave the
