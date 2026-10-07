@@ -15,10 +15,9 @@
  *   own pages                     resolves to from the page it is on
  *
  * Other hosts and anchors are not checked: an external page is not this
- * repository's to keep. Fenced code (in a list or a quote too), code spans and
- * HTML comments are skipped, because `[a](b)` there is not a link. An indented
- * code block is not skipped, since telling one from an indented list paragraph
- * needs a Markdown parser, and a bare target holds parentheses one level deep.
+ * repository's to keep. Links are read by markdown-it - already in the tree
+ * through typedoc - so what counts as code, a comment or a link is what
+ * CommonMark says, not what a regular expression guesses.
  *
  *   node scripts/check-links.mjs
  */
@@ -27,6 +26,8 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+
+import MarkdownIt from 'markdown-it';
 
 const SITE = 'https://zizzx.github.io/wizzard-packages/';
 const BASE = '/wizzard-packages';
@@ -41,10 +42,7 @@ const PAGES = 'site/src/pages';
  */
 const GENERATED = '/docs/api/';
 
-/** A target in `<angle brackets>` may hold spaces; a bare one may hold balanced parentheses. */
-const TARGET = String.raw`(?:<([^<>\n]*)>|((?:[^()\s]|\([^()\s]*\))+))`;
-const INLINE = new RegExp(String.raw`\]\(\s*${TARGET}`, 'g');
-const DEFINITION = new RegExp(String.raw`^\s*\[[^\]]+\]:\s*${TARGET}`);
+const markdown = new MarkdownIt({ html: true });
 
 /** Each run of escapes is decoded on its own, so a `%` that starts none stays part of the name. */
 const decode = (path) =>
@@ -73,53 +71,23 @@ export const routes = (root) => {
   return found;
 };
 
-/** A code span opens on a whole run of backticks and closes on a run of the same length. */
-const SPAN = /(?<!`)(`+)(?!`)(.*?[^`])\1(?!`)/g;
-
-/** Inline links and reference definitions, with their line, outside code and comments. */
+/** Every link and image in a document, with the line it is on. */
 export const links = (text) => {
   const found = [];
-  /**
-   * The open fence and how deep in quotes it sits. It closes on the same
-   * character, at least as long, at the same depth, with nothing after.
-   */
-  let fence = null;
-  /** Inside a comment that started a line and has not closed yet. */
-  let comment = false;
-  text.split(/\r?\n/).forEach((raw, index) => {
-    let line = raw;
-    if (comment) {
-      const end = line.indexOf('-->');
-      if (end < 0) return;
-      [comment, line] = [false, line.slice(end + 3)];
+  let line = 1;
+  for (const block of markdown.parse(text, {})) {
+    if (block.map) line = block.map[0] + 1;
+    for (const token of block.children ?? []) {
+      if (token.type === 'softbreak' || token.type === 'hardbreak') line += 1;
+      const target =
+        token.type === 'link_open'
+          ? token.attrGet('href')
+          : token.type === 'image'
+            ? token.attrGet('src')
+            : null;
+      if (target !== null) found.push({ line, target });
     }
-    const marker = line.match(/^([\s>]*)(`{3,}|~{3,})(.*)$/);
-    const depth = marker?.[1].split('>').length;
-    // A backtick fence cannot carry a backtick after it: ```a``` is a code span.
-    if (marker && !fence && !(marker[2][0] === '`' && marker[3].includes('`')))
-      fence = { marker: marker[2], depth };
-    else if (
-      fence &&
-      marker &&
-      marker[2][0] === fence.marker[0] &&
-      marker[2].length >= fence.marker.length &&
-      depth === fence.depth &&
-      !marker[3].trim()
-    )
-      fence = null;
-    else if (!fence) {
-      // Spans first: a `<!--` written in one is text, not the start of a comment.
-      line = line.replace(SPAN, '').replace(/<!--.*?-->/g, '');
-      if (/^ {0,3}<!--/.test(line)) {
-        comment = true;
-        return;
-      }
-      const add = (match) => found.push({ line: index + 1, target: match[1] ?? match[2] });
-      for (const match of line.matchAll(INLINE)) add(match);
-      const definition = line.match(DEFINITION);
-      if (definition) add(definition);
-    }
-  });
+  }
   return found;
 };
 
@@ -157,7 +125,7 @@ export const deadLinks = (root, files) => {
   return files.flatMap((file) =>
     links(readFileSync(join(root, file), 'utf8')).flatMap(({ line, target }) => {
       const why = deadEnd(root, pages, file, target);
-      return why ? [{ file, line, target, why }] : [];
+      return why ? [{ file, line, target: decode(target), why }] : [];
     })
   );
 };

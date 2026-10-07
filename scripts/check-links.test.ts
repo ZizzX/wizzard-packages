@@ -59,10 +59,9 @@ describe('check-links', () => {
     ]);
   });
 
-  it('reads a reference definition as a link', () => {
-    expect(dead({ 'README.md': '[r]: docs/RELEASE.md\n[g]: docs/GONE.md' })).toEqual([
-      'docs/GONE.md',
-    ]);
+  it('reads a reference link where it is used', () => {
+    const text = '[r][rel] and [g][gone]\n\n[rel]: docs/RELEASE.md\n[gone]: docs/GONE.md';
+    expect(dead({ 'README.md': text })).toEqual(['docs/GONE.md']);
   });
 
   it('reads a target with spaces in angle brackets, or with parentheses in it', () => {
@@ -148,7 +147,7 @@ describe('check-links', () => {
     ).toEqual([]);
   });
 
-  it('skips anchors, other hosts, code and comments, and reads on after them', () => {
+  it('skips anchors, other hosts, code and comments', () => {
     const text = [
       '[a](#install) [n](https://www.npmjs.com/package/x) [m](mailto:a@b.c)',
       '`[c](docs/GONE.md)` and ``a `b` [d](docs/GONE.md)``',
@@ -161,7 +160,8 @@ describe('check-links', () => {
       '[f](docs/GONE.md)',
       '```',
     ].join('\n');
-    expect(dead({ 'README.md': text })).toEqual(['docs/gone-3.md', 'docs/gone-4.md']);
+    // The rest of the line a comment closes on is part of it, as CommonMark reads it.
+    expect(dead({ 'README.md': text })).toEqual(['docs/gone-4.md']);
   });
 
   it('opens a comment only where one starts a line, and reads on after it', () => {
@@ -227,10 +227,10 @@ describe('check-links', () => {
     expect(dead({ 'README.md': text })).toEqual(['docs/gone-1.md', 'docs/gone-2.md']);
   });
 
-  it('names the line a dead link is on', () => {
-    scratch({ 'README.md': 'one\n\n[g](GONE.md)' });
+  it('names the line a dead link is on, inside a paragraph too', () => {
+    scratch({ 'README.md': 'one\n\ntwo\nthree [g](GONE.md)' });
     expect(deadLinks(tree, ['README.md'])).toEqual([
-      { file: 'README.md', line: 3, target: 'GONE.md', why: 'is not a file in the repository' },
+      { file: 'README.md', line: 4, target: 'GONE.md', why: 'is not a file in the repository' },
     ]);
   });
 });

@@ -101,6 +101,9 @@ importers:
       lint-staged:
         specifier: ^17.4.1
         version: 17.4.1
+      markdown-it:
+        specifier: ^14.1.0
+        version: 14.1.0
       prettier:
         specifier: ^3.7.4
         version: 3.7.4
