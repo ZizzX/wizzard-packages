@@ -144,7 +144,8 @@ describe('check-links', () => {
         'site/src/content/docs/docs/_draft.md': '[g](../gone/)',
         'site/src/pages/Foo/Index.astro': '',
         'site/src/pages/_parts/card.astro': '',
-        'README.md': `[d](${site}/docs/_draft/) [f](${site}/Foo/) [i](${site}/Foo/Index/) [c](${site}/_parts/card/) [s](${site}/docs%2Fflow/)`,
+        'site/src/content/docs/docs/a[1].md': '',
+        'README.md': `[d](${site}/docs/_draft/) [f](${site}/Foo/) [i](${site}/Foo/Index/) [c](${site}/_parts/card/) [s](${site}/docs%2Fflow/) [b](${site}/docs/a1/)`,
       })
     ).toEqual([
       `${site}/docs/_draft/`,

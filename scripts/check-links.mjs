@@ -64,9 +64,11 @@ const decode = (path) =>
 /** A file under `base`, as the URL Astro serves it at, or `null` for one it does not build. */
 const routeOf = (base, file) => {
   const parts = file.replace(/\.(mdx?|astro)$/, '').split('/');
-  // A `[slug].astro` page builds whatever its code says, and an `_`-prefixed file is not built.
-  if (parts.some((part) => part.includes('[')) || parts.at(-1).startsWith('_')) return null;
-  if (base === PAGES && parts.some((part) => part.startsWith('_'))) return null;
+  // An `_`-prefixed file is not built, nor, in pages, anything under an `_` directory; a
+  // `[slug].astro` page builds whatever its code says.
+  if (parts.at(-1).startsWith('_')) return null;
+  if (base === PAGES && parts.some((part) => part.startsWith('_') || part.includes('[')))
+    return null;
   // Content is slugged segment by segment with github-slugger, as Astro does, so typedoc's
   // `@wizzard-packages/vue/functions/useField.md` is served at `wizzard-packages/vue/functions/usefield/`;
   // a page keeps its file name, `index` included.
