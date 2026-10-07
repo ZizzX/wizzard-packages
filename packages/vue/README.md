@@ -1,13 +1,11 @@
 # @wizzard-packages/vue
 
 ![npm](https://img.shields.io/npm/v/@wizzard-packages/vue)
-![downloads](https://img.shields.io/npm/dm/@wizzard-packages/vue)
 ![license](https://img.shields.io/npm/l/@wizzard-packages/vue)
 
 The Vue binding for [`@wizzard-packages/core`](https://www.npmjs.com/package/@wizzard-packages/core).
 It bridges the engine into Vue and does nothing else: navigation, guards and validation are the
-engine's, so this package is one `provide` and eight composables. That is why it is 732 B gzipped
-against 5.07 kB for its 0.x equivalent — nothing was optimised, the logic moved.
+engine's, so this package is `provideWizard` and eight composables.
 
 ## Install
 
@@ -20,15 +18,12 @@ pnpm add @wizzard-packages/core@canary @wizzard-packages/vue@canary
 
 <!-- /example -->
 
-Vue 3.3 or newer. Reactivity rides on snapshot identity: the engine returns the same object
-until a commit, so a `shallowRef` holding it invalidates exactly once per commit and every
-`computed` derived from it caches for free.
-
 ## Use
 
-`provideWizard` goes in a parent, because `inject` reads the parent chain — the component that
-provides the wizard is not the one that uses it. Pass a flow and the scope owns and destroys
-the engine, or pass a `Wizard` you built yourself and it stays yours.
+`provideWizard` goes in a parent component. Given a `flow` it builds a wizard and destroys it
+with that component; given a `wizard` you built, it leaves it yours. Children read it with the
+same names the React binding uses: `useStep`, `useNavigation`, `useField`, `useErrors`,
+`useWizardSelector`, `useWizardSnapshot`, `useWizard` and `useOptionalWizard`.
 
 <!-- example:quickstart-vue-app -->
 
@@ -51,8 +46,6 @@ provideWizard({ flow: signup });
 ```
 
 <!-- /example -->
-
-The child is where the composables are called:
 
 <!-- example:quickstart-vue -->
 
@@ -91,57 +84,22 @@ const starting = computed(() => current.value === null);
 
 <!-- /example -->
 
-Both files and the flow they import are `examples/quickstart`, which CI runs — these blocks are
-generated from them, so what you paste is what is tested.
+## Supported
 
-## Composables
-
-| Composable              | Returns                                                                                      |
-| ----------------------- | -------------------------------------------------------------------------------------------- |
-| `useStep()`             | `current`, `isFirst`, `isLast`, `progress`, `breadcrumbs` and the rest, each a `ComputedRef` |
-| `useNavigation()`       | `next`, `back`, `go`, `cancel`, and `canBack`, `isBusy`, `isLast` as `ComputedRef`s          |
-| `useField<T>(path)`     | a `WritableComputedRef`, usable directly with `v-model`                                      |
-| `useErrors(stepId?)`    | a `ComputedRef` of the error map for a step, or for the current one                          |
-| `useWizardSelector(fn)` | one derived value as a `ComputedRef`                                                         |
-| `useWizard()`           | the engine itself, for anything the composables above do not cover                           |
-
-Below no `provideWizard`, `useWizard()` and every composable built on it throw a `WizardError`
-with the code `provider-missing`. `useOptionalWizard()` returns `null` there instead, which is
-what a component rendered both inside and outside a wizard needs.
-
-`provideWizard` starts the wizard when the component mounts. If that first move throws - a first
-step whose loader rejects is the usual case - there is no caller to throw to, so it logs
-`start-failed` with the cause and no step is current. The wizard has not started, so once what
-threw is fixed, `useWizard().start()` runs the first move again - from a retry button, say - and
-so does mounting the component again.
-
-Navigation is async and returns a result, not a boolean: `await next()` gives
-`{ ok: false, reason: 'blocked', by: 'age-check' }` when a guard refuses. Every `await` inside
-the engine re-checks a navigation epoch, so a validator that resolves after the user pressed
-Back cannot move them.
-
-On the server `onMounted` never runs, so a wizard rendered by SSR navigates nowhere and hydrates
-into its first step on the client.
+Vue 3.3+, Node 20.11+, TypeScript 5+. ESM and CJS, types for both. `vue` is a peer dependency.
+`@wizzard-packages/core` is a dependency, installed beside it above so your own code can import
+the engine.
 
 ## Documentation
 
 [Getting started](https://zizzx.github.io/wizzard-packages/docs/start/) ·
-[The flow](https://zizzx.github.io/wizzard-packages/docs/flow/) ·
-[Navigation](https://zizzx.github.io/wizzard-packages/docs/navigation/) ·
 [Hooks](https://zizzx.github.io/wizzard-packages/docs/hooks/) ·
+[Navigation](https://zizzx.github.io/wizzard-packages/docs/navigation/) ·
 [Validation](https://zizzx.github.io/wizzard-packages/docs/validation/) ·
 [Persistence](https://zizzx.github.io/wizzard-packages/docs/persistence/)
 
-The same names, as hooks, are in
-[`@wizzard-packages/react`](https://www.npmjs.com/package/@wizzard-packages/react). A shared
-contract suite runs against both, which is what stops them drifting apart.
-
-## Upgrading from 0.x
-
-0.x was a different library with the same name: `createWizardFactory<TSchema>()`,
-`useProvideWizard`, `useWizardState`, `useWizardActions`. In v1 the names are shorter and the
-import path carries the version — `@wizzard-packages/vue`. v1 is on the `canary` tag while
-the launch lands; the 0.x line on `latest` is being retired.
+The same names for React are in [`@wizzard-packages/react`](https://www.npmjs.com/package/@wizzard-packages/react).
+Coming from 0.x: [the migration guide](https://github.com/ZizzX/wizzard-packages/blob/main/docs/MIGRATION.md).
 
 ## License
 

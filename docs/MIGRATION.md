@@ -149,6 +149,26 @@ One adapter covers Zod, Valibot, ArkType, Effect and Yup, because they all expos
 Both packages are deleted. `store.hydrate()` and `store.save()` go with them: `persist` restores
 before the first render and writes on every commit.
 
+### `@wizzard-packages/devtools`
+
+The 2.x panel was a React overlay over the 0.x store. The panel now is a different component
+over the v1 engine. 3.0.0, on `latest` today, is already that panel, built against core 0.5;
+coming from it, nothing in this table applies.
+
+| 2.x                                       | now                                                                                          |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `import { WizardDevTools }`               | `import { WizardDevtools }` — one identifier; TypeScript reports the missing export at build |
+| `?devtools=true` in the URL               | removed; render the panel where you want it and gate it yourself                             |
+| floating overlay, `position: fixed`       | docked; fills its container, so the container needs a height                                 |
+| Actions tab (`subscribeToActions`)        | Activity: commits and refusals; refusals need `devtools()` in `plugins`                      |
+| Jump (`RESTORE_SNAPSHOT`)                 | removed; rebuild a wizard from a state with `createWizard({ state })`                        |
+| `@wizzard-packages/react` as a dependency | an optional peer dependency; install it beside devtools                                      |
+| no recording                              | `Record` → `Copy JSON`, or `recordSession()`; the file is a `SessionBundle` `version: 1`     |
+
+There is no codemod and no alias for the old name. The migration is a renamed import, two
+removals, a container with a height and the react binding installed beside it; the compile error
+names the first.
+
 ## What does not carry over
 
 Each of these was a bug or a leak rather than a feature.
