@@ -46,11 +46,14 @@ const SNIPPETS = {
   persist: { file: 'examples/quickstart/src/persist.ts', lang: 'ts' },
   // The install commands are files for the same reason the code is: the site
   // reads them too (`?raw`), so the line a reader copies from npm and the line
-  // they copy from the documentation cannot say different things. At R1 the
-  // dist-tag changes in three files and nowhere else.
+  // they copy from the documentation cannot say different things. Before R0
+  // the dist-tag changes in `examples/quickstart/install` and nowhere else.
   'install-react': { file: 'examples/quickstart/install/react.sh', lang: 'bash' },
   'install-vue': { file: 'examples/quickstart/install/vue.sh', lang: 'bash' },
   'install-core': { file: 'examples/quickstart/install/core.sh', lang: 'bash' },
+  'install-validate': { file: 'examples/quickstart/install/validate.sh', lang: 'bash' },
+  'install-plugins': { file: 'examples/quickstart/install/plugins.sh', lang: 'bash' },
+  'install-devtools': { file: 'examples/quickstart/install/devtools.sh', lang: 'bash' },
 };
 
 /**

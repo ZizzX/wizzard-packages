@@ -7,7 +7,7 @@ A plugin is an object with a `name` and any of six optional hooks. It is the eng
 point: persistence and devtools are both plugins, and nothing about them is privileged.
 
 ```ts
-import type { Hooks } from '@wizzard-packages/core/v1';
+import type { Hooks } from '@wizzard-packages/core';
 
 export const trail = (): Hooks => ({
   name: 'trail',

@@ -10,9 +10,14 @@ is yours: this package never bundles one.
 
 ## Install
 
+<!-- example:install-validate -->
+
+<!-- prettier-ignore -->
 ```bash
 pnpm add @wizzard-packages/core@canary @wizzard-packages/validate@canary
 ```
+
+<!-- /example -->
 
 ## Use
 
