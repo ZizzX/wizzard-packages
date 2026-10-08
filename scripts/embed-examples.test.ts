@@ -142,8 +142,13 @@ describe('embed-examples --stage', () => {
   );
   const git = (...args: string[]): string =>
     spawnSync('git', args, { cwd: tree, encoding: 'utf8', env }).stdout;
-  const stage = (): number | null =>
-    spawnSync('node', [join(tree, 'scripts/embed-examples.mjs'), '--stage'], { env }).status;
+  const stage = (): { status: number | null; stderr: string } => {
+    const result = spawnSync('node', [join(tree, 'scripts/embed-examples.mjs'), '--stage'], {
+      encoding: 'utf8',
+      env,
+    });
+    return { status: result.status, stderr: result.stderr };
+  };
   /** The committed copy of a file: what the index holds. */
   const indexed = (path: string): string => git('show', `:${path}`);
   const onDisk = (path: string): string => readFileSync(join(tree, path), 'utf8');
@@ -161,7 +166,7 @@ describe('embed-examples --stage', () => {
     // Run by hand before the commit: the working copies are current, the index ones are not.
     expect(run().status).toBe(0);
 
-    expect(stage()).toBe(0);
+    expect(stage()).toMatchObject({ status: 0 });
 
     expect(indexed('packages/plugins/README.md')).toContain('// a change');
     expect(indexed('site/src/content/docs/docs/persistence.md')).toContain('// a change');
@@ -174,7 +179,7 @@ describe('embed-examples --stage', () => {
     edit('examples/quickstart/src/validate.ts', (text) => `${text}\n// not staged\n`);
     edit('packages/plugins/README.md', (text) => `${text}\nAn edit of its own.\n`);
 
-    expect(stage()).toBe(0);
+    expect(stage()).toMatchObject({ status: 0 });
 
     const readme = indexed('packages/plugins/README.md');
     expect(readme).toContain('// a change');
@@ -183,5 +188,35 @@ describe('embed-examples --stage', () => {
 
     expect(onDisk('packages/plugins/README.md')).toContain('// a change');
     expect(onDisk('packages/plugins/README.md')).toContain('An edit of its own.');
+  });
+
+  it('writes nothing to the index when something is wrong', () => {
+    repository();
+    edit('examples/quickstart/src/persist.ts', (text) => `${text}\n// a change\n`);
+    edit('README.md', (text) =>
+      text.replace('<!-- example:install-react -->', '<!-- example:install-nothing -->')
+    );
+    git('add', 'examples/quickstart/src/persist.ts', 'README.md');
+
+    const result = stage();
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('marker "install-nothing" is not in the manifest');
+    expect(indexed('packages/plugins/README.md')).not.toContain('// a change');
+  });
+
+  it('names a file that is on disk but not in the index', () => {
+    repository();
+    git('rm', '-q', '--cached', 'packages/vue/README.md', 'examples/quickstart/src/persist.ts');
+
+    const result = stage();
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      'packages/vue/README.md is listed in DOCUMENTS, which is not in the index; stage it'
+    );
+    expect(result.stderr).toContain(
+      'points at examples/quickstart/src/persist.ts, which is not in the index; stage it'
+    );
   });
 });

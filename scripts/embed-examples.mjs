@@ -96,6 +96,8 @@ const read = async (file) =>
 
 const problems = [];
 const used = new Set();
+/** Why `read` failed: under `--stage` a file on disk may still be missing from the index. */
+const absent = stage ? 'which is not in the index; stage it' : 'which does not exist';
 
 // The `prettier-ignore` is load-bearing: prettier reformats code inside
 // fences, which would rewrite the block into something that no longer matches
@@ -128,7 +130,7 @@ async function embed(doc, text, report) {
     try {
       source = lf(await read(snippet.file)).trimEnd();
     } catch {
-      report.push(`${doc}: "${name}" points at ${snippet.file}, which does not exist`);
+      report.push(`${doc}: "${name}" points at ${snippet.file}, ${absent}`);
       continue;
     }
 
@@ -151,7 +153,13 @@ ${source}
 const staged = [];
 
 for (const doc of DOCUMENTS) {
-  const original = lf(await read(doc));
+  let original;
+  try {
+    original = lf(await read(doc));
+  } catch {
+    problems.push(`${doc} is listed in DOCUMENTS, ${absent}`);
+    continue;
+  }
   const updated = await embed(doc, original, problems);
   if (check || updated === original) continue;
   if (stage) staged.push([doc, updated]);
@@ -178,6 +186,7 @@ for (const [doc, updated] of staged) {
     input: updated,
     encoding: 'utf8',
   }).trim();
+  // Every document is a Markdown file, so its mode is the plain one.
   git('update-index', '--cacheinfo', `100644,${blob},${doc}`);
   const working = resolve(root, doc);
   await writeFile(working, await embed(doc, lf(await readFile(working, 'utf8')), []), 'utf8');
