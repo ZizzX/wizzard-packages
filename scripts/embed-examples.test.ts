@@ -133,24 +133,55 @@ describe('embed-examples --check', () => {
 });
 
 describe('embed-examples --stage', () => {
-  it('stages the documents it rewrote and nothing else', () => {
+  // A git hook exports GIT_DIR and friends, and this suite runs inside one
+  // (pre-push). Inherited, they point the scratch repository's commands at the
+  // real one: `git add -A` here once replaced this checkout's index with the
+  // scratch tree. Every git call below, the script's included, runs without them.
+  const env = Object.fromEntries(
+    Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_'))
+  );
+  const git = (...args: string[]): string =>
+    spawnSync('git', args, { cwd: tree, encoding: 'utf8', env }).stdout;
+  const stage = (): number | null =>
+    spawnSync('node', [join(tree, 'scripts/embed-examples.mjs'), '--stage'], { env }).status;
+  /** The committed copy of a file: what the index holds. */
+  const indexed = (path: string): string => git('show', `:${path}`);
+  const onDisk = (path: string): string => readFileSync(join(tree, path), 'utf8');
+
+  const repository = (): void => {
     scratch();
-    const git = (...args: string[]): string =>
-      spawnSync('git', args, { cwd: tree, encoding: 'utf8' }).stdout;
     git('init', '-q');
     git('add', '-A');
+  };
+
+  it('writes a staged source into the index copies, even when the documents were embedded by hand', () => {
+    repository();
     edit('examples/quickstart/src/persist.ts', (text) => `${text}\n// a change\n`);
-    edit('packages/core/README.md', (text) => `${text}\nAn edit of its own.\n`);
+    git('add', 'examples/quickstart/src/persist.ts');
+    // Run by hand before the commit: the working copies are current, the index ones are not.
+    expect(run().status).toBe(0);
 
-    expect(run('--stage').status).toBe(0);
+    expect(stage()).toBe(0);
 
-    // What is left unstaged: the source, which the commit stages itself, and
-    // the edit the script did not make. The two documents embedding the
-    // source were rewritten and staged.
-    expect(git('diff', '--name-only').trim().split('\n')).toEqual([
-      'examples/quickstart/src/persist.ts',
-      'packages/core/README.md',
-    ]);
-    expect(git('diff', '--cached', '--name-only')).toContain('packages/plugins/README.md');
+    expect(indexed('packages/plugins/README.md')).toContain('// a change');
+    expect(indexed('site/src/content/docs/docs/persistence.md')).toContain('// a change');
+  });
+
+  it('keeps what is not staged out of the index, and in the working copy', () => {
+    repository();
+    edit('examples/quickstart/src/persist.ts', (text) => `${text}\n// a change\n`);
+    git('add', 'examples/quickstart/src/persist.ts');
+    edit('examples/quickstart/src/validate.ts', (text) => `${text}\n// not staged\n`);
+    edit('packages/plugins/README.md', (text) => `${text}\nAn edit of its own.\n`);
+
+    expect(stage()).toBe(0);
+
+    const readme = indexed('packages/plugins/README.md');
+    expect(readme).toContain('// a change');
+    expect(readme).not.toContain('An edit of its own.');
+    expect(indexed('packages/validate/README.md')).not.toContain('// not staged');
+
+    expect(onDisk('packages/plugins/README.md')).toContain('// a change');
+    expect(onDisk('packages/plugins/README.md')).toContain('An edit of its own.');
   });
 });

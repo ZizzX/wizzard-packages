@@ -9,7 +9,7 @@
  *
  *   node scripts/embed-examples.mjs           rewrite the documents
  *   node scripts/embed-examples.mjs --check   fail if anything drifted
- *   node scripts/embed-examples.mjs --stage   rewrite, then `git add` what it rewrote
+ *   node scripts/embed-examples.mjs --stage   the pre-commit hook: rewrite what is staged
  *
  * Markers in a document, one pair per snippet:
  *
@@ -74,35 +74,43 @@ const DOCUMENTS = [
 
 const check = process.argv.includes('--check');
 /**
- * For the pre-commit hook. A document the hook rewrites is not one of the files
- * being committed, so nothing stages it unless this does; and only this script
- * knows which documents those are.
+ * For the pre-commit hook. A commit is the index, not the working tree, so this
+ * reads sources and documents from the index and writes each rewritten document
+ * there: a source embedded by hand beforehand still reaches the commit, and an
+ * unstaged edit - another session's, in a shared worktree - stays out of it. The
+ * working copy gets the same blocks and keeps everything else.
  */
 const stage = process.argv.includes('--stage');
-const written = [];
 /** Line endings differ between a Windows checkout and CI; the content does not. */
 const lf = (s) => s.replace(/\r\n/g, '\n');
+const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' });
+/** A repository path, from the index under `--stage`, from disk otherwise. */
+const read = async (file) =>
+  stage
+    ? execFileSync('git', ['show', `:${file}`], {
+        cwd: root,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      })
+    : readFile(resolve(root, file), 'utf8');
 
 const problems = [];
 const used = new Set();
 
-for (const doc of DOCUMENTS) {
-  const path = resolve(root, doc);
-  const original = lf(await readFile(path, 'utf8'));
+// The `prettier-ignore` is load-bearing: prettier reformats code inside
+// fences, which would rewrite the block into something that no longer matches
+// the file it came from, and the two would fight forever.
+const pattern =
+  /<!-- example:([\w-]+) -->\n+<!-- prettier-ignore -->\n```[\w]*\n[\s\S]*?\n```\n+<!-- \/example -->/g;
+
+/** `text` with every marked block rebuilt from its source; what is wrong goes to `report`. */
+async function embed(doc, text, report) {
   const seen = new Set();
+  let updated = text;
 
-  // The `prettier-ignore` is load-bearing: prettier reformats code inside
-  // fences, which would rewrite the block into something that no longer matches
-  // the file it came from, and the two would fight forever.
-  const pattern =
-    /<!-- example:([\w-]+) -->\n+<!-- prettier-ignore -->\n```[\w]*\n[\s\S]*?\n```\n+<!-- \/example -->/g;
-  let updated = original;
-  const replacements = [];
-
-  for (const match of original.matchAll(pattern)) {
-    const [block, name] = match;
+  for (const [block, name] of text.matchAll(pattern)) {
     if (seen.has(name)) {
-      problems.push(`${doc}: marker "${name}" appears more than once`);
+      report.push(`${doc}: marker "${name}" appears more than once`);
       continue;
     }
     seen.add(name);
@@ -110,7 +118,7 @@ for (const doc of DOCUMENTS) {
 
     const snippet = SNIPPETS[name];
     if (!snippet) {
-      problems.push(
+      report.push(
         `${doc}: marker "${name}" is not in the manifest in ${'scripts/embed-examples.mjs'}`
       );
       continue;
@@ -118,9 +126,9 @@ for (const doc of DOCUMENTS) {
 
     let source;
     try {
-      source = lf(await readFile(resolve(root, snippet.file), 'utf8')).trimEnd();
+      source = lf(await read(snippet.file)).trimEnd();
     } catch {
-      problems.push(`${doc}: "${name}" points at ${snippet.file}, which does not exist`);
+      report.push(`${doc}: "${name}" points at ${snippet.file}, which does not exist`);
       continue;
     }
 
@@ -132,18 +140,22 @@ ${source}
 \`\`\`
 
 <!-- /example -->`;
-    if (rebuilt !== block) replacements.push([block, rebuilt, name, doc]);
-  }
-
-  for (const [block, rebuilt, name, where] of replacements) {
-    if (check) problems.push(`${where}: "${name}" has drifted from ${SNIPPETS[name].file}`);
+    if (rebuilt === block) continue;
+    if (check) report.push(`${doc}: "${name}" has drifted from ${snippet.file}`);
     updated = updated.replace(block, rebuilt);
   }
 
-  if (!check && updated !== original) {
-    await writeFile(path, updated, 'utf8');
-    written.push(doc);
-  }
+  return updated;
+}
+
+const staged = [];
+
+for (const doc of DOCUMENTS) {
+  const original = lf(await read(doc));
+  const updated = await embed(doc, original, problems);
+  if (check || updated === original) continue;
+  if (stage) staged.push([doc, updated]);
+  else await writeFile(resolve(root, doc), updated, 'utf8');
 }
 
 for (const name of Object.keys(SNIPPETS)) {
@@ -160,7 +172,16 @@ if (problems.length > 0) {
   process.exit(1);
 }
 
-if (stage && written.length > 0) execFileSync('git', ['add', '--', ...written], { cwd: root });
+for (const [doc, updated] of staged) {
+  const blob = execFileSync('git', ['hash-object', '-w', '--stdin'], {
+    cwd: root,
+    input: updated,
+    encoding: 'utf8',
+  }).trim();
+  git('update-index', '--cacheinfo', `100644,${blob},${doc}`);
+  const working = resolve(root, doc);
+  await writeFile(working, await embed(doc, lf(await readFile(working, 'utf8')), []), 'utf8');
+}
 
 console.log(
   check ? 'embed-examples: documents match their sources' : 'embed-examples: documents updated'
