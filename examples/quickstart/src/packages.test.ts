@@ -1,4 +1,5 @@
-// `tsc` sees only the DOM here; this file alone needs Node's `util`.
+// `tsc` sees only the DOM here. This brings Node's types into the whole
+// example project, for the `util` this file imports.
 /// <reference types="node" />
 import { format } from 'node:util';
 
@@ -61,5 +62,6 @@ describe('the plugins README', () => {
     expect(said).not.toHaveBeenCalled();
     expect(after.getSnapshot().current).toBe('plan');
     expect(after.get('name.full')).toBe('Ada');
+    after.destroy();
   });
 });

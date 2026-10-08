@@ -44,7 +44,8 @@ console.log(await wizard.next());
 
 <!-- /example -->
 
-It prints the refusal, one message per field:
+With Zod 4 it prints the refusal: `by` names the step whose validator said no, `errors`
+holds one message per field, and `code` and `url` name the page that explains it:
 
 <!-- example:validate-output -->
 

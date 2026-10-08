@@ -72,7 +72,7 @@ steps: {
 ```
 
 The engine runs it before leaving the step. If it refuses, `next()` returns
-`{ ok: false, reason: 'invalid', errors }` and the flow stays where it is.
+`{ ok: false, reason: 'invalid', by, errors }` and the flow stays where it is.
 
 You can also run it directly, and set messages yourself:
 
@@ -129,7 +129,8 @@ console.log(await wizard.next());
 
 <!-- /example -->
 
-`next()` refuses, and says why, one message per field:
+With Zod 4 it prints the refusal: `by` names the step whose validator said no, `errors`
+holds one message per field, and `code` and `url` name the page that explains it:
 
 <!-- example:validate-output -->
 
