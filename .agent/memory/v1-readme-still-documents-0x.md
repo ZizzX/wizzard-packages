@@ -15,7 +15,8 @@ were already v1. Nothing a new reader lands on teaches the class API any more.
 
 The quickstart blocks in those READMEs are generated from
 `examples/quickstart` by `scripts/embed-examples.mjs`, whose `DOCUMENTS` list
-now carries the three package documents. Adding a fourth costs one line there;
+now carries every package README and the site's validation and persistence
+pages. Adding another costs one line there;
 writing a hand-maintained snippet instead is what the script exists to prevent.
 
 **What still teaches 0.x, and why it is fine:** `.stackblitz/*` (all eight),

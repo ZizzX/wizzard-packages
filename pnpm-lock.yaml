@@ -189,9 +189,15 @@ importers:
       '@wizzard-packages/devtools':
         specifier: workspace:*
         version: link:../../packages/devtools
+      '@wizzard-packages/plugins':
+        specifier: workspace:*
+        version: link:../../packages/plugins
       '@wizzard-packages/react':
         specifier: workspace:*
         version: link:../../packages/react
+      '@wizzard-packages/validate':
+        specifier: workspace:*
+        version: link:../../packages/validate
       '@wizzard-packages/vue':
         specifier: workspace:*
         version: link:../../packages/vue
@@ -204,6 +210,9 @@ importers:
       vue:
         specifier: ^3.5.13
         version: 3.5.27(typescript@5.9.3)
+      zod:
+        specifier: ^4.2.1
+        version: 4.5.4
     devDependencies:
       '@testing-library/react':
         specifier: ^16.3.1

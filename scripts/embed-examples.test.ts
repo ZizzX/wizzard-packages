@@ -25,6 +25,10 @@ const COPIED = [
   'packages/react/README.md',
   'packages/vue/README.md',
   'packages/devtools/README.md',
+  'packages/validate/README.md',
+  'packages/plugins/README.md',
+  'site/src/content/docs/docs/validation.md',
+  'site/src/content/docs/docs/persistence.md',
   'examples/quickstart/src',
   'examples/quickstart/install',
 ];

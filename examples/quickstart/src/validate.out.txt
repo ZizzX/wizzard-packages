@@ -1,0 +1,11 @@
+{
+  ok: false,
+  reason: 'invalid',
+  by: 'trip',
+  errors: {
+    name: 'Invalid input: expected string, received undefined',
+    age: 'Too small: expected number to be >=18'
+  },
+  code: 'nav-invalid',
+  url: 'https://zizzx.github.io/wizzard-packages/errors/nav-invalid'
+}
