@@ -31,6 +31,10 @@ export interface FlowGraph {
   edges: readonly GraphEdge[];
 }
 
+/**
+ * One node of a {@link FlowGraph}: a step, a group, or the single `END` node,
+ * which is there only when some edge leads to it.
+ */
 export interface GraphNode {
   id: string;
   kind: 'step' | 'group' | 'end';
@@ -47,6 +51,7 @@ export interface GraphNode {
   group?: GroupNode;
 }
 
+/** What a group node carries: its sub-flow drawn as a nested graph, or why it could not be. */
 export interface GroupNode {
   /** The sub-flow's id, whether it was inlined or named by reference. */
   flowId: string;
@@ -62,6 +67,7 @@ export interface GroupNode {
   opaque?: 'unresolved' | 'cycle' | 'too-deep';
 }
 
+/** One transition of a {@link FlowGraph}, from a step to a step or to `END`. */
 export interface GraphEdge {
   from: string;
   /** A step id, or `END`. */

@@ -17,10 +17,12 @@ import type { FlowDefinition, Hooks } from '@wizzard-packages/core';
  * stuck. What is read back is validated before it is installed, because
  * storage is a trust boundary like any other input.
  *
- * The plugin never throws. A browser that refuses storage, a quota that fills
- * up, a snapshot from a flow that has since changed: each of them means this
- * session is not coming back, and none of them is a reason to break the wizard
- * the person is filling in right now.
+ * Storage never makes the plugin throw. A browser that refuses storage, a
+ * quota that fills up, a snapshot from a flow that has since changed: each of
+ * them means this session is not coming back, and none of them is a reason to
+ * break the wizard the person is filling in right now. What is not caught is
+ * the application's own: a `migrate` that throws, or data `JSON.stringify`
+ * cannot write.
  */
 export interface PersistOptions {
   /** Storage key. One per flow, or one per flow per user. */
@@ -47,8 +49,11 @@ export interface PersistOptions {
 
 /** The synchronous slice of the Storage interface this needs. */
 export interface SyncStorage {
+  /** Called once, when the plugin initialises. A throw counts as storage being unavailable. */
   getItem: (key: string) => string | null;
+  /** A throw stops saving for the rest of the session, with one warning. */
   setItem: (key: string, value: string) => void;
+  /** Part of the interface, though `persist` does not call it. */
   removeItem: (key: string) => void;
 }
 
@@ -57,6 +62,11 @@ interface NotRestored {
   reason: RestoreReason | 'persist/nothing-stored' | 'persist/unavailable';
 }
 
+/**
+ * What `onRestore` receives: `restored: true`, or the reason it was not - a
+ * core `RestoreReason`, `persist/nothing-stored` when the key was empty, or
+ * `persist/unavailable` when storage could not be used.
+ */
 export type RestoreOutcome = { restored: true } | NotRestored;
 
 /** Coalescing window. One write per frame, not one per keystroke. */
@@ -64,6 +74,20 @@ const WRITE_AFTER_MS = 16;
 
 const DOCS = 'https://zizzx.github.io/wizzard-packages/errors';
 
+/**
+ * Creates the persistence plugin, for a wizard's `plugins`.
+ *
+ * When it initialises it reads `key`, decodes the stored snapshot against the
+ * wizard's flow and, if it is accepted, commits it in place of the starting
+ * state. From then on it writes a snapshot after every commit, at most one
+ * write per 16 ms, and flushes a pending write on `pagehide` and when the
+ * plugin is torn down. Storage and snapshot failures are warnings, not
+ * throws: a storage that refuses, a snapshot that does not decode, or an
+ * `onRestore` that throws is reported with `console.warn`, and the outcome of
+ * the restore reaches `onRestore`. A `migrate` that throws, or data that
+ * `JSON.stringify` cannot write, escapes the hook instead, and the engine
+ * disables the plugin.
+ */
 export function persist(options: PersistOptions): Hooks {
   const { key, version, migrate } = options;
   let storage: SyncStorage | undefined;

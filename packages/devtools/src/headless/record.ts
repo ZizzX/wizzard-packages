@@ -15,6 +15,11 @@ import type { FlowDefinition, SubFlows, Wizard, WizardState } from '@wizzard-pac
 export type WizardLike = Pick<Wizard, 'subscribe' | 'getState' | 'getFlow'> &
   Partial<Pick<Wizard, 'isDestroyed'>>;
 
+/**
+ * Facts about a bundle, filled in by `bundle()`: the counts, whether `redact`
+ * ran, the cap or flow change that ended the recording if one did, and the
+ * bundle's size.
+ */
 export interface BundleMeta {
   frames: number;
   outcomes: number;
@@ -27,6 +32,10 @@ export interface BundleMeta {
   bytes: number;
 }
 
+/**
+ * A recorded session as one JSON object: the flow, its sub-flows, core's
+ * `RecordedSession`, the outcomes, and {@link BundleMeta}.
+ */
 export interface SessionBundle {
   /** The format. A reader rejects any other number. */
   version: 1;
@@ -38,6 +47,7 @@ export interface SessionBundle {
   meta: BundleMeta;
 }
 
+/** Options for {@link recordSession}. */
 export interface RecordOptions {
   /** Outcomes come from here; `[]` without it. */
   plugin?: DevtoolsPlugin;
@@ -49,6 +59,7 @@ export interface RecordOptions {
   limits?: { frames?: number; outcomes?: number };
 }
 
+/** Controls one recording started by {@link recordSession}. */
 export interface Recorder {
   /** Copies, redacts, measures. Never mutates the frames or the wizard. */
   bundle(): SessionBundle;
@@ -58,9 +69,12 @@ export interface Recorder {
    * a bundle is never produced with zero frames.
    */
   stop(): void;
+  /** Frames recorded so far. */
   readonly frames: number;
   readonly capped: BundleMeta['capped'];
+  /** True from a `stop()` called before the first frame until that frame arrives. */
   readonly stopping: boolean;
+  /** True once the recording has ended, for any reason. */
   readonly stopped: boolean;
 }
 
@@ -91,6 +105,16 @@ const isBundle = (v: unknown): v is SessionBundle => {
   );
 };
 
+/**
+ * Starts recording a wizard and returns the {@link Recorder} that controls it.
+ *
+ * Every state the wizard settles in becomes a frame, starting with the current
+ * one; a state committed while a navigation is in flight is skipped. With
+ * `plugin`, the attempts that end during the recording are kept as well. The
+ * recording ends on `stop()`, when a limit is reached, or when the wizard's
+ * flow changes, and `bundle()` turns it into a {@link SessionBundle} that
+ * replays without the application.
+ */
 export function recordSession(wizard: WizardLike, options: RecordOptions = {}): Recorder {
   const { plugin, subFlows, redact } = options;
   const maxFrames = Math.max(1, options.limits?.frames ?? 2000);

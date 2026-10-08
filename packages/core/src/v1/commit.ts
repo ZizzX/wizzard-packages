@@ -10,6 +10,8 @@ import type { WizardState } from './state';
  *
  * A lint rule keeps it that way: assignment to a state field anywhere outside
  * this file is an error.
+ *
+ * @internal
  */
 export function commit(state: WizardState, patch: Partial<WizardState>): WizardState {
   return { ...state, ...patch, rev: state.rev + 1 };
@@ -23,12 +25,18 @@ export function commit(state: WizardState, patch: Partial<WizardState>): WizardS
  * before it. `nav` moves forward rather than starting again, so a navigation
  * still in flight when the reset lands finds its token superseded instead of
  * looking current again.
+ *
+ * @internal
  */
 export function restart(state: WizardState, fresh: WizardState): WizardState {
   return { ...fresh, rev: state.rev + 1, nav: state.nav + 1 };
 }
 
-/** Starts a navigation epoch. The returned token is re-checked after every await. */
+/**
+ * Starts a navigation epoch. The returned token is re-checked after every await.
+ *
+ * @internal
+ */
 export function beginNav(state: WizardState): { state: WizardState; token: number } {
   const token = state.nav + 1;
   // `rev` moves here too, and it has to. Everything downstream memoizes on it -
@@ -41,14 +49,27 @@ export function beginNav(state: WizardState): { state: WizardState; token: numbe
   return { state: { ...state, nav: token, status: 'busy', busy: [], rev: state.rev + 1 }, token };
 }
 
-/** True when this navigation is still the current one. */
+/**
+ * True when this navigation is still the current one.
+ *
+ * @internal
+ */
 export const isCurrent = (state: WizardState, token: number): boolean => state.nav === token;
 
-/** Appends without duplicating — these lists are sets that had to stay JSON. */
+/**
+ * Appends without duplicating — these lists are sets that had to stay JSON.
+ *
+ * @internal
+ */
 export function add(list: readonly string[], id: string): readonly string[] {
   return list.includes(id) ? list : [...list, id];
 }
 
+/**
+ * Removes an id, returning the same list when it was not there.
+ *
+ * @internal
+ */
 export function remove(list: readonly string[], id: string): readonly string[] {
   return list.includes(id) ? list.filter((x) => x !== id) : list;
 }

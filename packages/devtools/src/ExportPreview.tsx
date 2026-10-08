@@ -18,7 +18,7 @@ export interface ExportPreviewProps {
   hasRedact: boolean;
   hasPlugin: boolean;
   onClose: () => void;
-  /** Receives the redacted bundle. A throw here stops the export, not the wizard. */
+  /** Receives the redacted bundle. A throw here is caught: the preview still shows. */
   onRecord?: (bundle: SessionBundle) => void;
 }
 

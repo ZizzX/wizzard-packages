@@ -14,7 +14,7 @@ import {
  * It is a small tagged object instead, evaluated by this module. There is no
  * `eval` and no `new Function`, so a flow served by a backend is data, not code.
  *
- * Ten operators cover the predicates wizards actually express. Anything else —
+ * Twelve operators cover the predicates wizards actually express. Anything else —
  * arithmetic, regular expressions, a remote lookup — goes through `$ref`, which
  * names a function in the registry. That keeps the grammar small and makes the
  * one dangerous thing explicit and greppable.
@@ -22,6 +22,13 @@ import {
 
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 
+/**
+ * An expression: a JSON literal, a list, or an object keyed by one operator. A
+ * flow uses them for `when`, guards, transition conditions, `repeat.over` and
+ * `input`, and the engine evaluates them itself, without `eval`. A `$ref` calls
+ * a resolver from the registry. The builders in `@wizzard-packages/core/expr`
+ * write the same values.
+ */
 export type Expr =
   | null
   | boolean
@@ -54,7 +61,17 @@ export interface Scope {
   loop?: { index: number; item: unknown; key: string };
 }
 
+/**
+ * A function an expression names with `$ref`. It is called with the `args`
+ * written beside the `$ref` and the scope, and what it returns is the
+ * expression's value. Here it must not return a promise: the synchronous
+ * evaluator refuses a native `Promise` with `resolver-is-async`.
+ */
 export type Resolver = (args: Json | undefined, scope: Scope) => unknown;
+/**
+ * Resolvers by the name a `$ref` uses, for synchronous evaluation. `createWizard`
+ * takes an {@link AsyncRegistry}.
+ */
 export type Registry = Readonly<Record<string, Resolver>>;
 
 /** An expression object whose first key is not an operator. Both evaluators end in it. */
@@ -294,6 +311,11 @@ export type AsyncResolver = (
   scope: Scope,
   signal?: AbortSignal
 ) => unknown | Promise<unknown>;
+/**
+ * Resolvers by the name a `$ref` uses, as `createWizard` takes them. A resolver
+ * may return a promise where the engine awaits it - guards, a step's `validate`
+ * and `load` - but a `when` is evaluated synchronously and cannot wait for one.
+ */
 export type AsyncRegistry = Readonly<Record<string, AsyncResolver>>;
 
 /** Evaluates to a boolean, awaiting `$ref`. An absent expression is `true`. */

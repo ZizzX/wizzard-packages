@@ -42,6 +42,7 @@ export interface Snapshot {
   nav: number;
 }
 
+/** Why `decodeSnapshot` refused a snapshot, one value for each kind of refusal. */
 export type RestoreReason =
   /** Not an object, or not this format. */
   | 'snapshot/unreadable'
@@ -56,10 +57,16 @@ export type RestoreReason =
   /** Larger or deeper than the bounds below. */
   | 'snapshot/too-large';
 
+/**
+ * What `decodeSnapshot` answers: the state to install, or the reason it was
+ * refused. A snapshot that fails a check is returned as a reason, not thrown;
+ * an error thrown by `migrate` is not caught.
+ */
 export type RestoreResult =
   | { restored: true; state: WizardState }
   | { restored: false; reason: RestoreReason };
 
+/** What `decodeSnapshot` takes beyond the flow and the stored value. All optional. */
 export interface DecodeOptions {
   /**
    * The engine's current epoch, when restoring into a live wizard. The restored

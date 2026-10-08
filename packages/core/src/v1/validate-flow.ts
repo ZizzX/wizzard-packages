@@ -19,18 +19,15 @@ import {
 import { isGroup, type FlowDefinition, type StepDef, type Target } from './flow';
 
 /**
- * Checks a flow before it is trusted.
- *
- * Meant for development and for the moment a flow arrives from a backend — the
- * two places where a flow can be wrong in ways types cannot catch, because a
- * flow is JSON and JSON carries no types.
- *
- * The last check is the one that keeps the whole design honest: a function
- * anywhere in the flow means `JSON.stringify` would silently drop it, and the
- * flow would no longer round-trip. That is not a style violation, it is the
- * difference between a flow that can be sent over a wire and one that cannot.
+ * One problem `validateFlow` or `checkSession` found: where it is, the message
+ * that explains it, and the code, fix and page that message is built from.
  */
 export interface FlowProblem {
+  /**
+   * Where in the checked document the problem is: keys joined by dots, `[i]`
+   * for a list item, `''` for the document itself. A path longer than 512
+   * characters keeps its end, after `...`.
+   */
   path: string;
   /** `[wizzard] <what>. <why>. <fix>. <url>` - the template every failure uses. */
   message: string;
@@ -71,6 +68,27 @@ const MAX_DEPTH = 32;
 /** The characters of a path a problem keeps, from its end, when the document is deeper than that. */
 const MAX_PATH = 512;
 
+/**
+ * Checks a flow and returns every problem it finds, or an empty list. It never
+ * throws: a flow it cannot read comes back as a `flow-unreadable` problem,
+ * after whatever was found before it.
+ *
+ * Among other things it checks that `order` and every transition name steps
+ * that exist, that each expression uses known operators with operands of the
+ * right shape and reads from a known root, that `clearOnLeave` has a shape the
+ * engine can read, and that nothing in the flow is a function or contains
+ * itself. With `registry`, every `$ref` an expression makes is checked against
+ * its keys. Inline sub-flows are checked with the flow; one named by id is not.
+ *
+ * Some problems describe a flow that runs but is probably not what was meant,
+ * such as `when-with-next`. `assertFlow` throws on any problem at all.
+ *
+ * Meant for development and for the moment a flow arrives from a backend - the
+ * two places where a flow can be wrong in ways types cannot catch, because a
+ * flow is JSON and JSON carries no types. A function anywhere in the flow is
+ * not a style point: `JSON.stringify` would drop it silently, and the flow
+ * would no longer round-trip.
+ */
 export function validateFlow(
   flow: FlowDefinition,
   registry?: Readonly<Record<string, unknown>>

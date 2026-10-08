@@ -45,15 +45,27 @@ import { useObserved } from './useObserved';
 
 export type Tab = 'graph' | 'state' | 'activity';
 
+/**
+ * Props for {@link WizardDevtools}. All are optional: with none, the panel
+ * watches the wizard from the nearest `WizardProvider` and shows no refused
+ * navigations.
+ */
 export interface WizardDevtoolsProps {
   /** Default: the wizard from `WizardProvider`. */
   wizard?: WizardLike;
   /** The same object passed to `createWizard({ plugins: [dt] })`. Without it, no refusal rows. */
   plugin?: DevtoolsPlugin;
   subFlows?: SubFlows;
+  /** Replaces the built-in layered layout of the Graph tab. */
   layout?: (graph: FlowGraph) => PositionedGraph;
   /** Runs once, at export, on a copy of the whole bundle. */
   redact?: (bundle: SessionBundle) => SessionBundle;
+  /**
+   * Receives the bundle, after `redact`, while the Copy JSON preview is open:
+   * once for each bundle it builds, and again whenever this function changes
+   * identity, so keep it stable. A throw in it is caught and the preview still
+   * shows.
+   */
   onRecord?: (bundle: SessionBundle) => void;
   defaultTab?: Tab;
   limits?: { activity?: number; frames?: number; diffRows?: number };
@@ -115,6 +127,16 @@ function inferTaken(graph: FlowGraph, from: string | null, to: string | null): T
   return candidates.length === 1 ? { from, to } : null;
 }
 
+/**
+ * The devtools panel, a React component: the wizard's flow as a graph, its
+ * committed state, and its navigation activity, with a recorder that exports
+ * the session as JSON.
+ *
+ * It watches the wizard from `WizardProvider` unless `wizard` is given, and
+ * renders a message rather than throwing when there is neither. Refused
+ * navigations appear only when `plugin` is the {@link devtools} instance
+ * installed in that wizard. It never navigates and never writes to the wizard.
+ */
 export function WizardDevtools({
   wizard: wizardProp,
   plugin,

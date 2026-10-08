@@ -63,6 +63,10 @@ export type Refusal = {
   errors?: Readonly<Record<string, string>>;
 };
 
+/**
+ * A move the traversal resolved: the stack to commit, the step it lands on or
+ * `END` when the wizard finishes, and the flow and scope at the new top frame.
+ */
 export type Move = {
   stack: readonly Frame[];
   to: string | typeof END;

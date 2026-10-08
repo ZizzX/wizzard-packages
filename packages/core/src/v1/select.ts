@@ -20,12 +20,23 @@ import type { WizardState } from './state';
 
 export type StepStatus = 'completed' | 'current' | 'visited' | 'upcoming' | 'error';
 
+/**
+ * One entry of `breadcrumbs`: an active step, its label, and its status. The
+ * current step is `current` whatever else is true of it, and a step with
+ * errors is `error` before it is `completed` or `visited`.
+ */
 export interface Breadcrumb {
   id: string;
   label?: string;
   status: StepStatus;
 }
 
+/**
+ * The values computed from state and the flow rather than stored in state:
+ * where the wizard stands among the active steps, progress, breadcrumbs, and
+ * whether it can go back. `getSnapshot()` returns them merged with the state,
+ * and the object is the same one until the next commit.
+ */
 export interface Derived {
   /**
    * Steps whose `when` passes right now, in order, with any branch taken placed
@@ -41,8 +52,11 @@ export interface Derived {
   /** 0 to 100, over the active steps rather than all of them. */
   progress: number;
   breadcrumbs: readonly Breadcrumb[];
+  /** What `back()` would answer from here, rather than a guess at it. False before `start()`. */
   canBack: boolean;
+  /** A move is running, or a step is loading. */
   isBusy: boolean;
+  /** Some step has at least one field error. */
   hasErrors: boolean;
 }
 
