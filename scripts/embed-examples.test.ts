@@ -11,7 +11,15 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -122,6 +130,17 @@ describe('embed-examples --check', () => {
     expect(result.stderr).toContain('README.md: marker "install-react" appears more than once');
   });
 
+  it('reports a file it cannot read as it is, not as missing', () => {
+    scratch();
+    rmSync(join(tree, 'packages/vue/README.md'));
+    mkdirSync(join(tree, 'packages/vue/README.md'));
+
+    const result = run('--check');
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('EISDIR');
+    expect(result.stderr).not.toContain('which does not exist');
+  });
+
   it('reads a Windows checkout as unchanged', () => {
     scratch();
     const crlf = (text: string): string => text.replace(/\r?\n/g, '\r\n');
@@ -129,5 +148,109 @@ describe('embed-examples --check', () => {
     edit('README.md', crlf);
 
     expect(run('--check')).toMatchObject({ status: 0 });
+  });
+});
+
+describe('embed-examples --stage', () => {
+  // A git hook exports GIT_DIR and friends, and this suite runs inside one
+  // (pre-push). Inherited, they point the scratch repository's commands at the
+  // real one: `git add -A` here once replaced this checkout's index with the
+  // scratch tree. Every git call below, the script's included, runs without them.
+  const env = Object.fromEntries(
+    Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_'))
+  );
+  const git = (...args: string[]): string =>
+    spawnSync('git', args, { cwd: tree, encoding: 'utf8', env }).stdout;
+  const stage = (): { status: number | null; stderr: string } => {
+    const result = spawnSync('node', [join(tree, 'scripts/embed-examples.mjs'), '--stage'], {
+      encoding: 'utf8',
+      env,
+    });
+    return { status: result.status, stderr: result.stderr };
+  };
+  /** The committed copy of a file: what the index holds. */
+  const indexed = (path: string): string => git('show', `:${path}`);
+  const onDisk = (path: string): string => readFileSync(join(tree, path), 'utf8');
+
+  const repository = (): void => {
+    scratch();
+    git('init', '-q');
+    git('add', '-A');
+  };
+
+  it('writes a staged source into the index copies, even when the documents were embedded by hand', () => {
+    repository();
+    edit('examples/quickstart/src/persist.ts', (text) => `${text}\n// a change\n`);
+    git('add', 'examples/quickstart/src/persist.ts');
+    // Run by hand before the commit: the working copies are current, the index ones are not.
+    expect(run().status).toBe(0);
+
+    expect(stage()).toMatchObject({ status: 0 });
+
+    expect(indexed('packages/plugins/README.md')).toContain('// a change');
+    expect(indexed('site/src/content/docs/docs/persistence.md')).toContain('// a change');
+  });
+
+  it('keeps what is not staged out of the index, and in the working copy', () => {
+    repository();
+    edit('examples/quickstart/src/persist.ts', (text) => `${text}\n// a change\n`);
+    git('add', 'examples/quickstart/src/persist.ts');
+    edit('examples/quickstart/src/validate.ts', (text) => `${text}\n// not staged\n`);
+    edit('packages/plugins/README.md', (text) => `${text}\nAn edit of its own.\n`);
+
+    expect(stage()).toMatchObject({ status: 0 });
+
+    const readme = indexed('packages/plugins/README.md');
+    expect(readme).toContain('// a change');
+    expect(readme).not.toContain('An edit of its own.');
+    expect(indexed('packages/validate/README.md')).not.toContain('// not staged');
+
+    expect(onDisk('packages/plugins/README.md')).toContain('// a change');
+    expect(onDisk('packages/plugins/README.md')).toContain('An edit of its own.');
+  });
+
+  it('writes nothing to the index when something is wrong', () => {
+    repository();
+    edit('examples/quickstart/src/persist.ts', (text) => `${text}\n// a change\n`);
+    edit('README.md', (text) =>
+      text.replace('<!-- example:install-react -->', '<!-- example:install-nothing -->')
+    );
+    git('add', 'examples/quickstart/src/persist.ts', 'README.md');
+
+    const result = stage();
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('marker "install-nothing" is not in the manifest');
+    expect(indexed('packages/plugins/README.md')).not.toContain('// a change');
+    expect(indexed('site/src/content/docs/docs/persistence.md')).not.toContain('// a change');
+  });
+
+  it('names a file that is on disk but not in the index', () => {
+    repository();
+    git('rm', '-q', '--cached', 'packages/vue/README.md', 'examples/quickstart/src/persist.ts');
+
+    const result = stage();
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      'packages/vue/README.md is listed in DOCUMENTS, which is not in the index; stage it'
+    );
+    expect(result.stderr).toContain(
+      'points at examples/quickstart/src/persist.ts, which is not in the index; stage it'
+    );
+    // The README that was not read embeds install-vue; the manifest is not at fault.
+    expect(result.stderr).not.toContain('is in the manifest but no document embeds it');
+  });
+
+  it('writes the index copy of a document deleted on disk, and leaves it deleted', () => {
+    repository();
+    edit('examples/quickstart/src/persist.ts', (text) => `${text}\n// a change\n`);
+    git('add', 'examples/quickstart/src/persist.ts');
+    rmSync(join(tree, 'packages/plugins/README.md'));
+
+    expect(stage()).toMatchObject({ status: 0 });
+
+    expect(indexed('packages/plugins/README.md')).toContain('// a change');
+    expect(existsSync(join(tree, 'packages/plugins/README.md'))).toBe(false);
   });
 });

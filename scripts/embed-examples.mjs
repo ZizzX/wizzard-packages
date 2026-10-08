@@ -9,6 +9,7 @@
  *
  *   node scripts/embed-examples.mjs           rewrite the documents
  *   node scripts/embed-examples.mjs --check   fail if anything drifted
+ *   node scripts/embed-examples.mjs --stage   the pre-commit hook: rewrite what is staged
  *
  * Markers in a document, one pair per snippet:
  *
@@ -22,6 +23,7 @@
  * toolchain is one more thing to be broken on a fresh clone.
  */
 
+import { execFileSync } from 'node:child_process';
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -71,29 +73,51 @@ const DOCUMENTS = [
 ];
 
 const check = process.argv.includes('--check');
+/**
+ * For the pre-commit hook. A commit is the index, not the working tree, so this
+ * reads sources and documents from the index and writes each rewritten document
+ * there: a source embedded by hand beforehand still reaches the commit, and an
+ * unstaged edit - another session's, in a shared worktree - stays out of it. The
+ * working copy gets the same blocks and keeps everything else.
+ */
+const stage = process.argv.includes('--stage');
 /** Line endings differ between a Windows checkout and CI; the content does not. */
 const lf = (s) => s.replace(/\r\n/g, '\n');
+const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' });
+/** A file on disk, or `undefined` when there is none; any other failure is thrown as it is. */
+const fromDisk = async (file) => {
+  try {
+    return await readFile(resolve(root, file), 'utf8');
+  } catch (error) {
+    if (error.code === 'ENOENT') return undefined;
+    throw error;
+  }
+};
+/** A repository path, from the index under `--stage`, from disk otherwise. */
+const read = async (file) => {
+  if (!stage) return fromDisk(file);
+  return git('ls-files', '--cached', '--', file) === '' ? undefined : git('show', `:${file}`);
+};
 
 const problems = [];
 const used = new Set();
+/** Why `read` failed: under `--stage` a file on disk may still be missing from the index. */
+const absent = stage ? 'which is not in the index; stage it' : 'which does not exist';
 
-for (const doc of DOCUMENTS) {
-  const path = resolve(root, doc);
-  const original = lf(await readFile(path, 'utf8'));
+// The `prettier-ignore` is load-bearing: prettier reformats code inside
+// fences, which would rewrite the block into something that no longer matches
+// the file it came from, and the two would fight forever.
+const pattern =
+  /<!-- example:([\w-]+) -->\n+<!-- prettier-ignore -->\n```[\w]*\n[\s\S]*?\n```\n+<!-- \/example -->/g;
+
+/** `text` with every marked block rebuilt from its source; what is wrong goes to `report`. */
+async function embed(doc, text, report) {
   const seen = new Set();
+  let updated = text;
 
-  // The `prettier-ignore` is load-bearing: prettier reformats code inside
-  // fences, which would rewrite the block into something that no longer matches
-  // the file it came from, and the two would fight forever.
-  const pattern =
-    /<!-- example:([\w-]+) -->\n+<!-- prettier-ignore -->\n```[\w]*\n[\s\S]*?\n```\n+<!-- \/example -->/g;
-  let updated = original;
-  const replacements = [];
-
-  for (const match of original.matchAll(pattern)) {
-    const [block, name] = match;
+  for (const [block, name] of text.matchAll(pattern)) {
     if (seen.has(name)) {
-      problems.push(`${doc}: marker "${name}" appears more than once`);
+      report.push(`${doc}: marker "${name}" appears more than once`);
       continue;
     }
     seen.add(name);
@@ -101,19 +125,18 @@ for (const doc of DOCUMENTS) {
 
     const snippet = SNIPPETS[name];
     if (!snippet) {
-      problems.push(
+      report.push(
         `${doc}: marker "${name}" is not in the manifest in ${'scripts/embed-examples.mjs'}`
       );
       continue;
     }
 
-    let source;
-    try {
-      source = lf(await readFile(resolve(root, snippet.file), 'utf8')).trimEnd();
-    } catch {
-      problems.push(`${doc}: "${name}" points at ${snippet.file}, which does not exist`);
+    const text = await read(snippet.file);
+    if (text === undefined) {
+      report.push(`${doc}: "${name}" points at ${snippet.file}, ${absent}`);
       continue;
     }
+    const source = lf(text).trimEnd();
 
     const rebuilt = `<!-- example:${name} -->
 
@@ -123,19 +146,36 @@ ${source}
 \`\`\`
 
 <!-- /example -->`;
-    if (rebuilt !== block) replacements.push([block, rebuilt, name, doc]);
-  }
-
-  for (const [block, rebuilt, name, where] of replacements) {
-    if (check) problems.push(`${where}: "${name}" has drifted from ${SNIPPETS[name].file}`);
+    if (rebuilt === block) continue;
+    if (check) report.push(`${doc}: "${name}" has drifted from ${snippet.file}`);
     updated = updated.replace(block, rebuilt);
   }
 
-  if (!check && updated !== original) await writeFile(path, updated, 'utf8');
+  return updated;
 }
 
-for (const name of Object.keys(SNIPPETS)) {
-  if (!used.has(name)) problems.push(`"${name}" is in the manifest but no document embeds it`);
+const staged = [];
+let unread = false;
+
+for (const doc of DOCUMENTS) {
+  const text = await read(doc);
+  if (text === undefined) {
+    problems.push(`${doc} is listed in DOCUMENTS, ${absent}`);
+    unread = true;
+    continue;
+  }
+  const original = lf(text);
+  const updated = await embed(doc, original, problems);
+  if (check || updated === original) continue;
+  if (stage) staged.push([doc, updated]);
+  else await writeFile(resolve(root, doc), updated, 'utf8');
+}
+
+// A document that was not read hid its markers, and this would blame the manifest for them.
+if (!unread) {
+  for (const name of Object.keys(SNIPPETS)) {
+    if (!used.has(name)) problems.push(`"${name}" is in the manifest but no document embeds it`);
+  }
 }
 
 if (problems.length > 0) {
@@ -146,6 +186,21 @@ if (problems.length > 0) {
       : '\nFix the manifest and run again.'
   );
   process.exit(1);
+}
+
+for (const [doc, updated] of staged) {
+  const blob = execFileSync('git', ['hash-object', '-w', '--stdin'], {
+    cwd: root,
+    input: updated,
+    encoding: 'utf8',
+  }).trim();
+  // Every document is a Markdown file, so its mode is the plain one.
+  git('update-index', '--cacheinfo', `100644,${blob},${doc}`);
+  // A working copy deleted on disk stays deleted: the index copy is what is committed.
+  const working = await fromDisk(doc);
+  if (working !== undefined) {
+    await writeFile(resolve(root, doc), await embed(doc, lf(working), []), 'utf8');
+  }
 }
 
 console.log(
