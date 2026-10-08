@@ -129,8 +129,10 @@
   --z-dialog: 1000;
 
   /* Motion: the five of DESIGN.md, and nothing else. The route walk on the
-     homepage is scroll-driven and so has no duration - the scroll is its clock. */
+     homepage is scroll-driven and so has no duration - the scroll is its clock;
+     its one curve of its own is the halo's pulse. */
   --ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --ease-spring: linear(0, 0.36 8%, 0.76 17%, 1.02 27%, 1.1 35%, 1.08 43%, 1.02 55%, 0.99 68%, 1);
   --dur-step: 180ms;
   --dur-graph: 380ms;
   --dur-edge-draw: 550ms;

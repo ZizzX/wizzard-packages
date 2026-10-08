@@ -779,6 +779,378 @@ body {
   stroke-dashoffset: 0;
 }
 
+/* The route walk (DESIGN.md, Motion; docs/designs/home-route-walk.md). The
+   markup is the end frame, so everything here is either invisible at rest or
+   already where the walk leaves it; the motion below only says where each piece
+   starts, and plays it on the frame's view timeline. */
+.walk {
+  --walk-start: 14%;
+  --walk-span: 38%;
+  /* The halos are blurred past the graph's own box; the frame's padding has the
+     room for them, and an SVG clips at its viewport unless told otherwise. */
+  overflow: visible;
+}
+
+/* The walk draws its own edges; the page-load draw would fight it. A longhand,
+   not the shorthand: `animation: none` would also reset the timeline. */
+.walk .edge > polyline {
+  animation-name: none;
+  stroke-dashoffset: 0;
+}
+
+.walk .edge.run > polyline.base {
+  stroke: var(--line-strong);
+  opacity: var(--opacity-dim);
+}
+
+/* `.edge polyline` gives every polyline in an edge the page-load draw, the
+   comet's too; at rest the comet is hidden and plays nothing. */
+.walk .comet > polyline {
+  animation-name: none;
+  fill: none;
+  stroke: var(--st-active);
+  stroke-linecap: round;
+  stroke-dasharray: 8 9999;
+  opacity: 0;
+}
+
+.walk .comet > .comet-halo {
+  stroke-width: 6;
+}
+
+.walk .comet > .comet-core {
+  stroke-width: 2.5;
+}
+
+.walk .node > rect.halo {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 6;
+  opacity: 0;
+}
+
+.walk .node > text.walk-eval {
+  fill: var(--fg);
+  font-size: 9px;
+  opacity: 0;
+}
+
+.walk .node.end > circle.ring {
+  fill: none;
+  stroke: var(--st-active);
+  stroke-width: 2;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes walk-on {
+  from {
+    stroke: var(--line-strong);
+    fill: var(--surface-raised);
+    stroke-width: 1.5;
+  }
+  to {
+    stroke: var(--st-active);
+    fill: var(--accent-soft);
+    stroke-width: var(--border-selected);
+  }
+}
+
+@keyframes walk-off {
+  from {
+    stroke: var(--st-active);
+    fill: var(--accent-soft);
+    stroke-width: var(--border-selected);
+  }
+  to {
+    stroke: var(--st-visited);
+    fill: var(--surface-raised);
+    stroke-width: 1.5;
+  }
+}
+
+@keyframes walk-glow {
+  from {
+    opacity: 0;
+    stroke-width: 0;
+  }
+  to {
+    opacity: 0.55;
+    stroke-width: 6;
+  }
+}
+
+@keyframes walk-fade {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes walk-break {
+  0%,
+  55% {
+    stroke: var(--line-strong);
+    stroke-dasharray: 4 0;
+    opacity: 1;
+  }
+  100% {
+    stroke: var(--st-skipped);
+    stroke-dasharray: 4 4;
+    opacity: var(--opacity-muted);
+  }
+}
+
+@keyframes walk-label {
+  0%,
+  55% {
+    fill: var(--fg);
+  }
+  100% {
+    fill: var(--st-skipped);
+  }
+}
+
+@keyframes walk-when {
+  0%,
+  15% {
+    opacity: 1;
+  }
+  25%,
+  75% {
+    opacity: 0;
+  }
+  90%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes walk-eval {
+  0%,
+  15% {
+    opacity: 0;
+  }
+  25%,
+  75% {
+    opacity: 1;
+  }
+  90%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes walk-probe-edge {
+  0% {
+    opacity: var(--opacity-dim);
+  }
+  20%,
+  55% {
+    opacity: 0.8;
+  }
+  85%,
+  100% {
+    opacity: var(--opacity-dim);
+  }
+}
+
+@keyframes walk-probe {
+  0% {
+    opacity: 0;
+    stroke-dashoffset: 8;
+  }
+  5% {
+    opacity: 1;
+    stroke-dashoffset: 8;
+  }
+  30%,
+  55% {
+    opacity: 1;
+    stroke-dashoffset: calc(-0.7px * var(--len));
+  }
+  85% {
+    opacity: 0.5;
+    stroke-dashoffset: 8;
+  }
+  100% {
+    opacity: 0;
+    stroke-dashoffset: 8;
+  }
+}
+
+@keyframes walk-draw {
+  0% {
+    stroke-dashoffset: 100;
+    opacity: 0;
+  }
+  1% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+@keyframes walk-comet {
+  0% {
+    opacity: 0;
+    stroke-dashoffset: 8;
+  }
+  4%,
+  92% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    stroke-dashoffset: calc(-1px * var(--len));
+  }
+}
+
+@keyframes walk-finish {
+  from {
+    fill: var(--surface-raised);
+    stroke: var(--line-strong);
+  }
+  to {
+    fill: var(--st-active);
+    stroke: var(--st-active);
+  }
+}
+
+@keyframes walk-ring {
+  0% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  5% {
+    opacity: 0.75;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .frame:has(> svg.walk) {
+      view-timeline: --walk block;
+    }
+
+    /* Each beat arrives as a pair of shares, 0 to 1; these turn a pair into a
+       range on the timeline, once, where the pair is declared. */
+    .walk .node.walked {
+      --on: cover calc(var(--walk-start) + var(--walk-span) * var(--on0)) cover
+        calc(var(--walk-start) + var(--walk-span) * var(--on1));
+      --off: cover calc(var(--walk-start) + var(--walk-span) * var(--off0)) cover
+        calc(var(--walk-start) + var(--walk-span) * var(--off1));
+    }
+
+    .walk .node.dropped,
+    .walk .edge.probe {
+      --probe: cover calc(var(--walk-start) + var(--walk-span) * var(--p0)) cover
+        calc(var(--walk-start) + var(--walk-span) * var(--p1));
+    }
+
+    .walk .edge.run {
+      --run: cover calc(var(--walk-start) + var(--walk-span) * var(--r0)) cover
+        calc(var(--walk-start) + var(--walk-span) * var(--r1));
+    }
+
+    .walk .node.end {
+      --finish: cover calc(var(--walk-start) + var(--walk-span) * var(--f0)) cover
+        calc(var(--walk-start) + var(--walk-span) * var(--f1));
+      --ring: cover calc(var(--walk-start) + var(--walk-span) * var(--g0)) cover
+        calc(var(--walk-start) + var(--walk-span) * var(--g1));
+    }
+
+    /* Specific enough to beat `.edge polyline`, whose shorthand would reset the
+       timeline to the document's. */
+    .walk .node > rect,
+    .walk .node > circle,
+    .walk .node > text,
+    .walk .edge.probe,
+    .walk .edge > polyline,
+    .walk .edge .comet > polyline {
+      animation-timeline: --walk;
+      animation-duration: auto;
+      animation-fill-mode: both;
+      animation-timing-function: var(--ease-out);
+    }
+
+    .walk .node.walked > rect:not(.halo) {
+      animation-name: walk-on, walk-off;
+      animation-fill-mode: both, forwards;
+      animation-range: var(--on), var(--off);
+    }
+
+    .walk .node.walked > rect.halo {
+      animation-name: walk-glow, walk-fade;
+      animation-fill-mode: both, forwards;
+      animation-timing-function: var(--ease-spring), var(--ease-out);
+      animation-range: var(--on), var(--off);
+    }
+
+    .walk .node.dropped > rect {
+      animation-name: walk-break;
+      animation-range: var(--probe);
+    }
+
+    .walk .node.dropped > text:not([class]) {
+      animation-name: walk-label;
+      animation-range: var(--probe);
+    }
+
+    .walk .node.dropped > text.node-when {
+      animation-name: walk-when;
+      animation-range: var(--probe);
+    }
+
+    .walk .node.dropped > text.walk-eval {
+      animation-name: walk-eval;
+      animation-range: var(--probe);
+    }
+
+    .walk .edge.probe {
+      animation-name: walk-probe-edge;
+      animation-range: var(--probe);
+    }
+
+    .walk .edge.probe .comet > polyline {
+      animation-name: walk-probe;
+      animation-timing-function: linear;
+      animation-range: var(--probe);
+    }
+
+    .walk .edge.run > polyline.hot {
+      animation-name: walk-draw;
+      animation-timing-function: linear;
+      animation-range: var(--run);
+    }
+
+    .walk .edge.run .comet > polyline {
+      animation-name: walk-comet;
+      animation-timing-function: linear;
+      animation-range: var(--run);
+    }
+
+    .walk .node.end > circle:not(.ring) {
+      animation-name: walk-finish;
+      animation-range: var(--finish);
+    }
+
+    .walk .node.end > circle.ring {
+      animation-name: walk-ring;
+      animation-range: var(--ring);
+    }
+  }
+}
+
 /* The screen reader's path through the graph. A block, not the table itself:
    `overflow: hidden` has no effect on a table box, so a bare hidden table keeps
    its intrinsic width and widens the page on a narrow screen. */
