@@ -163,10 +163,22 @@ describe('a flow that repeats a target', () => {
 });
 
 describe('the graph without a route walk', () => {
-  it('carries no decoration and no walk class', () => {
+  // Everything the walk adds, attribute or element. Without a walk the markup is
+  // what it was before there was one: the hero, rows B and C and the inspector
+  // all draw through here.
+  const walkMarkup =
+    'defs, [style], .base, .walked, .dropped, .run, .probe, .halo, .hot, .comet, .walk-eval, .ring';
+
+  it('carries none of it as a picture', () => {
     const { container } = render(<Picture />);
     expect(container.querySelector('svg')?.getAttribute('class')).toBeNull();
-    expect(container.querySelector('defs, .halo, .hot, .comet, .walk-eval, .ring')).toBeNull();
+    expect(container.querySelector(walkMarkup)).toBeNull();
+  });
+
+  it('carries none of it as an instrument', () => {
+    const { container } = render(<Walkable />);
+    expect(container.querySelector('svg')?.getAttribute('class')).toBe('interactive');
+    expect(container.querySelector(walkMarkup)).toBeNull();
   });
 });
 

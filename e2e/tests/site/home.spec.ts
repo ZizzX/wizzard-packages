@@ -10,6 +10,17 @@ import { expect, test, type Page } from '@playwright/test';
 
 const frame = (page: Page) => page.locator('.flow-row').first().locator('.frame');
 
+/** `--st-visited` as the browser resolves it under the theme in force now. */
+const visited = (page: Page) =>
+  page.evaluate(() => {
+    const probe = document.createElement('span');
+    probe.style.color = 'var(--st-visited)';
+    document.body.append(probe);
+    const colour = getComputedStyle(probe).color;
+    probe.remove();
+    return colour;
+  });
+
 /** The four pieces of the walk that change most, as the browser computes them now. */
 const look = (page: Page) =>
   frame(page).evaluate((el) => {
@@ -51,6 +62,22 @@ for (const [width, height] of [
       await expect.poll(async () => (await look(page)).hot).toBe('100px');
     });
 
+    test('follows a theme switched after it settled', async ({ page }) => {
+      await page.goto('');
+      await frame(page).evaluate((el) => el.scrollIntoView({ block: 'center' }));
+      await expect.poll(async () => (await look(page)).hot).toBe('0px');
+      expect((await look(page)).details).toBe(await visited(page));
+      const theme = await page.evaluate(() => document.documentElement.dataset.theme);
+      const other = theme === 'dark' ? 'light' : 'dark';
+
+      await page.evaluate((other) => {
+        document.documentElement.dataset.theme = other;
+      }, other);
+      // The end frame is held by keyframes, and their colours must still be the
+      // tokens: Details draws the switched theme's visited stroke, not the old one.
+      expect((await look(page)).details).toBe(await visited(page));
+    });
+
     test('does not widen the page', async ({ page }) => {
       await page.goto('');
       const [scroll, client] = await page.evaluate(() => [
@@ -67,7 +94,9 @@ for (const colorScheme of ['light', 'dark'] as const) {
     test('is drawn at its end frame, with nothing playing', async ({ page }) => {
       await page.emulateMedia({ reducedMotion: 'reduce', colorScheme });
       await page.goto('');
+      expect(await page.evaluate(() => document.documentElement.dataset.theme)).toBe(colorScheme);
       const atRest = await look(page);
+      expect(atRest.details).toBe(await visited(page));
       expect(atRest.company).toBe('4px, 4px');
       expect(atRest.hot).toBe('0px');
       expect(await frame(page).evaluate((el) => el.getAnimations({ subtree: true }).length)).toBe(

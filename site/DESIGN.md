@@ -384,9 +384,10 @@ Five motions exist. Anything else is a bug.
 | route walk      | feature row A walks its route as it scrolls in | scroll-driven; the scroll is the clock  | the end frame, drawn at rest         |
 
 Three of the five are shipped: the step transition, the graph rebuild with the edge draw
-inside it, and the route walk. The scrubber and the page transition are specified here and
-built with the surfaces that need them; their tokens exist so that work adds behaviour rather
-than values.
+inside it, and the route walk. The scrubber's motion and the page transition are specified
+here and built with the surfaces that need them - the scrubber itself already exists on the
+inspector, without its motion; their tokens exist so that work adds behaviour rather than
+values.
 
 `--ease-out` is `cubic-bezier(0.2, 0.7, 0.3, 1)`. Motion never moves the page: nothing slides
 in on scroll, and every section is fully readable at rest. `prefers-reduced-motion: reduce`

@@ -5,9 +5,9 @@
  * Rendered with no client directive, so a row costs no JavaScript. It is still
  * not an illustration: `createWizard` walks the fixture to the moment the claim
  * is about, and the picture is whatever that walk produced. If the engine's
- * behaviour changed, the row would change with it. A row given a `walk` goes
- * further: the engine walks the fixture to its end, and the row draws the walk
- * as it scrolls into view.
+ * behaviour changed, the row would change with it. A row can also be handed a
+ * `walk`, which the page records from the engine at build time: the row then
+ * draws where the walk ends, and plays the walk as it scrolls into view.
  */
 import {
   createWizard,

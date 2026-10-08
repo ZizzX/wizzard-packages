@@ -115,13 +115,16 @@ All motion sits inside `@supports (animation-timeline: view())` and
 - the graph's frame declares `view-timeline: --walk block`;
 - every walked element uses `animation-timeline: --walk`, fill mode `both`, and an
   `animation-range` that maps its beats onto `cover 14%` to `cover 52%` with `calc()`;
-- shared keyframes: `walk-on`, `walk-off`, `walk-break`, `walk-draw`, `walk-comet`,
-  `walk-probe`, `walk-glow`, `walk-finish`, `walk-ring`;
+- shared keyframes: `walk-on` and `walk-off` for a step on the route, `walk-glow` and
+  `walk-fade` for its halo, `walk-break`, `walk-label`, `walk-when` and `walk-eval` for a step
+  that drops out, `walk-probe-edge` and `walk-probe` for the edge into it, `walk-draw` and
+  `walk-comet` for a run, and `walk-finish` and `walk-ring` for the end;
 - the page-load `wz-draw` animation is switched off for `.walk` edges, so the two never fight.
 
 `tokens.css` gains `--ease-spring`, a `linear()` curve with one small overshoot, used only for
-the halo's pulse. Nothing on the page moves, scales, or slides: colour, dash, opacity, and the
-dash offset that runs the comet are the only properties animated.
+the halo's pulse. Nothing on the page moves, scales, or slides. Inside the graph the walk
+animates colour, stroke width, dash, opacity, and the dash offset that runs the comet; the one
+transform is the ring's spread, which stays inside the graph's frame.
 
 The comet is a dash running along the edge, not a dot on `offset-path`. It looks the same and
 needs no motion-path support on SVG elements, which browsers do not agree on.
@@ -159,8 +162,11 @@ e2e, in `e2e/tests/site/home.spec.ts`, Chromium against the production build:
   has no scroll-driven animations;
 - at 390 the page does not scroll sideways; only the graph's frame does.
 
-Each claim gets a mutation check before the PR: removing the `@supports` guard, the
-reduced-motion block, or the email from the data turns the matching test red.
+Each claim gets a mutation check before the PR: removing the reduced-motion block, leaving the
+end frame out of the base styles, or the email from the data turns the matching test red.
+Chromium supports scroll-driven animations, so no browser test sees the `@supports` guard go;
+`site/src/styles/site.test.ts` reads the stylesheet instead, and fails when a scroll-driven
+declaration sits outside either guard.
 
 Screenshots of row A at 1280 and 390 - start, middle, and end of the walk, in both themes -
 go in the PR. Gates: `pnpm verify`, `format:check`, `links:check`, `build`, `test:e2e` for the
