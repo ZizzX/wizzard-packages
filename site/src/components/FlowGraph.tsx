@@ -13,10 +13,11 @@
 import { layoutGraph, type Direction } from '@wizzard-packages/devtools/headless';
 
 import { asText, printExpr } from '../lib/print-expr';
+import { polylineLength, type Beat, type Walk } from '../lib/walk';
 
 import type { Breadcrumb } from '@wizzard-packages/core';
 import type { FlowGraph as Graph, GraphNode } from '@wizzard-packages/core/graph';
-import type { KeyboardEvent, ReactNode } from 'react';
+import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
 
 export type NodeState = 'active' | 'error' | 'visited' | 'skipped' | 'done' | 'rest';
 
@@ -109,6 +110,13 @@ export interface FlowGraphProps {
    * that only wants a picture ships no JavaScript for it.
    */
   onSelect?: (id: string | null) => void;
+  /**
+   * The route walk, recorded by the engine (`lib/walk.ts`). Supplying it adds the
+   * decorations the walk plays and hands them their beats as custom properties;
+   * the stylesheet does the rest on the frame's view timeline. Without it the
+   * markup is exactly the picture or the instrument above.
+   */
+  walk?: Walk;
 }
 
 export function FlowGraph({
@@ -120,6 +128,7 @@ export function FlowGraph({
   drawKey = 0,
   selected = null,
   onSelect,
+  walk,
 }: FlowGraphProps): ReactNode {
   const laid = layoutGraph(graph, { direction });
   const nodeById = new Map<string, GraphNode>(graph.nodes.map((node) => [node.id, node]));
@@ -170,6 +179,20 @@ export function FlowGraph({
 
   const interactive = onSelect !== undefined;
 
+  /** A beat as the pair of custom properties the stylesheet maps onto the timeline. */
+  const at = (name: string, beat: Beat): Record<string, string> => ({
+    [`--${name}0`]: beat.from.toFixed(4),
+    [`--${name}1`]: beat.to.toFixed(4),
+  });
+
+  /** A dash running the whole edge, with a blurred copy under it for the glow. */
+  const comet = (points: string, length: number): ReactNode => (
+    <g className="comet" aria-hidden="true" style={{ '--len': length.toFixed(1) } as CSSProperties}>
+      <polyline className="comet-halo" points={points} filter="url(#walk-blur)" />
+      <polyline className="comet-core" points={points} />
+    </g>
+  );
+
   return (
     <>
       <svg
@@ -181,6 +204,7 @@ export function FlowGraph({
               ...(selected === null ? {} : { 'aria-activedescendant': `node-${selected}` }),
             }
           : {})}
+        {...(walk !== undefined && { className: interactive ? 'interactive walk' : 'walk' })}
         // Two units of bleed on every side: an edge routed along the graph's own
         // border loses the outer half of its stroke to the viewBox otherwise,
         // and reads as orphaned dashes.
@@ -195,20 +219,43 @@ export function FlowGraph({
             : `Flow graph of ${label}. The same information is in the table below.`
         }
       >
-        {laid.edges.map((edge, index) => (
-          <g
-            // The index is in the key because a repeated target in `on.next` is
-            // legal input: `from`, `to` and `kind` alone collide, and React
-            // answers a duplicate key by dropping siblings and warning per clash.
-            key={`${edge.from}-${edge.to}-${edge.kind}-${index}-${drawKey}`}
-            className={`edge ${edge.kind} ${edgeLive(edge, active, endId) ? 'live' : 'dim'}`}
-          >
-            <polyline
-              points={edge.points.map(([x, y]) => `${x},${y}`).join(' ')}
-              pathLength={100}
-            />
-          </g>
-        ))}
+        {walk !== undefined && (
+          <defs>
+            <filter id="walk-blur" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="4" />
+            </filter>
+          </defs>
+        )}
+
+        {laid.edges.map((edge, index) => {
+          const points = edge.points.map(([x, y]) => `${x},${y}`).join(' ');
+          const forward = edge.kind !== 'back';
+          const run = forward ? walk?.runs[`${edge.from}->${edge.to}`] : undefined;
+          const probed = forward ? walk?.dropped[edge.to] : undefined;
+          const probe = probed !== undefined && probed.from === edge.from ? probed : undefined;
+          const plays =
+            run !== undefined ? at('r', run) : probe !== undefined ? at('p', probe.beat) : null;
+          return (
+            <g
+              // The index is in the key because a repeated target in `on.next` is
+              // legal input: `from`, `to` and `kind` alone collide, and React
+              // answers a duplicate key by dropping siblings and warning per clash.
+              key={`${edge.from}-${edge.to}-${edge.kind}-${index}-${drawKey}`}
+              className={`edge ${edge.kind} ${edgeLive(edge, active, endId) ? 'live' : 'dim'}${run !== undefined ? ' run' : ''}${probe !== undefined ? ' probe' : ''}`}
+              {...(plays !== null && { style: plays as CSSProperties })}
+            >
+              <polyline
+                points={points}
+                pathLength={100}
+                {...(walk !== undefined && { className: 'base' })}
+              />
+              {run !== undefined && (
+                <polyline className="hot" points={points} pathLength={100} aria-hidden="true" />
+              )}
+              {plays !== null && comet(points, polylineLength(edge.points))}
+            </g>
+          );
+        })}
 
         {laid.nodes.map((placed, index) => {
           const node = nodeById.get(placed.id);
@@ -231,10 +278,34 @@ export function FlowGraph({
                 }
               : {};
           const ring = selected === placed.id ? ' selected' : '';
+          const walked = walk?.steps[placed.id];
+          const dropped = walk?.dropped[placed.id];
+          const role = walked !== undefined ? ' walked' : dropped !== undefined ? ' dropped' : '';
+          const plays =
+            walked !== undefined
+              ? { ...at('on', walked.on), ...at('off', walked.off) }
+              : dropped !== undefined
+                ? at('p', dropped.beat)
+                : null;
 
           if (kind === 'end') {
             return (
-              <g key={`${index}:${asText(placed.id)}`} className={`node end ${state}`}>
+              <g
+                key={`${index}:${asText(placed.id)}`}
+                className={`node end ${state}`}
+                {...(walk !== undefined && {
+                  style: { ...at('f', walk.finish), ...at('g', walk.ring) } as CSSProperties,
+                })}
+              >
+                {walk !== undefined && (
+                  <circle
+                    className="ring"
+                    cx={placed.x + 11}
+                    cy={placed.y + placed.h / 2}
+                    r="11"
+                    aria-hidden="true"
+                  />
+                )}
                 <circle cx={placed.x + 11} cy={placed.y + placed.h / 2} r="11" />
               </g>
             );
@@ -246,8 +317,9 @@ export function FlowGraph({
             // name, and React answers a duplicate key by dropping siblings.
             <g
               key={`${index}:${asText(placed.id)}`}
-              className={`node ${kind} ${state}${ring}`}
+              className={`node ${kind} ${state}${ring}${role}`}
               {...pick}
+              {...(plays !== null && { style: plays as CSSProperties })}
             >
               {kind === 'group' && (
                 <rect
@@ -259,6 +331,18 @@ export function FlowGraph({
                   rx="4"
                 />
               )}
+              {walked !== undefined && (
+                <rect
+                  className="halo"
+                  x={placed.x}
+                  y={placed.y}
+                  width={placed.w}
+                  height={placed.h}
+                  rx="4"
+                  filter="url(#walk-blur)"
+                  aria-hidden="true"
+                />
+              )}
               <rect x={placed.x} y={placed.y} width={placed.w} height={placed.h} rx="4" />
               <text x={placed.x + 12} y={placed.y + placed.h / 2 + (when === undefined ? 4 : -2)}>
                 {asText(node?.label ?? placed.id)}
@@ -267,6 +351,16 @@ export function FlowGraph({
                 <text className="node-when" x={placed.x + 12} y={placed.y + placed.h / 2 + 12}>
                   {when.short}
                   <title>{when.full}</title>
+                </text>
+              )}
+              {dropped !== undefined && dropped.reason !== null && (
+                <text
+                  className="walk-eval"
+                  x={placed.x + 12}
+                  y={placed.y + placed.h / 2 + 12}
+                  aria-hidden="true"
+                >
+                  {dropped.reason}
                 </text>
               )}
             </g>
