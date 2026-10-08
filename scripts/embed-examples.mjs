@@ -84,15 +84,20 @@ const stage = process.argv.includes('--stage');
 /** Line endings differ between a Windows checkout and CI; the content does not. */
 const lf = (s) => s.replace(/\r\n/g, '\n');
 const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' });
+/** A file on disk, or `undefined` when there is none; any other failure is thrown as it is. */
+const fromDisk = async (file) => {
+  try {
+    return await readFile(resolve(root, file), 'utf8');
+  } catch (error) {
+    if (error.code === 'ENOENT') return undefined;
+    throw error;
+  }
+};
 /** A repository path, from the index under `--stage`, from disk otherwise. */
-const read = async (file) =>
-  stage
-    ? execFileSync('git', ['show', `:${file}`], {
-        cwd: root,
-        encoding: 'utf8',
-        stdio: ['ignore', 'pipe', 'ignore'],
-      })
-    : readFile(resolve(root, file), 'utf8');
+const read = async (file) => {
+  if (!stage) return fromDisk(file);
+  return git('ls-files', '--cached', '--', file) === '' ? undefined : git('show', `:${file}`);
+};
 
 const problems = [];
 const used = new Set();
@@ -126,13 +131,12 @@ async function embed(doc, text, report) {
       continue;
     }
 
-    let source;
-    try {
-      source = lf(await read(snippet.file)).trimEnd();
-    } catch {
+    const text = await read(snippet.file);
+    if (text === undefined) {
       report.push(`${doc}: "${name}" points at ${snippet.file}, ${absent}`);
       continue;
     }
+    const source = lf(text).trimEnd();
 
     const rebuilt = `<!-- example:${name} -->
 
@@ -151,23 +155,27 @@ ${source}
 }
 
 const staged = [];
+let unread = false;
 
 for (const doc of DOCUMENTS) {
-  let original;
-  try {
-    original = lf(await read(doc));
-  } catch {
+  const text = await read(doc);
+  if (text === undefined) {
     problems.push(`${doc} is listed in DOCUMENTS, ${absent}`);
+    unread = true;
     continue;
   }
+  const original = lf(text);
   const updated = await embed(doc, original, problems);
   if (check || updated === original) continue;
   if (stage) staged.push([doc, updated]);
   else await writeFile(resolve(root, doc), updated, 'utf8');
 }
 
-for (const name of Object.keys(SNIPPETS)) {
-  if (!used.has(name)) problems.push(`"${name}" is in the manifest but no document embeds it`);
+// A document that was not read hid its markers, and this would blame the manifest for them.
+if (!unread) {
+  for (const name of Object.keys(SNIPPETS)) {
+    if (!used.has(name)) problems.push(`"${name}" is in the manifest but no document embeds it`);
+  }
 }
 
 if (problems.length > 0) {
@@ -188,8 +196,11 @@ for (const [doc, updated] of staged) {
   }).trim();
   // Every document is a Markdown file, so its mode is the plain one.
   git('update-index', '--cacheinfo', `100644,${blob},${doc}`);
-  const working = resolve(root, doc);
-  await writeFile(working, await embed(doc, lf(await readFile(working, 'utf8')), []), 'utf8');
+  // A working copy deleted on disk stays deleted: the index copy is what is committed.
+  const working = await fromDisk(doc);
+  if (working !== undefined) {
+    await writeFile(resolve(root, doc), await embed(doc, lf(working), []), 'utf8');
+  }
 }
 
 console.log(

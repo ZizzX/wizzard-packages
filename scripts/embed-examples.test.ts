@@ -11,7 +11,15 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -122,6 +130,17 @@ describe('embed-examples --check', () => {
     expect(result.stderr).toContain('README.md: marker "install-react" appears more than once');
   });
 
+  it('reports a file it cannot read as it is, not as missing', () => {
+    scratch();
+    rmSync(join(tree, 'packages/vue/README.md'));
+    mkdirSync(join(tree, 'packages/vue/README.md'));
+
+    const result = run('--check');
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('EISDIR');
+    expect(result.stderr).not.toContain('which does not exist');
+  });
+
   it('reads a Windows checkout as unchanged', () => {
     scratch();
     const crlf = (text: string): string => text.replace(/\r?\n/g, '\r\n');
@@ -203,6 +222,7 @@ describe('embed-examples --stage', () => {
     expect(result.status).toBe(1);
     expect(result.stderr).toContain('marker "install-nothing" is not in the manifest');
     expect(indexed('packages/plugins/README.md')).not.toContain('// a change');
+    expect(indexed('site/src/content/docs/docs/persistence.md')).not.toContain('// a change');
   });
 
   it('names a file that is on disk but not in the index', () => {
@@ -218,5 +238,19 @@ describe('embed-examples --stage', () => {
     expect(result.stderr).toContain(
       'points at examples/quickstart/src/persist.ts, which is not in the index; stage it'
     );
+    // The README that was not read embeds install-vue; the manifest is not at fault.
+    expect(result.stderr).not.toContain('is in the manifest but no document embeds it');
+  });
+
+  it('writes the index copy of a document deleted on disk, and leaves it deleted', () => {
+    repository();
+    edit('examples/quickstart/src/persist.ts', (text) => `${text}\n// a change\n`);
+    git('add', 'examples/quickstart/src/persist.ts');
+    rmSync(join(tree, 'packages/plugins/README.md'));
+
+    expect(stage()).toMatchObject({ status: 0 });
+
+    expect(indexed('packages/plugins/README.md')).toContain('// a change');
+    expect(existsSync(join(tree, 'packages/plugins/README.md'))).toBe(false);
   });
 });
