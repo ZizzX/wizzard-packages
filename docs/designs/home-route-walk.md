@@ -29,8 +29,8 @@ and holding the end frame on the way back would need JavaScript. It never replay
 its own.
 
 The end frame is "the route was walked": `Details` and `Payment` visited, `Company` dashed,
-the end filled. It is what the row shows with reduced motion, in a browser without
-`animation-timeline`, and with JavaScript off. The caption under the graph stays true as
+the end filled. It is what the row shows with reduced motion and in a browser without
+`animation-timeline`. JavaScript plays no part: with it off the walk runs the same. The caption under the graph stays true as
 written.
 
 Rows B and C, the hero, and the inspector do not change. A version of this choreography in

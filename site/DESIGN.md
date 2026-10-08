@@ -375,29 +375,34 @@ Rules that make it work:
 
 Five motions exist. Anything else is a bug.
 
-| Motion          | What it does                                  | Duration / easing                       | Reduced-motion equivalent            |
-| --------------- | --------------------------------------------- | --------------------------------------- | ------------------------------------ |
-| step transition | the form swaps to the next step's fields      | 180ms, `--ease-out`, opacity + 4px rise | opacity swap, 0ms                    |
-| graph rebuild   | `when` flips, the route re-draws              | 380ms nodes, 550ms edge draw            | no edge draw; colours change at 0ms  |
-| scrubber        | the replay handle moves and the graph follows | 120ms linear                            | no transition, position set directly |
-| page transition | one documentation page becomes the next       | 220ms cross-fade, View Transitions      | no transition                        |
-| route walk      | the homepage graph advances through its route | scroll-driven; the scroll is the clock  | settled end state, drawn at rest     |
+| Motion          | What it does                                   | Duration / easing                       | Reduced-motion equivalent            |
+| --------------- | ---------------------------------------------- | --------------------------------------- | ------------------------------------ |
+| step transition | the form swaps to the next step's fields       | 180ms, `--ease-out`, opacity + 4px rise | opacity swap, 0ms                    |
+| graph rebuild   | `when` flips, the route re-draws               | 380ms nodes, 550ms edge draw            | no edge draw; colours change at 0ms  |
+| scrubber        | the replay handle moves and the graph follows  | 120ms linear                            | no transition, position set directly |
+| page transition | one documentation page becomes the next        | 220ms cross-fade, View Transitions      | no transition                        |
+| route walk      | feature row A walks its route as it scrolls in | scroll-driven; the scroll is the clock  | the end frame, drawn at rest         |
 
-Three of the five are shipped: the step transition, the graph rebuild, and the edge draw
-inside the rebuild. The page transition and the route walk are specified here and built with
-the surfaces that need them; their tokens exist so that work adds behaviour rather than
-values.
+Three of the five are shipped: the step transition, the graph rebuild with the edge draw
+inside it, and the route walk. The scrubber and the page transition are specified here and
+built with the surfaces that need them; their tokens exist so that work adds behaviour rather
+than values.
 
 `--ease-out` is `cubic-bezier(0.2, 0.7, 0.3, 1)`. Motion never moves the page: nothing slides
 in on scroll, and every section is fully readable at rest. `prefers-reduced-motion: reduce`
 selects the right-hand column everywhere, including the edge-drawing animation.
 
-The route walk is the site's one authored moment and it exists once, on the homepage. It
-drives the graph rather than decorating around it: as the reader moves down the first screen,
-the flow advances through its own steps and the route redraws under a condition that resolves.
-It is built on CSS scroll-driven animations and carries no JavaScript. It settles, and it does
-not restart. Under reduced motion the graph is simply drawn at its end state, which is a
-complete picture rather than a degraded one.
+The route walk is the site's one authored moment and it exists once, on the homepage's first
+feature row. It drives the graph rather than decorating around it: as the row scrolls into
+view, the flow walks its own route. Details lights; a comet probes Company and its condition is
+shown with the data in it, `"personal" != "business"`; the branch breaks; the comet runs the
+bypass to Payment and on to the end, which fills and sends out one ring. The engine records the
+walk at build time and CSS scroll-driven animations play it, so it carries no JavaScript. It
+plays between `cover 14%` and `cover 52%` of the row's view timeline and then holds; scrolling
+back rewinds it, and it never replays on its own. Under reduced motion, or in a browser without
+`animation-timeline`, the graph is drawn at its end frame, which is a complete picture rather
+than a degraded one. The halo's pulse is the one use of `--ease-spring`. How it is built is in
+[`docs/designs/home-route-walk.md`](../docs/designs/home-route-walk.md).
 
 Edge drawing uses `pathLength="100"` so one dash length draws every polyline and no length is
 measured at runtime.
