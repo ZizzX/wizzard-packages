@@ -73,7 +73,8 @@ the board, and the slug says in a few kebab-case words what the branch does -
 `feature/T-009/diagnostic-contract`.
 
 **Trunk-based.** There is no `dev` or `stage` branch. An unfinished feature ships behind a
-config flag and is tried from the `canary` dist-tag, published on every merge to `main`.
+config flag and is tried from the `canary` dist-tag, published on every merge to `main` that
+touches `packages/` or `.changeset/` while a changeset is pending, outside a pre-release.
 
 **Scope.** Do the task that was asked. If you find a real problem outside it, say so and add
 a task for it rather than widening the change.

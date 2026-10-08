@@ -72,13 +72,17 @@ pnpm changeset
 
 Release the same way. While pre mode is active the release PR carries `-next.N` versions and its merge
 publishes under the `next` tag.
-While pre mode is active, the Canary workflow fails on a merge that would publish a snapshot instead
-of publishing it: `changeset version --snapshot` refuses to run in pre mode.
+While pre mode is active the Canary workflow publishes nothing: `changeset version --snapshot` refuses
+to run in pre mode, so a merge reaches npm with the next `next` release instead.
 Exit prerelease mode after the final `next` release:
 
 ```bash
 pnpm changeset pre exit
 ```
+
+Canary publishes again from the next merge that touches `packages/` or `.changeset/`, the exit commit
+included. Until the final release is merged, those snapshots carry the final version, as
+`1.0.0-canary-<datetime>`.
 
 ## Cutting a docs version
 
