@@ -18,8 +18,8 @@ name: Release
 # "The merge of the release PR" is a fact read from GitHub, not a commit
 # message: a title can be edited or imitated, and the branch a PR came from
 # cannot. If a changeset reached `main` before the merge, it is versioned into
-# a new release PR instead of shipping unseen. Outside pre mode, a merge that
-# carries a changeset still reaches npm as a canary through `canary.yml`.
+# a new release PR instead of shipping unseen. Outside pre mode, a merge while
+# a changeset is pending still reaches npm as a canary through `canary.yml`.
 on:
   workflow_dispatch:
   push:

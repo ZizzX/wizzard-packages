@@ -1,7 +1,8 @@
-# Every merge to main that carries a changeset is published under the
-# `canary` dist-tag, except while a pre-release is active. This is what
-# replaces a long-lived `dev` branch: an unfinished feature is tried with
-# `pnpm add @wizzard-packages/core@canary`, not by checking out a branch.
+# A merge to main that touches `packages/` or `.changeset/` is published under
+# the `canary` dist-tag while a changeset is pending, except while a pre-release
+# is active. This is what replaces a long-lived `dev` branch: an unfinished
+# feature is tried with `pnpm add @wizzard-packages/core@canary`, not by
+# checking out a branch.
 name: Canary
 
 on:

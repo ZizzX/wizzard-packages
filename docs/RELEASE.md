@@ -80,6 +80,10 @@ Exit prerelease mode after the final `next` release:
 pnpm changeset pre exit
 ```
 
+Canary publishes again from the next merge that touches `packages/` or `.changeset/`, the exit commit
+included. Until the final release is merged, those snapshots carry the final version, as
+`1.0.0-canary-<datetime>`.
+
 ## Cutting a docs version
 
 The site is versioned from 1.0.0, and 0.x has no docs version: it was torn down, not archived.
