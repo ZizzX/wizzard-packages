@@ -109,11 +109,11 @@ const isBundle = (v: unknown): v is SessionBundle => {
  * Starts recording a wizard and returns the {@link Recorder} that controls it.
  *
  * Every state the wizard settles in becomes a frame, starting with the current
- * one; a state committed while a navigation is in flight is skipped. With
- * `plugin`, the attempts that end during the recording are kept as well. The
- * recording ends on `stop()`, when a limit is reached, or when the wizard's
- * flow changes, and `bundle()` turns it into a {@link SessionBundle} that
- * replays without the application.
+ * one when it is settled; a state committed while a navigation is in flight is
+ * skipped. With `plugin`, the attempts that end during the recording are kept
+ * as well. The recording ends on `stop()`, when a limit is reached, or when the
+ * wizard's flow changes, and `bundle()` turns it into a {@link SessionBundle}
+ * that replays without the application.
  */
 export function recordSession(wizard: WizardLike, options: RecordOptions = {}): Recorder {
   const { plugin, subFlows, redact } = options;

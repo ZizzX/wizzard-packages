@@ -40,7 +40,7 @@ import type { AsyncRegistry, Json, Scope } from './expr';
 
 export type Snapshot = WizardState & Derived;
 
-/** What {@link createWizard} builds a wizard from. Only `flow` is required. */
+/** What `createWizard` builds a wizard from. Only `flow` is required. */
 export interface WizardOptions<F extends FlowDefinition = FlowDefinition> {
   flow: F;
   /** Named resolvers for everything a flow cannot serialize. */
@@ -142,7 +142,7 @@ export interface Wizard<F extends FlowDefinition = FlowDefinition> {
    * if it fails, the move resolves `{ ok: false, reason: 'invalid' }` with the
    * errors, which are also written to `state.errors`.
    *
-   * Every refusal resolves as a {@link NavResult}. A move started while
+   * Every refusal resolves as a `NavResult`. A move started while
    * another runs supersedes it, and the older one resolves `superseded`.
    */
   next: (opts?: { validate?: boolean }) => Promise<NavResult>;
@@ -155,11 +155,13 @@ export interface Wizard<F extends FlowDefinition = FlowDefinition> {
   back: () => Promise<NavResult>;
   /**
    * Jumps to a step by id, or to `END`, which finishes the flow the wizard
-   * stands in: the whole wizard at the root. For a step id, the target's `when`
-   * must hold and the flow's `policy` must allow the jump; `force: true` skips
-   * the policy, not the `when`. `go(END)` checks neither. Like `next`, it
-   * validates the step being left unless `validate: false` is passed. An id no
-   * flow has resolves `no-target`.
+   * stands in: the whole wizard at the root; inside a group, the child flow, so
+   * the move lands on the next item or the step after the group. For a step
+   * id, the target's `when` must hold and the flow's `policy` must allow the
+   * jump; `force: true` skips the policy, not the `when`. `go(END)` at the root
+   * checks neither; inside a group the step it lands on is checked like any
+   * other target. Like `next`, it validates the step being left unless
+   * `validate: false` is passed. An id no flow has resolves `no-target`.
    */
   go(
     to: StepIdOf<F> | typeof END,

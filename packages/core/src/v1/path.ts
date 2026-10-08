@@ -19,8 +19,6 @@ const parse = (path: string): string[] =>
 /**
  * Reads the value at a dot path, `undefined` when any key on the way is missing.
  * `a.0.b` and `a[0].b` name the same value; an empty path is the source itself.
- *
- * @internal
  */
 export function getPath(source: unknown, path: string): unknown {
   if (!path) return source;
@@ -35,8 +33,6 @@ export function getPath(source: unknown, path: string): unknown {
 /**
  * Immutable set. Returns the same reference when the value has not changed, so
  * a no-op write does not invalidate every memoized selector downstream.
- *
- * @internal
  */
 export function setPath<T extends object>(target: T, path: string, value: unknown): T {
   const keys = parse(path);
@@ -66,8 +62,6 @@ export function setPath<T extends object>(target: T, path: string, value: unknow
 /**
  * Immutable delete. Returns the same reference when there was nothing at the
  * path, for the same reason `setPath` does.
- *
- * @internal
  */
 export function unsetPath<T extends object>(target: T, path: string): T {
   const keys = parse(path);

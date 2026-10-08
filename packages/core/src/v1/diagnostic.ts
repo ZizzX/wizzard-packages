@@ -43,7 +43,7 @@ export const pageFor = (code: string): string => DOCS + code;
  * The class of every error the engine throws. `code` is a stable kebab-case
  * slug, `op` the public operation that failed, `path` where in the flow when
  * there is a where, `fix` what to change and `url` the page for the code.
- * `message` is one line of what went wrong, why, the fix and the page; `op`
+ * `message` is what went wrong, why, the fix and the page, in that order; `op`
  * and `path` are only on their fields. What the host's own code throws - a
  * resolver, a plugin hook - is never wrapped in one.
  *

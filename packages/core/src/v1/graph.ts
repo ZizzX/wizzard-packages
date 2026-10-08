@@ -67,7 +67,10 @@ export interface GroupNode {
   opaque?: 'unresolved' | 'cycle' | 'too-deep';
 }
 
-/** One transition of a {@link FlowGraph}, from a step to a step or to `END`. */
+/**
+ * One transition of a {@link FlowGraph}: from a step to a step, to `END`, or,
+ * marked `dangling`, to an id the flow does not have.
+ */
 export interface GraphEdge {
   from: string;
   /** A step id, or `END`. */

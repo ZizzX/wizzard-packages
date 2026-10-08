@@ -134,8 +134,9 @@ function inferTaken(graph: FlowGraph, from: string | null, to: string | null): T
  *
  * It watches the wizard from `WizardProvider` unless `wizard` is given, and
  * renders a message rather than throwing when there is neither. Refused
- * navigations appear only when `plugin` is the {@link devtools} instance
- * installed in that wizard. It never navigates and never writes to the wizard.
+ * navigations appear only when `plugin` is given, and the panel warns when
+ * that {@link devtools} instance is not the one installed in the watched
+ * wizard. It never navigates and never writes to the wizard.
  */
 export function WizardDevtools({
   wizard: wizardProp,

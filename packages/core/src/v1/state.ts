@@ -39,9 +39,9 @@ export interface WizardState {
   ctx: Readonly<Record<string, unknown>>;
   /** Field errors by step id, from validation or `setErrors`. */
   errors: Readonly<Record<string, Readonly<Record<string, string>>>>;
-  /** Every step entered, once each. */
+  /** Every atom step entered, once each. A group is not listed, only the steps inside it. */
   visited: readonly string[];
-  /** Steps left by `next()` or `go()`, the move that finished the flow included. */
+  /** Atom steps left by `next()` or `go()`, the move that finished the flow included. */
   completed: readonly string[];
   /** The data paths written with `set`. */
   dirty: readonly string[];

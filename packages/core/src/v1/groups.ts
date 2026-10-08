@@ -49,7 +49,8 @@ export interface Level {
 }
 
 /**
- * A move the traversal refuses outright, in the shape `runNav` returns.
+ * A move the traversal refuses outright, in the shape of a refused `NavResult`
+ * before it is given its code and page.
  *
  * `invalid` is a data error the author can fix (4.1b). `not-reachable` is the
  * flat path's own answer for a target whose `when` is false, reused because a

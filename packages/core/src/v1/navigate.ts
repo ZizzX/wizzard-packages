@@ -149,8 +149,8 @@ export interface Hooks {
    * `blocked` by that string, or `{ redirect }` to make it a `go` to that step
    * instead; answer nothing to let it through. A redirect still needs the
    * step's `when` to hold, but the flow's `policy` is checked against it only
-   * when the original move was a `go`. `to` is the target of a `go`, and `null`
-   * for `next` and `back`, whose target is not resolved yet.
+   * when the original move was a `go` without `force`. `to` is the target of a
+   * `go`, and `null` for `next` and `back`, whose target is not resolved yet.
    *
    * Awaited, plugin after plugin. A throw rejects the move.
    */

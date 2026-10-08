@@ -57,9 +57,9 @@ docs/designs/           the plan of record: v1-launch.md, flow-inspector.md
 6. **Every `core` sub-entry is its own budget.** `validate-flow`, `graph`, `groups`,
    `session`, `snapshot` and `expr` are separate entries so a runtime bundle never carries them; re-exporting one from
    `v1/index.ts` silently moves it into everyone's bundle. Adding an entry means a tsup
-   entry, an `exports` key and a `.size-limit.js` line in the same PR. Budgets are ratchets
-   set just above what a thing measures once it is correct - raise one with a stated reason
-   in the PR, never trim behaviour to fit one.
+   entry, an `exports` key, a `.size-limit.js` line and a line in `site/api-entry-points.mjs`
+   in the same PR. Budgets are ratchets set just above what a thing measures once it is
+   correct - raise one with a stated reason in the PR, never trim behaviour to fit one.
 
 ## Working agreement
 

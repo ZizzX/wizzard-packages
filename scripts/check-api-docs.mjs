@@ -32,9 +32,16 @@ const entries = entryPoints.map((entry) => resolve(site, entry));
 /** typedoc checks only the packages it is told to, so name every package an entry point is in. */
 const packages = [
   ...new Set(
-    entries.map(
-      (entry) => JSON.parse(readFileSync(entry.replace(/\/src\/.*$/, '/package.json'), 'utf8')).name
-    )
+    entries.map((entry) => {
+      // Anchored on `packages/<name>/src/`: an unanchored `/src/` would match a
+      // checkout that itself lives under a `src` directory.
+      const manifest = entry.replace(/(\/packages\/[^/]+)\/src\/.*$/, '$1/package.json');
+      const { name } = JSON.parse(readFileSync(manifest, 'utf8'));
+      // A package typedoc is not told about is skipped without a warning, so a
+      // missing name would pass its exports unchecked.
+      if (typeof name !== 'string') throw new Error(`${manifest} has no "name"`);
+      return name;
+    })
   ),
 ];
 
@@ -60,6 +67,18 @@ const app = await Application.bootstrap({
 
 const project = await app.convert();
 if (!project) process.exit(1);
+
+// An entry point that matches no file, or one outside tsconfig.typedoc.json's
+// `include`, is only a warning to typedoc: it converts the rest, and this check
+// would pass without having seen that package. A complete run has one module
+// per entry point.
+const converted = project.children?.length ?? 0;
+if (converted !== entries.length) {
+  console.error(
+    `\nNot every entry point was converted: ${entries.length} listed in site/api-entry-points.mjs, ${converted} read. The typedoc warning above names the path; fix it in the list, or add the file to site/tsconfig.typedoc.json.`
+  );
+  process.exit(1);
+}
 
 // The only check left on is `notDocumented`, so every warning it raises is one undocumented export.
 const missing = [];

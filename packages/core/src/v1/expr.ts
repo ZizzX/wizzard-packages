@@ -20,6 +20,7 @@ import {
  * one dangerous thing explicit and greppable.
  */
 
+/** Any JSON value: what every part of a flow, and every expression in it, is made of. */
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 
 /**
@@ -314,7 +315,8 @@ export type AsyncResolver = (
 /**
  * Resolvers by the name a `$ref` uses, as `createWizard` takes them. A resolver
  * may return a promise where the engine awaits it - guards, a step's `validate`
- * and `load` - but a `when` is evaluated synchronously and cannot wait for one.
+ * and `load` - but a step's or a transition's `when`, `repeat.over` and `input`
+ * are evaluated synchronously and refuse one.
  */
 export type AsyncRegistry = Readonly<Record<string, AsyncResolver>>;
 
