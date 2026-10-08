@@ -1,4 +1,5 @@
-# Every merge to main is published under the `canary` dist-tag. This is what
+# Every merge to main that carries a changeset is published under the
+# `canary` dist-tag, except while a pre-release is active. This is what
 # replaces a long-lived `dev` branch: an unfinished feature is tried with
 # `pnpm add @wizzard-packages/core@canary`, not by checking out a branch.
 name: Canary
@@ -38,17 +39,26 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       # No pending changesets means nothing changed that is worth a canary.
+      # In pre mode `changeset version --snapshot` refuses to run, and a merge
+      # reaches npm with the next `next` release instead.
       - name: Check for changesets
         id: check
         run: |
+          mode=$(node -p "require('./.changeset/pre.json').mode" 2>/dev/null || true)
+          if [ "$mode" = "pre" ]; then
+            echo "::notice::Pre mode is active, so no canary is published until 'changeset pre exit'."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           count=$(find .changeset -name '*.md' ! -name 'README.md' | wc -l)
-          echo "count=$count" >> "$GITHUB_OUTPUT"
+          if [ "$count" -gt 0 ]; then publish=true; else publish=false; fi
+          echo "publish=$publish" >> "$GITHUB_OUTPUT"
 
-      - if: steps.check.outputs.count != '0'
+      - if: steps.check.outputs.publish == 'true'
         run: pnpm build
 
       - name: Publish canary
-        if: steps.check.outputs.count != '0'
+        if: steps.check.outputs.publish == 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: 'true'
@@ -59,5 +69,5 @@ jobs:
       # changeset publish reports success for packages the registry never
       # saved, and exits 0. Ask the registry what actually landed.
       - name: Verify the registry has them
-        if: steps.check.outputs.count != '0'
+        if: steps.check.outputs.publish == 'true'
         run: node scripts/verify-published.mjs
