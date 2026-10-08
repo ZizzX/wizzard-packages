@@ -51,6 +51,9 @@ const SNIPPETS = {
   'install-react': { file: 'examples/quickstart/install/react.sh', lang: 'bash' },
   'install-vue': { file: 'examples/quickstart/install/vue.sh', lang: 'bash' },
   'install-core': { file: 'examples/quickstart/install/core.sh', lang: 'bash' },
+  'install-validate': { file: 'examples/quickstart/install/validate.sh', lang: 'bash' },
+  'install-plugins': { file: 'examples/quickstart/install/plugins.sh', lang: 'bash' },
+  'install-devtools': { file: 'examples/quickstart/install/devtools.sh', lang: 'bash' },
 };
 
 /**

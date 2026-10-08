@@ -8,9 +8,14 @@ so a flow that persists nothing carries none of the code that would.
 
 ## Install
 
+<!-- example:install-plugins -->
+
+<!-- prettier-ignore -->
 ```bash
 pnpm add @wizzard-packages/core@canary @wizzard-packages/plugins@canary
 ```
+
+<!-- /example -->
 
 ## `/persist`
 

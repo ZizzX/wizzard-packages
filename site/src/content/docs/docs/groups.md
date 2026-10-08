@@ -12,7 +12,7 @@ Traversing groups is optional code. The engine ships it as a separate entry poin
 without groups never pays for it:
 
 ```ts
-import { createWizard } from '@wizzard-packages/core/v1';
+import { createWizard } from '@wizzard-packages/core';
 import { groups } from '@wizzard-packages/core/groups';
 
 const wizard = createWizard({ flow: trip, groups, subFlows: { passenger } });

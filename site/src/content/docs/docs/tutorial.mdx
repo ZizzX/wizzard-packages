@@ -3,10 +3,12 @@ title: Tutorial
 description: Build a conference registration one change at a time - two steps, then validation, a branch, a repeat over guests, a step that loads, a saved session and a plugin of your own.
 ---
 
+import { Code } from '@astrojs/starlight/components';
 import RunnableExample from '../../../components/RunnableExample.astro';
 import TutorialFile from '../../../components/TutorialFile.astro';
 import TutorialReact from '../../../islands/TutorialReact';
 import TutorialVue from '../../../islands/TutorialVue.vue';
+import installPlugins from '@examples/quickstart/install/plugins.sh?raw';
 import appSource from '@examples/tasks/src/tutorial/finish/App.tsx?raw';
 import appVueSource from '@examples/tasks/src/tutorial/finish/App.vue?raw';
 import wizardVueSource from '@examples/tasks/src/tutorial/finish/Wizard.vue?raw';
@@ -144,9 +146,7 @@ move.
 The `persist` plugin writes the session on every change and reads it back when the wizard starts.
 It ships in its own package, beside the engine:
 
-```bash
-pnpm add @wizzard-packages/plugins@canary
-```
+<Code code={installPlugins} lang="bash" />
 
 In a browser it uses `localStorage`; the script hands it a `Map` behind the same three methods, so
 a reload can happen in one process.

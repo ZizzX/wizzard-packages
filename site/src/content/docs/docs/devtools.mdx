@@ -6,6 +6,7 @@ description: The panel that answers one question - why is the wizard where it is
 import { Code } from '@astrojs/starlight/components';
 import DevtoolsReact from '../../../islands/DevtoolsReact';
 import devtoolsSource from '@examples/quickstart/src/Devtools.tsx?raw';
+import installDevtools from '@examples/quickstart/install/devtools.sh?raw';
 
 A wizard that will not move is the hard bug, because nothing happened: no exception, no log line,
 a button that does nothing. The panel exists for that one question - why is the wizard where it
@@ -45,9 +46,7 @@ the registry the panel does not have.
 
 Three steps, and two ways to get it wrong.
 
-```bash
-pnpm add -D @wizzard-packages/devtools@canary
-```
+<Code code={installDevtools} lang="bash" />
 
 The panel imports `@wizzard-packages/react`, an optional peer, so install the React binding
 beside it.
