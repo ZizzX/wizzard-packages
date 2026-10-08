@@ -131,3 +131,26 @@ describe('embed-examples --check', () => {
     expect(run('--check')).toMatchObject({ status: 0 });
   });
 });
+
+describe('embed-examples --stage', () => {
+  it('stages the documents it rewrote and nothing else', () => {
+    scratch();
+    const git = (...args: string[]): string =>
+      spawnSync('git', args, { cwd: tree, encoding: 'utf8' }).stdout;
+    git('init', '-q');
+    git('add', '-A');
+    edit('examples/quickstart/src/persist.ts', (text) => `${text}\n// a change\n`);
+    edit('packages/core/README.md', (text) => `${text}\nAn edit of its own.\n`);
+
+    expect(run('--stage').status).toBe(0);
+
+    // What is left unstaged: the source, which the commit stages itself, and
+    // the edit the script did not make. The two documents embedding the
+    // source were rewritten and staged.
+    expect(git('diff', '--name-only').trim().split('\n')).toEqual([
+      'examples/quickstart/src/persist.ts',
+      'packages/core/README.md',
+    ]);
+    expect(git('diff', '--cached', '--name-only')).toContain('packages/plugins/README.md');
+  });
+});

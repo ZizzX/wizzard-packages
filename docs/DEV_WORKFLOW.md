@@ -21,7 +21,8 @@ An unfinished feature ships behind a config flag rather than waiting on a branch
 
 The git hooks run on your machine: commitlint holds every commit message to Conventional
 Commits, `pre-commit` runs ESLint and Prettier over staged TypeScript and Vue files and Prettier
-over the rest, and `pre-push` builds and runs the unit tests.
+over the rest, then, when an example under `examples/quickstart` is staged, re-embeds it and
+stages every document it rewrote; `pre-push` builds and runs the unit tests.
 
 ## Channels
 

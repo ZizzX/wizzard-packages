@@ -9,6 +9,7 @@
  *
  *   node scripts/embed-examples.mjs           rewrite the documents
  *   node scripts/embed-examples.mjs --check   fail if anything drifted
+ *   node scripts/embed-examples.mjs --stage   rewrite, then `git add` what it rewrote
  *
  * Markers in a document, one pair per snippet:
  *
@@ -22,6 +23,7 @@
  * toolchain is one more thing to be broken on a fresh clone.
  */
 
+import { execFileSync } from 'node:child_process';
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -71,6 +73,13 @@ const DOCUMENTS = [
 ];
 
 const check = process.argv.includes('--check');
+/**
+ * For the pre-commit hook. A document the hook rewrites is not one of the files
+ * being committed, so nothing stages it unless this does; and only this script
+ * knows which documents those are.
+ */
+const stage = process.argv.includes('--stage');
+const written = [];
 /** Line endings differ between a Windows checkout and CI; the content does not. */
 const lf = (s) => s.replace(/\r\n/g, '\n');
 
@@ -131,7 +140,10 @@ ${source}
     updated = updated.replace(block, rebuilt);
   }
 
-  if (!check && updated !== original) await writeFile(path, updated, 'utf8');
+  if (!check && updated !== original) {
+    await writeFile(path, updated, 'utf8');
+    written.push(doc);
+  }
 }
 
 for (const name of Object.keys(SNIPPETS)) {
@@ -147,6 +159,8 @@ if (problems.length > 0) {
   );
   process.exit(1);
 }
+
+if (stage && written.length > 0) execFileSync('git', ['add', '--', ...written], { cwd: root });
 
 console.log(
   check ? 'embed-examples: documents match their sources' : 'embed-examples: documents updated'

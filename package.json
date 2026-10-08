@@ -123,9 +123,8 @@
     "*.{js,mjs,cjs,jsx,json,md,mdx,yml,yaml}": [
       "prettier --write"
     ],
-    "examples/quickstart/src/*": [
-      "node scripts/embed-examples.mjs",
-      "git add README.md packages/core/README.md packages/react/README.md packages/vue/README.md packages/devtools/README.md packages/validate/README.md packages/plugins/README.md site/src/content/docs/docs/validation.md site/src/content/docs/docs/persistence.md"
+    "examples/quickstart/{src,install}/*": [
+      "node scripts/embed-examples.mjs --stage"
     ]
   }
 }
