@@ -39,6 +39,17 @@ export const guard = (call: () => unknown, report: (error: unknown) => void): vo
 /** The page for a code, built from the code alone. */
 export const pageFor = (code: string): string => DOCS + code;
 
+/**
+ * The class of every error the engine throws. `code` is a stable kebab-case
+ * slug, `op` the public operation that failed, `path` where in the flow when
+ * there is a where, `fix` what to change and `url` the page for the code.
+ * `message` is what went wrong, why, the fix and the page, in that order; `op`
+ * and `path` are only on their fields. What the host's own code throws - a
+ * resolver, a plugin hook - is never wrapped in one.
+ *
+ * `instanceof WizardError` checks the shape rather than the constructor, so it
+ * holds for an error from any entry of the package, or from a second copy of it.
+ */
 export class WizardError extends Error {
   /** Kebab-case, stable across releases, and the slug of the page that explains it. */
   readonly code: string;

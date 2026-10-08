@@ -77,6 +77,12 @@ jobs:
       - name: No dead links
         run: pnpm links:check
 
+      # Every export a user can import has a TSDoc comment, so no page of the API
+      # reference is a bare signature and no editor hover is empty. It runs after
+      # the build because the bindings re-export core's types from its dist.
+      - name: Every export is documented
+        run: pnpm api-docs:check
+
       - name: Package lint
         run: pnpm publint
 

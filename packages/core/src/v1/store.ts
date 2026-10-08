@@ -40,12 +40,16 @@ import type { AsyncRegistry, Json, Scope } from './expr';
 
 export type Snapshot = WizardState & Derived;
 
+/** What `createWizard` builds a wizard from. Only `flow` is required. */
 export interface WizardOptions<F extends FlowDefinition = FlowDefinition> {
   flow: F;
   /** Named resolvers for everything a flow cannot serialize. */
   registry?: AsyncRegistry;
+  /** Plugins, called in this order. */
   plugins?: readonly Hooks[];
+  /** The initial `data`. Ignored when `state` is given. */
   data?: Record<string, unknown>;
+  /** The initial `ctx`, which expressions read under `ctx`. Ignored when `state` is given. */
   ctx?: Record<string, unknown>;
   /** A previously serialized state, for resuming a session. */
   state?: WizardState;
@@ -97,11 +101,21 @@ function assertGroups(flow: FlowDefinition, installed: boolean, op: string): voi
  * stores in its context.
  */
 export interface Wizard<F extends FlowDefinition = FlowDefinition> {
+  /**
+   * The current state. Every commit replaces the object rather than changing
+   * it, so a reference held from before still shows the state as it was then.
+   */
   getState: () => WizardState;
   /** State and derived values in one object, identical between commits. */
   getSnapshot: () => Snapshot;
+  /** The flow the wizard runs, with whatever `patchFlow` merged into it. */
   getFlow: () => FlowDefinition;
 
+  /**
+   * Calls `listener`, with no arguments, after every commit; inside `batch`,
+   * once at the end. Returns the function that unsubscribes. A listener that
+   * throws is reported, the change stands, and every other listener still runs.
+   */
   subscribe: (listener: () => void) => () => void;
   /** Calls back only when the selected value changes. */
   select: <T>(
@@ -120,8 +134,35 @@ export interface Wizard<F extends FlowDefinition = FlowDefinition> {
    * is current and entered, this reports it and navigates nowhere.
    */
   start: () => Promise<NavResult>;
+  /**
+   * Moves forward: to the step `on.next` names, or the next reachable step in
+   * `order`. Past the root flow's last step the wizard finishes, with
+   * `status: 'done'`.
+   * The step being left is validated first unless `validate: false` is passed;
+   * if it fails, the move resolves `{ ok: false, reason: 'invalid' }` with the
+   * errors, which are also written to `state.errors`.
+   *
+   * Every refusal resolves as a `NavResult`. A move started while
+   * another runs supersedes it, and the older one resolves `superseded`.
+   */
   next: (opts?: { validate?: boolean }) => Promise<NavResult>;
+  /**
+   * Moves to the previous step: the one `on.back` names, or the previous
+   * reachable step in `order`; inside a group it follows the recorded history.
+   * The step being left is never validated.
+   * Resolves `no-target` when there is nowhere to go back to.
+   */
   back: () => Promise<NavResult>;
+  /**
+   * Jumps to a step by id, or to `END`, which finishes the flow the wizard
+   * stands in: the whole wizard at the root; inside a group, the child flow, so
+   * the move lands on the next item or the step after the group. For a step
+   * id, the target's `when` must hold and the flow's `policy` must allow the
+   * jump; `force: true` skips the policy, not the `when`. `go(END)` at the root
+   * checks neither; inside a group the step it lands on is checked like any
+   * other target. Like `next`, it validates the step being left unless
+   * `validate: false` is passed. An id no flow has resolves `no-target`.
+   */
   go(
     to: StepIdOf<F> | typeof END,
     opts?: { validate?: boolean; force?: boolean }
@@ -137,14 +178,42 @@ export interface Wizard<F extends FlowDefinition = FlowDefinition> {
    * for a known step would resolve to.
    */
   get<P extends string>(path: P): SliceAt<F, P> | undefined;
+  /**
+   * Writes `value` at a data path, creating the objects along it, and adds the
+   * path to `state.dirty`. Writing the value already there commits nothing.
+   */
   set<P extends string>(path: P, value: SliceAt<F, P>): void;
+  /**
+   * Merges `partial` into `data` one level deep, replacing each top-level key
+   * it names, in one commit. Unlike `set`, it marks nothing dirty.
+   */
   patch: (partial: Record<string, unknown>) => void;
   /** Applies several writes and notifies once. */
   batch: (fn: () => void) => void;
+  /** Merges `ctx` into the wizard's `ctx` one level deep, in one commit. */
   setCtx: (ctx: Record<string, unknown>) => void;
+  /**
+   * Puts the wizard back where it began, with `data` or empty data and the
+   * same `ctx`: no current step, no history, nothing visited, completed or in
+   * error, and `status: 'init'`. A move in flight resolves `superseded`. Call
+   * `start()` again to enter the first step.
+   */
   reset: (data?: Record<string, unknown>) => void;
 
+  /**
+   * Runs a step's `validate` resolver - the current step's, when no id is
+   * given - and records the answer: the errors under the step in
+   * `state.errors`, or the step's entry removed when it passes. Resolves
+   * `true` when the step is valid, has no `validate`, or there is no current
+   * step. A named id is looked up in the root flow, not inside a group.
+   */
   validate(stepId?: StepIdOf<F>): Promise<boolean>;
+  /**
+   * Sets a step's field errors, replacing any it had - errors a server
+   * returned, say - or removes them with `null`. They stay until replaced, or
+   * until `validate()`, a validated move away from the step, or `reset()`
+   * clears them.
+   */
   setErrors(stepId: StepIdOf<F>, errors: Readonly<Record<string, string>> | null): void;
 
   /** Replaces steps by id. Refuses a patch that would remove the current step. */
@@ -153,6 +222,11 @@ export interface Wizard<F extends FlowDefinition = FlowDefinition> {
   /** True once `destroy` has run. Plugins receive nothing after that. */
   isDestroyed: () => boolean;
 
+  /**
+   * Shuts the wizard down: aborts every move still running, removes every
+   * listener, and runs each plugin's teardown, logging one that throws and
+   * running the rest. Plugins receive nothing after it.
+   */
   destroy: () => void;
 }
 
@@ -172,6 +246,20 @@ const listenerThrew = (error: unknown): void => {
   );
 };
 
+/**
+ * Creates a wizard that runs `flow`. A fresh wizard stands on no step until
+ * `start()` enters the first reachable one; one given `options.state` stands
+ * where that state says.
+ *
+ * Each plugin's `init` runs before this returns, so a restored session is in
+ * place before anything reads the wizard; an `init` that throws disables that
+ * plugin. Throws a `WizardError` (`groups-not-installed`) when the flow has a
+ * group step and `groups` is not passed. Nothing else about the flow is
+ * checked here: a missing resolver is found only when an expression calls it -
+ * in a guard, `validate` or `load` it rejects the move, and in a `when` it is
+ * logged and read as false - so run `validateFlow` on a flow that arrives from
+ * outside.
+ */
 export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>): Wizard<F> {
   // Widened on purpose: `patchFlow` replaces it with something that is no longer `F`.
   let flow: FlowDefinition = options.flow;

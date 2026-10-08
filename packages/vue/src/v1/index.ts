@@ -42,6 +42,17 @@ import {
 
 const KEY: InjectionKey<Wizard> = Symbol('wizzard');
 
+/**
+ * Provides a wizard to `useWizard` and the other hooks in every descendant
+ * component, and returns it for the calling component's own use. Call it in
+ * `setup`.
+ *
+ * Given options, it creates the engine and destroys it when the calling
+ * component's scope is disposed. Given a wizard, it provides that one and
+ * leaves its lifetime to the caller. Either way it calls `start()` in
+ * `onMounted`, which never runs during server rendering, and a `start()` that
+ * rejects is logged with `console.error` rather than thrown.
+ */
 export function provideWizard<F extends FlowDefinition>(
   source: Wizard<F> | WizardOptions<F>
 ): Wizard<F> {
@@ -112,21 +123,42 @@ export function useWizardSnapshot(): Ref<Snapshot> {
   return snapshot;
 }
 
+/**
+ * A slice of the snapshot as a computed ref, invalidated by each commit. The
+ * subscription behind it ends with the component's scope. Unlike the React
+ * hook, it takes no equality function.
+ */
 export function useWizardSelector<T>(selector: (snapshot: Snapshot) => T): ComputedRef<T> {
   const snapshot = useWizardSnapshot();
   return computed(() => selector(snapshot.value));
 }
 
+/**
+ * What {@link useNavigation} returns: the wizard's four moves, and the three
+ * flags a row of navigation buttons is drawn from, as computed refs.
+ */
 export interface Navigation {
+  /** The wizard's `next`: moves forward, validating the step being left unless given `{ validate: false }`. */
   next: Wizard['next'];
+  /** The wizard's `back`: moves to the previous step. Backward moves are never validated. */
   back: Wizard['back'];
+  /** The wizard's `go`: jumps to a step by id, or to `END`. */
   go: Wizard['go'];
+  /** The wizard's `cancel`: aborts the navigation in flight, if any. */
   cancel: Wizard['cancel'];
+  /** Whether `back()` has a step to go to. */
   canBack: ComputedRef<boolean>;
+  /** True while a navigation is in flight, including a step's load. */
   isBusy: ComputedRef<boolean>;
+  /** Whether `next()` from the current step finishes the wizard. */
   isLast: ComputedRef<boolean>;
 }
 
+/**
+ * The navigation controls: the wizard's `next`, `back`, `go` and `cancel`,
+ * with `canBack`, `isBusy` and `isLast` as computed refs over the snapshot.
+ * The subscription behind them ends with the component's scope.
+ */
 export function useNavigation(): Navigation {
   const wizard = useWizard();
   const snapshot = useWizardSnapshot();

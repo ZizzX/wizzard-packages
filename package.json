@@ -12,6 +12,7 @@
     "examples:embed": "node scripts/embed-examples.mjs",
     "examples:check": "node scripts/embed-examples.mjs --check",
     "links:check": "node scripts/check-links.mjs",
+    "api-docs:check": "node scripts/check-api-docs.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "verify": "pnpm lint && pnpm type-check && pnpm test:run",

@@ -47,6 +47,7 @@ export interface LayoutInfo {
   active: readonly [number, number] | null;
 }
 
+/** Props for {@link FlowGraphView}. Only `graph` and `view` are required. */
 export interface FlowGraphViewProps {
   graph: FlowGraph;
   /** Default: the built-in layered layout. */
@@ -58,6 +59,10 @@ export interface FlowGraphViewProps {
   takenEdge?: TakenEdge | null;
   /** The inspected node; drawn with a ring, independent of `activeStep`. */
   selected?: string | null;
+  /**
+   * Called with a node's id when an unselected node is clicked or the arrow
+   * keys move to it, and with `null` on Escape.
+   */
   onSelect?: (id: string | null) => void;
   /** Enter, or a click on an already selected node. */
   onInspect?: (id: string) => void;
@@ -226,6 +231,12 @@ function Edge({ edge, taken }: { edge: PositionedEdge; taken: boolean }): ReactN
   );
 }
 
+/**
+ * Draws a `FlowGraph` as SVG, or as a table when `view.table` is set, with the
+ * highlights its props name: the active step, the visited ones, the edge taken
+ * and the selected node. It keeps no state of its own - pan and zoom come in
+ * through `view` - so it can be used outside the panel.
+ */
 export function FlowGraphView({
   graph,
   layout,

@@ -1,9 +1,9 @@
 # Root typedoc devDependencies are load-bearing
 
-`typedoc` and `typedoc-plugin-markdown` sit in the ROOT `package.json` devDependencies and look
-dead: nothing at the root runs typedoc since `docs:api` and the root `typedoc.json` were deleted
-with 0.x, and `site/package.json` declares both itself. Removing them from the root breaks
-`pnpm -F @wizzard-packages/site build`:
+`typedoc` and `typedoc-plugin-markdown` sit in the ROOT `package.json` devDependencies. Since
+T-062 `scripts/check-api-docs.mjs` imports root `typedoc` directly, but the plugin still looks
+dead: nothing at the root loads it, and `site/package.json` declares both itself. Removing either
+from the root breaks `pnpm -F @wizzard-packages/site build`:
 
 ```
 [error] The plugin typedoc-plugin-markdown could not be loaded

@@ -25,6 +25,10 @@ export interface OutcomeError {
   stack?: string;
 }
 
+/**
+ * One navigation attempt that ended: the move asked for, whether a call or
+ * `start()` asked for it, and the result it resolved to or the error it threw.
+ */
 export interface Outcome {
   id: number;
   intent: NavIntent;
@@ -36,12 +40,17 @@ export interface Outcome {
   error?: OutcomeError;
 }
 
+/** A navigation attempt that has started and not yet ended. */
 export interface Pending {
   id: number;
   intent: NavIntent;
   source: 'call' | 'start';
 }
 
+/**
+ * The plugin {@link devtools} returns: an engine plugin whose read-only
+ * properties are what it has observed, and `subscribe` to hear when they change.
+ */
 export interface DevtoolsPlugin extends Hooks {
   readonly name: 'devtools';
   /** Ended attempts, oldest first, at most `outcomes` of them. */
@@ -54,20 +63,35 @@ export interface DevtoolsPlugin extends Hooks {
   readonly lastRev: number;
   /** Set when a hook body or a subscriber threw; the panel shows it. */
   readonly failure: OutcomeError | null;
-  /** Fires on every outcome, pending change, attachment change and failure. */
+  /** Fires on every outcome, pending change and attachment change, and when a hook body throws. */
   subscribe(listener: () => void): () => void;
 }
 
+/** Options for {@link devtools}. */
 export interface DevtoolsOptions {
   /** How many ended attempts to keep. Default 500. */
   outcomes?: number;
 }
 
+/**
+ * A thrown value as an {@link OutcomeError}: an `Error` keeps its name, message
+ * and stack; anything else becomes `{ name: 'Error', message: String(value) }`.
+ */
 export const toOutcomeError = (value: unknown): OutcomeError =>
   value instanceof Error
     ? { name: value.name, message: value.message, ...(value.stack && { stack: value.stack }) }
     : { name: 'Error', message: String(value) };
 
+/**
+ * Creates the devtools plugin. Install it in the wizard's `plugins` and pass
+ * the same object to `WizardDevtools` or `recordSession`.
+ *
+ * It records every navigation attempt as it starts and ends, including the
+ * refusals that never commit, and keeps the last `outcomes` of them (500 by
+ * default). It only observes: it has no `beforeNavigate`, writes no state, and
+ * an error inside one of its hooks or subscribers is kept in `failure` rather
+ * than thrown.
+ */
 export function devtools(options: DevtoolsOptions = {}): DevtoolsPlugin {
   const cap = Math.max(1, options.outcomes ?? 500);
   const listeners = new Set<() => void>();

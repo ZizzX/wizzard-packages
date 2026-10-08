@@ -6,8 +6,8 @@ import type { WizardState } from '@wizzard-packages/core';
  * field of the state by value. `rev` and `nav` are left out because they move
  * on every commit and say nothing.
  *
- * Paths use the `getPath` syntax (`data.items[2].name`), so a row can be pasted
- * into `wizard.get()`.
+ * Paths are dotted keys with bracketed indexes (`data.items[2].name`); a
+ * `data` row's path without its leading `data.` is what `wizard.get()` takes.
  */
 export interface Change {
   path: string;
@@ -42,6 +42,13 @@ const BY_VALUE = [
   'busy',
 ] as const;
 
+/**
+ * What changed between two states, as {@link Change} rows: `data` and `ctx`
+ * path by path, every other field but `rev` and `nav` by value. At most `cap`
+ * rows (200 by default) are listed, followed by one that counts the rest. Past
+ * a depth limit, and once a budget of compared values is spent, a value that
+ * differs is listed as one row without descending into it.
+ */
 export function diffState(previous: WizardState, next: WizardState, cap = 200): Change[] {
   const changes: Change[] = [];
   let total = 0;

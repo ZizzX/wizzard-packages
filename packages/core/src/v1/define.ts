@@ -19,14 +19,28 @@ export interface Slice<T> {
   readonly [SLICE]?: T;
 }
 
+/**
+ * Returns the flow it is given, unchanged, typed so that a wizard created from
+ * it knows the flow's step ids and the data type each `step<T>()` declared:
+ * `go` then accepts only those ids, and `get` and `set` know each slice.
+ * Nothing is checked at run time; `validateFlow` does that.
+ */
 export function defineFlow<const F extends FlowDefinition>(flow: F): F {
   return flow;
 }
 
+/**
+ * Declares an atom step whose slice of `data` has type `T`. Returns the
+ * definition unchanged; `T` exists only for the compiler.
+ */
 export function step<T = unknown>(def: AtomStep = {}): AtomStep & Slice<T> {
   return def;
 }
 
+/**
+ * Declares a group step whose slice of `data` has type `T`. Returns the
+ * definition unchanged; `T` exists only for the compiler.
+ */
 export function group<T = unknown>(def: GroupStep): GroupStep & Slice<T> {
   return def;
 }

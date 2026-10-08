@@ -32,11 +32,17 @@ export interface Positioned {
   ghost?: boolean;
 }
 
+/** A graph edge with the route it is drawn along. */
 export interface PositionedEdge extends GraphEdge {
   /** A polyline in user units, from the source's border to the target's. */
   points: readonly (readonly [number, number])[];
 }
 
+/**
+ * What a layout returns: every node with its box, every edge with its route,
+ * and the size of the whole drawing, in user units. A custom `layout` passed
+ * to the panel returns the same shape.
+ */
 export interface PositionedGraph {
   nodes: readonly Positioned[];
   edges: readonly PositionedEdge[];
@@ -44,8 +50,14 @@ export interface PositionedGraph {
   height: number;
 }
 
+/**
+ * Options for `layoutGraph`. The result is memoised on the graph object only
+ * when neither gap is given.
+ */
 export interface LayoutOptions {
+  /** Horizontal space between boxes, in user units. Default 48. */
   gapX?: number;
+  /** Vertical space between boxes, in user units. Default 32. */
   gapY?: number;
   /**
    * Which way the layers run. `column` (the default) stacks them downward;
@@ -56,10 +68,12 @@ export interface LayoutOptions {
   direction?: Direction;
 }
 
+/** Which way the layers run: `column` top to bottom, `row` left to right. */
 export type Direction = 'column' | 'row';
 
 /** User units; the SVG uses a viewBox, so the host scales them by CSS. */
 export const NODE_W = 160;
+/** Height of a step's box, in user units; `NODE_W` is its width. */
 export const NODE_H = 40;
 /** A repeat group draws a second rect behind the first. */
 export const REPEAT_H = 48;

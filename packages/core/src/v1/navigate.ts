@@ -50,6 +50,14 @@ type Refused = {
 
 type Moved = { ok: true; from: string | null; to: string | typeof END };
 
+/**
+ * What a move resolves to. Landed: `ok: true`, with the step it left (`null`
+ * when there was none) and the step it reached, or `END`. Refused: `ok: false`
+ * with a `reason` and the `code` and `url` built from it, plus the plugin,
+ * guard or step that refused as `by` and the field errors as `errors` when
+ * there are any. A refusal resolves; the promise rejects only when something the
+ * move called threw, such as a resolver or a plugin's `beforeNavigate`.
+ */
 export type NavResult =
   | Moved
   | (Refused & {
@@ -59,21 +67,39 @@ export type NavResult =
       url: string;
     });
 
+/**
+ * The move asked for: `next`, `back`, or `go` to a step id. `force` on a `go`
+ * skips the flow's navigation policy.
+ */
 export type NavIntent =
   | { type: 'next' }
   | { type: 'back' }
   | { type: 'go'; to: string; force?: boolean };
 
 /**
+ * The options `runNav` takes beside the intent. `validate: false` skips
+ * validation of the step being left.
+ *
  * `stay` is `start()` entering a restored step again, in place: the step is
  * current already, so only its `load` and enter guard run. It is not left, so
  * no plugin hook, exit guard or `when` sees a move, and nothing is recorded -
  * no history, nothing completed, no data cleared.
+ *
+ * @internal
  */
 export type NavOptions = { validate?: boolean; stay?: boolean };
 
 /** What a plugin may answer from beforeNavigate. */
 export type NavDecision = void | false | { block: string } | { redirect: string };
+
+/**
+ * Where an attempt is: `start` when it begins, then `end` with the result it
+ * resolved to, or `error` with what it threw.
+ */
+export type AttemptPhase =
+  | { phase: 'start' }
+  | { phase: 'end'; result: NavResult }
+  | { phase: 'error'; error: unknown };
 
 /**
  * One navigation attempt as `onAttempt` reports it: once when it starts and
@@ -85,11 +111,6 @@ export type NavDecision = void | false | { block: string } | { redirect: string 
  * so a log can tell it from a call the application made. `rev` is the state's
  * revision at the moment of the event.
  */
-export type AttemptPhase =
-  | { phase: 'start' }
-  | { phase: 'end'; result: NavResult }
-  | { phase: 'error'; error: unknown };
-
 export type Attempt = {
   id: number;
   intent: NavIntent;
@@ -97,6 +118,11 @@ export type Attempt = {
   rev: number;
 } & AttemptPhase;
 
+/**
+ * A plugin: a `name` and whichever hooks it implements, every one optional.
+ * Plugins are passed to `createWizard` and called in the order given. One whose
+ * `init`, `onCommit` or `onAttempt` throws is disabled and named in the console.
+ */
 export interface Hooks {
   name: string;
   /**
@@ -117,11 +143,28 @@ export interface Hooks {
    * throwing disables the plugin rather than failing the write.
    */
   onCommit?: (state: WizardState, previous: WizardState) => void;
+  /**
+   * Runs before a move, and may refuse or redirect it. Answer `false` to refuse
+   * it as `blocked` by this plugin's `name`, `{ block }` to refuse it as
+   * `blocked` by that string, or `{ redirect }` to make it a `go` to that step
+   * instead; answer nothing to let it through. A redirect still needs the
+   * step's `when` to hold, but the flow's `policy` is checked against it only
+   * when the original move was a `go` without `force`. `to` is the target of a
+   * `go`, and `null` for `next` and `back`, whose target is not resolved yet.
+   *
+   * Awaited, plugin after plugin. A throw rejects the move.
+   */
   beforeNavigate?: (e: {
     from: string | null;
     to: string | typeof END | null;
     state: WizardState;
   }) => NavDecision | Promise<NavDecision>;
+  /**
+   * Runs once a move has committed, with the step it reached or `END`. Never
+   * for a refused move, nor for `start()` entering a restored step again in
+   * place. The move stands whatever this does: a throw is logged, and the
+   * plugin stays enabled.
+   */
   afterNavigate?: (e: { from: string | null; to: string | typeof END; state: WizardState }) => void;
   /**
    * Every attempt to move, whether or not it commits. A refused `next()` never
@@ -142,12 +185,20 @@ export interface Hooks {
 
 /** What a plugin is handed at `init`. Deliberately small: read, and write once. */
 export interface PluginHost {
+  /** The wizard's current state. */
   getState: () => WizardState;
+  /** The flow the wizard runs, with whatever `patchFlow` merged into it. */
   getFlow: () => FlowDefinition;
   /** Replaces state through the one commit path, exactly as the engine does. */
   commit: (patch: Partial<WizardState>) => void;
 }
 
+/**
+ * The store's side of a move: where the pipeline reads state and the one
+ * place it writes it.
+ *
+ * @internal
+ */
 export interface NavHost {
   read: () => WizardState;
   /** The single setter owned by the store. Notifies listeners exactly once. */
@@ -201,6 +252,12 @@ export interface Traversal {
     | null;
 }
 
+/**
+ * Everything a move reads that is not state: the flow, the resolvers, the
+ * plugins and the options the wizard was created with.
+ *
+ * @internal
+ */
 export interface NavContext {
   flow: FlowDefinition;
   registry?: AsyncRegistry;
@@ -282,6 +339,14 @@ function rewind(
 const superseded: Refused = { ok: false, reason: 'superseded' };
 const aborted: Refused = { ok: false, reason: 'aborted' };
 
+/**
+ * One move, start to finish: the plugin hooks, validation of the step being
+ * left, the exit guard, the target, loading, the enter guard, and one commit
+ * of the result. A refusal comes back with its code and the page that
+ * explains it.
+ *
+ * @internal
+ */
 export async function runNav(
   ctx: NavContext,
   host: NavHost,

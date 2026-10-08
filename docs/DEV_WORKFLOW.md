@@ -48,7 +48,8 @@ The documentation site is deployed from `main` on every merge.
 - `static`: `pnpm lint`, `pnpm format:check` and `pnpm examples:check` (the README and docs
   page snippets match the files they are generated from)
 - `packaging`: `pnpm build`, then `pnpm links:check` (no link points at a file or a site page
-  that is not there, the generated API reference included), `pnpm publint`, `pnpm attw` and
+  that is not there, the generated API reference included), `pnpm api-docs:check` (every
+  export the API reference shows has a TSDoc comment), `pnpm publint`, `pnpm attw` and
   `pnpm size` — packaging and bundle budgets
 - `build-test`, on Node 20 and 22: `pnpm type-check`, `pnpm build` and `pnpm test:coverage`,
   whose coverage thresholds are enforced. The site's type-check and build sit out the Node 20

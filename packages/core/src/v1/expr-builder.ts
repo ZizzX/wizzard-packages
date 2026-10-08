@@ -26,22 +26,33 @@ export type Path = 'data' | 'ctx' | 'loop' | `data.${string}` | `ctx.${string}` 
 
 type Pair = readonly [Expr, Expr];
 
+/** `$get`: the value at a path under `data`, `ctx` or `loop`, or `undefined` past a missing key. */
 export const get = (path: Path): { $get: string } => ({ $get: path });
 
 /** Names a resolver in the registry. `args` is omitted, not `undefined`, so the JSON round-trips. */
 export const ref = (name: string, args?: Json): { $ref: string; args?: Json } =>
   args === undefined ? { $ref: name } : { $ref: name, args };
 
+/** `$not`: `true` when the operand is falsy. */
 export const not = (e: Expr): { $not: Expr } => ({ $not: e });
+/** `$and`: `true` when every operand is truthy, stopping at the first falsy one. `[]` is `true`. */
 export const and = (...e: readonly Expr[]): { $and: readonly Expr[] } => ({ $and: e });
+/** `$or`: `true` when any operand is truthy, stopping at the first truthy one. `[]` is `false`. */
 export const or = (...e: readonly Expr[]): { $or: readonly Expr[] } => ({ $or: e });
+/** `$empty`: `true` for `null`, `undefined`, `''`, `NaN`, `[]` and an object with no keys. */
 export const empty = (e: Expr): { $empty: Expr } => ({ $empty: e });
 
+/** `$eq`: strict equality, `===`, so `1` and `'1'` differ. */
 export const eq = (a: Expr, b: Expr): { $eq: Pair } => ({ $eq: [a, b] });
+/** `$ne`: strict inequality, `!==`. */
 export const ne = (a: Expr, b: Expr): { $ne: Pair } => ({ $ne: [a, b] });
+/** `$gt`: the first operand is greater than the second, as JavaScript's `>` compares them. */
 export const gt = (a: Expr, b: Expr): { $gt: Pair } => ({ $gt: [a, b] });
+/** `$gte`: the first operand is greater than or equal to the second, as `>=` compares them. */
 export const gte = (a: Expr, b: Expr): { $gte: Pair } => ({ $gte: [a, b] });
+/** `$lt`: the first operand is less than the second, as `<` compares them. */
 export const lt = (a: Expr, b: Expr): { $lt: Pair } => ({ $lt: [a, b] });
+/** `$lte`: the first operand is less than or equal to the second, as `<=` compares them. */
 export const lte = (a: Expr, b: Expr): { $lte: Pair } => ({ $lte: [a, b] });
 
 /** `$in`: the needle first, then the array or string to look in. Named for the reserved word. */

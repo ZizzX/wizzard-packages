@@ -16,6 +16,10 @@ const parse = (path: string): string[] =>
         .filter(Boolean)
     : path.split('.').filter(Boolean);
 
+/**
+ * Reads the value at a dot path, `undefined` when any key on the way is missing.
+ * `a.0.b` and `a[0].b` name the same value; an empty path is the source itself.
+ */
 export function getPath(source: unknown, path: string): unknown {
   if (!path) return source;
   let cur = source;

@@ -16,8 +16,18 @@ export interface Frame {
   key?: string;
 }
 
+/**
+ * Where a wizard is in its life: `init` until the first move starts and again
+ * after `reset`, `busy` while a move runs, `idle` between moves, and `done`
+ * once a move reached `END`.
+ */
 export type WizardStatus = 'init' | 'idle' | 'busy' | 'done';
 
+/**
+ * Everything a running wizard knows, as plain JSON. It is never mutated: each
+ * change commits a new object with `rev` one higher, which `getState()`
+ * returns. Derived values are not here; they are in {@link Derived}.
+ */
 export interface WizardState {
   status: WizardStatus;
   /** Last element is the current step; earlier elements are enclosing groups. */
@@ -27,10 +37,15 @@ export interface WizardState {
   history: readonly (readonly Frame[])[];
   data: Readonly<Record<string, unknown>>;
   ctx: Readonly<Record<string, unknown>>;
+  /** Field errors by step id, from validation or `setErrors`. */
   errors: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  /** Every atom step entered, once each. A group is not listed, only the steps inside it. */
   visited: readonly string[];
+  /** Atom steps left by `next()` or `go()`, the move that finished the flow included. */
   completed: readonly string[];
+  /** The data paths written with `set`. */
   dirty: readonly string[];
+  /** Steps whose `load`, or deferred body, is being loaded right now. */
   busy: readonly string[];
   /** Incremented on every commit. The memoization key for every selector. */
   rev: number;
@@ -38,6 +53,11 @@ export interface WizardState {
   nav: number;
 }
 
+/**
+ * The state a wizard starts in, before `start()` enters the first step.
+ *
+ * @internal
+ */
 export const initialState = (
   data: Record<string, unknown> = {},
   ctx: Record<string, unknown> = {}

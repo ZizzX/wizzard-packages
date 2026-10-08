@@ -12,14 +12,17 @@ export interface StandardSchemaV1<Output = unknown> {
   readonly '~standard': {
     readonly version: 1;
     readonly vendor: string;
+    /** Checks a value against the schema, returning the result or a promise of it. */
     readonly validate: (value: unknown) => StandardResult<Output> | Promise<StandardResult<Output>>;
   };
 }
 
+/** What `validate` returns: the parsed `value`, or the `issues` that rejected the input. */
 export type StandardResult<Output> =
   | { readonly value: Output; readonly issues?: undefined }
   | { readonly issues: readonly StandardIssue[] };
 
+/** One problem a schema reported: its message and the path to the value it is about. */
 export interface StandardIssue {
   readonly message: string;
   /** Absent or empty for an error about the value as a whole. */

@@ -64,12 +64,28 @@ const OPTION_KEYS: Record<keyof WizardOptions, 0> = {
   subFlows: 0,
 };
 
+/**
+ * Props for {@link WizardProvider}: the `createWizard` options, all optional
+ * here, or `wizard` for an engine built elsewhere. Passing `wizard` together
+ * with any option throws `provider-wizard-and-options`.
+ */
 export interface WizardProviderProps extends Partial<WizardOptions> {
   /** An existing engine. Supply this or `flow`, not both. */
   wizard?: Wizard;
   children?: ReactNode;
 }
 
+/**
+ * Makes a wizard available to `useWizard` and the other hooks in the tree
+ * below it.
+ *
+ * Given options, it creates the engine on first render and keeps it - changing
+ * the options afterwards does not rebuild it - and destroys it on unmount.
+ * Given `wizard`, it provides that engine and leaves its lifetime to the
+ * caller. Either way it calls `start()` from a layout effect, which never runs
+ * during a server render, and a `start()` that rejects is logged with
+ * `console.error` rather than thrown.
+ */
 export function WizardProvider({ wizard, children, ...options }: WizardProviderProps): ReactNode {
   // A passed engine was built with its own options, so any given here would be
   // silently ignored. Thrown in every build, like `provider-missing`: a check
@@ -217,16 +233,35 @@ export function useWizardSnapshot(): Snapshot {
   return useSyncExternalStore(wizard.subscribe, wizard.getSnapshot, wizard.getSnapshot);
 }
 
+/**
+ * What {@link useNavigation} returns: the wizard's four moves, and the three
+ * flags a row of navigation buttons is drawn from.
+ */
 export interface Navigation {
+  /** The wizard's `next`: moves forward, validating the step being left unless given `{ validate: false }`. */
   next: Wizard['next'];
+  /** The wizard's `back`: moves to the previous step. Backward moves are never validated. */
   back: Wizard['back'];
+  /** The wizard's `go`: jumps to a step by id, or to `END`. */
   go: Wizard['go'];
+  /** The wizard's `cancel`: aborts the navigation in flight, if any. */
   cancel: Wizard['cancel'];
+  /** Whether `back()` has a step to go to. */
   canBack: boolean;
+  /** True while a navigation is in flight, including a step's load. */
   isBusy: boolean;
+  /** Whether `next()` from the current step finishes the wizard. */
   isLast: boolean;
 }
 
+/**
+ * The navigation controls: the wizard's `next`, `back`, `go` and `cancel`,
+ * with `canBack`, `isBusy` and `isLast` read from the snapshot.
+ *
+ * Each flag is its own subscription, so the component re-renders when one of
+ * the three changes rather than on every commit. The functions are the
+ * wizard's own and keep their identity across renders.
+ */
 export function useNavigation(): Navigation {
   const wizard = useWizard();
   // Three selectors rather than one packed value: each returns a primitive, so
