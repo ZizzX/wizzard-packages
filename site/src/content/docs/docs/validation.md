@@ -72,7 +72,7 @@ steps: {
 ```
 
 The engine runs it before leaving the step. If it refuses, `next()` returns
-`{ ok: false, reason: 'invalid', errors }` and the flow stays where it is.
+`{ ok: false, reason: 'invalid', by, errors }` and the flow stays where it is.
 
 You can also run it directly, and set messages yourself:
 
@@ -103,21 +103,53 @@ because Zod 3.24+, Zod 4, Valibot, ArkType, Effect and Yup 1.5+ all speak
 pnpm add @wizzard-packages/validate@canary
 ```
 
+<!-- example:validate -->
+
+<!-- prettier-ignore -->
 ```ts
-import { createWizard } from '@wizzard-packages/core/v1';
+import { createWizard } from '@wizzard-packages/core';
 import { schema } from '@wizzard-packages/validate';
 import { z } from 'zod';
 
 const wizard = createWizard({
-  flow: booking,
+  flow: {
+    id: 'booking',
+    order: ['trip', 'payment'],
+    steps: { trip: { validate: { $ref: 'tripRules' } }, payment: {} },
+  },
   registry: {
     tripRules: schema(z.object({ name: z.string().min(1), age: z.number().min(18) })),
   },
 });
 
 await wizard.start(); // the first move, which validates nothing: no step has been left yet
-await wizard.next(); // { ok: false, reason: 'invalid', errors: { name: '...', age: '...' } }
+wizard.set('age', 16);
+console.log(await wizard.next());
 ```
+
+<!-- /example -->
+
+With Zod 4 it prints the refusal: `by` names the step whose validator said no, `errors`
+holds one message per field, and `code` and `url` name the page that explains it:
+
+<!-- example:validate-output -->
+
+<!-- prettier-ignore -->
+```txt
+{
+  ok: false,
+  reason: 'invalid',
+  by: 'trip',
+  errors: {
+    name: 'Invalid input: expected string, received undefined',
+    age: 'Too small: expected number to be >=18'
+  },
+  code: 'nav-invalid',
+  url: 'https://zizzx.github.io/wizzard-packages/errors/nav-invalid'
+}
+```
+
+<!-- /example -->
 
 Swapping the Zod schema for a Valibot, ArkType, Effect or Yup one changes nothing else. The
 package never bundles a schema library; the one you use is yours.

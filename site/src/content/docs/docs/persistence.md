@@ -119,14 +119,34 @@ The two functions are the contract. `@wizzard-packages/plugins/persist` is the w
 applications want instead: it reads on start, writes on every commit, coalesces those writes to
 one per frame, and flushes what is pending when the page hides or the wizard is destroyed.
 
+<!-- example:persist -->
+
+<!-- prettier-ignore -->
 ```ts
+import { createWizard } from '@wizzard-packages/core';
 import { persist } from '@wizzard-packages/plugins/persist';
 
-createWizard({
-  flow: signup,
-  plugins: [persist({ key: 'signup', version: APP_VERSION, onRestore })],
+export const wizard = createWizard({
+  flow: {
+    id: 'signup',
+    order: ['name', 'plan'],
+    steps: { name: {}, plan: {} },
+  },
+  plugins: [
+    persist({
+      key: 'signup',
+      // sessionStorage for anything that should not outlive the tab. This
+      // stores whatever the flow collects, so that choice is yours to make.
+      storage: globalThis.sessionStorage,
+      onRestore: (outcome) => {
+        if (!outcome.restored) console.info('starting fresh:', outcome.reason);
+      },
+    }),
+  ],
 });
 ```
+
+<!-- /example -->
 
 | Option      | What it does                                                                                                                                                                                 |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

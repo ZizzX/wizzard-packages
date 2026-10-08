@@ -16,12 +16,19 @@ pnpm add @wizzard-packages/core@canary @wizzard-packages/plugins@canary
 
 Keeps a wizard across a reload.
 
+<!-- example:persist -->
+
+<!-- prettier-ignore -->
 ```ts
 import { createWizard } from '@wizzard-packages/core';
 import { persist } from '@wizzard-packages/plugins/persist';
 
-const wizard = createWizard({
-  flow: signup,
+export const wizard = createWizard({
+  flow: {
+    id: 'signup',
+    order: ['name', 'plan'],
+    steps: { name: {}, plan: {} },
+  },
   plugins: [
     persist({
       key: 'signup',
@@ -35,6 +42,8 @@ const wizard = createWizard({
   ],
 });
 ```
+
+<!-- /example -->
 
 What is read back is validated before it is installed: a snapshot from another flow, from an
 older version of it, or naming a step that no longer exists is refused with a reason. The
