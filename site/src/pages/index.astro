@@ -1,12 +1,15 @@
 ---
 import installReact from '@examples/quickstart/install/react.sh?raw';
 
+import { Code } from 'astro:components';
+
 import Page from '../layouts/Page.astro';
-import HeroFlow from '../components/HeroFlow';
+import Theater from '../components/Theater';
 import { FlowRow } from '../components/FlowRow';
 import { buildGraph } from '@wizzard-packages/core/graph';
 
 import { recordWalk, walkBeats } from '../lib/walk';
+import trip from '../theater/trip.flow.ts?raw';
 import {
   flowA,
   flowB,
@@ -31,22 +34,51 @@ const description =
 
 <Page title={title} description={description}>
         <section class="hero">
+          {/* Before the first paint, so the theater's final frame never flashes
+              before the scenario writes it. Not with reduced motion: the final
+              frame is the theater then. If the island has not taken the class
+              four seconds after load, the final frame shows without it. */}
+          <script is:inline>
+            if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+              const root = document.documentElement;
+              root.classList.add('theater-pending');
+              addEventListener('load', () => {
+                setTimeout(() => root.classList.remove('theater-pending'), 4000);
+              });
+            }
+          </script>
+
           <h1>Headless multi-step flows for React and Vue &mdash; <em>the flow is JSON</em>.</h1>
           <p class="lede">
             Order, conditions and validation live in a definition you can read, diff and ship.
-            The graph beside this form is that definition, running.
+            Below, one is written and then run on the engine: the form is a visitor filling it in,
+            the console is what each call returned, and the graph is the definition. Press
+            anything in the form and it is yours from there.
           </p>
 
-          <p class="lede">
-            Change the payer type and the route changes: <code>Company</code> exists only
-            while <code>payer</code> is <code>business</code>.
-          </p>
-
-          <HeroFlow client:load />
+          <Theater client:load>
+            <Code
+              code={trip.trimEnd()}
+              lang="ts"
+              themes={{ light: 'github-light-default', dark: 'github-dark-default' }}
+              defaultColor={false}
+              wrap
+              transformers={[
+                {
+                  // The typing is hidden from screen readers, which read the
+                  // whole file from a hidden copy; a focus stop inside it
+                  // would lead a keyboard to something nobody can hear.
+                  pre(node) {
+                    delete node.properties.tabindex;
+                  },
+                },
+              ]}
+            />
+          </Theater>
 
           <div class="actions">
             <a class="button button-primary" href={`${base}/docs/start/`}>Get started</a>
-            <a class="button button-secondary" href={`${base}/docs/start/#the-flow`}>Explore this flow</a>
+            <a class="button button-secondary" href={`${base}/docs/flow/`}>How a flow is defined</a>
             <span class="install">
               <span class="tag">install</span>
               <span>{installReact.trim()}</span>

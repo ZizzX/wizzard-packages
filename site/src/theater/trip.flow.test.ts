@@ -31,4 +31,19 @@ describe('the trip flow', () => {
     await wizard.start();
     expect(wizard.getSnapshot().active).toEqual(['route', 'payment']);
   });
+
+  // The Route form's travellers field goes down to none, after the flow started.
+  it('takes the group off the route when the list is emptied on Route', async () => {
+    const wizard = createWizard({
+      flow: trip,
+      groups,
+      subFlows,
+      registry,
+      data: { passengers: [{ id: 'p1' }] },
+    });
+    await wizard.start();
+    wizard.set('passengers', []);
+    expect(wizard.getSnapshot().active).toEqual(['route', 'payment']);
+    expect(await wizard.next()).toMatchObject({ ok: true, to: 'payment' });
+  });
 });
