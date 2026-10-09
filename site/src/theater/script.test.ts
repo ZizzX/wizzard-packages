@@ -8,6 +8,8 @@ import { buildGraph } from '@wizzard-packages/core/graph';
 import { groups } from '@wizzard-packages/core/groups';
 import { describe, expect, it } from 'vitest';
 
+import { SCOUT_MS } from '../lib/walk';
+
 import {
   flowUpTo,
   initialData,
@@ -109,9 +111,17 @@ describe('Act 2, on a bare engine', () => {
     ]);
   });
 
-  it('takes about fourteen seconds', () => {
-    expect(ms(act2)).toBeGreaterThanOrEqual(12000);
-    expect(ms(act2)).toBeLessThanOrEqual(16000);
+  // A press puts the graph back on the engine, so the press that leaves the
+  // route has to come after the scout Business set off (D-030).
+  it('leaves the route only once the scout has shown Company joining it', () => {
+    const ticked = act2.findIndex((cue) => cue.act.kind === 'set' && cue.act.path === 'business');
+    const leaves = act2.findIndex((cue, index) => index > ticked && cue.act.kind === 'next');
+    expect(ms(act2.slice(ticked + 1, leaves + 1))).toBeGreaterThanOrEqual(SCOUT_MS);
+  });
+
+  it('takes about sixteen seconds', () => {
+    expect(ms(act2)).toBeGreaterThanOrEqual(14000);
+    expect(ms(act2)).toBeLessThanOrEqual(18000);
   });
 });
 

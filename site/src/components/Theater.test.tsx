@@ -6,6 +6,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { SCOUT_MS } from '../lib/walk';
 import { lineOf, lines, scenario } from '../theater/script';
 
 import Theater from './Theater';
@@ -107,6 +108,52 @@ describe('the hero theater', () => {
     expect(consoleText()).toContain("next() -> { ok: true, to: 'payment' }");
   });
 
+  it('scouts the route when the data moves a step across it, and Next puts the engine back', async () => {
+    render(<Theater>{code}</Theater>);
+    await wait(0);
+    const graph = (): SVGSVGElement | null => document.querySelector('.theater-graph svg');
+    expect(graph()?.classList.contains('scout')).toBe(false);
+
+    fireEvent.click(screen.getByLabelText('Business trip'));
+    await wait(0);
+    expect(graph()?.classList.contains('scout')).toBe(true);
+    expect(document.querySelector('.node.probed.heals .walk-eval')?.textContent).toBe(
+      'true == true'
+    );
+
+    // A second change is a second scout, over the route the first one left.
+    fireEvent.click(screen.getByLabelText('Business trip'));
+    await wait(0);
+    expect(document.querySelector('.node.probed:not(.heals) .walk-eval')?.textContent).toBe(
+      'false != true'
+    );
+
+    // One traveller or two: nothing changes sides, so the scout playing is left
+    // to play, not started over.
+    const playing = document.querySelector('.walk-eval');
+    fireEvent.change(screen.getByLabelText('Travellers'), { target: { value: '2' } });
+    await wait(0);
+    expect(document.querySelector('.walk-eval')).toBe(playing);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await wait(0);
+    expect(graph()?.classList.contains('scout')).toBe(false);
+    expect(document.querySelector('.comet, .walk-eval, .ring')).toBeNull();
+  });
+
+  it('scouts Company joining the route at the second beat, and holds the press for it', async () => {
+    await playing();
+    const ticked = scenario.findIndex(
+      (cue) => cue.act.kind === 'set' && cue.act.path === 'business'
+    );
+    await wait(until(ticked));
+    expect(document.querySelector('.node.probed.heals .walk-eval')?.textContent).toBe(
+      'true == true'
+    );
+    await wait(SCOUT_MS - 1);
+    expect(document.querySelector('.theater-graph svg')?.classList.contains('scout')).toBe(true);
+  });
+
   it('books the trip, and offers it back', async () => {
     await playing();
     await wait(until(scenario.length - 1));
@@ -118,6 +165,8 @@ describe('the hero theater', () => {
     await wait(0);
     expect((screen.getByLabelText('From') as HTMLInputElement).value).toBe('');
     expect(consoleText()).not.toContain('next()');
+    // A restart takes Company off the route, and that is not a change to scout.
+    expect(document.querySelector('.theater-graph svg')?.classList.contains('scout')).toBe(false);
 
     await wait(until(scenario.length - 1));
     expect(screen.queryByText('Booked')).toBeNull();

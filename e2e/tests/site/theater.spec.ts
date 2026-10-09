@@ -4,7 +4,7 @@ import { expect, test, type Page } from '@playwright/test';
  * The homepage theater (docs/designs/hero-theater.md), against the production
  * build. The scenario is a real wizard being driven, so these read what a
  * visitor reads - the console, the form, the field's error - and the timeouts
- * are the scenario's length: about twenty seconds from load to the end.
+ * are the scenario's length: about twenty-two seconds from load to the end.
  */
 
 const PLAY = { timeout: 30_000 };
@@ -15,6 +15,15 @@ const stop = (page: Page) => page.getByRole('button', { name: 'Stop' });
 const unwritten = (page: Page) => page.locator('.theater-source .line.unwritten');
 const inert = (page: Page) =>
   page.locator('.theater-form form').evaluate((form) => form.hasAttribute('inert'));
+
+/** The CSS animations playing in the theater's graph right now, by keyframes name. */
+const playing = (page: Page) =>
+  page.locator('.theater-graph svg').evaluate((svg) =>
+    svg
+      .getAnimations({ subtree: true })
+      .filter((animation) => animation.playState === 'running')
+      .map((animation) => (animation as CSSAnimation).animationName)
+  );
 
 const notWider = async (page: Page) => {
   const [scroll, client] = await page.evaluate(() => [
@@ -51,6 +60,23 @@ for (const [width, height] of [
       await expect(terminal(page)).toContainText("next() -> { ok: true, to: '@end' }");
       await expect(stop(page)).toHaveCount(0);
       await notWider(page);
+    });
+
+    test('scouts Company joining the route at the second beat, and the press ends it', async ({
+      page,
+    }) => {
+      await page.goto('');
+      const graph = page.locator('.theater-graph svg');
+      await expect(graph).toHaveClass(/\bscout\b/, PLAY);
+      await expect(graph.locator('.node.probed.heals .walk-eval')).toHaveText('true == true');
+      await expect.poll(() => playing(page)).toContain('scout-heal');
+      expect(await playing(page)).toContain('walk-comet');
+      await notWider(page);
+
+      // The press that leaves the route waits for the scout, then ends it.
+      await expect(terminal(page)).toContainText("next() -> { ok: true, to: 'details' }", PLAY);
+      await expect(graph).not.toHaveClass(/\bscout\b/);
+      await expect(graph.locator('.comet, .walk-eval, .ring')).toHaveCount(0);
     });
 
     test('stops on a press in a field, and leaves the form live from that beat', async ({
@@ -118,6 +144,18 @@ test.describe('the hero theater without the scenario', () => {
     await page.waitForTimeout(1500);
     await expect(page.getByLabel('From')).toHaveValue('');
     await expect(terminal(page)).toHaveText('Calls made on the form, and what they return.');
+  });
+
+  test('scouts nothing under reduced motion: the route changes, and that is all', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('');
+    await expect(page.locator('astro-island[ssr]')).toHaveCount(0);
+    await page.getByLabel('Business trip').check();
+    await expect(theater(page).locator('svg')).toHaveClass(/\bscout\b/);
+    await expect(theater(page).locator('.node.skipped')).toHaveCount(0);
+    expect(await playing(page)).toEqual([]);
   });
 
   test('shows the final frame by itself when the island never arrives', async ({ page }) => {

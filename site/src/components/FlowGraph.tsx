@@ -13,7 +13,7 @@
 import { layoutGraph, type Direction } from '@wizzard-packages/devtools/headless';
 
 import { asText, printExpr } from '../lib/print-expr';
-import { polylineLength, type Beat, type Walk } from '../lib/walk';
+import { polylineLength, SCOUT_MS, type Beat, type Scout, type Walk } from '../lib/walk';
 
 import type { Breadcrumb } from '@wizzard-packages/core';
 import type { FlowGraph as Graph, GraphNode } from '@wizzard-packages/core/graph';
@@ -95,11 +95,6 @@ export interface FlowGraphProps {
   /** What the mirror table is a table of. */
   label: string;
   /**
-   * Changing this remounts the edges, which restarts their draw animation.
-   * The hero's Rebuild control is the only caller that needs it.
-   */
-  drawKey?: number;
-  /**
    * The node being read about, drawn with a ring. Independent of which node the
    * flow is standing on: inspecting a step is not navigating to it.
    */
@@ -117,6 +112,17 @@ export interface FlowGraphProps {
    * markup is exactly the picture or the instrument above.
    */
   walk?: Walk;
+  /**
+   * The hero's scout over a route that just changed (`lib/walk.ts`). Like the
+   * walk, it adds decorations and beats and leaves the drawing as the engine's
+   * frame; its beats are shares of `SCOUT_MS` on the page clock.
+   */
+  scout?: Scout | null;
+  /**
+   * Changing this starts the scout over: its decorations remount, and CSS plays
+   * them from the beginning. The graph itself is kept, so nothing is redrawn.
+   */
+  scoutKey?: number;
 }
 
 export function FlowGraph({
@@ -125,10 +131,11 @@ export function FlowGraph({
   view,
   direction = 'row',
   label,
-  drawKey = 0,
   selected = null,
   onSelect,
   walk,
+  scout = null,
+  scoutKey = 0,
 }: FlowGraphProps): ReactNode {
   const laid = layoutGraph(graph, { direction });
   const nodeById = new Map<string, GraphNode>(graph.nodes.map((node) => [node.id, node]));
@@ -181,8 +188,9 @@ export function FlowGraph({
 
   // A row draws one graph per direction and shows one (`FlowRow`), so the id
   // carries the direction: a `url(#id)` resolves to the first element with
-  // that id, and the first would be the drawing that is not displayed.
-  const blur = `walk-blur-${direction}`;
+  // that id, and the first would be the drawing that is not displayed. The
+  // hero's scout and row A's walk share a page, so it carries which one too.
+  const blur = `${scout !== null ? 'scout' : 'walk'}-blur-${direction}`;
 
   /** A beat as the pair of custom properties the stylesheet maps onto the timeline. */
   const at = (name: string, beat: Beat): Record<string, string> => ({
@@ -192,11 +200,20 @@ export function FlowGraph({
 
   /** A dash running the whole edge, with a blurred copy under it for the glow. */
   const comet = (points: string, length: number): ReactNode => (
-    <g className="comet" aria-hidden="true" style={{ '--len': length.toFixed(1) } as CSSProperties}>
+    <g
+      key={`comet-${scoutKey}`}
+      className="comet"
+      aria-hidden="true"
+      style={{ '--len': length.toFixed(1) } as CSSProperties}
+    >
       <polyline className="comet-halo" points={points} filter={`url(#${blur})`} />
       <polyline className="comet-core" points={points} />
     </g>
   );
+
+  const classes = [interactive && 'interactive', walk && 'walk', scout && 'scout']
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <>
@@ -205,11 +222,11 @@ export function FlowGraph({
           ? {
               tabIndex: 0,
               onKeyDown,
-              className: 'interactive',
               ...(selected === null ? {} : { 'aria-activedescendant': `node-${selected}` }),
             }
           : {})}
-        {...(walk !== undefined && { className: interactive ? 'interactive walk' : 'walk' })}
+        {...(classes !== '' && { className: classes })}
+        {...(scout !== null && { style: { '--scout-ms': `${SCOUT_MS}ms` } as CSSProperties })}
         // Two units of bleed on every side: an edge routed along the graph's own
         // border loses the outer half of its stroke to the viewBox otherwise,
         // and reads as orphaned dashes.
@@ -224,7 +241,7 @@ export function FlowGraph({
             : `Flow graph of ${label}. The same information is in the table below.`
         }
       >
-        {walk !== undefined && (
+        {(walk !== undefined || scout !== null) && (
           <defs>
             <filter id={blur} x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur stdDeviation="4" />
@@ -235,29 +252,40 @@ export function FlowGraph({
         {laid.edges.map((edge, index) => {
           const points = edge.points.map(([x, y]) => `${x},${y}`).join(' ');
           const forward = edge.kind !== 'back';
-          const run = forward ? walk?.runs[`${edge.from}->${edge.to}`] : undefined;
-          const probed = forward ? walk?.dropped[edge.to] : undefined;
-          const probe = probed !== undefined && probed.from === edge.from ? probed : undefined;
-          const plays =
-            run !== undefined ? at('r', run) : probe !== undefined ? at('p', probe.beat) : null;
+          // A graph carries a walk or a scout, never both, so each is read once.
+          const run = forward
+            ? (walk?.runs[`${edge.from}->${edge.to}`] ?? scout?.runs[`${edge.from}->${edge.to}`])
+            : undefined;
+          const probed = forward ? (walk?.dropped[edge.to] ?? scout?.probes[edge.to]) : undefined;
+          // The comet probes a step that breaks; a step that heals is run into.
+          const heals = scout?.probes[edge.to]?.heals === true;
+          const probe =
+            probed !== undefined && probed.from === edge.from && !heals ? probed : undefined;
+          const flips =
+            scout !== null && edgeLive(edge, scout.before, endId) !== edgeLive(edge, active, endId);
+          const plays = {
+            ...(run !== undefined && at('r', run)),
+            ...(probe !== undefined && at('p', probe.beat)),
+            ...(flips && at('x', scout.flip)),
+          };
           return (
             <g
               // The index is in the key because a repeated target in `on.next` is
               // legal input: `from`, `to` and `kind` alone collide, and React
               // answers a duplicate key by dropping siblings and warning per clash.
-              key={`${edge.from}-${edge.to}-${edge.kind}-${index}-${drawKey}`}
-              className={`edge ${edge.kind} ${edgeLive(edge, active, endId) ? 'live' : 'dim'}${run !== undefined ? ' run' : ''}${probe !== undefined ? ' probe' : ''}`}
-              {...(plays !== null && { style: plays as CSSProperties })}
+              key={`${edge.from}-${edge.to}-${edge.kind}-${index}`}
+              className={`edge ${edge.kind} ${edgeLive(edge, active, endId) ? 'live' : 'dim'}${run !== undefined ? ' run' : ''}${probe !== undefined ? ' probe' : ''}${flips ? ' flip' : ''}`}
+              {...(Object.keys(plays).length > 0 && { style: plays as CSSProperties })}
             >
               <polyline
                 points={points}
                 pathLength={100}
                 {...(walk !== undefined && { className: 'base' })}
               />
-              {run !== undefined && (
+              {walk !== undefined && run !== undefined && (
                 <polyline className="hot" points={points} pathLength={100} aria-hidden="true" />
               )}
-              {plays !== null && comet(points, polylineLength(edge.points))}
+              {(run ?? probe) !== undefined && comet(points, polylineLength(edge.points))}
             </g>
           );
         })}
@@ -284,14 +312,18 @@ export function FlowGraph({
               : {};
           const ring = selected === placed.id ? ' selected' : '';
           const walked = walk?.steps[placed.id];
-          const dropped = walk?.dropped[placed.id];
-          const role = walked !== undefined ? ' walked' : dropped !== undefined ? ' dropped' : '';
-          const plays =
-            walked !== undefined
-              ? { ...at('on', walked.on), ...at('off', walked.off) }
-              : dropped !== undefined
-                ? at('p', dropped.beat)
-                : null;
+          const glow = scout?.glows[placed.id];
+          const probed = walk?.dropped[placed.id] ?? scout?.probes[placed.id];
+          const heals = scout?.probes[placed.id]?.heals === true;
+          const role =
+            walk !== undefined
+              ? `${walked !== undefined ? ' walked' : ''}${probed !== undefined ? ' dropped' : ''}`
+              : `${glow !== undefined ? ' glows' : ''}${probed !== undefined ? ' probed' : ''}${heals ? ' heals' : ''}`;
+          const plays = {
+            ...(walked !== undefined && { ...at('on', walked.on), ...at('off', walked.off) }),
+            ...(glow !== undefined && at('l', glow)),
+            ...(probed !== undefined && at('p', probed.beat)),
+          };
 
           if (kind === 'end') {
             // The circle sits where the edge arrives: the box's left middle when
@@ -307,9 +339,17 @@ export function FlowGraph({
                 {...(walk !== undefined && {
                   style: { ...at('f', walk.finish), ...at('g', walk.ring) } as CSSProperties,
                 })}
+                {...(scout !== null && { style: at('g', scout.ring) as CSSProperties })}
               >
-                {walk !== undefined && (
-                  <circle className="ring" cx={cx} cy={cy} r="11" aria-hidden="true" />
+                {(walk !== undefined || scout !== null) && (
+                  <circle
+                    key={`ring-${scoutKey}`}
+                    className="ring"
+                    cx={cx}
+                    cy={cy}
+                    r="11"
+                    aria-hidden="true"
+                  />
                 )}
                 <circle cx={cx} cy={cy} r="11" />
               </g>
@@ -324,7 +364,7 @@ export function FlowGraph({
               key={`${index}:${asText(placed.id)}`}
               className={`node ${kind} ${state}${ring}${role}`}
               {...pick}
-              {...(plays !== null && { style: plays as CSSProperties })}
+              {...(Object.keys(plays).length > 0 && { style: plays as CSSProperties })}
             >
               {kind === 'group' && (
                 <rect
@@ -336,8 +376,12 @@ export function FlowGraph({
                   rx="4"
                 />
               )}
-              {walked !== undefined && (
+              {(walked !== undefined || glow !== undefined) && (
                 <rect
+                  // Each decoration has its own name in the key: a halo and a
+                  // condition share a node, and one key on two siblings leaves
+                  // a halo behind when the scout is gone.
+                  key={`halo-${scoutKey}`}
                   className="halo"
                   x={placed.x}
                   y={placed.y}
@@ -358,14 +402,15 @@ export function FlowGraph({
                   <title>{when.full}</title>
                 </text>
               )}
-              {dropped !== undefined && dropped.reason !== null && (
+              {probed !== undefined && probed.reason !== null && (
                 <text
+                  key={`eval-${scoutKey}`}
                   className="walk-eval"
                   x={placed.x + 12}
                   y={placed.y + placed.h / 2 + 12}
                   aria-hidden="true"
                 >
-                  {dropped.reason}
+                  {probed.reason}
                 </text>
               )}
             </g>

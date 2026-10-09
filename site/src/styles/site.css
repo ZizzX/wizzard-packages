@@ -899,8 +899,9 @@ body {
 }
 
 /* `.edge polyline` gives every polyline in an edge the page-load draw, the
-   comet's too; at rest the comet is hidden and plays nothing. */
-.walk .comet > polyline {
+   comet's too; at rest the comet is hidden and plays nothing. The hero's scout
+   wears the same decorations, so they rest the same way. */
+:is(.walk, .scout) .comet > polyline {
   animation-name: none;
   fill: none;
   stroke: var(--st-active);
@@ -909,28 +910,28 @@ body {
   opacity: 0;
 }
 
-.walk .comet > .comet-halo {
+:is(.walk, .scout) .comet > .comet-halo {
   stroke-width: 6;
 }
 
-.walk .comet > .comet-core {
+:is(.walk, .scout) .comet > .comet-core {
   stroke-width: 2.5;
 }
 
-.walk .node > rect.halo {
+:is(.walk, .scout) .node > rect.halo {
   fill: none;
   stroke: var(--accent);
   stroke-width: 6;
   opacity: 0;
 }
 
-.walk .node > text.walk-eval {
+:is(.walk, .scout) .node > text.walk-eval {
   fill: var(--fg);
   font-size: 9px;
   opacity: 0;
 }
 
-.walk .node.end > circle.ring {
+:is(.walk, .scout) .node.end > circle.ring {
   fill: none;
   stroke: var(--st-active);
   stroke-width: 2;
@@ -1247,6 +1248,160 @@ body {
       animation-name: walk-ring;
       animation-range: var(--ring);
     }
+  }
+}
+
+/* The hero's scout (docs/designs/hero-theater.md, The scout). Like the walk,
+   the markup is the engine's frame and this only says where each piece starts;
+   unlike it, the clock is the page's: a beat's pair of shares becomes a delay
+   and a duration out of `--scout-ms`. It never touches the edges' own
+   polylines, whose page-load draw would play again the moment the scout left;
+   an edge that flipped between live and dim changes on its group's opacity. */
+.scout {
+  overflow: visible;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .scout .edge.run .comet > polyline {
+    animation: walk-comet calc((var(--r1) - var(--r0)) * var(--scout-ms)) linear
+      calc(var(--r0) * var(--scout-ms)) both;
+  }
+
+  .scout .edge.probe .comet > polyline {
+    animation: walk-probe calc((var(--p1) - var(--p0)) * var(--scout-ms)) linear
+      calc(var(--p0) * var(--scout-ms)) both;
+  }
+
+  .scout .edge.flip {
+    animation: scout-lit calc((var(--x1) - var(--x0)) * var(--scout-ms)) var(--ease-out)
+      calc(var(--x0) * var(--scout-ms)) both;
+  }
+
+  .scout .edge.flip.dim {
+    animation-name: scout-unlit;
+  }
+
+  .scout .node.glows > rect.halo {
+    animation: scout-glow calc((var(--l1) - var(--l0)) * var(--scout-ms)) var(--ease-spring)
+      calc(var(--l0) * var(--scout-ms)) both;
+  }
+
+  /* A group's inner outline keeps its own colour; only the box breaks or heals. */
+  .scout .node.probed > rect:not(.halo, .inner),
+  .scout .node.probed > text {
+    animation-duration: calc((var(--p1) - var(--p0)) * var(--scout-ms));
+    animation-delay: calc(var(--p0) * var(--scout-ms));
+    animation-timing-function: var(--ease-out);
+    animation-fill-mode: both;
+  }
+
+  .scout .node.probed > rect:not(.halo, .inner) {
+    animation-name: walk-break;
+  }
+
+  .scout .node.probed > text:not([class]) {
+    animation-name: walk-label;
+  }
+
+  .scout .node.probed > text.node-when {
+    animation-name: walk-when;
+  }
+
+  .scout .node.probed.heals > rect:not(.halo, .inner) {
+    animation-name: scout-heal;
+  }
+
+  .scout .node.probed.heals > text:not([class]) {
+    animation-name: scout-label;
+  }
+
+  .scout .node.probed.heals > text.node-when {
+    animation-name: scout-when;
+  }
+
+  .scout .node.probed > text.walk-eval {
+    animation-name: walk-eval;
+  }
+
+  .scout .node.end > circle.ring {
+    animation: walk-ring calc((var(--g1) - var(--g0)) * var(--scout-ms)) var(--ease-out)
+      calc(var(--g0) * var(--scout-ms)) both;
+  }
+}
+
+@keyframes scout-lit {
+  0%,
+  55% {
+    opacity: var(--opacity-dim);
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes scout-unlit {
+  0%,
+  55% {
+    opacity: 1;
+  }
+  100% {
+    opacity: var(--opacity-dim);
+  }
+}
+
+@keyframes scout-glow {
+  0% {
+    opacity: 0;
+    stroke-width: 0;
+  }
+  35% {
+    opacity: 0.55;
+    stroke-width: 6;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* `walk-break` the other way round, held the same: the condition is read first. */
+@keyframes scout-heal {
+  0%,
+  55% {
+    stroke: var(--st-skipped);
+    stroke-dasharray: 4 4;
+    opacity: var(--opacity-muted);
+  }
+  100% {
+    stroke: var(--line-strong);
+    stroke-dasharray: 4 0;
+    opacity: 1;
+  }
+}
+
+@keyframes scout-label {
+  0%,
+  55% {
+    fill: var(--st-skipped);
+  }
+  100% {
+    fill: var(--fg);
+  }
+}
+
+@keyframes scout-when {
+  0%,
+  15% {
+    opacity: 1;
+    fill: var(--st-skipped);
+  }
+  25%,
+  75% {
+    opacity: 0;
+  }
+  90%,
+  100% {
+    opacity: 1;
+    fill: var(--fg-muted);
   }
 }
 

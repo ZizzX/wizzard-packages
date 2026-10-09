@@ -14,6 +14,8 @@
  * wrong line on the homepage; like `lib/walk.ts`, that error only ever meets
  * whoever edits the homepage, so it has no `[wizzard]` prefix and no errors page.
  */
+import { SCOUT_MS } from '../lib/walk';
+
 import { trip } from './trip.flow';
 import source from './trip.flow.ts?raw';
 
@@ -133,8 +135,9 @@ const act2: readonly Cue[] = [
   ),
   // A business trip: Company's condition holds, and Company joins the route.
   ...beat(BEAT_MS, lit(control('business', true, true), "eq(get('data.business'), true)")),
-  // Into the passenger group, on the first of the two.
-  ...beat(BEAT_MS, lit(press(), 'repeat: {')),
+  // Into the passenger group, on the first of the two - once the scout has shown
+  // Company joining the route: a press puts the graph back on the engine.
+  ...beat(SCOUT_MS, lit(press(), 'repeat: {')),
   // The first passenger has a passport, and passes.
   ...beat(
     BEAT_MS,

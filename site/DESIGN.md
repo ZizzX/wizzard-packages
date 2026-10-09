@@ -386,7 +386,7 @@ Six motions exist. Anything else is a bug.
 | scrubber        | the replay handle moves and the graph follows  | 120ms linear                            | no transition, position set directly |
 | page transition | one documentation page becomes the next        | 220ms cross-fade, View Transitions      | no transition                        |
 | route walk      | feature row A walks its route as it scrolls in | scroll-driven; the scroll is the clock  | the end frame, drawn at rest         |
-| hero theater    | the definition is written, then the form run   | about 6s writing, 14s running, once     | the final frame, the form live       |
+| hero theater    | the definition is written, then the form run   | about 6s writing, 16s running, once     | the final frame, the form live       |
 
 Four of the six are shipped: the step transition, the graph rebuild with the edge draw
 inside it, the route walk and the hero theater. The scrubber's motion and the page transition are specified
@@ -402,13 +402,18 @@ The site has two authored moments, both on the homepage (D-028): the hero theate
 first screen and on the clock, and the route walk, below the fold and on scroll.
 
 The hero theater plays once per load. The definition is typed a line at a time over about six
-seconds while the graph grows by a step at the line that defines it; then, over about fourteen,
+seconds while the graph grows by a step at the line that defines it; then, over about sixteen,
 a visitor fills the form - a route, a business trip that brings Company onto the route, two
 passengers, the second refused for a missing passport, and the booking. Every move is a call to
 the real engine, and the console prints what it answered. A keystroke is 50ms, a control 400ms,
 a press 500ms, and 800ms of stillness opens each beat so one reads as done before the next
-begins. A press or a key in the form, or Stop, hands the visitor the form where it stands. It
-never loops, and the scenario never moves focus. Under reduced motion it does not play: the page shows its
+begins. When the data moves a step across the route - the business trip in the scenario, or the
+visitor's own box or travellers later - the graph plays a scout over 2.6 seconds: a comet runs
+the route from the step the form stands on, the step that moved shows its condition with the data
+in it and heals or breaks, each step it reaches glows, and the end sends one ring without
+filling; any move puts the graph back on the engine at once (D-030). A press or a key in the
+form, or Stop, hands the visitor the form where it stands.
+It never loops, and the scenario never moves focus. Under reduced motion it does not play: the page shows its
 final frame, the whole file and the whole graph, with the form live on Route. How it is built is
 in [`docs/designs/hero-theater.md`](../docs/designs/hero-theater.md).
 

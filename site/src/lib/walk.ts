@@ -1,12 +1,14 @@
 /**
- * The route walk: the homepage's one authored motion (site/DESIGN.md, Motion;
- * docs/designs/home-route-walk.md).
+ * The route walk and the hero's scout: the homepage's two authored motions on a
+ * graph (site/DESIGN.md, Motion; docs/designs/home-route-walk.md and
+ * docs/designs/hero-theater.md).
  *
- * The engine writes it and the stylesheet performs it. `recordWalk` runs a real
- * wizard from `start()` to its end and keeps a view of every position.
+ * The engine writes them and the stylesheet performs them. `recordWalk` runs a
+ * real wizard from `start()` to its end and keeps a view of every position.
  * `walkBeats` turns those positions into beats - shares of the walk from 0 to 1 -
- * which `FlowGraph` hands to CSS as custom properties. Nothing here knows what
- * the walk looks like, and nothing in the stylesheet knows which steps exist.
+ * and `scoutBeats` does the same for a route that just changed under the form;
+ * `FlowGraph` hands the beats to CSS as custom properties. Nothing here knows
+ * what either looks like, and nothing in the stylesheet knows which steps exist.
  *
  * The beats cover a flat route, on purpose: a group step would need beats for
  * its children, and the one walk on the site has none.
@@ -106,7 +108,7 @@ export async function recordWalk(
  * A condition with the data put in, so the reader sees why it failed:
  * `data.payer == "business"` under `payer: personal` reads
  * `"personal" != "business"`. Only a top-level `$eq` that failed is turned
- * round; anything else is printed as substituted.
+ * round; anything else is printed as substituted, and a list by its length.
  */
 export function reason(when: Expr | undefined, data: Record<string, unknown>): string | null {
   if (when === undefined) return null;
@@ -114,7 +116,13 @@ export function reason(when: Expr | undefined, data: Record<string, unknown>): s
   const fill = (expr: unknown): unknown => {
     if (Array.isArray(expr)) return expr.map(fill);
     if (expr === null || typeof expr !== 'object') return expr;
-    if ('$get' in expr) return getPath(scope, String(expr.$get)) ?? null;
+    if ('$get' in expr) {
+      const value = getPath(scope, String(expr.$get)) ?? null;
+      if (!Array.isArray(value) || value.length === 0) return value;
+      // The items do not fit in a node, and the length is what a condition on a
+      // list is usually about. Put back as a `$get`, it prints bare.
+      return { $get: `[${value.length} ${value.length === 1 ? 'item' : 'items'}]` };
+    }
     return Object.fromEntries(Object.entries(expr).map(([key, value]) => [key, fill(value)]));
   };
   const shown = fill(when);
@@ -132,6 +140,10 @@ export function polylineLength(points: readonly (readonly [number, number])[]): 
     return sum + Math.hypot(x - px, y - py);
   }, 0);
 }
+
+/** A record with every value mapped. */
+const each = <T>(record: Record<string, T>, map: (value: T) => T): Record<string, T> =>
+  Object.fromEntries(Object.entries(record).map(([key, value]) => [key, map(value)]));
 
 // Relative weights of the beats, tuned by eye against the prototype the owner chose.
 const ON = 1;
@@ -203,8 +215,6 @@ export function walkBeats(
   });
 
   const share = (beat: Beat): Beat => ({ from: beat.from / clock, to: beat.to / clock });
-  const each = <T>(record: Record<string, T>, map: (value: T) => T): Record<string, T> =>
-    Object.fromEntries(Object.entries(record).map(([key, value]) => [key, map(value)]));
 
   return {
     view: last,
@@ -212,6 +222,121 @@ export function walkBeats(
     dropped: each(dropped, (step) => ({ ...step, beat: share(step.beat) })),
     runs: each(runs, share),
     finish: share(finish),
+    ring: share(ring),
+  };
+}
+
+/** How long the hero's scout plays (D-030). Every beat of a scout is a share of it. */
+export const SCOUT_MS = 2600;
+
+export interface Scout {
+  /** The route before the change: an edge live under one and not the other flips. */
+  readonly before: readonly string[];
+  /** Each step the comet reaches, glowing for a moment. Its state does not change. */
+  readonly glows: Readonly<Record<string, Beat>>;
+  /**
+   * Each step ahead that changed sides: its probe, the route step it is probed
+   * from, its condition with the data in it, and whether it joined the route
+   * (heals) or left it (breaks).
+   */
+  readonly probes: Readonly<
+    Record<
+      string,
+      {
+        readonly beat: Beat;
+        readonly from: string;
+        readonly reason: string | null;
+        readonly heals: boolean;
+      }
+    >
+  >;
+  /** Each edge the comet runs, keyed `from->to`. */
+  readonly runs: Readonly<Record<string, Beat>>;
+  /** When the edges that changed between live and dim change: at the first probe. */
+  readonly flip: Beat;
+  /** The ring the end sends. It does not fill: the form has not got there. */
+  readonly ring: Beat;
+}
+
+// Relative weights of the scout's beats. A probe is three runs long so its
+// condition stays up long enough to read at 2.6 seconds.
+const SCOUT_RUN = 1;
+const SCOUT_PROBE = 3;
+const SCOUT_GLOW = 1.5;
+const SCOUT_RING = 1.5;
+
+/**
+ * The scout of a route that changed under the form (docs/designs/hero-theater.md,
+ * The scout): from the step the form stands on, the comet runs `after` to the
+ * end; a step that left the route is probed and breaks before the comet passes
+ * it, one that joined is probed and heals before the comet runs into it, and
+ * the end sends one ring.
+ *
+ * `null` when there is nothing to show: the form stands off the new route, or
+ * no step ahead of it changed sides.
+ */
+export function scoutBeats(
+  graph: Graph,
+  before: readonly string[],
+  after: readonly string[],
+  standing: string,
+  data: Record<string, unknown>
+): Scout | null {
+  if (!after.includes(standing)) return null;
+  const route = after.slice(after.indexOf(standing));
+  const end = graph.nodes.find((node) => node.kind === 'end')?.id ?? END;
+  const order = graph.nodes.filter((node) => node.kind !== 'end').map((node) => node.id);
+  const was = new Set(before);
+  const when = (id: string): Expr | undefined => graph.nodes.find((node) => node.id === id)?.when;
+
+  let clock = 0;
+  const span = (weight: number): Beat => {
+    const beat = { from: clock, to: clock + weight };
+    clock += weight;
+    return beat;
+  };
+
+  const glows: Record<string, Beat> = {};
+  const probes: Record<
+    string,
+    { beat: Beat; from: string; reason: string | null; heals: boolean }
+  > = {};
+  const runs: Record<string, Beat> = {};
+  let ring: Beat = { from: 0, to: 0 };
+  let first: Beat | undefined;
+
+  route.forEach((id, index) => {
+    const next = route[index + 1] ?? end;
+    const left = order
+      .slice(order.indexOf(id) + 1, next === end ? undefined : order.indexOf(next))
+      .filter((step) => was.has(step));
+    const joined = next !== end && !was.has(next) ? [next] : [];
+    for (const step of [...left, ...joined]) {
+      const heals = step === next;
+      const beat = span(SCOUT_PROBE);
+      first ??= beat;
+      probes[step] = { beat, from: id, reason: reason(when(step), data), heals };
+    }
+    const run = span(SCOUT_RUN);
+    runs[`${id}->${next}`] = run;
+    if (next === end) ring = span(SCOUT_RING);
+    else glows[next] = { from: run.to, to: run.to + SCOUT_GLOW };
+  });
+
+  // ponytail: every flipped edge changes at the first probe, and a second step
+  // leaving next to the first is probed from the route step, as on row A. Only
+  // one step ever changes sides at a time on the hero; per-step flips and
+  // probes from the step before if two ever do.
+  if (first === undefined) return null;
+
+  const share = (beat: Beat): Beat => ({ from: beat.from / clock, to: beat.to / clock });
+
+  return {
+    before,
+    glows: each(glows, share),
+    probes: each(probes, (step) => ({ ...step, beat: share(step.beat) })),
+    runs: each(runs, share),
+    flip: share(first),
     ring: share(ring),
   };
 }

@@ -34,6 +34,7 @@ import {
   type ReactNode,
 } from 'react';
 
+import { scoutBeats, type Scout } from '../lib/walk';
 import {
   answer,
   flowUpTo,
@@ -170,6 +171,25 @@ function Stage({ code }: { code: ReactNode }): ReactNode {
   const { active, view } = tripView(flow, snapshot);
   const live = !player.playing;
 
+  // The scout (docs/designs/hero-theater.md, The scout): when the data moves a
+  // step across the route and the form stays where it is, the graph shows why.
+  // Anything else that changes what it draws - a move, a restart, a line of
+  // Act 1 - puts it back on the engine at once.
+  const [seen, setSeen] = useState({ flow, active, standing: view.standing });
+  const [scout, setScout] = useState<{ beats: Scout; take: number } | null>(null);
+  if (
+    seen.flow !== flow ||
+    seen.standing !== view.standing ||
+    seen.active.join() !== active.join()
+  ) {
+    setSeen({ flow, active, standing: view.standing });
+    const beats =
+      seen.flow === flow && seen.standing === view.standing && view.standing !== null
+        ? scoutBeats(graph, seen.active, active, view.standing, snapshot.data)
+        : null;
+    setScout(beats === null ? null : { beats, take: (scout?.take ?? 0) + 1 });
+  }
+
   return (
     <div className="theater">
       <section className="theater-code" aria-label="trip.flow.ts">
@@ -231,7 +251,7 @@ function Stage({ code }: { code: ReactNode }): ReactNode {
             answers for is on it. */}
         <div
           className="theater-console"
-          // Silent while the scenario plays: ten announcements in fourteen
+          // Silent while the scenario plays: ten announcements in sixteen
           // seconds would drown the page. The visitor's own calls are news.
           {...(live && { role: 'log', 'aria-label': 'Console' })}
         >
@@ -246,7 +266,15 @@ function Stage({ code }: { code: ReactNode }): ReactNode {
           {/* Down, at every width: across, the trip is 996 units wide, and the
               column beside the code would draw it at half size. */}
           <div className="frame">
-            <FlowGraph graph={graph} active={active} view={view} direction="column" label="trip" />
+            <FlowGraph
+              graph={graph}
+              active={active}
+              view={view}
+              direction="column"
+              label="trip"
+              scout={scout?.beats ?? null}
+              scoutKey={scout?.take ?? 0}
+            />
           </div>
         </figure>
       </div>

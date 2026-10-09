@@ -1,6 +1,6 @@
 # Homepage hero theater
 
-Status: accepted 2026-10-09, tasks T-097 and T-099, decision D-028.
+Status: accepted 2026-10-09, tasks T-097, T-099 and T-100, decisions D-028 and D-030.
 
 The homepage hero stops being the `signup` instrument and becomes a theater: the code a developer
 writes on the left, and on the right the form a visitor would see and the graph of the flow
@@ -92,7 +92,7 @@ The form pane shows the `route` form through Act 1, inert and dimmed: there is n
 until the definition is written. Taking over during Act 1 finishes the text at once and hands the
 visitor the live form on `route`.
 
-### Act 2 - running, about 14 seconds
+### Act 2 - running, about 16 seconds
 
 | Beat | Form                                                  | Console, and the line lit in the code                                       | Graph                                       |
 | ---- | ----------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------- |
@@ -109,11 +109,28 @@ Entering the group lands on the passenger's step, and `next()` names that step: 
 `people`. The table is pinned by `site/src/theater/script.test.ts`, which plays the scenario on a
 bare engine and compares the console line by line.
 
-The scout on the graph (beat 2) is the model agreed for T-097 before it grew: a comet runs the
-route from the step the form stands on, a step that changes sides is probed with its condition
-filled in - `true == true`, `"personal" != "business"` - and breaks or heals, and the end sends
-one ring without filling. Its last frame is always the engine's frame. It lands in its own task,
-after the theater; until then the graph pane draws the engine's state with no choreography.
+### The scout
+
+The scout on the graph (beat 2) is the model agreed for T-097 before it grew, carried over to the
+trip (D-030). It plays whenever the data moves a step across the route while the form stays
+where it is: in the scenario at beat 2, and live when the visitor ticks or unticks "Business
+trip", or takes the travellers to zero or back. Act 1 does not end with one: the graph growing
+is the introduction.
+
+A comet runs the route from the step the form stands on to the end. Each step it reaches glows
+for a moment and keeps its state. A step that changed sides is probed with its condition filled
+in: one that left the route is approached and dropped - `false != true`, and the branch breaks,
+as on row A - and one that joined it shows `true == true`, heals, and the comet runs into it. A
+list in a condition is printed by its length, `!empty([2 items])`, since the items themselves do
+not fit in a node. The edges that changed between live and dim change at the probe of the step
+that moved them. The end sends one ring and does not fill, because the form has not got there.
+
+The scout takes 2.6 seconds, and its beats are shares of that, worked out by `scoutBeats` in
+`site/src/lib/walk.ts` from the route before and after the change, and played by CSS as delays
+and durations on the page clock. The markup is the engine's frame, and the scout only says
+where each piece starts, so its last frame is the engine's frame and with reduced motion there
+is nothing to play. Next, Back and either restart put the graph back on the engine at once;
+beat 3 waits for the scout so the scenario does not cut it off.
 
 ### The end, and taking over
 
@@ -199,7 +216,7 @@ final frame shows; an island that hydrates after that finds no class and does no
 - The scenario never moves focus.
 - The typing is `aria-hidden`. A visually hidden `<pre>` carries the whole definition for a
   screen reader.
-- The console is silent during the scenario - ten announcements in fourteen seconds would drown
+- The console is silent during the scenario - ten announcements in sixteen seconds would drown
   the page - and becomes `role="log"` once the visitor has the form.
 - With reduced motion there is no scenario: the final frame, the form live on `route`.
 
