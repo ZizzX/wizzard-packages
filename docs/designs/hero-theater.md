@@ -26,6 +26,16 @@ A trip booking, in one file, `site/src/theater/trip.flow.ts`. It is the file the
 the text the code pane types; nothing is written twice.
 
 ```ts
+import {
+  defineFlow,
+  getPath,
+  group,
+  step,
+  type AsyncRegistry,
+  type SubFlows,
+} from '@wizzard-packages/core';
+import { empty, eq, get, not, ref } from '@wizzard-packages/core/expr';
+
 const passenger = defineFlow({
   id: 'passenger',
   order: ['details'],
@@ -34,24 +44,35 @@ const passenger = defineFlow({
 
 export const trip = defineFlow({
   id: 'trip',
+  version: 1,
   order: ['route', 'people', 'company', 'payment'],
   steps: {
     route: step({ label: 'Route' }),
     people: group({
       label: 'Passengers',
       flow: 'passenger',
+      when: not(empty(get('data.passengers'))),
       repeat: { over: get('data.passengers'), keyBy: 'id' },
     }),
     company: step({ label: 'Company', when: eq(get('data.business'), true) }),
     payment: step({ label: 'Payment' }),
   },
 });
+
+export const subFlows: SubFlows = { passenger };
+
+export const registry: AsyncRegistry = {
+  passport: (_args, { data, loop }) =>
+    getPath(data, `answers.${loop?.key}.passport`) ? null : { passport: 'required' },
+};
 ```
 
 The `passport` validator reads the current passenger's answers through `loop.key`, the way the
-R-C reference app addresses an item's data. Whether the group also needs
-`when: not(empty(get('data.passengers')))` to be valid with an empty list is settled against
-`validateFlow` when the file is written; the line is added if the engine asks for it.
+R-C reference app addresses an item's data: the engine leaves an item's data to the host, and the
+host keeps it under `answers.<key>`. `validateFlow` asks two things of a flow with a repeat group,
+and the file has both: a `when` on the group, so an empty list takes it off the route instead of
+leaving an empty section on it, and a `version` on the flow, because a snapshot taken inside the
+group stores an item key.
 
 ### Act 1 - writing, about 6 seconds
 
@@ -70,13 +91,17 @@ visitor the live form on `route`.
 | Beat | Form                                                  | Console, and the line lit in the code                                       | Graph                                       |
 | ---- | ----------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------- |
 | 1    | Route: "Almaty -> Tbilisi" typed, travellers set to 2 | -                                                                           | standing on `route`                         |
-| 2    | "Business trip" ticked                                | `data.business = true`; `company`'s `when` lit                              | scout: `true == true`, `company` heals      |
-| 3    | Next                                                  | `next() -> { ok: true, to: 'people' }`                                      | `people` active                             |
-| 4    | Passenger 1: "Ada Lovelace", passport typed, Next     | `repeat` lit; `next() -> { ok: true }`                                      | the group shows two items, the first walked |
+| 2    | "Business trip" ticked                                | `set('business', true)`; `company`'s `when` lit                             | scout: `true == true`, `company` heals      |
+| 3    | Next                                                  | `repeat` lit; `next() -> { ok: true, to: 'details' }`                       | `people` active                             |
+| 4    | Passenger 1: "Ada Lovelace", passport typed, Next     | `next() -> { ok: true, to: 'details' }`                                     | the group shows two items, the first walked |
 | 5    | Passenger 2: "Alan Turing", passport left empty, Next | `next() -> { ok: false, errors: { passport: 'required' } }`; `validate` lit | the node is refused                         |
-| 6    | The error under the field; passport typed, Next       | `next() -> { ok: true }`                                                    | on to `company`                             |
+| 6    | The error under the field; passport typed, Next       | `next() -> { ok: true, to: 'company' }`                                     | on to `company`                             |
 | 7    | Company: "Analytical Engines" typed, Next             | `next() -> { ok: true, to: 'payment' }`                                     | `payment` active                            |
 | 8    | Payment: Book                                         | `next() -> { ok: true, to: '@end' }`                                        | the end fills, one ring                     |
+
+Entering the group lands on the passenger's step, and `next()` names that step: `details`, not
+`people`. The table is pinned by `site/src/theater/script.test.ts`, which plays the scenario on a
+bare engine and compares the console line by line.
 
 The scout on the graph (beat 2) is the model agreed for T-097 before it grew: a comet runs the
 route from the step the form stands on, a step that changes sides is probed with its condition
