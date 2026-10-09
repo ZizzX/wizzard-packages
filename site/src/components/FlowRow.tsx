@@ -5,7 +5,9 @@
  * Rendered with no client directive, so a row costs no JavaScript. It is still
  * not an illustration: `createWizard` walks the fixture to the moment the claim
  * is about, and the picture is whatever that walk produced. If the engine's
- * behaviour changed, the row would change with it.
+ * behaviour changed, the row would change with it. A row can also be handed a
+ * `walk`, which the page records from the engine at build time: the row then
+ * draws where the walk ends, and plays the walk as it scrolls into view.
  */
 import {
   createWizard,
@@ -18,6 +20,7 @@ import { groups } from '@wizzard-packages/core/groups';
 
 import { FlowGraph, type GraphView } from './FlowGraph';
 
+import type { Walk } from '../lib/walk';
 import type { ReactNode } from 'react';
 
 export interface FlowRowProps {
@@ -29,6 +32,11 @@ export interface FlowRowProps {
   subFlows?: SubFlows;
   /** The line under the graph, naming what the picture is a picture of. */
   note: string;
+  /**
+   * The route walk, recorded by the engine at build time. The row then draws
+   * where the walk ends, and the graph plays the walk as the row scrolls in.
+   */
+  walk?: Walk;
 }
 
 /**
@@ -39,7 +47,7 @@ export interface FlowRowProps {
  * store computes without navigating. That is enough for a resting picture -
  * which steps are reachable, and where the flow would begin.
  */
-function walk(
+function resting(
   flow: FlowDefinition,
   data: Record<string, unknown>,
   registry?: AsyncRegistry,
@@ -75,9 +83,10 @@ export function FlowRow({
   registry,
   subFlows,
   note,
+  walk,
 }: FlowRowProps): ReactNode {
   const graph = buildGraph(flow, subFlows);
-  const { active, view } = walk(flow, data, registry, subFlows);
+  const { active, view } = resting(flow, data, registry, subFlows);
 
   return (
     <article className="flow-row">
@@ -87,7 +96,14 @@ export function FlowRow({
       </div>
       <figure className="flow-row-graph">
         <div className="frame">
-          <FlowGraph graph={graph} active={active} view={view} direction="row" label={flow.id} />
+          <FlowGraph
+            graph={graph}
+            active={active}
+            view={walk?.view ?? view}
+            direction="row"
+            label={flow.id}
+            {...(walk !== undefined && { walk })}
+          />
         </div>
         <figcaption>{note}</figcaption>
       </figure>

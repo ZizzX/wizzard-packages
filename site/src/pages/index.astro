@@ -4,9 +4,26 @@ import installReact from '@examples/quickstart/install/react.sh?raw';
 import Page from '../layouts/Page.astro';
 import HeroFlow from '../components/HeroFlow';
 import { FlowRow } from '../components/FlowRow';
-import { flowA, flowB, flowC, subFlowsC, dataC, registryB } from '../../../contract/fixtures';
+import { buildGraph } from '@wizzard-packages/core/graph';
+
+import { recordWalk, walkBeats } from '../lib/walk';
+import {
+  flowA,
+  flowB,
+  flowC,
+  subFlowsC,
+  dataC,
+  registryA,
+  registryB,
+} from '../../../contract/fixtures';
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+
+// The first row walks its route as it scrolls into view. The engine records the
+// walk here, at build time, so the row's data has to carry the flow to its end:
+// the payer the row is about, and the email Details' validator asks for.
+const dataA = { payer: 'personal', email: 'ada@example.com' };
+const walkA = walkBeats(await recordWalk(flowA, dataA, registryA), buildGraph(flowA), dataA);
 const title = 'wizzard - headless multi-step flows for React and Vue';
 const description =
   'Order, conditions and validation live in a flow definition you can read, diff and ship. React and Vue bindings over one headless engine.';
@@ -41,7 +58,9 @@ const description =
           <FlowRow
             heading="Change your answer. Keep the right data."
             flow={flowA}
-            data={{ payer: 'personal' }}
+            data={dataA}
+            registry={registryA}
+            walk={walkA}
             note="signup with payer = personal. Company is dashed: its `when` is false, so it is not on the route and the data it would collect is not submitted."
           >
             <p>

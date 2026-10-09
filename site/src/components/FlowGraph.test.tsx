@@ -10,7 +10,8 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { flowA } from '../../../contract/fixtures';
+import { flowA, registryA } from '../../../contract/fixtures';
+import { recordWalk, walkBeats } from '../lib/walk';
 
 import { FlowGraph, restingView } from './FlowGraph';
 
@@ -158,5 +159,73 @@ describe('a flow that repeats a target', () => {
     expect(container.querySelectorAll('.edge').length).toBe(repeated.edges.length);
     expect(errors).toEqual([]);
     spy.mockRestore();
+  });
+});
+
+describe('the graph without a route walk', () => {
+  // Everything the walk adds, attribute or element. Without a walk the markup is
+  // what it was before there was one: the hero, rows B and C and the inspector
+  // all draw through here.
+  const walkMarkup =
+    'defs, [style], .base, .walked, .dropped, .run, .probe, .halo, .hot, .comet, .walk-eval, .ring';
+
+  it('carries none of it as a picture', () => {
+    const { container } = render(<Picture />);
+    expect(container.querySelector('svg')?.getAttribute('class')).toBeNull();
+    expect(container.querySelector(walkMarkup)).toBeNull();
+  });
+
+  it('carries none of it as an instrument', () => {
+    const { container } = render(<Walkable />);
+    expect(container.querySelector('svg')?.getAttribute('class')).toBe('interactive');
+    expect(container.querySelector(walkMarkup)).toBeNull();
+  });
+});
+
+describe('the graph with a route walk', () => {
+  const data = { payer: 'personal', email: 'ada@example.com' };
+
+  const Walked = async () => {
+    const walk = walkBeats(await recordWalk(flowA, data, registryA), graph, data);
+    return render(
+      <FlowGraph
+        graph={graph}
+        active={['details', 'payment']}
+        view={walk.view}
+        walk={walk}
+        label="signup"
+      />
+    );
+  };
+
+  it('adds every decoration, each hidden from assistive technology', async () => {
+    const { container } = await Walked();
+    expect(container.querySelector('svg')?.classList.contains('walk')).toBe(true);
+    // Halos on Details and Payment, a hot copy of both runs, a comet on both runs
+    // and on the probe into Company, Company's condition with the data in, one ring.
+    expect(container.querySelectorAll('.halo')).toHaveLength(2);
+    expect(container.querySelectorAll('.hot')).toHaveLength(2);
+    expect(container.querySelectorAll('.comet')).toHaveLength(3);
+    expect(container.querySelectorAll('.walk-eval')).toHaveLength(1);
+    expect(container.querySelectorAll('.ring')).toHaveLength(1);
+    for (const decoration of container.querySelectorAll('.halo, .hot, .comet, .walk-eval, .ring')) {
+      expect(decoration.getAttribute('aria-hidden')).toBe('true');
+    }
+  });
+
+  it('hands the beats to CSS on the elements that play them', async () => {
+    const { container } = await Walked();
+    const details = container.querySelector('.node.walked') as SVGGElement;
+    expect(details.style.getPropertyValue('--on0')).toBe('0.0000');
+    expect(container.querySelector('.edge.probe .comet')).not.toBeNull();
+    expect(container.querySelector('.node.dropped .walk-eval')?.textContent).toBe(
+      '"personal" != "business"'
+    );
+  });
+
+  it('tells a screen reader where the walk ends', async () => {
+    await Walked();
+    expect(screen.getByRole('row', { name: /Payment/ }).textContent).toContain('visited');
+    expect(screen.getByRole('row', { name: /Company/ }).textContent).toContain('skipped');
   });
 });
