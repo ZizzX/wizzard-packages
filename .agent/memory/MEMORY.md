@@ -44,3 +44,4 @@
 - [A watch can report green early](a-watch-can-report-green-early.md) — `--watch` exits 0 mid-run; a verify run beside e2e fails a healthy test.
 - [Root typedoc deps are load-bearing](root-typedoc-deps-are-load-bearing.md) — they look dead; removing them breaks the site build only.
 - [Two versions live in a snapshot](two-versions-in-a-snapshot.md) — `v` is the envelope's and `migrate` only moves that one; a flow `version` mismatch is `snapshot/other-flow`.
+- [Astro islands retry their import](astro-island-retries-its-import.md) — a failed chunk is re-imported 1s later with `?astro-retry=`; block it by pathname in Playwright.
