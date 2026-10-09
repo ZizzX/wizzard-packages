@@ -122,7 +122,12 @@ test.describe('the hero theater without the scenario', () => {
   });
 
   test('shows the final frame by itself when the island never arrives', async ({ page }) => {
-    await page.route('**/_astro/Theater*.js', (route) => route.abort());
+    // By path: Astro retries a failed island a second later with an
+    // `astro-retry` query, which a glob on the file name lets through.
+    await page.route(
+      (url) => url.pathname.includes('/_astro/Theater.'),
+      (route) => route.abort()
+    );
     await page.goto('');
     await expect(page.locator('html')).toHaveClass(/theater-pending/);
     await expect(page.locator('html')).not.toHaveClass(/theater-pending/, { timeout: 8_000 });
