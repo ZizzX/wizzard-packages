@@ -182,7 +182,7 @@ fill is visible at a time.** Everything else that wants the accent takes the bor
 
 The rule exists because the accent is also the colour that means "this is where the flow is
 now". A second filled control competes with the graph for the same glance, and the graph is
-what the page is for. The homepage spends its one fill on `Get started`, and the instrument's
+what the page is for. The homepage spends its one fill on `Get started`, and the theater form's
 `Next` takes the border form: an accent outline over `--accent-soft`, which outranks a neutral
 border without spending the fill twice. Its label is `--fg` rather than the accent, because
 the accent as text on that tint measures under the floor in the light theme.
@@ -377,7 +377,7 @@ Rules that make it work:
 
 ## Motion
 
-Five motions exist. Anything else is a bug.
+Six motions exist. Anything else is a bug.
 
 | Motion          | What it does                                   | Duration / easing                       | Reduced-motion equivalent            |
 | --------------- | ---------------------------------------------- | --------------------------------------- | ------------------------------------ |
@@ -386,9 +386,10 @@ Five motions exist. Anything else is a bug.
 | scrubber        | the replay handle moves and the graph follows  | 120ms linear                            | no transition, position set directly |
 | page transition | one documentation page becomes the next        | 220ms cross-fade, View Transitions      | no transition                        |
 | route walk      | feature row A walks its route as it scrolls in | scroll-driven; the scroll is the clock  | the end frame, drawn at rest         |
+| hero theater    | the definition is written, then the form run   | about 6s writing, 14s running, once     | the final frame, the form live       |
 
-Three of the five are shipped: the step transition, the graph rebuild with the edge draw
-inside it, and the route walk. The scrubber's motion and the page transition are specified
+Four of the six are shipped: the step transition, the graph rebuild with the edge draw
+inside it, the route walk and the hero theater. The scrubber's motion and the page transition are specified
 here and built with the surfaces that need them - the scrubber itself already exists on the
 inspector, without its motion; their tokens exist so that work adds behaviour rather than
 values.
@@ -397,8 +398,21 @@ values.
 in on scroll, and every section is fully readable at rest. `prefers-reduced-motion: reduce`
 selects the right-hand column everywhere, including the edge-drawing animation.
 
-The route walk is the site's one authored moment and it exists once, on the homepage's first
-feature row. It drives the graph rather than decorating around it: as the row scrolls into
+The site has two authored moments, both on the homepage (D-028): the hero theater, on the
+first screen and on the clock, and the route walk, below the fold and on scroll.
+
+The hero theater plays once per load. The definition is typed a line at a time over about six
+seconds while the graph grows by a step at the line that defines it; then, over about fourteen,
+a visitor fills the form - a route, a business trip that brings Company onto the route, two
+passengers, the second refused for a missing passport, and the booking. Every move is a call to
+the real engine, and the console prints what it answered. A keystroke is 50ms, a control 400ms,
+a press 500ms, and 800ms of stillness opens each beat so one reads as done before the next
+begins. A press or a key in the form, or Stop, hands the visitor the form where it stands. It
+never loops and never moves focus. Under reduced motion it does not play: the page shows its
+final frame, the whole file and the whole graph, with the form live on Route. How it is built is
+in [`docs/designs/hero-theater.md`](../docs/designs/hero-theater.md).
+
+The route walk exists once, on the homepage's first feature row. It drives the graph rather than decorating around it: as the row scrolls into
 view, the flow walks its own route. Details lights; a comet probes Company and its condition is
 shown with the data in it, `"personal" != "business"`; the branch breaks; the comet runs the
 bypass to Payment and on to the end, which fills and sends out one ring. The engine records the
@@ -438,10 +452,11 @@ host application that ships the tokens.
 What the site itself is built from. Every one of them is the chassis above: a bounded field, a
 hairline, a mono label where something needs naming, state on the border.
 
-6. **instrument** — a bounded panel holding a live wizard: a row of controls, the line the
-   engine last said, and the graph of the definition those controls are driving. One border
-   around all three and none between them, because they are one object; a reader who takes the
-   controls and the graph for two widgets has been told the wrong thing about the product.
+6. **theater** — the homepage hero: the definition being written on the left; on the right the
+   form a visitor fills in, the console of calls and what the engine returned, and the graph of
+   the flow, drawn down at every width. Each is its own panel, because each is a different
+   reader's view of one wizard - the developer's, the visitor's, the engine's - and the claim is
+   that the three agree, not that they are one widget.
 7. **flow row** — a claim on the left and the flow that makes it true on the right, drawn by
    the engine from a reference definition rather than illustrated. It ships no JavaScript.
 8. **page header** — the one top shared by custom pages and documentation: wordmark,
@@ -485,7 +500,7 @@ those states come from the table under **Interaction states** rather than from t
 ### What is built and what is specified
 
 This list is a contract, and part of it is still ahead of the code. Built today: the graph node,
-the node condition, the table mirror, the instrument, the flow row, and the page header on
+the node condition, the table mirror, the theater, the flow row, and the page header on
 every page, all but its framework mode. Specified here and built with the surfaces that need them: the
 scrubber and state-diff panel with the inspector, and the code block, install line, framework
 mode, example frame, spec table, callout, docs rail, search and evidence strip with the

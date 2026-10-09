@@ -1,6 +1,6 @@
 # Homepage hero theater
 
-Status: accepted 2026-10-09, task T-097, decision D-028.
+Status: accepted 2026-10-09, tasks T-097 and T-099, decision D-028.
 
 The homepage hero stops being the `signup` instrument and becomes a theater: the code a developer
 writes on the left, and on the right the form a visitor would see and the graph of the flow
@@ -15,10 +15,16 @@ and on scroll (D-028).
 
 ## What the reader sees
 
-Desktop, above 900px: two columns. Left, the code pane: the definition as it is being written,
-and under it a console of the calls made and what they returned. Right, the form pane over the
-graph pane. At 900px and under the three stack - code, form, graph - and the graph is laid out
-as a column, as the feature rows are.
+Desktop, above 900px: two columns. Left, the code pane: the definition as it is being written.
+Right, a 22rem column: the form pane, under it a console of the calls made and what they
+returned, and under that the graph pane. At 900px and under they stack - code, form, console,
+graph.
+
+The console sits beside the form rather than under the file: the file is forty lines tall, and a
+console under it was off the screen while the form it answers for was on it. The graph is laid
+out down at every width: across, the trip is 996 units wide, and any column beside the code
+would draw it at about half size, under the 0.95 floor below which a graph's labels stop being
+readable.
 
 ### The flow
 
@@ -146,16 +152,29 @@ Three ways were weighed:
   `playing` flag. It starts when the tab is visible and waits while it is hidden.
 - `site/src/components/Theater.tsx` - the island: provider, the three panes, the stop, play
   again and try it yourself controls. It replaces `HeroFlow.tsx` in `index.astro`.
-- Code pane: reveals pre-highlighted tokens, lights a line by a marker the script names, and
-  keeps the console. Form pane: route, the passenger form for the current item, company,
-  payment, booked. Graph pane: `FlowGraph`, both directions, one shown by the breakpoint, as
-  `FlowRow` does.
+- `site/src/theater/view.ts` - what the graph reads off the running wizard. Inside the group
+  the snapshot answers for the passenger sub-flow, so the trip's view is read through
+  `createSelector` over the state with the stack cut to the trip's frame.
+- Code pane: reveals the pre-highlighted lines and lights one by a marker the script names.
+  Console: the last six calls, so it never scrolls. Form pane: route, the passenger form for the
+  current item, company, payment, booked; the number of travellers is a control of Route only,
+  because emptying the list from inside the group would leave the form standing on a step that
+  is no longer on the route. Graph pane: `FlowGraph`, drawn down.
 
 ### Highlighting without a runtime highlighter
 
-`index.astro` tokenises `trip.flow.ts` at build time with the highlighter Astro already ships and
-passes the tokens to the island. Typing reveals tokens; it never highlights. No dependency is
-added.
+`index.astro` highlights `trip.flow.ts` at build time with Astro's own `<Code>` and hands the
+markup to the island as its slot. Writing marks the slot's lines `unwritten`, `caret` and `lit`;
+it never highlights, and the pane is the whole file's height from the first frame, so writing it
+never moves the page. No dependency is added.
+
+The themes are GitHub's default pair, the one pair whose every token in the file clears 4.5:1 on
+the site's surfaces (night owl, which Starlight's code blocks are built on, has a token at 3.59:1
+on white). Expressive Code strips every highlighter theme it was not configured with by name,
+which is all of them, so `astro.config.mjs` turns that off; it touches the build only.
+
+The island keeps the file's raw text as well (about 1 kB): `script.ts` finds the lines it lights
+by their text, and the visually hidden copy for screen readers is the same text.
 
 ### The first paint
 
@@ -163,16 +182,20 @@ Rendered on the server, the theater is its final frame: the whole definition, th
 the form on `route` and live once hydrated. That is what a reader gets with JavaScript off and
 with reduced motion.
 
-With JavaScript on and motion allowed, an inline script in the page head adds a `theater-pending`
-class before the first paint, and the stylesheet shows the empty editor under it, so the final
-frame never flashes before Act 1. The island removes the class when it starts. If it has not
-started 4 seconds after load, the inline script removes the class itself and the final frame
-shows.
+With JavaScript on and motion allowed, an inline script ahead of the hero adds a
+`theater-pending` class to the root before the first paint, and the stylesheet shows the empty
+editor under it, so the final frame never flashes before Act 1. The island takes the class away
+when it hydrates and draws the empty editor itself, so a tab opened in the background waits on an
+empty editor until it is shown, rather than on a final frame the scenario would then wipe. If the
+island has not hydrated 4 seconds after load, the inline script removes the class itself and the
+final frame shows; an island that hydrates after that finds no class and does not play.
 
 ### Accessibility
 
 - A "Stop" button is visible while the scenario runs: motion that lasts more than five seconds
-  needs a way to stop it (WCAG 2.2.2), and stopping is the same as taking over.
+  needs a way to stop it (WCAG 2.2.2), and stopping is the same as taking over. Pressing it puts
+  focus on the form's first control, since the button leaves with the scenario; "Try it
+  yourself" does the same, and "Play again" puts it on Stop.
 - The scenario never moves focus.
 - The typing is `aria-hidden`. A visually hidden `<pre>` carries the whole definition for a
   screen reader.
