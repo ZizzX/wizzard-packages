@@ -76,6 +76,12 @@ export default defineConfig({
         Header: './src/components/SiteHeader.astro',
         Sidebar: './src/components/DocsSidebar.astro',
       },
+      // Expressive Code strips every highlighter theme it was not configured
+      // with by name, and Starlight configures it with theme objects, so it
+      // strips them all. The homepage theater highlights its file with Astro's
+      // own `<Code>` and two of those themes, at build time only: nothing here
+      // reaches a page's JavaScript.
+      expressiveCode: { removeUnusedThemes: false },
       customCss: [
         '@fontsource-variable/inter-tight',
         '@fontsource-variable/jetbrains-mono',

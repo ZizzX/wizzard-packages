@@ -9,8 +9,8 @@ metadata:
 ---
 
 `site/src/components/FlowGraph.tsx` is the only component that paints a flow graph.
-`HeroFlow.tsx` owns the engine and the controls and hands it a `GraphView`; the feature rows
-hand it a resting one. The earlier `FlowGraph.astro` was deleted on 2026-09-08, not kept as a
+The hero theater (`Theater.tsx`, which replaced `HeroFlow.tsx` in T-099) owns the engine and
+the form and hands it a `GraphView`; the feature rows hand it a resting one. The earlier `FlowGraph.astro` was deleted on 2026-09-08, not kept as a
 fallback: Astro renders an island's SSR output as the pre-hydration frame, and a React
 component with **no** client directive is a pure static graph with zero JavaScript.
 
@@ -25,7 +25,11 @@ Consequences worth remembering before editing it:
 - Before `start()` runs there is no current step, so the SSR frame would paint every node
   upcoming. The component computes `standing = current ?? active[0]` for exactly this.
 - Reaching the end does **not** null `current` — the engine stays on the last step and says
-  `to: '@end'` in the `NavResult`. `ended` is component state, never derived from a snapshot.
+  `to: '@end'` in the `NavResult`. `ended` comes from that answer or from `status === 'done'`
+  (fine where nothing is persisted, [[two-signals-for-a-finished-wizard]]), never from `current`.
+- Inside a repeat group the snapshot answers for the sub-flow: `active` is the item's steps, which
+  the parent's graph does not have. `site/src/theater/view.ts` reads the parent through
+  `createSelector` over the state with the stack cut to the parent's frame.
 - Conditions are drawn under the node, never on an edge: an `order` edge is a fall-through
   and carries no `when`.
 - `layoutGraph` routes an incoming edge to the top of the target's box, so the end node's

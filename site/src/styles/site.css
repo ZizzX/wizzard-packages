@@ -374,7 +374,7 @@ body {
 }
 
 /* One solid accent fill per screen, and the first screen spends it on
-   Get started. Next is still the instrument's primary control, so it keeps the
+   Get started. Next is still the theater form's primary control, so it keeps the
    accent as an outline on a tint - which outranks Back's neutral border
    without spending the fill a second time. The label stays `--fg`: the accent
    itself is 3.98:1 on that tint in the light theme, under the floor for a 15px
@@ -483,26 +483,187 @@ body {
 }
 
 /* -------------------------------------------------------------------------
-   The hero instrument, and the graph wherever it is drawn. These components
-   are React rather than Astro, so nothing scopes them and every rule below
-   is namespaced by hand.
+   The hero theater, the form controls, and the graph wherever it is drawn.
+   These components are React rather than Astro, so nothing scopes them and
+   every rule below is namespaced by hand.
    ------------------------------------------------------------------------- */
 
-.instrument {
+/* The code takes what the side column leaves. Its longest line is 85
+   characters, which is 700px of mono at this size; the side holds two fields
+   abreast and the graph drawn down, 212 units wide - across, the trip is 996
+   units and no column beside the code could draw it at its size. */
+.theater {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.theater-code,
+.theater-form,
+.theater-console {
+  min-width: 0;
   border: var(--border) solid var(--line);
   border-radius: var(--radius-panel);
   background: var(--surface);
-  /* No wider than the graph it holds. A panel stretched past its content moves
-     the dead space inside the border rather than removing it. */
-  max-width: 54rem;
 }
 
-.instrument-controls {
+/* Stop comes and goes with the scenario; the head keeps its height, so the
+   code under it does not jump when the visitor takes over. */
+.theater-head {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--space-4);
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: calc(var(--control-h) + 2 * var(--space-3));
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border) solid var(--line);
+}
+
+.theater-head .tag {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+}
+
+.theater-source pre {
+  margin: 0;
+  padding: var(--space-4);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: var(--leading-code);
+  background: transparent;
+}
+
+/* A line is a box the width of the pane, so a lit line is lit edge to edge and
+   a line that wraps on a phone wraps inside its own box. */
+.theater-source .line {
+  display: inline-block;
+  width: 100%;
+}
+
+/* The highlighter writes both themes' colours into custom properties and
+   neither into `color`, so the page picks one the way tokens.css does. */
+.theater-source span[style] {
+  color: var(--shiki-dark);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) .theater-source span[style] {
+    color: var(--shiki-light);
+  }
+}
+
+:root[data-theme='light'] .theater-source span[style] {
+  color: var(--shiki-light);
+}
+
+/* Hidden, not removed: the pane is as tall as the whole file from the first
+   frame, so writing it never moves the page. */
+.theater-source .line.unwritten,
+.theater-pending .theater-source .line {
+  visibility: hidden;
+}
+
+.theater-source .line.caret::after {
+  content: '';
+  display: inline-block;
+  width: 0.55em;
+  height: 1.15em;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  background: var(--accent);
+}
+
+.theater-source .line.lit {
+  background: var(--accent-soft);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+/* Six lines reserved: the console keeps its last six and drops the rest, so
+   it never scrolls and never pushes the graph down as it fills. */
+.theater-console {
+  min-height: calc(6em * var(--leading-code) + 2 * var(--space-3));
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: var(--leading-code);
+}
+
+.theater-console p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.theater-console .theater-console-empty {
+  color: var(--fg-muted);
+}
+
+.theater-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.theater-form {
   padding: var(--space-6);
+}
+
+/* Inert while the file is being written: there is no flow to run yet. */
+.theater-form.writing,
+.theater-pending .theater-form {
+  opacity: var(--opacity-disabled);
+}
+
+.theater-step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.theater-where {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.theater-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--space-4);
+}
+
+.theater-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-h);
+  font-size: var(--text-sm);
+}
+
+.theater-check input {
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.theater-booked {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.theater-graph {
+  margin: 0;
+}
+
+.theater-pending .theater-graph svg {
+  visibility: hidden;
 }
 
 .field {
@@ -512,18 +673,14 @@ body {
   min-width: 0;
 }
 
-/* The question is the wide one; the payer choice and the buttons are fixed. */
-.instrument-controls .field-grow {
-  flex: 1 1 16rem;
-}
-
 .field-label {
   font-family: var(--font-mono);
   color: var(--fg-muted);
   font-size: var(--text-xs);
 }
 
-.field input {
+.field input,
+.field select {
   font-size: var(--text-sm);
   color: var(--fg);
   background: var(--bg);
@@ -536,6 +693,12 @@ body {
 
 .field input[aria-invalid='true'] {
   border-color: var(--st-error);
+}
+
+.field-error {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--st-error);
 }
 
 .segmented {
@@ -581,81 +744,13 @@ body {
   cursor: not-allowed;
 }
 
-.flow-message {
-  margin: 0;
-  padding: 0 var(--space-6) var(--space-4);
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  line-height: var(--leading-code);
-  /* Reserved, so a message arriving does not move the controls above it. */
-  min-height: 2.6em;
-}
-
-.flow-message.idle {
-  color: var(--fg-muted);
-}
-
-.flow-message.ok {
-  color: var(--accent);
-}
-
-.flow-message.err {
-  color: var(--st-error);
-}
-
-.instrument-graph {
-  margin: 0;
-  min-width: 0;
-  border-top: var(--border) solid var(--line);
-}
-
-.instrument-graph .graph-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-6);
-  font-family: var(--font-mono);
-  font-size: var(--text-label);
-  letter-spacing: var(--track-label);
-  text-transform: uppercase;
-  color: var(--fg-muted);
-}
-
-.instrument-graph .rebuild {
-  font: inherit;
-  background: transparent;
-  border: var(--border) solid var(--line);
-  border-radius: var(--radius-control);
-  color: var(--fg-muted);
-  min-height: var(--control-h-compact);
-  padding: 0 var(--control-pad-x-compact);
-  cursor: pointer;
-}
-
-.instrument-graph .rebuild:hover {
-  border-color: var(--line-hover);
-  color: var(--fg);
-}
-
-.instrument-graph .rebuild:active {
-  background: var(--tint-active);
-}
-
 /* --- the graph itself, wherever it is drawn ------------------------------- */
-
-/* The panel already draws a border, so the graph inside takes none. A row's
-   graph stands on the page ground and takes its own. Nested boxes are the
-   lazy container and this system does not use them. */
-.instrument-graph .frame {
-  padding: 0 var(--space-6) var(--space-6);
-  overflow-x: auto;
-}
 
 /* The frame is the graph's border, not the row's: it takes the width the graph
    needs and no more, so a two-node flow does not sit in a box built for a
    four-node one. Capped at the row, which is where it starts to scroll. */
-.flow-row-graph .frame {
+.flow-row-graph .frame,
+.theater-graph .frame {
   width: fit-content;
   max-width: 100%;
   border: var(--border) solid var(--line);
@@ -1185,6 +1280,10 @@ body {
    down instead: laid across, the widest route is 788 units, so on a phone its
    second half, and the walk that ends there, was past the frame's edge. */
 @media (max-width: 900px) {
+  .theater {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .flow-row-text {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-3);
@@ -1606,7 +1705,7 @@ svg.interactive .node {
    Examples: the index, the page around one application, and the application.
 
    The controls reuse `.field`, `.segmented`, `.actions` and `.button` from the
-   instrument above rather than growing a second set: an example that looked
+   hero above rather than growing a second set: an example that looked
    like a different product would undo what the pages are for. */
 
 .example-index {
@@ -2048,11 +2147,6 @@ svg.interactive .node {
   .site-nav a {
     justify-content: center;
     min-width: var(--target-min);
-  }
-
-  /* The graph's own control, compact on purpose beside a mouse. */
-  .instrument-graph .rebuild {
-    min-height: var(--target-min);
   }
 
   /* The documentation chrome is Starlight's, and it measured the same way: the

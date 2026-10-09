@@ -33,8 +33,9 @@ the end filled. It is what the row shows with reduced motion and in a browser wi
 `animation-timeline`. JavaScript plays no part: with it off the walk runs the same. The caption under the graph stays true as
 written.
 
-Rows B and C, the hero, and the inspector do not change. A version of this choreography in
-the hero - once on load, and again on every change of payer - is T-097.
+Rows B and C, the hero, and the inspector do not change. The hero has an authored moment of its
+own, the theater (`docs/designs/hero-theater.md`, D-028); this walk's scout reaches its graph in
+a task of its own.
 
 ## Why the engine writes the walk
 
