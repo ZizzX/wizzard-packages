@@ -10,6 +10,11 @@
  *
  * The beats cover a flat route, on purpose: a group step would need beats for
  * its children, and the one walk on the site has none.
+ *
+ * What this throws stops the site's build, and only whoever edits the homepage
+ * meets it - never a library user. So it carries no `[wizzard]` prefix and no
+ * `errors/<code>` page, which are for messages the packages throw; it keeps the
+ * rest of their shape: what went wrong, why, and the fix.
  */
 import {
   createWizard,

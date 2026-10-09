@@ -914,10 +914,13 @@ body {
   }
 }
 
+/* The condition reads as a step still ahead until the break, then as the rest
+   of Company does: `.node.skipped text` would grey it for the whole walk. */
 @keyframes walk-when {
   0%,
   15% {
     opacity: 1;
+    fill: var(--fg-muted);
   }
   25%,
   75% {
@@ -926,6 +929,7 @@ body {
   90%,
   100% {
     opacity: 1;
+    fill: var(--st-skipped);
   }
 }
 

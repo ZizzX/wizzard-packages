@@ -29,23 +29,36 @@ function block(source: string, prelude: string, from = 0): { start: number; end:
   throw new Error(`\`${prelude}\` in site.css never closes`);
 }
 
+/**
+ * The scroll-driven declarations in `source` that sit outside the guards, by
+ * name. Declarations only: the guard's own prelude, `(animation-timeline:
+ * view())`, follows a parenthesis.
+ */
+function outside(source: string): string[] {
+  const supports = block(source, '@supports (animation-timeline: view())');
+  const motion = block(source, '@media (prefers-reduced-motion: no-preference)', supports.start);
+  if (motion.end > supports.end) return ['the reduced-motion guard'];
+  return Array.from(
+    source.matchAll(
+      /(?<![(\w-])(animation-timeline|animation-range(?:-start|-end)?|view-timeline(?:-name|-axis|-inset)?|scroll-timeline(?:-name|-axis)?)\s*:/g
+    ),
+    (match) => ({ name: match[1] ?? '', at: match.index })
+  )
+    .filter(({ at }) => at < motion.start || at > motion.end)
+    .map(({ name }) => name);
+}
+
 describe('the route walk in site.css', () => {
   it('declares every scroll-driven property inside both of its guards', () => {
-    const supports = block(css, '@supports (animation-timeline: view())');
-    const motion = block(css, '@media (prefers-reduced-motion: no-preference)', supports.start);
-    expect(motion.end).toBeLessThan(supports.end);
+    expect(css).toMatch(/view-timeline\s*:/);
+    expect(outside(css)).toEqual([]);
+  });
 
-    const declarations = Array.from(
-      // Declarations only: the guard's own prelude, `(animation-timeline: view())`,
-      // follows a parenthesis.
-      css.matchAll(/(?<![(\w-])(animation-timeline|animation-range|view-timeline)\s*:/g),
-      (match) => ({ name: match[1], at: match.index })
-    );
-    expect(declarations.length).toBeGreaterThan(0);
-    for (const declaration of declarations) {
-      expect(declaration.at > motion.start && declaration.at < motion.end, declaration.name).toBe(
-        true
-      );
-    }
+  it('would see a stray rule, longhands and scroll timelines included', () => {
+    const stray = (rule: string) => outside(`${css}\n.stray { ${rule} }\n`);
+    expect(stray('view-timeline: --stray block;')).toEqual(['view-timeline']);
+    expect(stray('view-timeline-name: --stray;')).toEqual(['view-timeline-name']);
+    expect(stray('animation-range-start: cover 10%;')).toEqual(['animation-range-start']);
+    expect(stray('scroll-timeline: --stray block;')).toEqual(['scroll-timeline']);
   });
 });
