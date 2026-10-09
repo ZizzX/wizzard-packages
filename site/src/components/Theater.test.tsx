@@ -86,6 +86,27 @@ describe('the hero theater', () => {
     expect(document.querySelector('.node.group.error')).not.toBeNull();
   });
 
+  it('leaves the refusal behind when the visitor goes back to the passenger before', async () => {
+    await playing();
+    await wait(until(refusal));
+    fireEvent.pointerDown(screen.getByLabelText('Passport'));
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    await wait(0);
+    expect(screen.getByText('Passenger 1 of 2')).toBeDefined();
+    expect(screen.getByLabelText('Passport').getAttribute('aria-invalid')).toBe('false');
+    expect(screen.queryByText('required')).toBeNull();
+    expect(document.querySelector('.node.group.error')).toBeNull();
+  });
+
+  it('takes the passenger group off the route when nobody travels', async () => {
+    render(<Theater>{code}</Theater>);
+    await wait(0);
+    fireEvent.change(screen.getByLabelText('Travellers'), { target: { value: '0' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await wait(0);
+    expect(consoleText()).toContain("next() -> { ok: true, to: 'payment' }");
+  });
+
   it('books the trip, and offers it back', async () => {
     await playing();
     await wait(until(scenario.length - 1));

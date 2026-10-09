@@ -214,7 +214,13 @@ function Stage({ code }: { code: ReactNode }): ReactNode {
           >
             <Form
               log={log}
-              onBack={() => void move('back()', wizard.back())}
+              onBack={() => {
+                // A refusal is about the step being left, and the engine keys it
+                // by step, not by passenger: kept, it would follow Back onto the
+                // passenger before, under a passport that is filled in.
+                if (snapshot.current !== null) wizard.setErrors(snapshot.current, null);
+                void move('back()', wizard.back());
+              }}
               onAgain={(play) => void again(play)}
             />
           </form>
@@ -305,20 +311,20 @@ function Form({ log, onBack, onAgain }: FormProps): ReactNode {
             <Text label="To" value={text('route.to')} onChange={set('route.to')} />
             <label className="field">
               <span className="field-label">Travellers</span>
-              <input
-                type="number"
-                min={0}
-                max={MAX_TRAVELLERS}
+              {/* A choice, not a number field: typed into, a number field reads
+                  "12" when a visitor after 2 types it after the 1 already there. */}
+              <select
                 value={list.length}
                 onChange={(event) => {
-                  const count = Math.trunc(event.target.valueAsNumber);
-                  if (Number.isNaN(count)) return;
-                  wizard.set(
-                    'passengers',
-                    travellers(Math.min(MAX_TRAVELLERS, Math.max(0, count)))
-                  );
+                  wizard.set('passengers', travellers(Number(event.target.value)));
                 }}
-              />
+              >
+                {Array.from({ length: MAX_TRAVELLERS + 1 }, (_, count) => (
+                  <option key={count} value={count}>
+                    {count}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
           <label className="theater-check">

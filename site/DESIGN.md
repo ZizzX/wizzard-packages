@@ -408,7 +408,7 @@ passengers, the second refused for a missing passport, and the booking. Every mo
 the real engine, and the console prints what it answered. A keystroke is 50ms, a control 400ms,
 a press 500ms, and 800ms of stillness opens each beat so one reads as done before the next
 begins. A press or a key in the form, or Stop, hands the visitor the form where it stands. It
-never loops and never moves focus. Under reduced motion it does not play: the page shows its
+never loops, and the scenario never moves focus. Under reduced motion it does not play: the page shows its
 final frame, the whole file and the whole graph, with the form live on Route. How it is built is
 in [`docs/designs/hero-theater.md`](../docs/designs/hero-theater.md).
 

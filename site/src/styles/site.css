@@ -679,7 +679,8 @@ body {
   font-size: var(--text-xs);
 }
 
-.field input {
+.field input,
+.field select {
   font-size: var(--text-sm);
   color: var(--fg);
   background: var(--bg);

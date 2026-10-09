@@ -45,10 +45,9 @@ for (const [width, height] of [
       await expect(page.locator('.field-error')).toHaveText('required');
       await expect(page.locator('.theater .node.group.error')).toHaveCount(1);
 
-      await expect(page.locator('.theater-booked')).toHaveText(
-        'Almaty -> Tbilisi, 2 passengers',
-        PLAY
-      );
+      // Payment shows the same line, so the heading is what says it is booked.
+      await expect(page.locator('.theater-where')).toHaveText('Booked', PLAY);
+      await expect(page.locator('.theater-booked')).toHaveText('Almaty -> Tbilisi, 2 passengers');
       await expect(terminal(page)).toContainText("next() -> { ok: true, to: '@end' }");
       await expect(stop(page)).toHaveCount(0);
       await notWider(page);
