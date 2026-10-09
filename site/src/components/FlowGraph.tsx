@@ -179,6 +179,11 @@ export function FlowGraph({
 
   const interactive = onSelect !== undefined;
 
+  // A row draws one graph per direction and shows one (`FlowRow`), so the id
+  // carries the direction: a `url(#id)` resolves to the first element with
+  // that id, and the first would be the drawing that is not displayed.
+  const blur = `walk-blur-${direction}`;
+
   /** A beat as the pair of custom properties the stylesheet maps onto the timeline. */
   const at = (name: string, beat: Beat): Record<string, string> => ({
     [`--${name}0`]: beat.from.toFixed(4),
@@ -188,7 +193,7 @@ export function FlowGraph({
   /** A dash running the whole edge, with a blurred copy under it for the glow. */
   const comet = (points: string, length: number): ReactNode => (
     <g className="comet" aria-hidden="true" style={{ '--len': length.toFixed(1) } as CSSProperties}>
-      <polyline className="comet-halo" points={points} filter="url(#walk-blur)" />
+      <polyline className="comet-halo" points={points} filter={`url(#${blur})`} />
       <polyline className="comet-core" points={points} />
     </g>
   );
@@ -221,7 +226,7 @@ export function FlowGraph({
       >
         {walk !== undefined && (
           <defs>
-            <filter id="walk-blur" x="-50%" y="-50%" width="200%" height="200%">
+            <filter id={blur} x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur stdDeviation="4" />
             </filter>
           </defs>
@@ -289,6 +294,12 @@ export function FlowGraph({
                 : null;
 
           if (kind === 'end') {
+            // The circle sits where the edge arrives: the box's left middle when
+            // the layers run across, its top centre when they run down.
+            const [cx, cy] =
+              direction === 'row'
+                ? [placed.x + 11, placed.y + placed.h / 2]
+                : [placed.x + placed.w / 2, placed.y + 11];
             return (
               <g
                 key={`${index}:${asText(placed.id)}`}
@@ -298,15 +309,9 @@ export function FlowGraph({
                 })}
               >
                 {walk !== undefined && (
-                  <circle
-                    className="ring"
-                    cx={placed.x + 11}
-                    cy={placed.y + placed.h / 2}
-                    r="11"
-                    aria-hidden="true"
-                  />
+                  <circle className="ring" cx={cx} cy={cy} r="11" aria-hidden="true" />
                 )}
-                <circle cx={placed.x + 11} cy={placed.y + placed.h / 2} r="11" />
+                <circle cx={cx} cy={cy} r="11" />
               </g>
             );
           }
@@ -339,7 +344,7 @@ export function FlowGraph({
                   width={placed.w}
                   height={placed.h}
                   rx="4"
-                  filter="url(#walk-blur)"
+                  filter={`url(#${blur})`}
                   aria-hidden="true"
                 />
               )}

@@ -5,6 +5,7 @@
  * what a page pays for a graph it only wants to look at.
  */
 import { buildGraph } from '@wizzard-packages/core/graph';
+import { layoutGraph } from '@wizzard-packages/devtools/headless';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
@@ -48,6 +49,32 @@ describe('the graph as a picture', () => {
     render(<Picture />);
     expect(screen.getByRole('rowheader', { name: 'Company' })).toBeDefined();
   });
+
+  // The circle was placed for a row only, so laid down, the edge into it stopped
+  // at the top of an empty box and the circle sat below it, off to the left.
+  it.each(['row', 'column'] as const)(
+    'ends the edge into the end on its circle, %s',
+    (direction) => {
+      const { container } = render(
+        <FlowGraph
+          graph={graph}
+          active={active}
+          view={restingView(active, [])}
+          direction={direction}
+          label="signup"
+        />
+      );
+      const circle = container.querySelector('.node.end > circle') as SVGCircleElement;
+      const into = layoutGraph(graph, { direction }).edges.find(
+        (edge) => edge.to === '@end' && edge.kind !== 'back'
+      );
+      const [x, y] = into?.points.at(-1) ?? [NaN, NaN];
+      const cx = Number(circle.getAttribute('cx'));
+      const cy = Number(circle.getAttribute('cy'));
+
+      expect(Math.hypot(x - cx, y - cy)).toBe(Number(circle.getAttribute('r')));
+    }
+  );
 });
 
 describe('the graph as an instrument', () => {
@@ -227,5 +254,34 @@ describe('the graph with a route walk', () => {
     await Walked();
     expect(screen.getByRole('row', { name: /Payment/ }).textContent).toContain('visited');
     expect(screen.getByRole('row', { name: /Company/ }).textContent).toContain('skipped');
+  });
+
+  // A feature row draws the walk once per direction and displays one. With one
+  // shared id, every glow on the page would point at the first, hidden filter.
+  it('gives each direction its own glow, so a row can carry both', async () => {
+    const walk = walkBeats(await recordWalk(flowA, data, registryA), graph, data);
+    const { container } = render(
+      <>
+        {(['row', 'column'] as const).map((direction) => (
+          <FlowGraph
+            key={direction}
+            graph={graph}
+            active={['details', 'payment']}
+            view={walk.view}
+            walk={walk}
+            direction={direction}
+            label="signup"
+          />
+        ))}
+      </>
+    );
+    const ids = [...container.querySelectorAll('[id]')].map((element) => element.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const svg of container.querySelectorAll('svg')) {
+      const own = `url(#${svg.querySelector('filter')?.id})`;
+      for (const glow of svg.querySelectorAll('[filter]')) {
+        expect(glow.getAttribute('filter')).toBe(own);
+      }
+    }
   });
 });

@@ -10,6 +10,9 @@ import { expect, test, type Page } from '@playwright/test';
 
 const frame = (page: Page) => page.locator('.flow-row').first().locator('.frame');
 
+/** The drawing the row displays: it holds one per direction and shows one. */
+const graph = (page: Page) => frame(page).locator('svg:visible');
+
 /** A colour token as the browser resolves it under the theme in force now. */
 const token = (page: Page, name: string) =>
   page.evaluate((name) => {
@@ -25,7 +28,7 @@ const visited = (page: Page) => token(page, '--st-visited');
 
 /** The pieces of the walk that change most, as the browser computes them now. */
 const look = (page: Page) =>
-  frame(page).evaluate((el) => {
+  graph(page).evaluate((el) => {
     const style = (selector: string) => getComputedStyle(el.querySelector(selector) as Element);
     return {
       details: style('.node.walked > rect:not(.halo)').stroke,
@@ -93,15 +96,20 @@ for (const [width, height] of [
       expect(scroll).toBeLessThanOrEqual(client as number);
     });
 
-    test('scrolls the graph inside its frame when the graph is wider', async ({ page }) => {
+    test(`lays every row's graph ${width > 900 ? 'across' : 'down'}, whole inside its frame`, async ({
+      page,
+    }) => {
       await page.goto('');
-      const fits = await frame(page).evaluate((el) => el.scrollWidth <= el.clientWidth);
-      // At 1280 the graph fits; at 390 it is wider than the screen, and the frame,
-      // not the page, is what scrolls.
-      expect(fits).toBe(width >= 900);
-      if (!fits) {
-        await frame(page).evaluate((el) => el.scrollBy({ left: 200 }));
-        expect(await frame(page).evaluate((el) => el.scrollLeft)).toBeGreaterThan(0);
+      // Laid across on a phone, the first row's route is 788 units: the frame
+      // scrolled, and its second half, where the walk ends, was out of sight.
+      const shown = width > 900 ? '.graph-row' : '.graph-column';
+      const rows = page.locator('.flow-row');
+      await expect(rows).toHaveCount(3);
+      for (const row of await rows.all()) {
+        await expect(row.locator('svg:visible')).toHaveCount(1);
+        await expect(row.locator(`${shown} svg`)).toBeVisible();
+        const fits = await row.locator('.frame').evaluate((el) => el.scrollWidth <= el.clientWidth);
+        expect(fits).toBe(true);
       }
     });
   });
