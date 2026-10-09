@@ -4,7 +4,7 @@ import { expect, test, type Page } from '@playwright/test';
  * The homepage theater (docs/designs/hero-theater.md), against the production
  * build. The scenario is a real wizard being driven, so these read what a
  * visitor reads - the console, the form, the field's error - and the timeouts
- * are the scenario's length: about twenty seconds from load to the end.
+ * are the scenario's length: about twenty-two seconds from load to the end.
  */
 
 const PLAY = { timeout: 30_000 };

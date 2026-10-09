@@ -128,12 +128,12 @@ describe('the hero theater', () => {
       'false != true'
     );
 
-    // Two travellers or three: nothing changes sides, so nothing is scouted again.
+    // One traveller or two: nothing changes sides, so the scout playing is left
+    // to play, not started over.
+    const playing = document.querySelector('.walk-eval');
     fireEvent.change(screen.getByLabelText('Travellers'), { target: { value: '2' } });
     await wait(0);
-    expect(document.querySelector('.node.probed:not(.heals) .walk-eval')?.textContent).toBe(
-      'false != true'
-    );
+    expect(document.querySelector('.walk-eval')).toBe(playing);
 
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
     await wait(0);

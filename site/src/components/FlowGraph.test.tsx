@@ -420,6 +420,39 @@ describe('the graph with a scout', () => {
     errors.mockRestore();
   });
 
+  // The hero's scout and row A's walk are on one page, both drawn down on a phone.
+  it("does not take row A's glow, when both are drawn down on one page", async () => {
+    const { active, view } = await engine(true);
+    const scout = scoutBeats(tripGraph, plain, active, 'route', {
+      passengers: two,
+      business: true,
+    });
+    const data = { payer: 'personal', email: 'ada@example.com' };
+    const walk = walkBeats(await recordWalk(flowA, data, registryA), graph, data);
+    const { container } = render(
+      <>
+        <FlowGraph
+          graph={tripGraph}
+          active={active}
+          view={view}
+          direction="column"
+          label="trip"
+          scout={scout}
+        />
+        <FlowGraph
+          graph={graph}
+          active={['details', 'payment']}
+          view={walk.view}
+          walk={walk}
+          direction="column"
+          label="signup"
+        />
+      </>
+    );
+    const ids = [...container.querySelectorAll('[id]')].map((element) => element.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
   it('starts the decorations over for a new scout, and keeps the graph', async () => {
     const { container, again } = await Scouted(1);
     const comet = container.querySelector('.comet');

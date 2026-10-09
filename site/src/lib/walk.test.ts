@@ -172,6 +172,16 @@ describe('scoutBeats', () => {
     expect(Object.keys(beats.glows)).toEqual(['people', 'company', 'payment']);
   });
 
+  it('probes two steps that change sides at once in route order, and flips at the first', () => {
+    const beats = scout(plain, ['route', 'company', 'payment'], { passengers: [], business: true });
+    const people = beats.probes.people;
+    const company = beats.probes.company;
+    expect(people?.heals).toBe(false);
+    expect(company?.heals).toBe(true);
+    expect(people?.beat.to).toBeLessThanOrEqual(company?.beat.from ?? -1);
+    expect(beats.flip).toEqual(people?.beat);
+  });
+
   it('keeps every beat inside the scout, and ends on the ring', () => {
     const beats = scout(plain, business, { passengers: two, business: true });
     const all: Beat[] = [

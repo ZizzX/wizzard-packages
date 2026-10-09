@@ -188,8 +188,9 @@ export function FlowGraph({
 
   // A row draws one graph per direction and shows one (`FlowRow`), so the id
   // carries the direction: a `url(#id)` resolves to the first element with
-  // that id, and the first would be the drawing that is not displayed.
-  const blur = `walk-blur-${direction}`;
+  // that id, and the first would be the drawing that is not displayed. The
+  // hero's scout and row A's walk share a page, so it carries which one too.
+  const blur = `${scout !== null ? 'scout' : 'walk'}-blur-${direction}`;
 
   /** A beat as the pair of custom properties the stylesheet maps onto the timeline. */
   const at = (name: string, beat: Beat): Record<string, string> => ({

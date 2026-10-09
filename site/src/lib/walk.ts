@@ -303,6 +303,7 @@ export function scoutBeats(
   > = {};
   const runs: Record<string, Beat> = {};
   let ring: Beat = { from: 0, to: 0 };
+  let first: Beat | undefined;
 
   route.forEach((id, index) => {
     const next = route[index + 1] ?? end;
@@ -312,7 +313,9 @@ export function scoutBeats(
     const joined = next !== end && !was.has(next) ? [next] : [];
     for (const step of [...left, ...joined]) {
       const heals = step === next;
-      probes[step] = { beat: span(SCOUT_PROBE), from: id, reason: reason(when(step), data), heals };
+      const beat = span(SCOUT_PROBE);
+      first ??= beat;
+      probes[step] = { beat, from: id, reason: reason(when(step), data), heals };
     }
     const run = span(SCOUT_RUN);
     runs[`${id}->${next}`] = run;
@@ -320,9 +323,10 @@ export function scoutBeats(
     else glows[next] = { from: run.to, to: run.to + SCOUT_GLOW };
   });
 
-  // ponytail: every flipped edge changes at the first probe. Only one step ever
-  // changes sides at a time on the hero; per-step flips if two ever do.
-  const first = Object.values(probes)[0]?.beat;
+  // ponytail: every flipped edge changes at the first probe, and a second step
+  // leaving next to the first is probed from the route step, as on row A. Only
+  // one step ever changes sides at a time on the hero; per-step flips and
+  // probes from the step before if two ever do.
   if (first === undefined) return null;
 
   const share = (beat: Beat): Beat => ({ from: beat.from / clock, to: beat.to / clock });
