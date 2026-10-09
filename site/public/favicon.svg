@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- The graph's own shapes: a step, an edge, the end, in the visited and accent colours. -->
+  <style>
+    .step { fill: none; stroke: #5a6b7d; }
+    .end { fill: #0e6e6a; }
+    @media (prefers-color-scheme: dark) {
+      .step { stroke: #6e8fa8; }
+      .end { fill: #35d6d0; }
+    }
+  </style>
+  <rect class="step" x="2.5" y="9.5" width="13" height="13" rx="3" stroke-width="3" />
+  <path class="step" d="M15.5 16h4" stroke-width="3" />
+  <circle class="end" cx="25" cy="16" r="6" />
+</svg>

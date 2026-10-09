@@ -54,6 +54,32 @@ test.describe('the top bar', () => {
   }
 
   /**
+   * Starlight links a `favicon.svg` by default and the site never shipped one,
+   * so every documentation page asked for a 404 and the hand-written pages
+   * linked no icon at all. One link per page, and it has to load. A 200 is not
+   * enough: an SVG that is not well-formed XML is served all the same and draws
+   * nothing, so the browser has to decode it.
+   */
+  for (const [path] of PAGES) {
+    test(`has a tab icon that loads on /${path}`, async ({ page }) => {
+      await page.goto(path);
+      const href = await page.locator('link[rel~="icon"]').getAttribute('href');
+      const icon = await page.request.get(new URL(href!, page.url()).href);
+      const decodes = await page.evaluate((src) => {
+        const image = new Image();
+        image.src = src;
+        return image.decode().then(
+          () => true,
+          () => false
+        );
+      }, href!);
+
+      expect(icon.status()).toBe(200);
+      expect(decodes).toBe(true);
+    });
+  }
+
+  /**
    * The pages' own bar sat in the 1120px column and scrolled away, so at 1440
    * the wordmark moved 160px sideways between the site and the documentation
    * and was gone as soon as the page moved (D-016).
