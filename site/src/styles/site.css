@@ -1042,7 +1042,7 @@ body {
 
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
-    .frame:has(> svg.walk) {
+    .frame:has(svg.walk) {
       view-timeline: --walk block;
     }
 
@@ -1170,11 +1170,20 @@ body {
   border: 0;
 }
 
-/* One breakpoint, because both rules answer the same fact: below it the row is
+/* A feature row holds its graph laid out both ways and displays one. `none`
+   takes the other out of the accessibility tree as well, so its mirror table is
+   not read twice. */
+.flow-row-graph .graph-column {
+  display: none;
+}
+
+/* One breakpoint, because every rule answers the same fact: below it the row is
    too narrow for the claim and the graph to keep their sizes. The claim stacks,
    and the graph stops shrinking - a 13px label under the 12px floor is a
    picture of a graph rather than a graph, so the viewport rules say code and
-   graphs scroll inside their container here. */
+   graphs scroll inside their container here. A feature row turns its graph
+   down instead: laid across, the widest route is 788 units, so on a phone its
+   second half, and the walk that ends there, was past the frame's edge. */
 @media (max-width: 900px) {
   .flow-row-text {
     grid-template-columns: minmax(0, 1fr);
@@ -1183,6 +1192,14 @@ body {
 
   .frame svg {
     max-width: none;
+  }
+
+  .flow-row-graph .graph-row {
+    display: none;
+  }
+
+  .flow-row-graph .graph-column {
+    display: block;
   }
 }
 

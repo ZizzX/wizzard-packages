@@ -302,10 +302,14 @@ graph gets the width it needs, or it scrolls - it never gets a scale.**
 `layoutGraph` takes a `direction`, and the choice belongs to the surface rather than to the
 flow.
 
-| Where          | Direction | Why                                                                        |
-| -------------- | --------- | -------------------------------------------------------------------------- |
-| a page         | `row`     | a page has width and not height, and a route read left to right is a route |
-| a docked panel | `column`  | a panel has height and not width                                           |
+| Where                             | Direction | Why                                                                                                                               |
+| --------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| a page                            | `row`     | a page has width and not height, and a route read left to right is a route                                                        |
+| a docked panel                    | `column`  | a panel has height and not width                                                                                                  |
+| a feature row, at 900px and under | `column`  | a phone has height and not width; laid across, the widest route left half of itself, and the walk that ends there, past the frame |
+
+A feature row ships no script, so it cannot measure itself and pick: it draws both and the
+stylesheet displays the one the breakpoint asks for.
 
 The layering is identical either way: the same topological order, the same cycle break, the
 same sibling order. Only which coordinate the layer index drives changes, so the two

@@ -160,7 +160,8 @@ e2e, in `e2e/tests/site/home.spec.ts`, Chromium against the production build:
   and the hot edge is drawn - read through `getComputedStyle`;
 - with reduced motion emulated: the end frame is there at the top of the page, and the graph
   has no scroll-driven animations;
-- at 390 the page does not scroll sideways; only the graph's frame does.
+- at 390 the page does not scroll sideways, and the row draws its graph laid down, whole inside
+  its frame: laid across, the frame scrolled and the walk ended out of sight.
 
 Each claim gets a mutation check before the PR: removing the reduced-motion block, leaving the
 end frame out of the base styles, or the email from the data turns the matching test red.

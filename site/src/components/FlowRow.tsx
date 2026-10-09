@@ -96,14 +96,20 @@ export function FlowRow({
       </div>
       <figure className="flow-row-graph">
         <div className="frame">
-          <FlowGraph
-            graph={graph}
-            active={active}
-            view={walk?.view ?? view}
-            direction="row"
-            label={flow.id}
-            {...(walk !== undefined && { walk })}
-          />
+          {/* Across on a page that has the width, down on one that does not; the
+              stylesheet shows one, because a row ships no script to choose. */}
+          {(['row', 'column'] as const).map((direction) => (
+            <div key={direction} className={`graph-${direction}`}>
+              <FlowGraph
+                graph={graph}
+                active={active}
+                view={walk?.view ?? view}
+                direction={direction}
+                label={flow.id}
+                {...(walk !== undefined && { walk })}
+              />
+            </div>
+          ))}
         </div>
         <figcaption>{note}</figcaption>
       </figure>
