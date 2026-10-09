@@ -1,0 +1,1 @@
+var e=e=>({$get:e}),t=(e,t)=>t===void 0?{$ref:e}:{$ref:e,args:t},n=e=>({$not:e}),r=e=>({$empty:e}),i=(e,t)=>({$eq:[e,t]});export{t as a,n as i,i as n,e as r,r as t};
