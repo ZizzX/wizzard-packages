@@ -206,6 +206,52 @@ describe('usePlayer', () => {
     expect(ran).toEqual([0, 1, 2]);
   });
 
+  // The island learns about reduced motion only once it runs in the browser, so
+  // it renders with autoplay off and turns it on a moment later.
+  it('plays, and says so, when autoplay turns on after the first render', async () => {
+    const ran: number[] = [];
+    const { result, rerender } = renderHook(
+      ({ auto }: { auto: boolean }) =>
+        usePlayer(
+          cues,
+          (_cue, index) => {
+            ran.push(index);
+          },
+          auto
+        ),
+      { initialProps: { auto: false } }
+    );
+    rerender({ auto: true });
+    expect(result.current.playing).toBe(true);
+    await wait(100);
+    expect(ran).toEqual([0]);
+    expect(result.current.playing).toBe(true);
+  });
+
+  // Reduced motion switched on and off again mid-scenario: starting over would
+  // replay Act 2 onto a wizard the first run already half filled.
+  it('does not start over when autoplay comes back after cues have run', async () => {
+    const ran: number[] = [];
+    const { result, rerender } = renderHook(
+      ({ auto }: { auto: boolean }) =>
+        usePlayer(
+          cues,
+          (_cue, index) => {
+            ran.push(index);
+          },
+          auto
+        ),
+      { initialProps: { auto: true } }
+    );
+    await wait(100);
+    rerender({ auto: false });
+    expect(result.current.playing).toBe(false);
+    rerender({ auto: true });
+    await wait(1000);
+    expect(ran).toEqual([0]);
+    expect(result.current.playing).toBe(false);
+  });
+
   it('plays nothing after it unmounts', async () => {
     const { ran, unmount } = recorded();
     await wait(100);

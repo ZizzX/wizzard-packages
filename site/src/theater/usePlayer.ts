@@ -23,7 +23,8 @@ export interface Player {
  * Runs `run` for each of `cues` in order. A hidden tab holds the next cue until
  * the tab is shown, so a page opened in the background starts its scenario when
  * somebody looks at it, rather than playing it to nobody. Without `autoplay`
- * nothing runs until `replay()`.
+ * nothing runs until `replay()`; `autoplay` turning on later starts the
+ * scenario, unless a cue has already run.
  */
 export function usePlayer<C extends { readonly delay: number }>(
   cues: readonly C[],
@@ -36,6 +37,9 @@ export function usePlayer<C extends { readonly delay: number }>(
   // earlier start sees that it has been overtaken, and does nothing.
   const generation = useRef(0);
   const cancel = useRef(() => {});
+  // Whether a cue has run. Autoplay starts the scenario once: coming back on
+  // after that would replay it onto a world the first run already changed.
+  const begun = useRef(false);
 
   useEffect(() => {
     latest.current = { cues, run };
@@ -49,6 +53,7 @@ export function usePlayer<C extends { readonly delay: number }>(
 
   const start = useCallback(() => {
     halt();
+    setPlaying(true);
     const mine = generation.current;
     const live = (): boolean => generation.current === mine;
 
@@ -72,6 +77,7 @@ export function usePlayer<C extends { readonly delay: number }>(
       }
       const timer = setTimeout(() => {
         whenShown(() => {
+          begun.current = true;
           Promise.resolve()
             .then(() => latest.current.run(cue, index))
             .then(
@@ -92,7 +98,7 @@ export function usePlayer<C extends { readonly delay: number }>(
   }, [halt]);
 
   useEffect(() => {
-    if (autoplay) start();
+    if (autoplay && !begun.current) start();
     else setPlaying(false);
     return halt;
   }, [autoplay, halt, start]);
@@ -102,10 +108,5 @@ export function usePlayer<C extends { readonly delay: number }>(
     setPlaying(false);
   }, [halt]);
 
-  const replay = useCallback(() => {
-    setPlaying(true);
-    start();
-  }, [start]);
-
-  return { playing, stop, replay };
+  return { playing, stop, replay: start };
 }
