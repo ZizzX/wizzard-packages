@@ -19,8 +19,9 @@ import type { Breadcrumb } from '@wizzard-packages/core';
 import type { FlowGraph as Graph, GraphNode } from '@wizzard-packages/core/graph';
 import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
 
-/** A node's corner radius, user units: `--radius-node` in tokens.css. The
- *  group's inner border sits 3 units in, so its radius is 3 less. */
+/** A node's corner radius, in user units: an SVG attribute, so it lives here
+ *  rather than in tokens.css (DESIGN.md, Borders and radii). The group's inner
+ *  border sits 3 units in, so its radius is 3 less. */
 const NODE_RX = 8;
 
 export type NodeState = 'active' | 'error' | 'visited' | 'skipped' | 'done' | 'rest';

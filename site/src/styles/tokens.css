@@ -105,11 +105,9 @@
 
   --radius-control: 10px;
   --radius-panel: 18px;
-  /* Buttons, the install line and segmented controls: a control a visitor
-     presses is a pill, a field they type into is not. */
+  /* Buttons and segmented controls: a control a visitor presses is a pill, a
+     field they type into is not. */
   --radius-pill: 999px;
-  /* A graph node, in user units: the SVG carries it as an attribute. */
-  --radius-node: 8;
 
   --border: 1px;
   --border-selected: 2px;
@@ -291,7 +289,7 @@
      line above redefines as a 12% wash of the accent - so the text composited
      to the same colour as the fill behind it and the current page was
      unreadable at 1:1. `--on-accent` is the token the palette already measures
-     for exactly this pairing: 10.53:1 dark, 6.07:1 light. */
+     for exactly this pairing: 12.65:1 dark, 6.44:1 light. */
   --sl-color-text-invert: var(--on-accent);
   --sl-color-bg: var(--bg);
   --sl-color-bg-nav: var(--bg);

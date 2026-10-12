@@ -235,12 +235,16 @@ or its label, because a touch visitor never hovers anything.
 One border weight at rest (1px, `--line`), one at selection (2px, `--accent`). Radii, by
 what the thing is:
 
-| Radius             | Value   | On                                                          |
-| ------------------ | ------- | ----------------------------------------------------------- |
-| `--radius-pill`    | full    | what a visitor presses: buttons, the install line, segments |
-| `--radius-control` | 10px    | what a visitor types into: fields, selects                  |
-| `--radius-node`    | 8 units | a graph node; a group's inner border sits 3 in, at 5        |
-| `--radius-panel`   | 18px    | panels, code blocks, tables, the graph's frame              |
+| Radius             | Value   | On                                                                                            |
+| ------------------ | ------- | --------------------------------------------------------------------------------------------- |
+| `--radius-pill`    | full    | what a visitor presses: buttons, segments                                                     |
+| `--radius-control` | 10px    | what a visitor types into: fields, selects                                                    |
+| `NODE_RX`          | 8 units | a graph node, an SVG attribute set in `FlowGraph.tsx`; a group's inner border sits 3 in, at 5 |
+| `--radius-panel`   | 18px    | panels, code blocks, tables, the graph's frame                                                |
+
+The install line is a pill only while it is one line. Its radius is half the control height, so
+the command a phone wraps onto two or three lines becomes a rounded box rather than a lozenge
+whose ends crowd the text.
 
 Focus is a 2px `--accent` outline at 2px offset, on every focusable element, never removed —
 including inside the SVG graph, where each node is a focusable group.
@@ -358,7 +362,7 @@ Node shapes carry the node's kind, so shape survives greyscale and colour blindn
 
 | Kind   | Shape                                        |
 | ------ | -------------------------------------------- |
-| step   | rounded rect, `--radius-node`                |
+| step   | rounded rect, `NODE_RX`                      |
 | group  | rect with a second border inset 3px          |
 | repeat | rect with a second rect offset 4px behind it |
 | end    | filled circle, radius 11                     |

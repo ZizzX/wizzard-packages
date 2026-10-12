@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <!-- The graph's own shapes: a step, an edge, the end, in the visited and accent colours. -->
   <style>
-    .step { fill: none; stroke: #5a6b7d; }
-    .end { fill: #0e6e6a; }
+    .step { fill: none; stroke: #5a6b8d; }
+    .end { fill: #1f5fa8; }
     @media (prefers-color-scheme: dark) {
-      .step { stroke: #6e8fa8; }
-      .end { fill: #35d6d0; }
+      .step { stroke: #7d93bd; }
+      .end { fill: #a9d8ff; }
     }
   </style>
   <rect class="step" x="2.5" y="9.5" width="13" height="13" rx="3" stroke-width="3" />
