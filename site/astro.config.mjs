@@ -83,7 +83,8 @@ export default defineConfig({
       // reaches a page's JavaScript.
       expressiveCode: { removeUnusedThemes: false },
       customCss: [
-        '@fontsource-variable/inter-tight',
+        '@fontsource-variable/jost',
+        '@fontsource-variable/atkinson-hyperlegible-next',
         '@fontsource-variable/jetbrains-mono',
         './src/styles/tokens.css',
         './src/styles/site.css',

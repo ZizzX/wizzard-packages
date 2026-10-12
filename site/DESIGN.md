@@ -16,9 +16,12 @@ live in a definition you can read and diff. The site's job is to make that argum
 so the flow graph is the loudest thing on any page it appears on, and everything else stays
 quiet enough for it to be loud.
 
-That rules out a decorated site. No gradients, no glass, no cards stamped on every block, no
-icon standing in for a word. The page is type, rules, and one accent colour that means "this
-is where the flow is now".
+The character is a night editor: a deep blue ground, a large light display face beside
+compact code, and two colours that each mean one thing. A pale blue means "this is where the
+flow is now"; one warm fill means "press this". It still rules out a decorated site. No
+gradients, no glass, no cards stamped on every block, no icon standing in for a word. The one
+licence beyond type and rules is a glow, in three places and in the dark theme only, described
+under **Elevation**.
 
 ### One chassis, many readouts
 
@@ -36,38 +39,39 @@ elevation the graph does not use is either wrong or is telling you the graph is 
 
 ## Typefaces
 
-Two families, self-hosted through `@fontsource`, and the split between them is the design:
+Three families, self-hosted through `@fontsource`, one job each:
 
-| Role    | Family         | Weight | Size / line-height              | Tracking |
-| ------- | -------------- | ------ | ------------------------------- | -------- |
-| display | JetBrains Mono | 500    | `clamp(30px, 5vw, 52px)` / 1.06 | -0.025em |
-| heading | JetBrains Mono | 500    | 20-30px / 1.2                   | -0.015em |
-| body    | Inter Tight    | 400    | 17px / 1.6                      | 0        |
-| code    | JetBrains Mono | 400    | 14px / 1.55                     | 0        |
-| label   | JetBrains Mono | 500    | 11px / 1.4, uppercase           | 0.1em    |
+| Role    | Family                     | Weight | Size / line-height              | Tracking |
+| ------- | -------------------------- | ------ | ------------------------------- | -------- |
+| display | Jost                       | 300    | `clamp(40px, 6vw, 72px)` / 1.04 | -0.022em |
+| heading | Jost                       | 400    | 20-30px / 1.2                   | -0.012em |
+| body    | Atkinson Hyperlegible Next | 400    | 17px / 1.6                      | 0        |
+| code    | JetBrains Mono             | 400    | 14px / 1.55                     | 0        |
+| label   | JetBrains Mono             | 500    | 11px / 1.4, uppercase           | 0.1em    |
 
-**The monospace is the voice and the sans is the prose.** Headings, labels, controls, the
-wordmark, code and every string the library produced are set in JetBrains Mono; running text
-is set in Inter Tight and nothing else is. A site whose headings are monospace reads as an
-instrument rather than as a landing page, which is the whole claim; a documentation page whose
-paragraphs are monospace is read slower than it is admired, which is the whole cost. Both are
-true, so the line is drawn between them rather than around them. Body text is never below
-16px.
+**A light display face beside compact code.** The contrast between a large, thin geometric
+heading and a dense block of monospace is the page's signature: the heading says what the
+library is in a few words, and the code under it is the thing itself. A page title on the
+homepage and on every documentation page is the display weight; section headings are one step
+heavier so they hold at 20px.
 
-Inter Tight is a common choice, and a detector that flags overused typefaces flags it. That is
-a fair reading of the family and the wrong reading of this pairing: the identity here is
-carried by the monospace, and the prose face is asked to disappear. Swapping it for a less
-familiar grotesque would move the distinctiveness to the one place the design does not want it.
-Settled, not overlooked.
+The body face is Atkinson Hyperlegible Next, drawn for legibility: distinct `I`, `l` and `1`,
+open counters, and a documentation page is paragraphs that are read rather than admired. Buttons
+and navigation are set in it too. Body text is never below 16px.
 
-Type scale, in px: 11, 13, 15, 17, 20, 24, 30, 38, 48. Nothing between the steps.
+The reference this direction came from (D-031) sets its display in Raleway. Jost carries the same
+light geometric voice without lifting the reference's own face, so the site reads as related
+rather than copied.
+
+Type scale, in px: 11, 13, 15, 17, 20, 24, 30, 38, 48. Nothing between the steps; the display
+size is its own clamp and sits above the scale.
 
 ### What mono is for
 
-Mono carries the interface and the machine: headings, labels, controls, the wordmark, code,
-identifiers, expressions and measurements - a step id, a `when` expression, a package name, a
-bundle size, an install command, and any string the library itself produced. What it never
-carries is a sentence. The site's own prose is set in sans even when it sits beside code, and
+Mono carries the machine: labels, the wordmark, code, identifiers, expressions and
+measurements - a step id, a `when` expression, a package name, a bundle size, an install
+command, what a visitor types into a field, and any string the library itself produced. What it
+never carries is a sentence, a heading or a button. The site's own prose is set in sans even when it sits beside code, and
 a caption explaining a graph is prose, not a readout.
 
 ### Where the label style may appear
@@ -90,33 +94,36 @@ inside their own scroll container, and never widen the page.
 ## Colour
 
 Dark is the default and light follows the visitor's system preference; both are complete
-palettes, not an inversion. The neutral is cool - an ink ground biased toward the accent - so
-the cyan reads as belonging to the page rather than as sitting on top of it.
+palettes, not an inversion. The neutrals are cut from the ground's blue, so the pale accent
+reads as belonging to the page rather than as sitting on top of it.
 
-| Token              | Dark        | Light       | Use                                          |
-| ------------------ | ----------- | ----------- | -------------------------------------------- |
-| `--bg`             | `#0B0E14`   | `#F4F6F9`   | page ground                                  |
-| `--surface`        | `#10141C`   | `#FFFFFF`   | panels, form wells, code blocks              |
-| `--surface-raised` | `#141926`   | `#EDF1F6`   | the one layer above surface; used sparingly  |
-| `--line`           | `#1E2530`   | `#DCE3EC`   | hairlines, node borders at rest, table rules |
-| `--line-strong`    | `#2C3648`   | `#B9C4D2`   | dividers that separate sections              |
-| `--fg`             | `#E6EDF3`   | `#0B0E14`   | body and headings                            |
-| `--fg-muted`       | `#93A1B4`   | `#4A5666`   | secondary text, captions, labels             |
-| `--fg-faint`       | `#6E7C90`   | `#7A8798`   | non-text only: rules, disabled glyphs        |
-| `--accent`         | `#35D6D0`   | `#0E6E6A`   | the active step, primary action, links       |
-| `--accent-soft`    | `#35D6D01F` | `#0E6E6A14` | fill behind the active node                  |
-| `--on-accent`      | `#06121A`   | `#FFFFFF`   | text on an accent fill                       |
+| Token              | Dark        | Light       | Use                                           |
+| ------------------ | ----------- | ----------- | --------------------------------------------- |
+| `--bg`             | `#070C18`   | `#F5F7FB`   | page ground                                   |
+| `--surface`        | `#0D1527`   | `#FFFFFF`   | panels, form wells, code blocks               |
+| `--surface-raised` | `#121C33`   | `#EDF2FA`   | the one layer above surface; used sparingly   |
+| `--line`           | `#1A2A47`   | `#D9E2F0`   | hairlines, node borders at rest, table rules  |
+| `--line-strong`    | `#26395E`   | `#B5C3DA`   | dividers that separate sections               |
+| `--fg`             | `#E8EEF9`   | `#0A1222`   | body and headings                             |
+| `--fg-muted`       | `#8E9FC2`   | `#4A5878`   | secondary text, captions, labels              |
+| `--fg-faint`       | `#5E6F92`   | `#7888A6`   | non-text only: rules, disabled glyphs         |
+| `--accent`         | `#A9D8FF`   | `#1F5FA8`   | the active step, links, the selected control  |
+| `--accent-soft`    | `#A9D8FF1F` | `#1F5FA814` | fill behind the active node                   |
+| `--on-accent`      | `#07101F`   | `#FFFFFF`   | text on an accent fill                        |
+| `--action`         | `#F2C46B`   | `#ECB54F`   | the fill of the primary action, and only that |
+| `--on-action`      | `#1B1405`   | `#1B1405`   | text on the action fill                       |
 
 `--fg-faint` must never carry text; it exists for rules and for glyphs that repeat a label
 already present, and it clears the 3:1 a non-text mark needs and nothing more. Every other
-pairing clears 4.5:1 in both themes, measured on the rendered page rather than assumed: the
-accent carries text at 10.74 dark and 5.61 light, its solid fill under `--on-accent` at 10.53
-and 6.07, and the lowest reading anywhere in the system is 4.78. `axe` in CI is what keeps it
-that way.
+pairing clears 4.5:1 in both themes: the accent carries text at 12.98 dark and 6.01 light, its
+fill under `--on-accent` at 12.65 and 6.44, the action fill under `--on-action` at 11.21 and
+9.83, and the lowest reading anywhere in the system is 4.84, `--st-skipped` on a raised node in
+the light theme. `axe` in CI is what keeps it that way.
 
-The amber this replaced could not make that claim. White on the light `#B4640F` measured
-4.40:1 under a 15px bold label. It shipped that way and no check caught it, because the check
-was never run on that pair.
+`--action` is never text and never carries white. The amber an earlier palette used as its
+accent did both, and white on the light `#B4640F` measured 4.40:1 under a 15px bold label. It
+shipped that way and no check caught it, because the check was never run on that pair. The warm
+here is a fill under near-black, which is the pairing that measures well in both themes.
 
 ### The ground is flat
 
@@ -167,31 +174,32 @@ problems list and the state diff.
 
 | State   | Token          | Dark      | Light     | Means                                           |
 | ------- | -------------- | --------- | --------- | ----------------------------------------------- |
-| active  | `--st-active`  | `#35D6D0` | `#0E6E6A` | the step the flow is on                         |
-| visited | `--st-visited` | `#6E8FA8` | `#5A6B7D` | entered and left; history, not progress bar     |
+| active  | `--st-active`  | `#A9D8FF` | `#1F5FA8` | the step the flow is on                         |
+| visited | `--st-visited` | `#7D93BD` | `#5A6B8D` | entered and left; history, not progress bar     |
 | blocked | `--st-blocked` | `#F2716F` | `#B3261E` | a validator refused the move                    |
-| skipped | `--st-skipped` | `#7E8AA0` | `#5F6B7A` | `when` evaluated false; drawn dashed            |
-| group   | `--st-group`   | `#8FB4C8` | `#2F6B84` | a repeat group or a sub-flow                    |
+| skipped | `--st-skipped` | `#8A98B8` | `#5D6A84` | `when` evaluated false; drawn dashed            |
+| group   | `--st-group`   | `#C9B6FF` | `#5B46A8` | a repeat group or a sub-flow                    |
 | error   | `--st-error`   | `#F2716F` | `#B3261E` | a thrown error, distinct from a refusal in copy |
 
 ### One fill per viewport
 
-`--accent` appears in three ways, and only one of them is a solid fill: a filled control, a
-2px border with `--accent-soft` behind it, and a line or a word. **At most one solid accent
-fill is visible at a time.** Everything else that wants the accent takes the border form.
+The solid fill of a control belongs to `--action`, and **at most one solid fill is visible at a
+time**. `--accent` appears as a 2px border with `--accent-soft` behind it, or as a line or a
+word, and is not a button's fill.
 
-The rule exists because the accent is also the colour that means "this is where the flow is
-now". A second filled control competes with the graph for the same glance, and the graph is
-what the page is for. The homepage spends its one fill on `Get started`, and the theater form's
+The rule exists because the accent is the colour that means "this is where the flow is now",
+and a filled control competes with the graph for the same glance. Splitting the two colours by
+meaning keeps them from competing: the warm fill says where to press, the pale blue says where
+the flow stands. The homepage spends its one fill on `Get started`, and the theater form's
 `Next` takes the border form: an accent outline over `--accent-soft`, which outranks a neutral
-border without spending the fill twice. Its label is `--fg` rather than the accent, because
-the accent as text on that tint measures under the floor in the light theme.
+border without spending a fill. Its label is `--fg` rather than the accent, because a label
+in the accent colour on its own tint is the pairing most likely to fall under the floor.
 
 `--st-skipped` is a step's colour, not a rule's: it carries the label of a node that is off
 the route, so it clears 4.5:1 against `--surface-raised` in both themes. It deliberately does
 not share `--fg-faint`'s value any more, which is the token that may never carry text.
 
-`--st-group` is the single cool hue on the page. It marks a different class of object —
+`--st-group` is the single violet on the page. It marks a different class of object —
 structure rather than position — and it is never used for emphasis, a button, or a link.
 `blocked` and `error` share a colour because they share an urgency; the wording, not the
 colour, says which one happened.
@@ -203,8 +211,8 @@ mean the same thing — not on the route — with the struck-through outline say
 
 ## Interaction states
 
-The system has no shadows, so a control cannot rise on hover. It changes its line instead,
-and only fills where a line would be wrong.
+Nothing on the page rises on hover. A control changes its line instead, and only fills
+where a line would be wrong; the glow is a resting state, not a hover effect.
 
 | State    | How it is drawn                                                         |
 | -------- | ----------------------------------------------------------------------- |
@@ -224,11 +232,35 @@ or its label, because a touch visitor never hovers anything.
 
 ## Borders, radii, elevation
 
-One border weight at rest (1px, `--line`), one at selection (2px, `--accent`). Radii: 4px on
-controls and nodes, 6px on panels, nothing rounder. There are no shadows: separation comes
-from the surface step and the hairline. Focus is a 2px `--accent` outline at 2px offset, on
-every focusable element, never removed — including inside the SVG graph, where each node is a
-focusable group.
+One border weight at rest (1px, `--line`), one at selection (2px, `--accent`). Radii, by
+what the thing is:
+
+| Radius             | Value   | On                                                          |
+| ------------------ | ------- | ----------------------------------------------------------- |
+| `--radius-pill`    | full    | what a visitor presses: buttons, the install line, segments |
+| `--radius-control` | 10px    | what a visitor types into: fields, selects                  |
+| `--radius-node`    | 8 units | a graph node; a group's inner border sits 3 in, at 5        |
+| `--radius-panel`   | 18px    | panels, code blocks, tables, the graph's frame              |
+
+Focus is a 2px `--accent` outline at 2px offset, on every focusable element, never removed —
+including inside the SVG graph, where each node is a focusable group.
+
+### Elevation
+
+Separation comes from the surface step and the hairline, and there are no drop shadows. The
+one exception is a glow, in exactly three places and in the dark theme only (D-032):
+
+| Token           | On                    | Dark                                     |
+| --------------- | --------------------- | ---------------------------------------- |
+| `--glow-action` | the primary action    | a 1px ring and a 30px halo of `--action` |
+| `--glow-quiet`  | a secondary button    | a 22px halo of `--accent`, inset by 6px  |
+| `--glow-active` | the active graph node | a 7px `drop-shadow` of `--st-active`     |
+
+The three are the two things a visitor acts on and the one place the flow is, so the glow
+follows the same meanings as the colours rather than decorating a surface. On a light ground a
+halo reads as a smudge, so the light theme sets `--glow-quiet` and `--glow-active` to `none`
+and gives the action a ring only, because its fill measures 1.73:1 against the page and needs
+an edge. Nothing else glows: not a panel, a card, a heading or a hover.
 
 Spacing is a 4px grid: 4, 8, 12, 16, 24, 32, 48, 64, 96. Sibling groups are laid out with
 `gap`, not margins.
@@ -326,7 +358,7 @@ Node shapes carry the node's kind, so shape survives greyscale and colour blindn
 
 | Kind   | Shape                                        |
 | ------ | -------------------------------------------- |
-| step   | rounded rect, 4px radius                     |
+| step   | rounded rect, `--radius-node`                |
 | group  | rect with a second border inset 3px          |
 | repeat | rect with a second rect offset 4px behind it |
 | end    | filled circle, radius 11                     |

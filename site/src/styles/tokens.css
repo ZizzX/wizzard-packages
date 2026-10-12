@@ -28,23 +28,33 @@
  * still gets a readable one.
  */
 
+/* Metric-adjusted stand-ins, measured from each face's own tables against
+   Arial, so the swap to the real face does not reflow the page. */
 @font-face {
-  font-family: 'Inter Tight Fallback';
+  font-family: 'Atkinson Hyperlegible Next Fallback';
+  src: local('Arial');
+  size-adjust: 100.6%;
+  ascent-override: 97.8%;
+  descent-override: 31.4%;
+}
+
+@font-face {
+  font-family: 'Jost Fallback';
   src: local('Arial');
   size-adjust: 97%;
-  ascent-override: 98%;
-  descent-override: 24%;
+  ascent-override: 110.4%;
+  descent-override: 38.7%;
 }
 
 :root {
-  /* Two typefaces, and the split between them is the design. The monospace is
-     the voice of the product: headings, labels, controls, code, the wordmark.
-     The sans carries prose only, because a documentation page is paragraphs and
-     a monospace paragraph is read slower than it is admired. The fallback face
-     is metric-adjusted so the swap does not reflow. */
+  /* Three faces, one job each. A large, light display face for headings, a
+     sans built for legibility for prose and controls, and the monospace for
+     everything the machine says: code, labels, identifiers, the graph. The
+     fallback faces are metric-adjusted so the swap does not reflow. */
+  --font-display: 'Jost Variable', 'Jost', 'Jost Fallback', ui-sans-serif, system-ui, sans-serif;
   --font-sans:
-    'Inter Tight Variable', 'Inter Tight', 'Inter Tight Fallback', ui-sans-serif, system-ui,
-    sans-serif;
+    'Atkinson Hyperlegible Next Variable', 'Atkinson Hyperlegible Next',
+    'Atkinson Hyperlegible Next Fallback', ui-sans-serif, system-ui, sans-serif;
   --font-mono:
     'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
@@ -58,17 +68,19 @@
   --text-2xl: 1.875rem;
   --text-3xl: 2.375rem;
   --text-4xl: 3rem;
-  --text-display: clamp(1.875rem, 5vw, 3.25rem);
+  --text-display: clamp(2.5rem, 6vw, 4.5rem);
 
-  --leading-display: 1.06;
+  --leading-display: 1.04;
   --leading-heading: 1.2;
   --leading-body: 1.6;
   --leading-code: 1.55;
 
-  --track-display: -0.025em;
-  --track-heading: -0.015em;
+  --track-display: -0.022em;
+  --track-heading: -0.012em;
   --track-label: 0.1em;
 
+  --weight-display: 300;
+  --weight-heading: 400;
   --weight-body: 400;
   --weight-medium: 500;
   --weight-strong: 600;
@@ -91,8 +103,13 @@
   --space-16: 4rem;
   --space-24: 6rem;
 
-  --radius-control: 4px;
-  --radius-panel: 6px;
+  --radius-control: 10px;
+  --radius-panel: 18px;
+  /* Buttons, the install line and segmented controls: a control a visitor
+     presses is a pill, a field they type into is not. */
+  --radius-pill: 999px;
+  /* A graph node, in user units: the SVG carries it as an attribute. */
+  --radius-node: 8;
 
   --border: 1px;
   --border-selected: 2px;
@@ -146,77 +163,102 @@
   --edge-width: 1.5;
   --graph-max-nodes: 40;
 
-  /* Blueprint: an ink ground, hairlines that read as a drawing rather than a
-     chrome, and one cold accent. Measured on this ground, the accent carries
-     text at 10.74:1 and its fill under `--on-accent` at 10.53:1; the amber it
-     replaced sat at 4.40:1 on the light fill and shipped that way.
+  /* Night editor: a deep blue ground, a pale blue that means "where the flow
+     is now", and one warm fill that means "press this". The neutrals are cut
+     from the same blue as the ground, so the accent belongs to the page
+     rather than sitting on it.
 
      The comment below is a marker: tokens.test.ts finds each palette by it. */
   /* Dark palette (default). */
-  --bg: #0b0e14;
-  --surface: #10141c;
-  --surface-raised: #141926;
-  --line: #1e2530;
-  --line-strong: #2c3648;
-  --fg: #e6edf3;
-  --fg-muted: #93a1b4;
-  --fg-faint: #6e7c90;
-  --accent: #35d6d0;
-  --accent-soft: rgba(53, 214, 208, 0.12);
-  --on-accent: #06121a;
+  --bg: #070c18;
+  --surface: #0d1527;
+  --surface-raised: #121c33;
+  --line: #1a2a47;
+  --line-strong: #26395e;
+  --fg: #e8eef9;
+  --fg-muted: #8e9fc2;
+  --fg-faint: #5e6f92;
+  --accent: #a9d8ff;
+  --accent-soft: rgba(169, 216, 255, 0.12);
+  --on-accent: #07101f;
+  --action: #f2c46b;
+  --on-action: #1b1405;
 
-  --st-active: #35d6d0;
-  --st-visited: #6e8fa8;
+  /* The glow: three places, dark theme only (DESIGN.md, "Elevation"). */
+  --glow-action:
+    0 0 0 1px color-mix(in oklab, var(--action) 70%, transparent),
+    0 0 30px -2px color-mix(in oklab, var(--action) 50%, transparent);
+  --glow-quiet: 0 0 22px -6px color-mix(in oklab, var(--accent) 45%, transparent);
+  --glow-active: drop-shadow(0 0 7px color-mix(in oklab, var(--st-active) 70%, transparent));
+
+  --st-active: #a9d8ff;
+  --st-visited: #7d93bd;
   --st-blocked: #f2716f;
   --st-blocked-soft: rgba(242, 113, 111, 0.12);
-  --st-skipped: #7e8aa0;
-  --st-group: #8fb4c8;
+  --st-skipped: #8a98b8;
+  --st-group: #c9b6ff;
   --st-error: #f2716f;
 }
 
 @media (prefers-color-scheme: light) {
   :root:not([data-theme='dark']) {
-    --bg: #f4f6f9;
+    --bg: #f5f7fb;
     --surface: #ffffff;
-    --surface-raised: #edf1f6;
-    --line: #dce3ec;
-    --line-strong: #b9c4d2;
-    --fg: #0b0e14;
-    --fg-muted: #4a5666;
-    --fg-faint: #7a8798;
-    --accent: #0e6e6a;
-    --accent-soft: rgba(14, 110, 106, 0.08);
+    --surface-raised: #edf2fa;
+    --line: #d9e2f0;
+    --line-strong: #b5c3da;
+    --fg: #0a1222;
+    --fg-muted: #4a5878;
+    --fg-faint: #7888a6;
+    --accent: #1f5fa8;
+    --accent-soft: rgba(31, 95, 168, 0.08);
     --on-accent: #ffffff;
+    --action: #ecb54f;
+    --on-action: #1b1405;
 
-    --st-active: #0e6e6a;
-    --st-visited: #5a6b7d;
+    /* No glow on a light ground: a halo there reads as a smudge. The action
+       keeps a ring, because its fill alone is 1.73:1 against the page. */
+    --glow-action: inset 0 0 0 1px color-mix(in oklab, var(--action) 60%, var(--fg));
+    --glow-quiet: none;
+    --glow-active: none;
+
+    --st-active: #1f5fa8;
+    --st-visited: #5a6b8d;
     --st-blocked: #b3261e;
     --st-blocked-soft: rgba(179, 38, 30, 0.08);
-    --st-skipped: #5f6b7a;
-    --st-group: #2f6b84;
+    --st-skipped: #5d6a84;
+    --st-group: #5b46a8;
     --st-error: #b3261e;
   }
 }
 
 :root[data-theme='light'] {
-  --bg: #f4f6f9;
+  --bg: #f5f7fb;
   --surface: #ffffff;
-  --surface-raised: #edf1f6;
-  --line: #dce3ec;
-  --line-strong: #b9c4d2;
-  --fg: #0b0e14;
-  --fg-muted: #4a5666;
-  --fg-faint: #7a8798;
-  --accent: #0e6e6a;
-  --accent-soft: rgba(14, 110, 106, 0.08);
+  --surface-raised: #edf2fa;
+  --line: #d9e2f0;
+  --line-strong: #b5c3da;
+  --fg: #0a1222;
+  --fg-muted: #4a5878;
+  --fg-faint: #7888a6;
+  --accent: #1f5fa8;
+  --accent-soft: rgba(31, 95, 168, 0.08);
   --on-accent: #ffffff;
+  --action: #ecb54f;
+  --on-action: #1b1405;
 
-  --st-active: #0e6e6a;
-  --st-visited: #5a6b7d;
+  /* No glow on a light ground: a halo there reads as a smudge. The action
+     keeps a ring, because its fill alone is 1.73:1 against the page. */
+  --glow-action: inset 0 0 0 1px color-mix(in oklab, var(--action) 60%, var(--fg));
+  --glow-quiet: none;
+  --glow-active: none;
+
+  --st-active: #1f5fa8;
+  --st-visited: #5a6b8d;
   --st-blocked: #b3261e;
   --st-blocked-soft: rgba(179, 38, 30, 0.08);
-  --st-skipped: #5f6b7a;
-  --st-group: #2f6b84;
+  --st-skipped: #5d6a84;
+  --st-group: #5b46a8;
   --st-error: #b3261e;
 }
 

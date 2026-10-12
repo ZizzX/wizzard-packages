@@ -54,7 +54,12 @@ describe('the design system and its tokens', () => {
     };
 
     const colours = (source: string): Set<string> =>
-      new Set(group1(source, /^\s*(--(?:bg|surface|line|fg|accent|on-accent|st)[a-z-]*)\s*:/gm));
+      new Set(
+        group1(
+          source,
+          /^\s*(--(?:bg|surface|line|fg|accent|on-accent|action|on-action|glow|st)[a-z-]*)\s*:/gm
+        )
+      );
 
     const dark = colours(block(/\/\* Dark palette \(default\)\. \*\//));
     const media = colours(block(/@media \(prefers-color-scheme: light\)/));
