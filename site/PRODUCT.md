@@ -164,11 +164,12 @@ tested code or a measurement taken at build. A grid of icons and slogans is stil
 
 Real numbers that exist and may be shown:
 
-- Bundle sizes, gzip, per entry: measured by size-limit when the site is built and drawn
-  on the homepage. A size typed into a page goes stale with the next change to the engine,
-  as every one this file used to list did.
+- Bundle sizes, gzip: what calling `createWizard` costs and what each runtime import adds to
+  it, measured by size-limit when the site is built and drawn on the homepage. A size typed
+  into a page goes stale with the next change to the engine, as every one this file used to
+  list did.
 - Supported versions, from the packages' own `peerDependencies` and `engines`.
-- 239 engine tests, including property tests.
+- Engine tests, including property tests; count them from a test run rather than from here.
 - Monthly npm downloads at the time the compat decision was made: core 37, react 35, vue 7.
 - Contrast at least 4.5:1 for text and 3:1 for state-carrying borders, gated by `axe` in CI.
 

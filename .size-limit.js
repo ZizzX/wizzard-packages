@@ -12,6 +12,38 @@
  * Today core is 4.09 kB while react is 8.48 kB — the framework layer is twice
  * the size of the engine it wraps, which is the duplication v1 removes.
  */
+import { fileURLToPath } from 'node:url';
+
+/**
+ * Not budgets: the homepage's size card. These carry no limit and never fail.
+ *
+ * The card draws what each import adds to an application that already calls
+ * `createWizard`, and an entry measured alone does not say that: `groups`
+ * alone is 4.18 kB, most of it the expression evaluator and resolver it shares
+ * with core. So each of these bundles `createWizard` with one more import, and
+ * site/src/lib/evidence.ts subtracts `homepage createWizard` from it. The
+ * imports are the ones the tested quickstart makes.
+ *
+ * The packages import core by its package name, which would resolve to the
+ * built `dist` and put a second engine in the bundle; the alias points it at
+ * the source the application half already holds, so the shared code is
+ * counted once.
+ */
+const engine = { 'packages/core/src/v1/index.ts': '{ createWizard }' };
+const fromSource = (config) => ({
+  ...config,
+  alias: {
+    '@wizzard-packages/core': fileURLToPath(new URL('packages/core/src/v1', import.meta.url)),
+  },
+});
+const homepage = (name, imports = {}, ignore = []) => ({
+  name: `homepage ${name}`,
+  import: { ...engine, ...imports },
+  ignore,
+  gzip: true,
+  modifyEsbuildConfig: fromSource,
+});
+
 export default [
   // The v1 engine, measured from source while it is built. A ratchet like the
   // rest: it sits just above what is there now, so growth has to be deliberate.
@@ -508,4 +540,23 @@ export default [
   // packages 0.x had. Measured from source like the rest of v1; the schema
   // library itself is the consumer's, never bundled here.
   { name: 'validate', path: 'packages/validate/src/index.ts', limit: '400 B', gzip: true },
+
+  // The homepage's size card; see `homepage` above. evidence.ts names each one.
+  homepage('createWizard'),
+  homepage('+ groups', { 'packages/core/src/v1/groups.ts': '{ groups }' }),
+  homepage('+ snapshot', {
+    'packages/core/src/v1/snapshot.ts': '{ toSnapshot, decodeSnapshot }',
+  }),
+  homepage('+ persist', { 'packages/plugins/src/persist.ts': '{ persist }' }),
+  homepage('+ validate', { 'packages/validate/src/index.ts': '{ schema }' }),
+  homepage(
+    '+ react',
+    { 'packages/react/src/v1/index.tsx': '{ WizardProvider, useField, useNavigation, useStep }' },
+    ['react', 'react-dom']
+  ),
+  homepage(
+    '+ vue',
+    { 'packages/vue/src/v1/index.ts': '{ provideWizard, useField, useNavigation, useStep }' },
+    ['vue']
+  ),
 ];

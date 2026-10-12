@@ -6,6 +6,16 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
+    "@wizzard-packages/site#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/.size-limit.js",
+        "$TURBO_ROOT$/packages/*/src/**",
+        "$TURBO_ROOT$/packages/*/package.json"
+      ]
+    },
     "type-check": {
       "dependsOn": ["^build"],
       "outputs": []

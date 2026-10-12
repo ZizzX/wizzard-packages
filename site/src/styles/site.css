@@ -562,7 +562,7 @@ h1#_top {
 /* Mono runs wider than the sans at one size, so a package name in a sentence
    is set a step down to sit at the prose's height. */
 .card p code {
-  font-size: 0.875em;
+  font-size: var(--text-sm);
 }
 
 /* The link closes the card wherever its row ends, so the links of a row line up. */
@@ -580,13 +580,8 @@ h1#_top {
   border-radius: var(--radius-control);
 }
 
-.card-code .tag {
+.card-code .eyebrow {
   padding: var(--space-2) var(--space-3) 0;
-  font-family: var(--font-mono);
-  font-size: var(--text-label);
-  letter-spacing: var(--track-label);
-  text-transform: uppercase;
-  color: var(--fg-muted);
 }
 
 .card-code pre,
@@ -601,12 +596,13 @@ h1#_top {
 
 /* What the code printed, set apart from the code the way a console is: a rule
    at the start of the lines and the muted ink. Wrapped, since a message is one
-   long line and the card is narrow. */
+   long line and the card is narrow. A border rather than an inset shadow, which
+   forced colours would drop. */
 .card-output {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   color: var(--fg-muted);
-  box-shadow: inset 2px 0 0 var(--line-strong);
+  border-inline-start: var(--border-selected) solid var(--line-strong);
 }
 
 /* One series, so one ink and no legend: the name and the number print beside
@@ -635,8 +631,8 @@ h1#_top {
    from the same baseline. */
 .bar {
   inline-size: calc(var(--share) * 100%);
-  block-size: 8px;
-  border-radius: 0 4px 4px 0;
+  block-size: var(--space-2);
+  border-radius: 0 var(--space-1) var(--space-1) 0;
   background: var(--fg-muted);
 }
 
@@ -662,14 +658,6 @@ h1#_top {
   margin: 0;
   padding-top: var(--space-4);
   border-top: var(--border) solid var(--line);
-}
-
-.evidence-strip dt {
-  font-family: var(--font-mono);
-  font-size: var(--text-label);
-  letter-spacing: var(--track-label);
-  text-transform: uppercase;
-  color: var(--fg-muted);
 }
 
 .evidence-strip dd {

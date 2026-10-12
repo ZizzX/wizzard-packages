@@ -541,10 +541,14 @@ hairline, a mono label where something needs naming, state on the border.
     typed by hand. Two columns where the shell is wide, one on a phone; a card that quotes a
     whole file takes the row. Its code sits on the card's surface inside a hairline, without a
     copy control, because an excerpt is not meant to be pasted alone: the card's link, at its
-    foot, goes to the page that has the whole thing. Output is set apart by a rule at the start
-    of its lines, the way the theater's console is. The size card draws one bar per entry on
-    one scale, largest first, the name and the measured size printed beside each in text
-    colours; the bar is `--fg-muted`, neither the accent nor the warm fill.
+    foot, goes to the page that has the whole thing. The code well takes `--radius-control`: a
+    block nested in a panel takes the smaller radius, so it does not echo the card's corner from
+    a few pixels inside it. Output is set apart by a rule at the start of its lines, the way the
+    theater's console is. The size card draws one bar per runtime import on one scale, largest
+    first: core as what calling `createWizard` costs, every other import as what it adds to
+    that, never an entry measured alone, which counts the code it shares with core again. The
+    name and the measured size print beside each bar in text colours; the bar is `--fg-muted`,
+    neither the accent nor the warm fill.
 
 Every component in both tiers ships its rest, hover, active, focus and disabled states, and
 those states come from the table under **Interaction states** rather than from the component.
@@ -553,10 +557,10 @@ those states come from the table under **Interaction states** rather than from t
 
 This list is a contract, and part of it is still ahead of the code. Built today: the graph node,
 the node condition, the table mirror, the theater, the flow row, the evidence strip and the
-feature card on the homepage, and the page header on every page, all but its framework mode. Specified here and built with the surfaces that need them: the
-scrubber and state-diff panel with the inspector, and the code block, install line, framework
-mode, example frame, spec table, callout, docs rail and search with the documentation and
-examples pages.
+feature card on the homepage, and the page header on every page, all but its framework mode.
+Specified here and built with the surfaces that need them: the scrubber and state-diff panel
+with the inspector, and the code block, install line, framework mode, example frame, spec
+table, callout, docs rail and search with the documentation and examples pages.
 
 A component in the second group is not a suggestion. It is written down first so that the
 page which needs it inherits a decision rather than making a new one, which is the failure

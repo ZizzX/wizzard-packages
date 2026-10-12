@@ -13,12 +13,12 @@ import { Code } from 'astro:components';
 import { bundleSizes, excerpt, supported } from '../lib/evidence';
 import { problems } from '../evidence/check';
 import check from '../evidence/check.ts?raw';
-import reactApp from '../../../examples/quickstart/src/App.tsx?raw';
-import vueWizard from '../../../examples/quickstart/src/Wizard.vue?raw';
-import headless from '../../../examples/quickstart/src/headless.ts?raw';
-import headlessOut from '../../../examples/quickstart/src/headless.out.txt?raw';
-import validate from '../../../examples/quickstart/src/validate.ts?raw';
-import validateOut from '../../../examples/quickstart/src/validate.out.txt?raw';
+import reactApp from '@examples/quickstart/src/App.tsx?raw';
+import vueWizard from '@examples/quickstart/src/Wizard.vue?raw';
+import headless from '@examples/quickstart/src/headless.ts?raw';
+import headlessOut from '@examples/quickstart/src/headless.out.txt?raw';
+import validate from '@examples/quickstart/src/validate.ts?raw';
+import validateOut from '@examples/quickstart/src/validate.out.txt?raw';
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const sizes = bundleSizes();
@@ -28,7 +28,7 @@ const hooks = (source: string) => excerpt(source, '= useStep()', '= useNavigatio
 const refusal = problems[0]?.message;
 if (refusal === undefined) {
   throw new Error(
-    'validateFlow found nothing wrong with site/src/evidence/check.ts. The homepage card says it refuses that flow. Put the unknown-root path back, or rewrite the card.'
+    'validateFlow found nothing wrong with site/src/evidence/check.ts. The homepage card says it catches that flow. Put the unknown-root path back, or rewrite the card.'
   );
 }
 ---
@@ -40,11 +40,12 @@ if (refusal === undefined) {
     <article class="card">
       <h3>Small, and measured on every build</h3>
       <p>
-        Each entry gzipped, as size-limit measured it when this page was built. An application
-        ships core and one binding; groups, session, snapshot, persist and graph are imports of
-        their own, paid for only by a flow that uses them.
+        Gzipped, as size-limit measured it when this page was built. Core is what calling
+        <code>createWizard</code> costs; every other bar is what one more import adds to that
+        application, with the code it shares with core counted once. persist stores through
+        snapshot, so its bar includes it.
       </p>
-      <ul class="bars">
+      <ul class="bars" role="list" aria-label="Gzipped size by import">
         {
           sizes.map((bar) => (
             <li style={`--share: ${bar.share}`}>
@@ -60,15 +61,15 @@ if (refusal === undefined) {
     <article class="card">
       <h3>The same hooks in React and Vue</h3>
       <p>
-        One engine under both bindings, so a hook has the same name and the same fields in each.
-        Vue hands the values out as refs.
+        The two bindings export the same hook names over one engine. The two below, quoted from
+        the quickstart, return the same fields in each; Vue hands them out as refs.
       </p>
       <div class="card-code">
-        <span class="tag">react</span>
+        <span class="eyebrow">react</span>
         <Code code={hooks(reactApp)} lang="tsx" themes={themes} defaultColor={false} wrap />
       </div>
       <div class="card-code">
-        <span class="tag">vue</span>
+        <span class="eyebrow">vue</span>
         <Code code={hooks(vueWizard)} lang="ts" themes={themes} defaultColor={false} wrap />
       </div>
       <a href={`${base}/docs/hooks/`}>The hooks, one by one</a>
@@ -77,8 +78,8 @@ if (refusal === undefined) {
     <article class="card">
       <h3>Validation by the schema you already have</h3>
       <p>
-        <code>@wizzard-packages/validate</code> takes any Standard Schema: Zod, Valibot, ArkType, Effect
-        or Yup. A refused step names each field in the schema's own words.
+        <code>@wizzard-packages/validate</code> takes any Standard Schema; its tests run Zod and
+        Yup. A refused step names each field in the schema's own words.
       </p>
       <div class="card-code">
         <Code
@@ -113,11 +114,11 @@ if (refusal === undefined) {
     </article>
 
     <article class="card card-wide">
-      <h3>A broken flow is refused before it runs</h3>
+      <h3>A broken flow, caught before it runs</h3>
       <p>
         A flow from a backend is JSON, and JSON carries no types. This one would run, and Company
-        would never show. <code>validateFlow</code> says why; its answer below came from the
-        engine when this page was built.
+        would never show. <code>validateFlow</code> says why when the application asks it; its
+        answer below came from the engine when this page was built.
       </p>
       <div class="card-pair">
         <div class="card-code">
@@ -130,7 +131,7 @@ if (refusal === undefined) {
   </div>
 
   <dl class="evidence-strip">
-    <dt class="label">Supports</dt>
+    <dt class="eyebrow">Supports</dt>
     {
       supported.map(({ name, value }) => (
         <dd>

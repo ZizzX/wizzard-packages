@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { SHOWN, bars, excerpt, formatBytes, lowest, supported } from './evidence';
+import {
+  ENGINE,
+  SHOWN,
+  bars,
+  excerpt,
+  formatBytes,
+  lowest,
+  parseMeasurement,
+  supported,
+} from './evidence';
 
 describe('formatBytes', () => {
   it('prints bytes under a thousand and decimal kilobytes from there', () => {
@@ -8,23 +17,45 @@ describe('formatBytes', () => {
     expect(formatBytes(999)).toBe('999 B');
     expect(formatBytes(1000)).toBe('1.00 kB');
     expect(formatBytes(7165)).toBe('7.17 kB');
+    // 1.815 is 1.81499... in binary, which toFixed alone rounds down.
+    expect(formatBytes(1815)).toBe('1.82 kB');
   });
 });
 
 describe('bars', () => {
-  const measured = Object.keys(SHOWN).map((name, at) => ({ name, size: 100 * (at + 1) }));
+  // The engine at 7000 B, and each import adding 100, 200, ... on top of it.
+  const measured = [
+    { name: ENGINE, size: 7000 },
+    ...Object.values(SHOWN).map((name, at) => ({ name, size: 7000 + 100 * (at + 1) })),
+  ];
 
-  it('draws every shown entry, largest first, on one scale', () => {
+  it('draws core, then what each import adds to it, largest first, on one scale', () => {
     const drawn = bars([...measured, { name: 'devtools panel', size: 99_999 }]);
-    expect(drawn.map((bar) => bar.name)).toEqual(Object.values(SHOWN).reverse());
-    expect(drawn[0]).toMatchObject({ size: 900, label: '900 B', share: 1 });
-    expect(drawn.at(-1)?.share).toBeCloseTo(100 / 900);
+    expect(drawn.map((bar) => bar.name)).toEqual(['core', ...Object.keys(SHOWN).reverse()]);
+    expect(drawn[0]).toMatchObject({ size: 7000, label: '7.00 kB', share: 1 });
+    expect(drawn[1]).toMatchObject({ size: 600, label: '600 B' });
+    expect(drawn.at(-1)?.share).toBeCloseTo(100 / 7000);
   });
 
-  it('fails on a shown entry the measurement lacks, naming it', () => {
-    expect(() => bars(measured.filter((entry) => entry.name !== 'vue-v1'))).toThrow(
-      /no entry named "vue-v1"/
+  it('fails on an entry the measurement lacks or could not size, naming it', () => {
+    expect(() => bars(measured.filter((entry) => entry.name !== 'homepage + vue'))).toThrow(
+      /no size for "homepage \+ vue"/
     );
+    expect(() => bars(measured.map((e) => (e.name === ENGINE ? { name: ENGINE } : e)))).toThrow(
+      /no size for "homepage createWizard"/
+    );
+  });
+
+  it("passes on size-limit's own error rather than a TypeError", () => {
+    expect(() => bars({ error: 'Error: esbuild failed' })).toThrow(/esbuild failed/);
+    expect(() => bars(null)).toThrow(/printed no list/);
+  });
+});
+
+describe('parseMeasurement', () => {
+  it('reads JSON and quotes what was printed when it is not', () => {
+    expect(parseMeasurement('[]')).toEqual([]);
+    expect(() => parseMeasurement('ERR_PNPM_NO_SCRIPT')).toThrow(/ERR_PNPM_NO_SCRIPT/);
   });
 });
 
