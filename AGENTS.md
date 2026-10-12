@@ -167,7 +167,7 @@ pnpm -F @wizzard-packages/core build                 # rebuild what the bindings
 The bindings import core's `dist`, not its source, so a core change is invisible to their
 tests until `build` runs.
 
-**Supported versions.** Node >= 20.11, pnpm 10, TypeScript >= 5, React >= 18, Vue >= 3.3.
+**Supported versions.** Node >= 20.11, pnpm 10, TypeScript >= 5, React >= 18, Vue >= 3.5.
 
 `pnpm size` budgets are a ratchet: they sit just above current size, so any growth fails the
 build. Raise a budget only with a stated reason in the PR.

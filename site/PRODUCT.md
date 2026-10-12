@@ -72,7 +72,7 @@ invented.
 
 ## Operating Context
 
-Supported: Node 20.11+, TypeScript 5+, React 18+, Vue 3.3+. ESM and CJS, types for both.
+Supported: Node 20.11+, TypeScript 5+, React 18+, Vue 3.5+. ESM and CJS, types for both.
 
 Examples that exist: `examples/quickstart` (the reference example, embedded in the README,
 run by CI on both bindings), `examples/next-app` (the devtools panel in Next.js, plus a
