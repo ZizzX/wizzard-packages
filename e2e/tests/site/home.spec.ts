@@ -162,8 +162,20 @@ test.describe('the evidence', () => {
     } catch (error) {
       stdout = (error as { stdout?: string }).stdout ?? '';
     }
-    const entries = JSON.parse(stdout) as { name: string; size: number }[];
-    return new Map(entries.map((entry) => [entry.name, entry.size]));
+    let entries: unknown;
+    try {
+      entries = JSON.parse(stdout);
+    } catch {
+      entries = undefined;
+    }
+    if (!Array.isArray(entries)) {
+      throw new Error(
+        `size-limit gave the evidence test no measurements: ${stdout.slice(0, 200) || 'it printed nothing'}. The test compares the size card with them. Run pnpm exec size-limit --json from the repository root and fix what it reports.`
+      );
+    }
+    return new Map(
+      (entries as { name: string; size: number }[]).map((entry) => [entry.name, entry.size])
+    );
   }
 
   test('draws what each import adds to core, as size-limit measures it now', async ({ page }) => {
@@ -192,12 +204,13 @@ test.describe('the evidence', () => {
     expect(bars.map((bar) => bar.name).sort()).toEqual([...expected.keys()].sort());
     for (const bar of bars) expect(bar.value).toBe(bytes(expected.get(bar.name) ?? Number.NaN));
 
-    // Largest first, and every bar to one scale: its length is its share of core's.
+    // Largest first, and every bar to one scale: its length is its share of core's,
+    // compared in pixels so a short bar is held as tightly as a long one.
     const widths = bars.map((bar) => bar.width);
     expect(widths).toEqual([...widths].sort((a, b) => b - a));
     const core = bars.find((bar) => bar.name === 'core')?.width ?? Number.NaN;
     for (const bar of bars) {
-      expect(bar.width / core).toBeCloseTo((expected.get(bar.name) ?? Number.NaN) / engine, 2);
+      expect(bar.width).toBeCloseTo((core * (expected.get(bar.name) ?? Number.NaN)) / engine, 0);
     }
   });
 

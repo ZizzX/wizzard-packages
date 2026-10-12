@@ -58,8 +58,8 @@ each stated in the README:
   validator that resolves after Back cannot move the visitor. `next()` and `back()` return
   a result (`{ ok: false, reason: 'blocked', by: 'age-check' }`), never a bare boolean.
 - **One engine, two bindings.** Each binding is a thin layer over the same engine; the
-  homepage draws what each measures on the build it is part of. A shared contract suite in
-  `contract/` is what stops the two drifting.
+  homepage draws what each adds to the engine, measured on the build it is part of. A shared
+  contract suite in `contract/` is what stops the two drifting.
 - **The flow is JSON.** Definition and state carry no functions, classes or `Set`s, so
   `JSON.stringify(flow)` always round-trips. That is what makes the graph, server-driven
   flows and session replay possible at all.

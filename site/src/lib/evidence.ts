@@ -20,8 +20,9 @@ export const ENGINE = 'homepage createWizard';
 /**
  * The bars after core's, by the name the card gives each and the `.size-limit.js`
  * entry that bundles `createWizard` with that one import. A bar is the
- * difference the import makes. Development tools - devtools, validate-flow,
- * graph, session, expr - are left out: they are not what an application ships.
+ * difference the import makes. Left out: devtools, validate-flow, graph and
+ * session, which .size-limit.js calls development concerns, and expr, the
+ * builder that writes a flow's JSON and that a flow arriving as JSON never ships.
  */
 export const SHOWN: Readonly<Record<string, string>> = {
   react: 'homepage + react',
@@ -73,9 +74,18 @@ export function bars(measured: unknown): Bar[] {
     return value;
   };
   const engine = size(ENGINE);
+  const added = (name: string, entry: string) => {
+    const difference = size(entry) - engine;
+    if (difference <= 0) {
+      throw new Error(
+        `"${entry}" measured ${size(entry)} B, no more than createWizard's ${engine} B. The size card would draw ${name} as costing nothing, which is not what it measures. Check that the entry imports ${name} and that .size-limit.js builds both sides alike.`
+      );
+    }
+    return difference;
+  };
   const rows = [
     { name: 'core', size: engine },
-    ...Object.entries(SHOWN).map(([name, entry]) => ({ name, size: size(entry) - engine })),
+    ...Object.entries(SHOWN).map(([name, entry]) => ({ name, size: added(name, entry) })),
   ];
   const largest = Math.max(...rows.map((row) => row.size));
   return rows

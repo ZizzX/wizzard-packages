@@ -46,6 +46,11 @@ describe('bars', () => {
     );
   });
 
+  it('refuses an import that adds nothing, rather than drawing an empty bar', () => {
+    const flat = measured.map((e) => (e.name === 'homepage + vue' ? { ...e, size: 7000 } : e));
+    expect(() => bars(flat)).toThrow(/"homepage \+ vue" measured 7000 B, no more than/);
+  });
+
   it("passes on size-limit's own error rather than a TypeError", () => {
     expect(() => bars({ error: 'Error: esbuild failed' })).toThrow(/esbuild failed/);
     expect(() => bars(null)).toThrow(/printed no list/);

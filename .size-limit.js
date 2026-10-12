@@ -22,18 +22,28 @@ import { fileURLToPath } from 'node:url';
  * alone is 4.18 kB, most of it the expression evaluator and resolver it shares
  * with core. So each of these bundles `createWizard` with one more import, and
  * site/src/lib/evidence.ts subtracts `homepage createWizard` from it. The
- * imports are the ones the tested quickstart makes.
+ * bindings, `validate` and `persist` import what the tested quickstart does;
+ * `groups` and `snapshot`, what the examples that use them do.
  *
  * The packages import core by its package name, which would resolve to the
- * built `dist` and put a second engine in the bundle; the alias points it at
- * the source the application half already holds, so the shared code is
- * counted once.
+ * built `dist` and put a second engine in the bundle; the alias points each
+ * specifier they use at the source the application half already holds, so the
+ * shared code is counted once. A specifier not listed resolves through the
+ * nearest one and fails to build, which is the point: list it here.
+ *
+ * ESM on both sides of the subtraction. As an IIFE, an entry with an external
+ * - react, vue - carries a require helper that size-limit corrects for with a
+ * different constant than the baseline's, and the difference came out 54 B
+ * short for react.
  */
 const engine = { 'packages/core/src/v1/index.ts': '{ createWizard }' };
+const source = (file) => fileURLToPath(new URL(`packages/core/src/v1/${file}`, import.meta.url));
 const fromSource = (config) => ({
   ...config,
+  format: 'esm',
   alias: {
-    '@wizzard-packages/core': fileURLToPath(new URL('packages/core/src/v1', import.meta.url)),
+    '@wizzard-packages/core': source('index.ts'),
+    '@wizzard-packages/core/snapshot': source('snapshot.ts'),
   },
 });
 const homepage = (name, imports = {}, ignore = []) => ({
