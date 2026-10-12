@@ -1,3 +1,5 @@
+import { execFileSync } from 'node:child_process';
+
 import { expect, test, type Page } from '@playwright/test';
 
 /**
@@ -131,3 +133,60 @@ for (const colorScheme of ['light', 'dark'] as const) {
     });
   });
 }
+
+/**
+ * The evidence under the rows (site/src/components/Evidence.astro). Its sizes
+ * are measured when the site is built, so this measures again and compares: a
+ * bar drawn from a stale number, or out of scale with its neighbours, fails.
+ */
+test.describe('the evidence', () => {
+  const bytes = (size: number) => (size < 1000 ? `${size} B` : `${(size / 1000).toFixed(2)} kB`);
+
+  test('draws what size-limit measures, largest first and to scale', async ({ page }) => {
+    const measured = new Map(
+      (
+        JSON.parse(
+          execFileSync('pnpm', ['exec', 'size-limit', '--json'], { encoding: 'utf8' })
+        ) as {
+          name: string;
+          size: number;
+        }[]
+      ).map((entry) => [entry.name, entry.size])
+    );
+    await page.goto('');
+    const bars = await page.locator('.bars li').evaluateAll((items) =>
+      items.map((item) => ({
+        name: item.querySelector('.bar-name')?.textContent,
+        value: item.querySelector('.bar-value')?.textContent,
+        width: item.querySelector('.bar')?.getBoundingClientRect().width ?? 0,
+      }))
+    );
+    const bar = (name: string) => bars.find((row) => row.name === name);
+
+    // The four packages an application installs, by their entry in .size-limit.js.
+    for (const [name, entry] of [
+      ['core', 'core-v1'],
+      ['react', 'react-v1'],
+      ['vue', 'vue-v1'],
+      ['validate', 'validate'],
+    ] as const) {
+      expect(bar(name)?.value).toBe(bytes(measured.get(entry) ?? -1));
+    }
+
+    const widths = bars.map((row) => row.width);
+    expect(widths).toEqual([...widths].sort((a, b) => b - a));
+    expect((bar('vue')?.width ?? 0) / (bar('core')?.width ?? 1)).toBeCloseTo(
+      (measured.get('vue-v1') ?? 0) / (measured.get('core-v1') ?? 1),
+      2
+    );
+  });
+
+  test('states the versions the packages declare', async ({ page }) => {
+    await page.goto('');
+    await expect(page.locator('.evidence-strip dd')).toHaveText([
+      'React >= 18',
+      'Vue >= 3.5',
+      'Node >= 20.11',
+    ]);
+  });
+});

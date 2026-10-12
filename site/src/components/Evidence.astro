@@ -1,0 +1,142 @@
+---
+/**
+ * The homepage's evidence: the feature cards and the strip under them.
+ *
+ * Nothing on it is typed by hand. The sizes are size-limit's, measured when the
+ * site is built; the versions are the packages' own; every line of code is
+ * quoted from a file a test runs, and every output is that file's recorded
+ * output or, for the flow check, what the engine returned during the build.
+ * Ships no JavaScript.
+ */
+import { Code } from 'astro:components';
+
+import { bundleSizes, excerpt, supported } from '../lib/evidence';
+import { problems } from '../evidence/check';
+import check from '../evidence/check.ts?raw';
+import reactApp from '../../../examples/quickstart/src/App.tsx?raw';
+import vueWizard from '../../../examples/quickstart/src/Wizard.vue?raw';
+import headless from '../../../examples/quickstart/src/headless.ts?raw';
+import headlessOut from '../../../examples/quickstart/src/headless.out.txt?raw';
+import validate from '../../../examples/quickstart/src/validate.ts?raw';
+import validateOut from '../../../examples/quickstart/src/validate.out.txt?raw';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const sizes = bundleSizes();
+const themes = { light: 'github-light-default', dark: 'github-dark-default' } as const;
+
+const hooks = (source: string) => excerpt(source, '= useStep()', '= useNavigation()');
+const refusal = problems[0]?.message;
+if (refusal === undefined) {
+  throw new Error(
+    'validateFlow found nothing wrong with site/src/evidence/check.ts. The homepage card says it refuses that flow. Put the unknown-root path back, or rewrite the card.'
+  );
+}
+---
+
+<section class="evidence" aria-labelledby="evidence-title">
+  <h2 id="evidence-title">The rest of the library</h2>
+
+  <div class="cards">
+    <article class="card">
+      <h3>Small, and measured on every build</h3>
+      <p>
+        Each entry gzipped, as size-limit measured it when this page was built. An application
+        ships core and one binding; groups, session, snapshot, persist and graph are imports of
+        their own, paid for only by a flow that uses them.
+      </p>
+      <ul class="bars">
+        {
+          sizes.map((bar) => (
+            <li style={`--share: ${bar.share}`}>
+              <span class="bar-name">{bar.name}</span>
+              <span class="bar" aria-hidden="true" />
+              <span class="bar-value">{bar.label}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </article>
+
+    <article class="card">
+      <h3>The same hooks in React and Vue</h3>
+      <p>
+        One engine under both bindings, so a hook has the same name and the same fields in each.
+        Vue hands the values out as refs.
+      </p>
+      <div class="card-code">
+        <span class="tag">react</span>
+        <Code code={hooks(reactApp)} lang="tsx" themes={themes} defaultColor={false} wrap />
+      </div>
+      <div class="card-code">
+        <span class="tag">vue</span>
+        <Code code={hooks(vueWizard)} lang="ts" themes={themes} defaultColor={false} wrap />
+      </div>
+      <a href={`${base}/docs/hooks/`}>The hooks, one by one</a>
+    </article>
+
+    <article class="card">
+      <h3>Validation by the schema you already have</h3>
+      <p>
+        <code>@wizzard-packages/validate</code> takes any Standard Schema: Zod, Valibot, ArkType, Effect
+        or Yup. A refused step names each field in the schema's own words.
+      </p>
+      <div class="card-code">
+        <Code
+          code={excerpt(validate, 'tripRules: schema(')}
+          lang="ts"
+          themes={themes}
+          defaultColor={false}
+          wrap
+        />
+      </div>
+      <pre class="card-output">{excerpt(validateOut, 'errors: {', '},')}</pre>
+      <a href={`${base}/docs/validation/`}>Validation</a>
+    </article>
+
+    <article class="card">
+      <h3>Runs without a framework</h3>
+      <p>
+        The engine is a plain object. A test or a script makes the same calls a component makes,
+        with no DOM to render.
+      </p>
+      <div class="card-code">
+        <Code
+          code={excerpt(headless, 'await wizard.start();', 'console.log(`name: ')}
+          lang="ts"
+          themes={themes}
+          defaultColor={false}
+          wrap
+        />
+      </div>
+      <pre class="card-output">{excerpt(headlessOut, 'step: name', 'name: Ada')}</pre>
+      <a href={`${base}/docs/testing/`}>Testing a flow</a>
+    </article>
+
+    <article class="card card-wide">
+      <h3>A broken flow is refused before it runs</h3>
+      <p>
+        A flow from a backend is JSON, and JSON carries no types. This one would run, and Company
+        would never show. <code>validateFlow</code> says why; its answer below came from the
+        engine when this page was built.
+      </p>
+      <div class="card-pair">
+        <div class="card-code">
+          <Code code={check.trimEnd()} lang="ts" themes={themes} defaultColor={false} wrap />
+        </div>
+        <pre class="card-output">{refusal}</pre>
+      </div>
+      <a href={`${base}/docs/server-driven/`}>Flows from a server</a>
+    </article>
+  </div>
+
+  <dl class="evidence-strip">
+    <dt class="label">Supports</dt>
+    {
+      supported.map(({ name, value }) => (
+        <dd>
+          {name} <span class="value">{value}</span>
+        </dd>
+      ))
+    }
+  </dl>
+</section>
