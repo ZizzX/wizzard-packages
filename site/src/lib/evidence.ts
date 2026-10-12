@@ -43,7 +43,7 @@ export interface Bar {
   share: number;
 }
 
-/** Bytes the way size-limit prints them: decimal kilobytes, two places. */
+/** Bytes as the card prints them: decimal kilobytes to two places, rounded half up. */
 export function formatBytes(bytes: number): string {
   return bytes < 1000 ? `${bytes} B` : `${(Math.round(bytes / 10) / 100).toFixed(2)} kB`;
 }
