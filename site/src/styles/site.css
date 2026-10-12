@@ -30,20 +30,28 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* The monospace is the interface and the machine; the sans is prose and only
-   prose. A form control inherits neither by default - a bare `<button>` was
-   rendering in Arial under both typefaces - so the reset says so explicitly. */
+/* What a visitor types is data, so a field and a bare control speak mono; a
+   button the site draws says which with `.button`. A form control inherits no
+   face by default - a bare `<button>` was rendering in Arial - so the reset
+   says so explicitly. */
 :where(button, input, select, textarea) {
   font: inherit;
   font-family: var(--font-mono);
 }
 
 :where(h1, h2, h3, h4) {
-  font-family: var(--font-mono);
-  font-weight: var(--weight-strong);
+  font-family: var(--font-display);
+  font-weight: var(--weight-heading);
   letter-spacing: var(--track-heading);
   line-height: var(--leading-heading);
   text-wrap: balance;
+}
+
+/* A page's own title is the display voice at its lightest, on the homepage
+   and on every documentation page alike. */
+h1#_top {
+  font-weight: var(--weight-display);
+  letter-spacing: var(--track-display);
 }
 
 :where(code, pre, kbd, samp) {
@@ -80,8 +88,8 @@ body {
   caret-color: var(--accent);
 }
 
-/* Links. DESIGN.md gives `--accent` to the active step, the primary action and
-   links, and nothing implemented the third: every anchor outside the top bar
+/* Links. DESIGN.md gives `--accent` to the active step, links and the
+   selected control, and nothing implemented the links: every anchor outside the top bar
    was shipping the browser's own blue.
 
    This lives in `site.base` - the weakest layer, declared in tokens.css - and
@@ -175,7 +183,7 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3) var(--space-6);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: var(--text-sm);
 }
 
@@ -274,12 +282,12 @@ body {
 }
 
 /* The footer had a class and no rule, so three inline children ran together:
-   "MIT licensedSourceDocumentation". A row of muted mono links like the top
-   bar's, with the licence held left and the links pushed right. */
+   "MIT licensedSourceDocumentation". A row of muted links like the top bar's,
+   with the licence held left and the links pushed right. */
 .site-footer {
   display: flex;
   flex-wrap: wrap;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   align-items: center;
   gap: var(--space-6);
   min-height: 60px;
@@ -332,9 +340,9 @@ body {
   font-size: var(--text-display);
   line-height: var(--leading-display);
   letter-spacing: var(--track-display);
-  font-weight: var(--weight-strong);
+  font-weight: var(--weight-display);
   margin: 0;
-  max-width: 17ch;
+  max-width: 19ch;
 }
 
 .hero h1 em {
@@ -359,26 +367,28 @@ body {
   display: inline-flex;
   align-items: center;
   min-height: var(--control-h);
-  padding: 0 var(--space-4);
-  border-radius: var(--radius-control);
+  padding: 0 var(--space-6);
+  border-radius: var(--radius-pill);
   border: var(--border) solid transparent;
+  font-family: var(--font-sans);
   font-size: var(--text-sm);
   font-weight: var(--weight-strong);
   text-decoration: none;
   cursor: pointer;
 }
 
+/* The one warm fill on the page, and one of the three places that glow. */
 .button-primary {
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--action);
+  color: var(--on-action);
+  box-shadow: var(--glow-action);
 }
 
-/* One solid accent fill per screen, and the first screen spends it on
-   Get started. Next is still the theater form's primary control, so it keeps the
-   accent as an outline on a tint - which outranks Back's neutral border
-   without spending the fill a second time. The label stays `--fg`: the accent
-   itself is 3.98:1 on that tint in the light theme, under the floor for a 15px
-   bold label, so the accent is carried by the border and the tint. */
+/* One solid fill per screen, `--action`, and the first screen spends it on
+   Get started. Next is still the theater form's primary control, so it takes
+   the accent as an outline on a tint - which outranks Back's neutral border
+   without spending the fill a second time. The label stays `--fg`: accent text
+   reads as a link, so the accent is carried by the border and the tint. */
 .button-accent {
   background: var(--accent-soft);
   color: var(--fg);
@@ -389,6 +399,7 @@ body {
   background: transparent;
   color: var(--fg);
   border-color: var(--line-strong);
+  box-shadow: var(--glow-quiet);
 }
 
 .install {
@@ -396,9 +407,11 @@ body {
   align-items: center;
   gap: var(--space-3);
   min-height: var(--control-h);
-  padding: 0 var(--space-4);
+  padding: var(--space-2) var(--space-6);
   border: var(--border) solid var(--line);
-  border-radius: var(--radius-control);
+  /* A pill on one line; on a phone the command wraps, and a 999px radius would
+     make two or three lines of it a lozenge whose ends crowd the text. */
+  border-radius: calc(var(--control-h) / 2);
   background: var(--surface);
   font-family: var(--font-mono);
   font-size: var(--text-xs);
@@ -458,7 +471,8 @@ body {
 }
 
 .flow-row h2 {
-  font-size: var(--text-xl);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-display);
   margin: 0;
 }
 
@@ -704,8 +718,7 @@ body {
 .segmented {
   display: flex;
   border: var(--border) solid var(--line);
-  border-radius: var(--radius-control);
-  overflow: hidden;
+  border-radius: var(--radius-pill);
 }
 
 .segmented button {
@@ -718,6 +731,19 @@ body {
   color: var(--fg-muted);
   border: 0;
   cursor: pointer;
+}
+
+/* The ends take the pill's curve themselves rather than the container
+   clipping them to it: a clip cut a pressed end's inset ring at the corners
+   and hid the focus ring, which is drawn outside the button. */
+.segmented button:first-child {
+  border-start-start-radius: var(--radius-pill);
+  border-end-start-radius: var(--radius-pill);
+}
+
+.segmented button:last-child {
+  border-start-end-radius: var(--radius-pill);
+  border-end-end-radius: var(--radius-pill);
 }
 
 .segmented button:hover {
@@ -768,6 +794,9 @@ body {
   display: block;
   max-width: 100%;
   height: auto;
+  /* The active node's glow reaches past the graph's own box, and the first
+     node sits on its corner; the frame's padding has the room for it. */
+  overflow: visible;
 }
 
 .node {
@@ -805,6 +834,13 @@ body {
   stroke: var(--st-active);
   stroke-width: var(--border-selected);
   fill: var(--accent-soft);
+}
+
+/* The node's own box glows, not the scout's halo beside it: the halo is
+   blurred by an SVG filter attribute, and any CSS `filter` - `none` in the
+   light theme included - would replace it. */
+.node.active > rect:not(.halo, .inner) {
+  filter: var(--glow-active);
 }
 
 .node.error rect {

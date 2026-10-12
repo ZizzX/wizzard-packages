@@ -32,6 +32,13 @@ const group1 = (source: string, pattern: RegExp): string[] =>
 const named = new Set(design.match(NAMED) ?? []);
 const defined = new Set(group1(tokens, DEFINED));
 
+/** One palette block, from the line that opens it to its closing brace. */
+const block = (start: RegExp): string => {
+  const at = tokens.search(start);
+  expect(at).toBeGreaterThan(-1);
+  return tokens.slice(at, tokens.indexOf('\n}', at));
+};
+
 describe('the design system and its tokens', () => {
   it('defines every custom property DESIGN.md names', () => {
     expect([...named].filter((token) => !defined.has(token))).toEqual([]);
@@ -47,14 +54,13 @@ describe('the design system and its tokens', () => {
     // Every colour the dark block defines is redefined for light, in both the
     // system-preference block and the explicit toggle, or a visitor who picks
     // light gets a half-translated page.
-    const block = (start: RegExp): string => {
-      const at = tokens.search(start);
-      expect(at).toBeGreaterThan(-1);
-      return tokens.slice(at, tokens.indexOf('\n}', at));
-    };
-
     const colours = (source: string): Set<string> =>
-      new Set(group1(source, /^\s*(--(?:bg|surface|line|fg|accent|on-accent|st)[a-z-]*)\s*:/gm));
+      new Set(
+        group1(
+          source,
+          /^\s*(--(?:bg|surface|line|fg|accent|on-accent|action|on-action|glow|st)[a-z-]*)\s*:/gm
+        )
+      );
 
     const dark = colours(block(/\/\* Dark palette \(default\)\. \*\//));
     const media = colours(block(/@media \(prefers-color-scheme: light\)/));
@@ -63,6 +69,32 @@ describe('the design system and its tokens', () => {
     expect(dark.size).toBeGreaterThan(15);
     expect([...dark].filter((token) => !media.has(token))).toEqual([]);
     expect([...dark].filter((token) => !toggle.has(token))).toEqual([]);
+  });
+
+  it('gives both light blocks the same values', () => {
+    // The system preference and the explicit toggle are one palette written
+    // twice, because plain CSS cannot share a block between a media query and
+    // an attribute. Names alone would let one copy's values drift.
+    const declarations = (source: string): string[] =>
+      group1(source, /^\s*(--[a-z][a-z0-9-]*:[^;]+;)/gm);
+
+    const media = declarations(block(/@media \(prefers-color-scheme: light\)/));
+    expect(media.length).toBeGreaterThan(20);
+    expect(declarations(block(/:root\[data-theme='light'\]/))).toEqual(media);
+  });
+
+  it('keeps the glow to the dark theme', () => {
+    // DESIGN.md, Elevation: a halo on a light ground reads as a smudge, so both
+    // light blocks turn the node's and the quiet button's glow off, and the
+    // action keeps only the ring its pale fill needs.
+    for (const light of [
+      block(/@media \(prefers-color-scheme: light\)/),
+      block(/:root\[data-theme='light'\]/),
+    ]) {
+      expect(light).toMatch(/--glow-quiet: none;/);
+      expect(light).toMatch(/--glow-active: none;/);
+      expect(light).toMatch(/--glow-action: inset /);
+    }
   });
 
   it('zeroes every duration under reduced motion', () => {

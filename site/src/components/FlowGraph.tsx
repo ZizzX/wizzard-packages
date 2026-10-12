@@ -19,6 +19,11 @@ import type { Breadcrumb } from '@wizzard-packages/core';
 import type { FlowGraph as Graph, GraphNode } from '@wizzard-packages/core/graph';
 import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
 
+/** A node's corner radius, in user units: an SVG attribute, so it lives here
+ *  rather than in tokens.css (DESIGN.md, Borders, radii, elevation). The group's inner
+ *  border sits 3 units in, so its radius is 3 less. */
+const NODE_RX = 8;
+
 export type NodeState = 'active' | 'error' | 'visited' | 'skipped' | 'done' | 'rest';
 
 export interface GraphView {
@@ -373,7 +378,7 @@ export function FlowGraph({
                   y={placed.y + 3}
                   width={placed.w - 6}
                   height={placed.h - 6}
-                  rx="4"
+                  rx={NODE_RX - 3}
                 />
               )}
               {(walked !== undefined || glow !== undefined) && (
@@ -387,12 +392,12 @@ export function FlowGraph({
                   y={placed.y}
                   width={placed.w}
                   height={placed.h}
-                  rx="4"
+                  rx={NODE_RX}
                   filter={`url(#${blur})`}
                   aria-hidden="true"
                 />
               )}
-              <rect x={placed.x} y={placed.y} width={placed.w} height={placed.h} rx="4" />
+              <rect x={placed.x} y={placed.y} width={placed.w} height={placed.h} rx={NODE_RX} />
               <text x={placed.x + 12} y={placed.y + placed.h / 2 + (when === undefined ? 4 : -2)}>
                 {asText(node?.label ?? placed.id)}
               </text>

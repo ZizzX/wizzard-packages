@@ -145,9 +145,15 @@ Conversation and planning happen in Russian; everything committed to the reposit
 English.
 
 The owner's binding constraint on this surface, given in answer: **no decoration**. No
-gradients, no glass, no shadows, no icon standing in for a word. This rules the borrowed
+gradients, no glass, no drop shadows, no icon standing in for a word. This rules the borrowed
 material too: a component or motion technique that arrives wearing decoration is refused,
 however good it looks elsewhere.
+
+One exception, chosen by the owner when the visual character moved toward a night-editor look
+(D-031, D-032): a glow, in the dark theme only, on the primary action, a secondary button and
+the active graph node. Those are the two things a visitor acts on and the one place the flow
+is, so the glow carries meaning rather than dressing a surface. `site/DESIGN.md`, under
+"Elevation", is the closed list; nothing else glows.
 
 The launch plan states the same rule as an anti-goal: no default palette, no default font
 stacks, and no three-column feature grid anywhere on the site.
