@@ -268,7 +268,7 @@ each build of the site.
 
 ## Supported
 
-Node 20.11+, TypeScript 5+, React 18+, Vue 3.3+. ESM and CJS, types for both.
+Node 20.11+, TypeScript 5+, React 18+, Vue 3.5+. ESM and CJS, types for both.
 
 ## Status
 
