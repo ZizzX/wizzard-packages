@@ -286,7 +286,7 @@
   --sl-color-text-accent: var(--accent);
   /* What Starlight writes on an accent fill: the sidebar's current page, the
      skip link, a banner. Its own default is `--sl-color-accent-low`, which the
-     line above redefines as a 12% wash of the accent - so the text composited
+     line above redefines as an 8-12% wash of the accent - so the text composited
      to the same colour as the fill behind it and the current page was
      unreadable at 1:1. `--on-accent` is the token the palette already measures
      for exactly this pairing: 12.65:1 dark, 6.44:1 light. */
