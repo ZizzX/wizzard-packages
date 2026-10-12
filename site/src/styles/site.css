@@ -496,6 +496,178 @@ h1#_top {
   max-width: var(--measure);
 }
 
+/* --- the evidence: feature cards and the strip --------------------------- */
+
+.evidence {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-16) 0;
+}
+
+.evidence h2 {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-display);
+  margin: 0;
+}
+
+/* Two columns in the shell's 1072px, one on a phone. Not three: a card quotes
+   code, and at a third of the shell a 60-character line wrapped twice. */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 26rem), 1fr));
+  gap: var(--space-6);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: var(--space-6);
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+
+/* The flow check quotes a whole file and a whole message; it takes the row,
+   and puts the two side by side where the row is wide enough. */
+.card-wide {
+  grid-column: 1 / -1;
+}
+
+.card-wide p {
+  max-width: var(--measure);
+}
+
+.card-pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.card h3 {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-heading);
+  line-height: var(--leading-heading);
+  margin: 0;
+}
+
+.card p {
+  margin: 0;
+  color: var(--fg-muted);
+}
+
+/* Mono runs wider than the sans at one size, so a package name in a sentence
+   is set a step down to sit at the prose's height. */
+.card p code {
+  font-size: var(--text-sm);
+}
+
+/* The link closes the card wherever its row ends, so the links of a row line up. */
+.card > a {
+  margin-top: auto;
+  align-self: flex-start;
+}
+
+/* The code sits on the card's own surface, bounded by a hairline: a second
+   fill inside a card is the layering the surface ladder keeps short. */
+.card-code {
+  display: flex;
+  flex-direction: column;
+  border: var(--border) solid var(--line);
+  border-radius: var(--radius-control);
+}
+
+.card-code .eyebrow {
+  padding: var(--space-2) var(--space-3) 0;
+}
+
+.card-code pre,
+.card-output {
+  margin: 0;
+  padding: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: var(--leading-code);
+  background: transparent;
+}
+
+/* What the code printed, set apart from the code the way a console is: a rule
+   at the start of the lines and the muted ink. Wrapped, since a message is one
+   long line and the card is narrow. A border rather than an inset shadow, which
+   forced colours would drop. */
+.card-output {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--fg-muted);
+  border-inline-start: var(--border-selected) solid var(--line-strong);
+}
+
+/* One series, so one ink and no legend: the name and the number print beside
+   every bar, in text colours, and the bar only gives the number a length. Not
+   the accent and not the warm fill - each means one thing on this site. */
+.bars {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.bars li {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+}
+
+/* Square where it starts and rounded where the value is, so every bar reads
+   from the same baseline. */
+.bar {
+  inline-size: calc(var(--share) * 100%);
+  block-size: var(--space-2);
+  border-radius: 0 var(--space-1) var(--space-1) 0;
+  background: var(--fg-muted);
+}
+
+.bar-value {
+  justify-self: end;
+}
+
+/* Forced colours drop backgrounds, and the bars are nothing else. */
+@media (forced-colors: active) {
+  .bar {
+    forced-color-adjust: none;
+    background: CanvasText;
+  }
+}
+
+/* DESIGN.md's evidence strip: value-and-name pairs on one hairline, values in
+   mono. */
+.evidence-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-8);
+  margin: 0;
+  padding-top: var(--space-4);
+  border-top: var(--border) solid var(--line);
+}
+
+.evidence-strip dd {
+  margin: 0;
+}
+
+.evidence-strip .value {
+  font-family: var(--font-mono);
+}
+
 /* -------------------------------------------------------------------------
    The hero theater, the form controls, and the graph wherever it is drawn.
    These components are React rather than Astro, so nothing scopes them and
@@ -558,17 +730,20 @@ h1#_top {
 
 /* The highlighter writes both themes' colours into custom properties and
    neither into `color`, so the page picks one the way tokens.css does. */
-.theater-source span[style] {
+.theater-source span[style],
+.card-code span[style] {
   color: var(--shiki-dark);
 }
 
 @media (prefers-color-scheme: light) {
-  :root:not([data-theme='dark']) .theater-source span[style] {
+  :root:not([data-theme='dark']) .theater-source span[style],
+  :root:not([data-theme='dark']) .card-code span[style] {
     color: var(--shiki-light);
   }
 }
 
-:root[data-theme='light'] .theater-source span[style] {
+:root[data-theme='light'] .theater-source span[style],
+:root[data-theme='light'] .card-code span[style] {
   color: var(--shiki-light);
 }
 
@@ -2328,7 +2503,8 @@ svg.interactive .node {
 @media (pointer: coarse) {
   .site-nav a,
   .site-footer a,
-  .rows a {
+  .rows a,
+  .card > a {
     display: inline-flex;
     align-items: center;
     min-height: var(--target-min);

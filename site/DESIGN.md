@@ -153,6 +153,7 @@ card has no hierarchy at all, so the list is short and closed.
 | Tables: filled header row, hairline rows, in a border | The documentation sidebar                     |
 | Panels that hold an instrument, and their form wells  | The table of contents                         |
 | Cards in a gallery of examples                        | Prose, headings, captions, the footer         |
+| The homepage's feature cards                          | The evidence strip                            |
 
 The nav is the case people get wrong. Every site in that comparison paints its header in
 exactly the page ground colour; one of them draws a hairline under it, and none uses a fill or
@@ -531,9 +532,23 @@ hairline, a mono label where something needs naming, state on the border.
 16. **search** — Starlight's pagefind dialog in the site's grammar: `--z-dialog`, the keyboard
     hint set in `label`, results as hairline-separated rows, and a real empty state naming
     what was searched.
-17. **evidence strip** — where real numbers live: bundle sizes, test count, supported
-    versions. A row of value-and-name pairs on one hairline, values in mono. Explicitly not a
-    three-column feature grid, not cards, and never a number without the thing it measures.
+17. **evidence strip** — where a short row of real numbers lives: the supported versions on
+    the homepage. A row of value-and-name pairs on one hairline, values in mono, on the ground
+    rather than in a card, and never a number without the thing it measures.
+18. **feature card** — the homepage's cards under the flow rows (D-034): a heading, one
+    sentence, and what makes the sentence true - an excerpt of a file a test runs, its recorded
+    output, or a measurement taken when the site is built. Never an icon, a slogan or a number
+    typed by hand. Two columns where the shell is wide, one on a phone; a card that quotes a
+    whole file takes the row. Its code sits on the card's surface inside a hairline, without a
+    copy control, because an excerpt is not meant to be pasted alone: the card's link, at its
+    foot, goes to the page that has the whole thing. The code well takes `--radius-control`: a
+    block nested in a panel takes the smaller radius, so it does not echo the card's corner from
+    a few pixels inside it. Output is set apart by a rule at the start of its lines, the way the
+    theater's console is. The size card draws one bar per runtime import on one scale, largest
+    first: core as what calling `createWizard` costs, every other import as what it adds to
+    that, never an entry measured alone, which counts the code it shares with core again. The
+    name and the measured size print beside each bar in text colours; the bar is `--fg-muted`,
+    neither the accent nor the warm fill.
 
 Every component in both tiers ships its rest, hover, active, focus and disabled states, and
 those states come from the table under **Interaction states** rather than from the component.
@@ -541,11 +556,11 @@ those states come from the table under **Interaction states** rather than from t
 ### What is built and what is specified
 
 This list is a contract, and part of it is still ahead of the code. Built today: the graph node,
-the node condition, the table mirror, the theater, the flow row, and the page header on
-every page, all but its framework mode. Specified here and built with the surfaces that need them: the
-scrubber and state-diff panel with the inspector, and the code block, install line, framework
-mode, example frame, spec table, callout, docs rail, search and evidence strip with the
-documentation and examples pages.
+the node condition, the table mirror, the theater, the flow row, the evidence strip and the
+feature card on the homepage, and the page header on every page, all but its framework mode.
+Specified here and built with the surfaces that need them: the scrubber and state-diff panel
+with the inspector, and the code block, install line, framework mode, example frame, spec
+table, callout, docs rail and search with the documentation and examples pages.
 
 A component in the second group is not a suggestion. It is written down first so that the
 page which needs it inherits a decision rather than making a new one, which is the failure

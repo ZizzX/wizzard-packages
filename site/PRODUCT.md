@@ -57,9 +57,9 @@ each stated in the README:
   state is written once at the end; every `await` rechecks the navigation epoch, so a slow
   validator that resolves after Back cannot move the visitor. `next()` and `back()` return
   a result (`{ ok: false, reason: 'blocked', by: 'age-check' }`), never a bare boolean.
-- **One engine, two bindings.** `@wizzard-packages/react` is 906 B and
-  `@wizzard-packages/vue` 646 B, against 8.43 kB and 5.07 kB for their 0.x equivalents. A
-  shared contract suite in `contract/` is what stops the two drifting.
+- **One engine, two bindings.** Each binding is a thin layer over the same engine; the
+  homepage draws what each adds to the engine, measured on the build it is part of. A shared
+  contract suite in `contract/` is what stops the two drifting.
 - **The flow is JSON.** Definition and state carry no functions, classes or `Set`s, so
   `JSON.stringify(flow)` always round-trips. That is what makes the graph, server-driven
   flows and session replay possible at all.
@@ -112,8 +112,8 @@ Hard technical constraints:
 - `@wizzard-packages/core` has no dependencies. Ever.
 - Every `core` sub-entry carries its own size budget; adding an entry means a tsup entry, an
   `exports` key and a `.size-limit.js` line in the same change.
-- Current budgets (gzip): `core` 3.92 kB, `react` 927 B, `vue` 660 B, `validate` 317 B,
-  `core/graph` 754 B.
+- The budgets live in `.size-limit.js`, and the sizes are measured, never copied into prose:
+  the homepage's size card runs size-limit when the site is built.
 - Graph nesting stops at 32 levels.
 
 Explicitly out of scope for 1.0.0: the `@wizzard-packages/compat` package (cut on measured
@@ -156,15 +156,20 @@ is, so the glow carries meaning rather than dressing a surface. `site/DESIGN.md`
 "Elevation", is the closed list; nothing else glows.
 
 The launch plan states the same rule as an anti-goal: no default palette, no default font
-stacks, and no three-column feature grid anywhere on the site.
+stacks, and no three-column feature grid anywhere on the site. The owner narrowed the last one
+for the homepage (D-034): feature cards under the flow rows, in two columns, each made true by
+tested code or a measurement taken at build. A grid of icons and slogans is still out.
 
 ## Evidence on Hand
 
 Real numbers that exist and may be shown:
 
-- Bundle sizes, gzip: `core` 3.92 kB, `react` 927 B, `vue` 660 B, `validate` 317 B,
-  `core/graph` 754 B. The 0.x comparison: react 8.43 kB, vue 5.07 kB.
-- 239 engine tests, including property tests.
+- Bundle sizes, gzip: what calling `createWizard` costs and what each runtime import adds to
+  it, measured by size-limit when the site is built and drawn on the homepage. A size typed
+  into a page goes stale with the next change to the engine, as every one this file used to
+  list did.
+- Supported versions, from the packages' own `peerDependencies` and `engines`.
+- Engine tests, including property tests; count them from a test run rather than from here.
 - Monthly npm downloads at the time the compat decision was made: core 37, react 35, vue 7.
 - Contrast at least 4.5:1 for text and 3:1 for state-carrying borders, gated by `axe` in CI.
 

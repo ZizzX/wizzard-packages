@@ -1,3 +1,8 @@
+import { execFileSync } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { expect, test, type Page } from '@playwright/test';
 
 /**
@@ -131,3 +136,105 @@ for (const colorScheme of ['light', 'dark'] as const) {
     });
   });
 }
+
+/**
+ * The evidence under the rows (site/src/components/Evidence.astro). Its sizes
+ * are measured when the site is built, so this measures again and compares: a
+ * bar drawn from a stale number, or out of scale with its neighbours, fails.
+ */
+test.describe('the evidence', () => {
+  // The formatting and the arithmetic are written out again here rather than
+  // imported from site/src/lib/evidence.ts, so the test does not trust the code
+  // it checks.
+  const bytes = (size: number) =>
+    size < 1000 ? `${size} B` : `${(Math.round(size / 10) / 100).toFixed(2)} kB`;
+  const root = fileURLToPath(new URL('../../../', import.meta.url));
+
+  /** size-limit's measurements now, by entry name. Over a budget it exits 1 and still prints them. */
+  function measure(): Map<string, number> {
+    const bin = join(
+      dirname(createRequire(join(root, 'package.json')).resolve('size-limit/package.json')),
+      'bin.js'
+    );
+    let stdout: string;
+    try {
+      stdout = execFileSync(process.execPath, [bin, '--json'], { cwd: root, encoding: 'utf8' });
+    } catch (error) {
+      stdout = (error as { stdout?: string }).stdout ?? '';
+    }
+    let entries: unknown;
+    try {
+      entries = JSON.parse(stdout);
+    } catch {
+      entries = undefined;
+    }
+    if (!Array.isArray(entries)) {
+      throw new Error(
+        `size-limit gave the evidence test no measurements: ${stdout.slice(0, 200) || 'it printed nothing'}. The test compares the size card with them. Run pnpm exec size-limit --json from the repository root and fix what it reports.`
+      );
+    }
+    return new Map(
+      (entries as { name: string; size: number }[]).map((entry) => [entry.name, entry.size])
+    );
+  }
+
+  test('draws what each import adds to core, as size-limit measures it now', async ({ page }) => {
+    const measured = measure();
+    const engine = measured.get('homepage createWizard') ?? Number.NaN;
+    const added = (entry: string) => (measured.get(entry) ?? Number.NaN) - engine;
+    const expected = new Map([
+      ['core', engine],
+      ['react', added('homepage + react')],
+      ['vue', added('homepage + vue')],
+      ['validate', added('homepage + validate')],
+      ['groups', added('homepage + groups')],
+      ['snapshot', added('homepage + snapshot')],
+      ['persist', added('homepage + persist')],
+    ]);
+
+    await page.goto('');
+    const bars = await page.locator('.bars li').evaluateAll((items) =>
+      items.map((item) => ({
+        name: item.querySelector('.bar-name')?.textContent ?? '',
+        value: item.querySelector('.bar-value')?.textContent,
+        width: item.querySelector('.bar')?.getBoundingClientRect().width ?? 0,
+      }))
+    );
+
+    expect(bars.map((bar) => bar.name).sort()).toEqual([...expected.keys()].sort());
+    for (const bar of bars) expect(bar.value).toBe(bytes(expected.get(bar.name) ?? Number.NaN));
+
+    // Largest first, and every bar to one scale: its length is its share of core's,
+    // compared in pixels so a short bar is held as tightly as a long one.
+    const widths = bars.map((bar) => bar.width);
+    expect(widths).toEqual([...widths].sort((a, b) => b - a));
+    const core = bars.find((bar) => bar.name === 'core')?.width ?? Number.NaN;
+    for (const bar of bars) {
+      expect(bar.width).toBeCloseTo((core * (expected.get(bar.name) ?? Number.NaN)) / engine, 0);
+    }
+  });
+
+  test('quotes the tested files and the engine, not compiled code', async ({ page }) => {
+    await page.goto('');
+    const cards = page.locator('.card');
+    // Both bindings quote the same two lines; the Vue one is read from a .vue file.
+    const hooks = cards.filter({ hasText: 'The same hooks' }).locator('.card-code');
+    await expect(hooks).toHaveCount(2);
+    for (const block of await hooks.all()) {
+      await expect(block).toContainText('const { current, isLast } = useStep();');
+      await expect(block).toContainText('const { next, back, canBack } = useNavigation();');
+    }
+    await expect(
+      cards.filter({ hasText: 'caught before it runs' }).locator('.card-output')
+    ).toHaveText(/^\[wizzard\] \$get "account\.type" does not start with data, ctx, loop\./);
+  });
+
+  test('states the versions the packages declare', async ({ page }) => {
+    await page.goto('');
+    await expect(page.locator('.evidence-strip dd')).toHaveText([
+      'React >= 18',
+      'Vue >= 3.5',
+      'Node >= 20.11',
+    ]);
+  });
+});

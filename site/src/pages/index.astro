@@ -4,6 +4,7 @@ import installReact from '@examples/quickstart/install/react.sh?raw';
 import { Code } from 'astro:components';
 
 import Page from '../layouts/Page.astro';
+import Evidence from '../components/Evidence.astro';
 import Theater from '../components/Theater';
 import { FlowRow } from '../components/FlowRow';
 import { buildGraph } from '@wizzard-packages/core/graph';
@@ -136,4 +137,6 @@ const description =
             </p>
           </FlowRow>
         </div>
+
+        <Evidence />
       </Page>
