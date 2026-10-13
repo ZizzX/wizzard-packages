@@ -77,13 +77,28 @@ Paths read from three roots and nothing else:
 code: a validator, a permission check, a price lookup.
 
 ```ts
-const registry = {
-  needsEmail: (_args, { data }) => Boolean(data.email),
+import type { AsyncRegistry } from '@wizzard-packages/core';
+
+type Details = { email?: string; payer?: string } | undefined;
+
+export const registry: AsyncRegistry = {
+  // Named in a `when`: read as true or false.
+  isBusiness: (_args, { data }) => (data['details'] as Details)?.payer === 'business',
+  // Named in a `validate`: messages keyed by field, or null when the step may be left.
+  needsEmail: (_args, { data }) =>
+    (data['details'] as Details)?.email ? null : { email: 'Enter an email address.' },
 };
 ```
 
+The registry is passed to `createWizard({ flow, registry })` beside the flow, and it is the only
+place a `$ref` is looked up.
+
 A resolver takes the `args` from the `$ref` and the scope, in that order:
 `(args: Json | undefined, scope: Scope, signal?: AbortSignal) => unknown`. Most ignore the first.
+What it should return depends on where it is named. In a `when` its answer is read as true or
+false. In a `validate` it is not: a validator returns the messages it found, keyed by field, or
+`null`, and a `false` there lets the step be left - see
+[Validation](../validation/#checking-the-answers).
 Only a step's `load` is handed the third, the signal of the move it runs in; see
 [Loading a step](../async-steps/).
 

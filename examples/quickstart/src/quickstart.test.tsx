@@ -5,6 +5,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import AppVue from './App.vue';
 import { App } from './App';
+import branchingOutput from './branching/run.out.txt?raw';
+import groupsOutput from './groups/run.out.txt?raw';
 import expectedOutput from './headless.out.txt?raw';
 
 /**
@@ -111,6 +113,36 @@ describe('quickstart', () => {
     await import('./headless');
 
     expect(`${lines.join('\n')}\n`).toBe(lf(expectedOutput));
+    vi.restoreAllMocks();
+  });
+
+  /**
+   * Getting started describes this flow in prose - refused until the email is
+   * there, `company` only for a business, Back from `payment` to `details` -
+   * and prints this script's output as the proof of each claim.
+   */
+  it('prints what the branching example on Getting started shows', async () => {
+    const lines: unknown[] = [];
+    vi.spyOn(console, 'log').mockImplementation((line: unknown) => {
+      lines.push(line);
+    });
+
+    await import('./branching/run');
+
+    expect(`${lines.join('\n')}\n`).toBe(lf(branchingOutput));
+    vi.restoreAllMocks();
+  });
+
+  /** The same promise for the groups page: each item, its branch and Back into the group. */
+  it('prints what the groups page shows', async () => {
+    const lines: unknown[] = [];
+    vi.spyOn(console, 'log').mockImplementation((line: unknown) => {
+      lines.push(line);
+    });
+
+    await import('./groups/run');
+
+    expect(`${lines.join('\n')}\n`).toBe(lf(groupsOutput));
     vi.restoreAllMocks();
   });
 });

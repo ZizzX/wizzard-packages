@@ -8,43 +8,191 @@ or once per item in a list, which is how "three passengers, four steps each" is 
 writing twelve steps. The nested flow is an ordinary `FlowDefinition`, so everything that works
 at the root works inside it.
 
-Traversing groups is optional code. The engine ships it as a separate entry point, so a flow
-without groups never pays for it:
+This page builds one example in three files: the flow that runs per passenger, the trip that
+repeats it, and the file that creates the wizard and walks it. The sections after them explain
+each field the example uses.
 
+## 1. The nested flow
+
+<!-- example:groups-passenger -->
+
+<!-- prettier-ignore -->
 ```ts
-import { createWizard } from '@wizzard-packages/core';
-import { groups } from '@wizzard-packages/core/groups';
+import { defineFlow, step } from '@wizzard-packages/core';
+import { eq, get } from '@wizzard-packages/core/expr';
 
-const wizard = createWizard({ flow: trip, groups, subFlows: { passenger } });
+/**
+ * The flow a group runs once per traveller. It is an ordinary definition and
+ * does not know it is nested: whatever it needs from outside it reads from
+ * `ctx`, which the group's `input` fills - `ctx.traveller`, `ctx.tier`.
+ */
+export const passenger = defineFlow({
+  id: 'passenger',
+  order: ['name', 'meal', 'lounge'],
+  steps: {
+    name: step({ label: 'Name' }),
+    // Adults only. The branch is inside the repeat, so it is decided per item.
+    meal: step({ label: 'Meal', when: eq(get('ctx.traveller.type'), 'adult') }),
+    // A value from the root `ctx`, passed down by the group's `input`.
+    lounge: step({ label: 'Lounge', when: eq(get('ctx.tier'), 'gold') }),
+  },
+});
 ```
 
-A flow holding a group step without `groups` throws
-[`groups-not-installed`](../../errors/groups-not-installed/), at `createWizard` and at
-`patchFlow`.
+<!-- /example -->
 
-## A group step
+Nothing in this file says it is nested, and nothing has to. It reads the two values it needs from
+outside - the traveller it is running for, and the account's tier - from `ctx`. The group in the
+next file decides what goes there.
 
+## 2. The flow that repeats it
+
+<!-- example:groups-trip -->
+
+<!-- prettier-ignore -->
 ```ts
 import { defineFlow, group, step } from '@wizzard-packages/core';
 import { empty, get, not } from '@wizzard-packages/core/expr';
 
-const trip = defineFlow({
+export interface Traveller {
+  id: string;
+  type: 'adult' | 'child';
+}
+
+/**
+ * The root flow. `party` collects the list, `people` runs `passenger` once per
+ * item in it, and `review` comes after the last one.
+ *
+ * `flow: 'passenger'` is a name, not the definition, so this object stays JSON
+ * on its own; `createWizard` is handed the definition under that name.
+ */
+export const trip = defineFlow({
   id: 'trip',
+  // A flow holding a repeat needs a version: a restored snapshot names keys of
+  // a list that may have changed shape since it was written.
   version: 1,
   order: ['party', 'people', 'review'],
   steps: {
-    party: step({ label: 'Who is travelling' }),
+    party: step<{ travellers: Traveller[] }>({ label: 'Who is travelling' }),
     people: group({
       label: 'Passengers',
       flow: 'passenger',
-      when: not(empty(get('data.passengers'))),
-      repeat: { over: get('data.passengers'), keyBy: 'id' },
+      // A repeat must be excluded while its list is empty.
+      when: not(empty(get('data.party.travellers'))),
+      repeat: { over: get('data.party.travellers'), keyBy: 'id' },
+      input: { traveller: get('loop.item'), tier: get('ctx.user.tier') },
     }),
     review: step({ label: 'Review' }),
   },
   policy: 'free',
 });
 ```
+
+<!-- /example -->
+
+`people` is the group. `party` writes the list it repeats over, `data.party.travellers`, like any
+other answer. [A group step](#a-group-step) below goes through its fields.
+
+## 3. Creating and walking the wizard
+
+<!-- example:groups-run -->
+
+<!-- prettier-ignore -->
+```ts
+import { createWizard } from '@wizzard-packages/core';
+import { groups } from '@wizzard-packages/core/groups';
+
+import { passenger } from './passenger';
+import { trip } from './trip';
+
+/**
+ * Where the pieces meet. `groups` is the traversal for group steps, a separate
+ * entry so a flow without groups never carries it. `subFlows` hands over the
+ * definition `flow: 'passenger'` names. `ctx` is what the application knows
+ * before the user types anything; the group's `input` reads `ctx.user.tier`
+ * from it.
+ *
+ * This file plays the part a component plays in an app: it starts the wizard,
+ * writes the answers, moves, and destroys the wizard when it is done.
+ */
+const wizard = createWizard({
+  flow: trip,
+  groups,
+  subFlows: { passenger },
+  ctx: { user: { tier: 'gold' } },
+});
+
+/** Every frame of the stack, the group's with the item's key. */
+const where = (): string =>
+  wizard
+    .getSnapshot()
+    .stack.map((f) => (f.key === undefined ? f.step : `${f.step}[${f.key}]`))
+    .join(' / ');
+
+await wizard.start();
+console.log(`at: ${where()}`);
+
+// The list the group repeats over is ordinary data, written by the first step.
+wizard.set('party.travellers', [
+  { id: 'ada', type: 'adult' },
+  { id: 'cy', type: 'child' },
+]);
+
+// Into the group, and through each item: Ada gets every step, Cy skips `meal`.
+for (let i = 0; i < 6; i++) {
+  await wizard.next();
+  const { index, active } = wizard.getSnapshot();
+  console.log(`at: ${where()} (${index + 1} of ${active.length})`);
+}
+
+// Back from the step after the group goes in where the last item stopped.
+await wizard.back();
+console.log(`back: ${where()}`);
+
+wizard.destroy();
+```
+
+<!-- /example -->
+
+Three options make a flow with groups run, and each one answers a question the definition leaves
+open:
+
+- `groups` is the code that walks into and out of a group. It is a separate entry point,
+  `@wizzard-packages/core/groups`, so a flow without groups never pays for it. A flow holding a
+  group step without it throws [`groups-not-installed`](../../errors/groups-not-installed/), at
+  `createWizard` and at `patchFlow`.
+- `subFlows` maps the names a `flow:` string uses to their definitions.
+- `ctx` is what the application knows before anyone types. It is where `ctx.user.tier` comes from.
+
+In an app, a binding's provider takes the same options - `<WizardProvider flow={trip} groups={groups}
+subFlows={{ passenger }} ctx={ctx}>` in React, `provideWizard({ ... })` in Vue - calls `start()`
+when it mounts and `destroy()` when it unmounts. Your components write the list with `set` and
+move with `next` and `back`, exactly as this file does by hand.
+
+What the script prints:
+
+<!-- example:groups-output -->
+
+<!-- prettier-ignore -->
+```txt
+at: party
+at: people[ada] / name (1 of 3)
+at: people[ada] / meal (2 of 3)
+at: people[ada] / lounge (3 of 3)
+at: people[cy] / name (1 of 2)
+at: people[cy] / lounge (2 of 2)
+at: review (3 of 3)
+back: people[cy] / lounge
+```
+
+<!-- /example -->
+
+Ada is an adult, so her pass has three steps. Cy is a child, so `meal` is not part of hers, and the
+count says "2 of 2" rather than skipping a number. `lounge` is there for both, because `tier`
+came down from `ctx`. Back from `review` goes into the group where the last item stopped. A test
+in the repository runs this script and compares its output with the block above.
+
+## A group step
 
 `flow` is the nested definition: an inline `FlowDefinition`, or a string naming one of
 `subFlows`. A string keeps the parent serializable on its own, which is what a backend sending a
@@ -72,41 +220,37 @@ Inside a repeat, expressions of the nested flow see the current item under `loop
 | `loop.index` | its position in the list                                   |
 | `loop.key`   | the key `keyBy` produced, or the position when it has none |
 
+So `passenger.ts` could test the item directly, without `input`:
+
 ```ts
-when: eq(get('loop.item.type'), 'adult');
+meal: step({ label: 'Meal', when: eq(get('loop.item.type'), 'adult') }),
 ```
+
+It reads `ctx.traveller` instead because `loop` exists only inside a repeat, while `ctx` can be
+filled by any group's `input`, or by `createWizard` when the same flow runs on its own.
 
 A nested group that does not repeat keeps the `loop` of the one above it, so a section inside a
 repeat still knows which item it is in.
 
-`input` passes values down by name:
-
-```ts
-people: group({
-  flow: 'passenger',
-  repeat: { over: get('data.passengers'), keyBy: 'id' },
-  input: { traveller: get('loop.item'), tier: get('ctx.user.tier') },
-});
-```
-
-Each expression is evaluated against the parent's scope, with the group's own `loop` already on
-it, and the results land in the `ctx` the nested flow reads - `ctx.traveller`, `ctx.tier`. They
-are derived, not captured: every read of the scope evaluates them again, so a value that changes
-upstream is visible inside the group without leaving it and coming back. The parent's own `ctx`
-is untouched, and an expression that fails leaves its name `undefined` rather than refusing the
-move.
+`input` passes values down by name. In `trip.ts` it is
+`{ traveller: get('loop.item'), tier: get('ctx.user.tier') }`. Each expression is evaluated
+against the parent's scope, with the group's own `loop` already on it, and the results land in the
+`ctx` the nested flow reads - `ctx.traveller`, `ctx.tier`. They are derived, not captured: every
+read of the scope evaluates them again, so a value that changes upstream is visible inside the
+group without leaving it and coming back. The parent's own `ctx` is untouched, and an expression
+that fails leaves its name `undefined` rather than refusing the move.
 
 ## What the wizard reports inside a group
 
 A group replaces what "where am I" means while it runs. `current`, `index`, `progress`,
 `breadcrumbs` and `active` are computed against the nested flow, so a stepper drawn from them
-reads "step 2 of 3" for this passenger rather than "step 2 of 3" for the trip. `canBack` and
-`isLast` come from the traversal too: the last step of the third passenger is not the last step
-of the trip.
+reads "step 2 of 3" for this passenger rather than "step 2 of 3" for the trip - the counts in the
+output above. `canBack` and `isLast` come from the traversal too: the last step of the third
+passenger is not the last step of the trip.
 
 The enclosing groups are in `stack`, one frame each - `{ flow, step, key }` - with the current
-step last. That is also what a snapshot stores, and why a repeat needs a `version`: the frames
-name keys of a list the next session may have changed.
+step last. That is what `where()` above prints, what a snapshot stores, and why a repeat needs a
+`version`: the frames name keys of a list the next session may have changed.
 
 `back()` follows the history across a group's edges. From the first step of an item it lands where
 the previous item stopped, and from the first step of the first item it leaves the group. From the

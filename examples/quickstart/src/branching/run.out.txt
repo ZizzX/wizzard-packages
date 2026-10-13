@@ -1,0 +1,6 @@
+step: details
+next: invalid {"details":{"email":"Enter an email address."}}
+step: company
+step: payment
+step: details
+step: payment

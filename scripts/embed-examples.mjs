@@ -44,6 +44,11 @@ const SNIPPETS = {
   validate: { file: 'examples/quickstart/src/validate.ts', lang: 'ts' },
   'validate-output': { file: 'examples/quickstart/src/validate.out.txt', lang: 'txt' },
   persist: { file: 'examples/quickstart/src/persist.ts', lang: 'ts' },
+  // The groups page builds one example across its sections, file by file.
+  'groups-passenger': { file: 'examples/quickstart/src/groups/passenger.ts', lang: 'ts' },
+  'groups-trip': { file: 'examples/quickstart/src/groups/trip.ts', lang: 'ts' },
+  'groups-run': { file: 'examples/quickstart/src/groups/run.ts', lang: 'ts' },
+  'groups-output': { file: 'examples/quickstart/src/groups/run.out.txt', lang: 'txt' },
   // The install commands are files for the same reason the code is: the site
   // reads them too (`?raw`), so the line a reader copies from npm and the line
   // they copy from the documentation cannot say different things. Before R0
@@ -60,7 +65,7 @@ const SNIPPETS = {
  * Every document with markers in it. A package README embeds the same snippet
  * the root README does on purpose: npm shows the package README and nothing
  * else, so the quickstart a reader arrives at there has to be the tested one
- * rather than a copy that drifts. The site's validation and persistence pages
+ * rather than a copy that drifts. The site's groups, validation and persistence pages
  * are plain Markdown, so they take the markers too rather than a `?raw` import.
  */
 const DOCUMENTS = [
@@ -71,6 +76,7 @@ const DOCUMENTS = [
   'packages/devtools/README.md',
   'packages/validate/README.md',
   'packages/plugins/README.md',
+  'site/src/content/docs/docs/groups.md',
   'site/src/content/docs/docs/validation.md',
   'site/src/content/docs/docs/persistence.md',
 ];
