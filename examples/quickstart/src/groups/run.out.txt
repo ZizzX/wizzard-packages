@@ -1,0 +1,8 @@
+at: party
+at: people[ada] / name (1 of 3)
+at: people[ada] / meal (2 of 3)
+at: people[ada] / lounge (3 of 3)
+at: people[cy] / name (1 of 2)
+at: people[cy] / lounge (2 of 2)
+at: review (3 of 3)
+back: people[cy] / lounge

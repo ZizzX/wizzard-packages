@@ -35,6 +35,8 @@ const COPIED = [
   'packages/devtools/README.md',
   'packages/validate/README.md',
   'packages/plugins/README.md',
+  'site/src/content/docs/docs/expressions.md',
+  'site/src/content/docs/docs/groups.md',
   'site/src/content/docs/docs/validation.md',
   'site/src/content/docs/docs/persistence.md',
   'examples/quickstart/src',
@@ -151,7 +153,11 @@ describe('embed-examples --check', () => {
   });
 });
 
-describe('embed-examples --stage', () => {
+// Each case builds a git repository and the script spawns git twice for every
+// document and snippet it reads, so a case is dozens of processes. On a Windows
+// checkout that is 3-5 seconds, which the default 5-second timeout cannot hold
+// once the manifest grows; the time is process start-up, not a slow check.
+describe('embed-examples --stage', { timeout: 30_000 }, () => {
   // A git hook exports GIT_DIR and friends, and this suite runs inside one
   // (pre-push). Inherited, they point the scratch repository's commands at the
   // real one: `git add -A` here once replaced this checkout's index with the

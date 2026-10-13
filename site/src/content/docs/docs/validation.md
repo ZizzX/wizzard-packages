@@ -71,7 +71,40 @@ steps: {
 }
 ```
 
-The engine runs it before leaving the step. If it refuses, `next()` returns
+The resolver is a function in the registry passed to `createWizard`. It receives the scope, and
+answers with the problems it found:
+
+<!-- example:branching-registry -->
+
+<!-- prettier-ignore -->
+```ts
+import type { AsyncRegistry } from '@wizzard-packages/core';
+
+/**
+ * The code the flow names. A validator answers with the messages it found,
+ * keyed by field, or `null` when the step may be left.
+ *
+ * Not a boolean: `false` carries no message to show and does not stop the
+ * move. Only an object with at least one key refuses it.
+ */
+export const registry: AsyncRegistry = {
+  needsEmail: (_args, { data }) => {
+    const details = data['details'] as { email?: string } | undefined;
+    return details?.email ? null : { email: 'Enter an email address.' };
+  },
+};
+```
+
+<!-- /example -->
+
+That answer is the whole contract. `null`, or an object with no keys, means the step may be
+left. An object with at least one key refuses the move, and each key is a field with its
+message - that is what lets a form put the message beside its input. A validator may be `async`
+and return a promise of either. A boolean is not an answer: `true` and `false` both let the step
+be left, so a predicate written for `when` and reused here guards nothing.
+
+The engine runs it before every move away from the step except `back()`: `next()`, and `go()`
+wherever it leads, unless the move is passed `validate: false`. If it refuses, the move returns
 `{ ok: false, reason: 'invalid', by, errors }` and the flow stays where it is.
 
 You can also run it directly, and set messages yourself:
