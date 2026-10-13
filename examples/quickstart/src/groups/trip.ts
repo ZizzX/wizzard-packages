@@ -31,5 +31,4 @@ export const trip = defineFlow({
     }),
     review: step({ label: 'Review' }),
   },
-  policy: 'free',
 });

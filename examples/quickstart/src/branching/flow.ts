@@ -10,7 +10,6 @@ import { defineFlow, step } from '@wizzard-packages/core';
  */
 export const signup = defineFlow({
   id: 'signup',
-  version: 1,
   order: ['details', 'company', 'payment'],
   steps: {
     details: step<{ email: string; payer: 'personal' | 'business' }>({
@@ -23,5 +22,4 @@ export const signup = defineFlow({
     }),
     payment: step({ label: 'Payment', on: { back: 'details' } }),
   },
-  policy: 'free',
 });

@@ -74,21 +74,31 @@ Paths read from three roots and nothing else:
 ## Resolvers
 
 `$ref` names a function in the registry passed to `createWizard`. It is how a predicate reaches
-code: a validator, a permission check, a price lookup.
+code: a validator, a permission check, a price lookup. This is the registry of the flow
+[Getting started](../start/#the-flow) builds, with the one validator it names:
 
+<!-- example:branching-registry -->
+
+<!-- prettier-ignore -->
 ```ts
 import type { AsyncRegistry } from '@wizzard-packages/core';
 
-type Details = { email?: string; payer?: string } | undefined;
-
+/**
+ * The code the flow names. A validator answers with the messages it found,
+ * keyed by field, or `null` when the step may be left.
+ *
+ * Not a boolean: `false` carries no message to show and does not stop the
+ * move. Only an object with at least one key refuses it.
+ */
 export const registry: AsyncRegistry = {
-  // Named in a `when`: read as true or false.
-  isBusiness: (_args, { data }) => (data['details'] as Details)?.payer === 'business',
-  // Named in a `validate`: messages keyed by field, or null when the step may be left.
-  needsEmail: (_args, { data }) =>
-    (data['details'] as Details)?.email ? null : { email: 'Enter an email address.' },
+  needsEmail: (_args, { data }) => {
+    const details = data['details'] as { email?: string } | undefined;
+    return details?.email ? null : { email: 'Enter an email address.' };
+  },
 };
 ```
+
+<!-- /example -->
 
 The registry is passed to `createWizard({ flow, registry })` beside the flow, and it is the only
 place a `$ref` is looked up.

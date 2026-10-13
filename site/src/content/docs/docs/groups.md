@@ -84,7 +84,6 @@ export const trip = defineFlow({
     }),
     review: step({ label: 'Review' }),
   },
-  policy: 'free',
 });
 ```
 
@@ -169,7 +168,9 @@ subFlows={{ passenger }} ctx={ctx}>` in React, `provideWizard({ ... })` in Vue -
 when it mounts and `destroy()` when it unmounts. Your components write the list with `set` and
 move with `next` and `back`, exactly as this file does by hand.
 
-What the script prints:
+To run it, put the three files in `src/groups/` of an app made as
+[Getting started](../start/#in-a-new-app) describes, add `import './groups/run';` to `src/main.ts`
+(`src/main.tsx` in React) and start `pnpm dev`. The script prints to the browser console:
 
 <!-- example:groups-output -->
 

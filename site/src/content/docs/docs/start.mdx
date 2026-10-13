@@ -164,11 +164,12 @@ move forward, come back.
 
 A definition does more than order two steps. This one branches, guards a step with a named
 validator, and sends Back somewhere other than where it came from. It takes three files: the
-definition, the code it names, and the place the two are put together and driven.
+definition, the code it names, and the place the two are put together and driven. They go in
+`src/branching/`, so they sit beside the quickstart's files rather than over them.
 
 ### 1. The definition
 
-<Code code={branchingFlowSource} lang="ts" title="src/flow.ts" />
+<Code code={branchingFlowSource} lang="ts" title="src/branching/flow.ts" />
 
 Three things are true of this object before any of your code runs. `company` is part of the flow
 only while `details.payer` is `business`: `when` is evaluated against the data as it is now, so
@@ -181,7 +182,7 @@ writes `data.details.email` and `data.details.payer` - which is why `when` reads
 
 ### 2. The code the definition names
 
-<Code code={branchingRegistrySource} lang="ts" title="src/registry.ts" />
+<Code code={branchingRegistrySource} lang="ts" title="src/branching/registry.ts" />
 
 The definition stays JSON, so it cannot hold a function. It holds the name `needsEmail`, and the
 registry holds the function under that name. The engine joins them when it validates the step.
@@ -193,7 +194,7 @@ to show. [Validation](../validation/) has the whole contract.
 
 ### 3. Creating and driving the wizard
 
-<Code code={branchingRunSource} lang="ts" title="src/run.ts" />
+<Code code={branchingRunSource} lang="ts" title="src/branching/run.ts" />
 
 `createWizard` takes the definition and the registry and returns the engine. It is created idle,
 on no step. `start()` enters the first step, and from then on the engine moves only when it is
@@ -203,6 +204,10 @@ and `back` from buttons. `destroy()` is the owner's last call: it aborts every m
 removes the listeners and runs each plugin's teardown. A provider that created the wizard makes
 that call on unmount. A wizard you created yourself, here or handed to a provider, is yours to
 destroy when you are done with it.
+
+To run it in the app from [In a new app](#in-a-new-app), add `import './branching/run';` to
+`src/main.ts` - `src/main.tsx` in React - and start `pnpm dev`. The script prints to the browser
+console:
 
 <Code code={branchingOutput} lang="text" title="Output" />
 
