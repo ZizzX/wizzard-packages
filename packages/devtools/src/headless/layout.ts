@@ -198,6 +198,16 @@ function layout(
     place(n.id, n.group?.repeat !== undefined ? REPEAT_H : NODE_H, false);
   for (const g of ghosts) place(g, NODE_H, true);
 
+  // A row runs its edges across the middle of its boxes, so a box shorter than
+  // the tallest in its row is centred on it: top-aligned, a step beside a
+  // repeat group sits 4 units higher and the line between them slants. A row
+  // of equal boxes is left where it was.
+  if (row) {
+    const tallest = new Map<number, number>();
+    for (const n of nodes) tallest.set(n.y, Math.max(tallest.get(n.y) ?? 0, n.h));
+    for (const n of nodes) n.y += ((tallest.get(n.y) ?? n.h) - n.h) / 2;
+  }
+
   let width = 0;
   let height = 0;
   for (const n of nodes) {

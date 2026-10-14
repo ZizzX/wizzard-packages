@@ -115,6 +115,18 @@ for (const [width, height] of [
         await expect(row.locator(`${shown} svg`)).toBeVisible();
         const fits = await row.locator('.frame').evaluate((el) => el.scrollWidth <= el.clientWidth);
         expect(fits).toBe(true);
+        // A straight edge runs along the axis between two box centres. Across,
+        // a 40-unit step beside a 48-unit repeat group was top-aligned, and the
+        // edge between them slanted by 4 units.
+        const slanted = await row.locator(`${shown} svg .edge polyline`).evaluateAll((lines) =>
+          lines
+            .map((l) =>
+              (l.getAttribute('points') ?? '').split(' ').map((p) => p.split(',').map(Number))
+            )
+            .filter((pts) => pts.length === 2)
+            .filter(([a, b]) => a?.[0] !== b?.[0] && a?.[1] !== b?.[1])
+        );
+        expect(slanted).toEqual([]);
       }
     });
   });
