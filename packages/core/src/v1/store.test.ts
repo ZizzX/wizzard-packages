@@ -897,6 +897,23 @@ describe('start after a failed start', () => {
 });
 
 describe('start under concurrency', () => {
+  // The lock commit of start()'s own first move notifies synchronously, before
+  // start() had recorded that it was starting; a listener calling start() there
+  // began a second move, and the first start() answered superseded (T-087).
+  it('answers a start() called from its own lock commit with the same attempt', async () => {
+    const w = make();
+    let inner: Promise<unknown> | undefined;
+    const unsubscribe = w.subscribe(() => {
+      if (inner === undefined && w.getState().status === 'busy') inner = w.start();
+    });
+    const outer = w.start();
+    unsubscribe();
+
+    expect(await outer).toMatchObject({ ok: true });
+    expect(inner).toBe(outer);
+    expect(w.getState().history).toHaveLength(0);
+  });
+
   // A move already under way owns the wizard; a start beside it would bump
   // the epoch and turn that move into `superseded`.
   it('leaves a next() that is already moving alone', async () => {
