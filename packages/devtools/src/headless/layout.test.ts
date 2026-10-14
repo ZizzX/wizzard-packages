@@ -274,12 +274,13 @@ describe('layoutGraph', () => {
 
     // A ratio, not a budget in milliseconds. The fixture lays out in about 8 ms
     // on a laptop and took 114-170 ms on a loaded CI runner, so a fixed 100 ms
-    // measured the runner. Four times the edges cost about three times the
-    // time, and the bound leaves twice that; a layout gone quadratic in its
-    // edges costs about nine here, sixteen in the limit.
-    const small = fastest(100);
+    // measured the runner. Sixteen times the edges cost about twelve times the
+    // time while the layout is linear in them; one extra pass quadratic in the
+    // edges measured 64. The bound of 40 sits clear of both: with sizes 100 and
+    // 200 a ratio of 6.6 against a bound of 6 failed a CI run.
+    const small = fastest(50);
     const dense = fastest(200);
-    expect(dense / Math.max(small, 0.5)).toBeLessThan(6);
+    expect(dense / Math.max(small, 0.2)).toBeLessThan(40);
     // And a ceiling no runner should reach, for a regression that is slow at every size.
     expect(dense).toBeLessThan(2_000);
   });

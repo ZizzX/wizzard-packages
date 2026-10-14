@@ -10,10 +10,11 @@ thousand edges. It used to assert the fastest of three runs under 100 ms. That m
 runner, not the layout: about 8 ms on a laptop, 114-170 ms on a loaded GitHub runner, and on
 2026-10-14 it failed three of four CI runs and blocked merges that never touched the layout.
 
-Since T-119 it asserts a ratio instead: the fastest of five runs at 200 nodes against 100
-nodes stays under 6 (about 3 when linear in edges). A mutation that made the layout quadratic
-in its edges read about 9 and failed. A 2 s absolute ceiling stays for a regression that is
-slow at every size.
+Since T-119 it asserts a ratio instead, and since T-121 the sizes are far apart: the fastest of
+five runs at 200 nodes against 50 stays under 40 - about 12 when linear in edges, 64 with one
+extra quadratic pass. The first version compared 200 with 100 against a bound of 6 (linear about
+3, quadratic about 9) and a CI run read 6.6 the same day: two sizes close together leave no room
+between noise and regression. A 2 s absolute ceiling stays for a regression slow at every size.
 
 **Why:** an absolute budget on a shared runner is a test of the runner's load. A ratio taken
 in one process on one machine cancels the machine out, and still catches the regression that
