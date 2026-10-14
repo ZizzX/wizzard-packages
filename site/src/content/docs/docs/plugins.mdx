@@ -3,21 +3,43 @@ title: Writing a plugin
 description: The hooks a plugin may implement, where each one runs in a move, and what happens when one throws.
 ---
 
+import { Code } from '@astrojs/starlight/components';
+import flowSource from '@examples/tasks/src/plugins/flow.ts?raw';
+import auditSource from '@examples/tasks/src/plugins/audit.ts?raw';
+import authSource from '@examples/tasks/src/plugins/auth.ts?raw';
+import runSource from '@examples/tasks/src/plugins/run.ts?raw';
+import runOutput from '@examples/tasks/src/plugins/run.out.txt?raw';
+
 A plugin is an object with a `name` and any of six optional hooks. It is the engine's extension
 point: persistence and devtools are both plugins, and nothing about them is privileged.
 
-```ts
-import type { Hooks } from '@wizzard-packages/core';
+The example on this page is a checkout with two plugins of its own. Every block below is a file
+from `examples/tasks/src/plugins` in the repository, and a test runs the script and compares what
+it prints, so the output shown is what the engine does. The files sit side by side in one folder;
+`run.ts` awaits at the top level, so it runs as an ES module - with `"type": "module"` in the
+folder's `package.json` - under a TypeScript runner such as `npx tsx run.ts`.
 
-export const trail = (): Hooks => ({
-  name: 'trail',
-  afterNavigate: ({ from, to }) => {
-    console.info(`${from ?? 'start'} -> ${String(to)}`);
-  },
-});
+<Code code={flowSource} lang="ts" title="plugins/flow.ts" />
 
-createWizard({ flow, plugins: [trail()] });
-```
+`audit` holds state of its own, so it uses the hooks that start, observe and stop:
+
+<Code code={auditSource} lang="ts" title="plugins/audit.ts" />
+
+`requireSignIn` is the other kind, a plugin that decides whether a move may happen:
+
+<Code code={authSource} lang="ts" title="plugins/auth.ts" />
+
+A plugin is passed to `createWizard` in its `plugins` option, and the wizard calls it from then
+on. The script builds the wizard, drives it into the refusal and past it, and destroys it:
+
+<Code code={runSource} lang="ts" title="plugins/run.ts" />
+
+<Code code={runOutput} lang="txt" title="Output" />
+
+The output reads in the order things happened. `init` ran inside `createWizard`, before the first
+line of the script read the coupon it committed. Every move is one `onAttempt` line, the refused
+one included, while `onCommit` counted eight writes for four attempts - the sections below say
+why. `destroy()` ran the teardown last.
 
 ## The hooks
 
@@ -31,20 +53,30 @@ createWizard({ flow, plugins: [trail()] });
 | `onAttempt(attempt)`        | around a whole attempt: `start`, `end`, `error` | observe only                                      |
 
 `init` receives a host with `getState`, `getFlow` and `commit`, and may return a teardown
-function, which `destroy()` calls. A commit made during `init` is not reported back to the same
-plugin's `onCommit`, so a plugin restoring state does not see its own restoration as a change.
+function, which `destroy()` calls. `destroy()` is called by whoever created the wizard: the
+application, when it called `createWizard` itself, as `run.ts` does; `WizardProvider` or
+`provideWizard` on unmount, when they were given options and created it; and the application again
+when it handed them a wizard it built. A teardown that never runs leaves its timers and listeners
+behind. A commit made during `init` is not reported to any plugin's `onCommit`, so a plugin
+restoring state does not see its own restoration as a change.
 
 `onCommit` fires on every commit, not only on navigation: `set`, `setCtx`, `patch`, `reset` and
 `patchFlow` each produce one.
 
+`onAttempt` receives one object per event, twice per attempt. Every one carries `id`, which counts
+attempts on this wizard; `intent`, the move as asked (`{ type: 'next' }`, `{ type: 'back' }` or
+`{ type: 'go', to, force }`); `source`, which is `'start'` for the move `start()` makes and
+`'call'` for every other; and `rev`, the state's revision at that moment. `phase` says which event
+it is: `'start'`, then either `'end'` with the `result` the caller receives, or `'error'` with the
+`error` that was thrown.
+
 ## Blocking and redirecting
 
 `beforeNavigate` is the only hook that can change what happens. It is called on every plugin in
-registration order, and the first one that refuses ends the move:
+registration order, and the first one that refuses ends the move.
 
-```ts
-beforeNavigate: ({ state }) => (signedIn() ? undefined : { block: 'auth' });
-```
+`requireSignIn` in `plugins/auth.ts` above is one, and the refusal it returns is the `refused:`
+line of the output.
 
 `to` is the destination only when the move is an explicit `go(id)`. A `next()` or a `back()`
 has not resolved its target yet when plugins run, so `to` is `null` there: a rule about a
@@ -57,6 +89,9 @@ particular step reads `from`, or the state, rather than `to`.
 | `{ block: name }`  | refused, with `by` set to that name                            |
 | `{ redirect: to }` | the move becomes a `go` to that step and continues             |
 
+A refusal also carries `code` and `url`, the kebab-case code and the page that explains it, as
+the `refused:` line of the output shows.
+
 It may be async. Everything after it - validation, guards, loading - runs against the intent it
 left behind, so a redirect is honoured by the rest of the pipeline rather than corrected
 afterwards.
@@ -65,7 +100,7 @@ afterwards.
 
 A move is one pipeline, and lands in exactly one commit - the one that changes where the wizard
 is. It is not the only write: taking the navigation lock is a commit, and so is marking a step
-busy before it loads, and `onCommit` sees each of them. A plugin counting moves, or recording
+busy before it loads, and so is releasing the lock when a move is refused, and `onCommit` sees each of them. A plugin counting moves, or recording
 one entry per navigation, belongs in `onAttempt` or `afterNavigate` rather than in `onCommit`.
 
 1. `beforeNavigate` on every plugin
@@ -110,7 +145,8 @@ exceptions, and a failure with nobody to throw to is logged.
 
 ## The worked example
 
-`@wizzard-packages/plugins/persist` is the plugin to read. It uses two hooks and no more:
+`@wizzard-packages/plugins/persist` is the plugin to read; its source is
+[`packages/plugins/src/persist.ts`](https://github.com/ZizzX/wizzard-packages/blob/main/packages/plugins/src/persist.ts). It uses two hooks and no more:
 `init` reads storage, decodes the snapshot and commits it through the host; `onCommit`
 serialises the state and writes it behind a short debounce, so typing does not write on every
 keystroke. Every failure inside it - storage unavailable, payload unreadable, version mismatch -

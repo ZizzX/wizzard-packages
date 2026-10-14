@@ -56,7 +56,7 @@ Both kinds share the same base:
 | `slice`        | `string`                                                 | The subtree of `data` this step owns.                 |
 | `ui`           | `Json`                                                   | Passed untouched to your renderer, never evaluated.   |
 | `load`         | `{ $ref: string; args?: Json }`                          | A resolver run on entry.                              |
-| `deferred`     | `boolean`                                                | The step is reached, but not counted as pending work. |
+| `deferred`     | `boolean`                                                | The body arrives later: entering waits on `loadStep`. |
 | `clearOnLeave` | `readonly string[] \| true`                              | Data to drop when the step is left.                   |
 
 An atom step adds `view` (a name your renderer maps to a component) and `validate`, which is a

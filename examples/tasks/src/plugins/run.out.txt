@@ -1,0 +1,8 @@
+audit: checkout opened
+coupon: WELCOME
+attempt 1 next (start): reached cart
+attempt 2 next (call): reached account
+attempt 3 next (call): blocked by auth
+refused: {"ok":false,"reason":"blocked","by":"auth","code":"nav-blocked","url":"https://zizzx.github.io/wizzard-packages/errors/nav-blocked"}
+attempt 4 next (call): reached pay
+audit: closed after 8 commits
