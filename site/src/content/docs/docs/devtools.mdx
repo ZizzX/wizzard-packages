@@ -7,6 +7,8 @@ import { Code } from '@astrojs/starlight/components';
 import DevtoolsReact from '../../../islands/DevtoolsReact';
 import devtoolsSource from '@examples/quickstart/src/Devtools.tsx?raw';
 import installDevtools from '@examples/quickstart/install/devtools.sh?raw';
+import headlessSource from '@examples/tasks/src/devtools-headless/run.ts?raw';
+import headlessOutput from '@examples/tasks/src/devtools-headless/run.out.txt?raw';
 
 A wizard that will not move is the hard bug, because nothing happened: no exception, no log line,
 a button that does nothing. The panel exists for that one question - why is the wizard where it
@@ -28,9 +30,10 @@ navigates, so reading the picture cannot move the wizard someone is debugging.
 actually reach the wizard", which is a different question from "did I call `set`".
 
 **Activity** is the one that pays for the panel. It lists what the wizard did in order - commits
-it made, moves it refused, and the one in flight. A refusal is not a commit, so it does not reach
-a subscriber at all: without this view a refused `next()` is invisible, which is exactly the
-moment someone opens devtools. The rows come from the plugin, and the header says so when the
+it made, moves it refused, and the one in flight. A refused move leaves no record in state: one
+a guard or a plugin refuses commits nothing, and one a validator refuses commits only its errors.
+Without this view a refused `next()` is invisible as a move, which is exactly the moment someone
+opens devtools. The rows come from the plugin, and the header says so when the
 plugin is missing.
 
 The strip above the tabs answers without a tab change: where the wizard is, whether the panel is
@@ -44,19 +47,21 @@ the registry the panel does not have.
 
 ## Mounting it
 
-Three steps, and two ways to get it wrong.
+Three steps, and two ways to get it wrong. `Devtools.tsx` at the top of this page is all three;
+it renders the quickstart's `Wizard` component from `App.tsx` and its `signup` flow from
+`flow.ts`, both in `examples/quickstart/src`.
+
+1. Install the panel. It imports `@wizzard-packages/react`, an optional peer, so install the
+   React binding beside it.
 
 <Code code={installDevtools} lang="bash" />
 
-The panel imports `@wizzard-packages/react`, an optional peer, so install the React binding
-beside it.
-
-```tsx
-const dt = devtools();
-const wizard = createWizard({ flow: signup, plugins: [dt] });
-
-<WizardDevtools plugin={dt} />;
-```
+2. Call `devtools()` once, and pass what it returns to `createWizard` in `plugins`.
+3. Render `WizardDevtools` with that same object as `plugin`, inside the provider that carries
+   the wizard - `Devtools.tsx` builds the wizard itself and hands it to `WizardProvider` as
+   `wizard`. Outside a provider, pass the wizard as the panel's `wizard` prop instead; with
+   neither, the panel has nothing to watch and says so as
+   [`devtools-no-wizard`](../../errors/devtools-no-wizard/).
 
 **The same object goes to both.** `devtools()` returns a plugin; the engine writes to it and the
 panel reads from it. Two calls produce two objects, the panel reads the one nothing writes to,
@@ -91,20 +96,18 @@ machinery without React or the DOM: `devtools()` installs into any wizard, and `
 produces the same bundle the panel's record button writes. The recording can then be read
 anywhere - a test, a bug report, the inspector on this site.
 
-```ts
-import { devtools, recordSession } from '@wizzard-packages/devtools/headless';
-import { writeFileSync } from 'node:fs';
+The script below records the two-step trip from [Hooks](../hooks/) - its `flow.ts` and
+`registry.ts` - through a refused move and an accepted one, and prints what the bundle holds. It
+is `examples/tasks/src/devtools-headless/run.ts` in the repository, and a test compares what it
+prints with the output shown.
 
-const dt = devtools();
-const wizard = createWizard({ flow, registry, plugins: [dt] });
-const recording = recordSession(wizard, { plugin: dt });
+<Code code={headlessSource} lang="ts" title="devtools-headless/run.ts" />
 
-await wizard.start();
-await wizard.next();
+<Code code={headlessOutput} lang="txt" title="Output" />
 
-recording.stop();
-writeFileSync('bundle.json', JSON.stringify(recording.bundle()));
-```
+The refused `next()` is an outcome with its reason. It is also a frame, because a validator's
+refusal commits the errors it produced, but that frame says nothing about the move. Without
+`plugin` in `recordSession` the frames are the same and the outcomes are empty.
 
 A bundle replays structure and data: the flow definition, every settled state, and the outcomes.
 It does not replay resolver behaviour - a named resolver is not in the bundle, so a flow that
@@ -124,7 +127,8 @@ in a minor release. Use them for a tool you can rebuild, not for something a use
 
 ## Redaction
 
-`redact` runs once, at export, on a copy of the whole bundle:
+`redact` runs once, at export, on a copy of the whole bundle. `dt` here and below is the object
+from `devtools()`, as in `Devtools.tsx` above:
 
 ```tsx
 <WizardDevtools
