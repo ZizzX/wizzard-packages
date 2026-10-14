@@ -3,17 +3,27 @@ title: Inspecting a flow
 description: A flow as a graph, and a recorded session checked against the definition it was taken from.
 ---
 
+import { Code } from '@astrojs/starlight/components';
+import runSource from '@examples/tasks/src/inspecting/run.ts?raw';
+import runOutput from '@examples/tasks/src/inspecting/run.out.txt?raw';
+
 Two entry points exist for looking at a flow rather than running one: `core/graph` turns a
 definition into nodes and edges, and `core/session` checks that a recorded session still matches
 the definition. Both are their own entry, so a wizard that only runs a flow never carries them.
 
+The script below does all of what this page describes to the conference registration the
+[Tutorial](../tutorial/) builds - its `flow.ts` and `registry.ts`, where `registration` runs the
+`guest` sub-flow once per guest. It is `examples/tasks/src/inspecting/run.ts` in the repository,
+and a test compares what it prints with the output shown.
+
+<Code code={runSource} lang="ts" title="inspecting/run.ts" />
+
+<Code code={runOutput} lang="txt" title="Output" />
+
 ## The graph
 
-```ts
-import { buildGraph } from '@wizzard-packages/core/graph';
-
-const { nodes, edges } = buildGraph(trip, { passenger });
-```
+`buildGraph(flow, subFlows)` returns `{ nodes, edges }`. The second argument holds the
+definitions a group step names, the same `subFlows` `createWizard` takes.
 
 The result is structure, not a picture: there are no coordinates in it, and laying it out is the
 caller's job. That is the division that lets the devtools panel and this site's diagrams draw
@@ -68,14 +78,10 @@ that quietly breaks testable on its own: build a state, ask where `next()` would
 id. `scope` is `{ data, ctx }`, the same object an expression is evaluated against, and
 `registry` is needed only when a `when` is a `$ref`.
 
-`createSelector` is the derived half of the same idea:
-
-```ts
-import { createSelector } from '@wizzard-packages/core';
-
-const select = createSelector(() => trip);
-const { active, current, progress, breadcrumbs, canBack, isBusy, hasErrors } = select(state);
-```
+`createSelector` is the derived half of the same idea. It takes a function that returns the flow,
+and the registry when a `when` is a `$ref`. The script above hands what it returns a state read
+with `wizard.getState()`, and `active`, `current`, `progress`, `breadcrumbs`, `canBack`, `isBusy`
+and `hasErrors` come back together.
 
 It returns a function of state, memoized on `rev`, which changes on a commit and only on a
 commit. Two calls between commits return the identical object, which is what
@@ -104,15 +110,10 @@ whatever the size of the flow, and the built-in layout is memoized per graph.
 `core/session` answers a narrower question: is this stack of frames still consistent with this
 definition?
 
-```ts
-import { checkSession } from '@wizzard-packages/core/session';
-
-const problems = checkSession(recording, trip, { passenger });
-if (problems.length > 0) refuse(problems[0].message);
-```
-
 A session is `{ flow, version?, frames }` - the id and version it was taken against, and the
-states it passed through. `checkSession` returns problems and never throws, each one carrying
+states it passed through. The script builds one by pushing `wizard.getState()` on every commit;
+`recordSession` from [Devtools](../devtools/) records the same thing, and its bundle's `session`
+is one. `checkSession(session, flow, subFlows)` returns problems and never throws, each one carrying
 `path`, `message`, `code`, `fix` and `url`, the same shape `validateFlow` returns.
 
 What it catches: a recording of a different flow or version

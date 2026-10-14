@@ -8,6 +8,7 @@ API surface of navigation, and it is deliberate: validation may need the network
 veto, and a user who clicks twice must not end up two steps along.
 
 ```ts
+// `wizard` is the engine `createWizard` returns, or `useWizard()` in a component.
 const result = await wizard.next();
 if (!result.ok) {
   // result.reason says why
@@ -105,11 +106,16 @@ traversal installed. Those are bugs in the wiring, not outcomes of a user's clic
 
 ## In a component
 
-The bindings expose the same four methods plus the state a control needs to render itself:
+The bindings expose the same four methods plus the state a control needs to render itself.
+`useNavigation` is a named import from `@wizzard-packages/react` or `@wizzard-packages/vue`, and
+is called in a component under the provider:
 
 ```ts
 const { next, back, canBack, isBusy, isLast } = useNavigation();
 ```
+
+In React the three flags are booleans. In Vue they are `ComputedRef`s: a template unwraps them,
+and a script reads `isBusy.value`. The `Steps` component on [Hooks](../hooks/) uses them on both.
 
 `isBusy` is true while a move is in flight, which is what a submit button should be disabled
 by - not a local flag, which cannot know about a move started elsewhere.
