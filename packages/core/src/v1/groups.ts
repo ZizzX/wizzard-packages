@@ -545,7 +545,10 @@ function retreat(
     if (level === undefined) return null;
 
     const to = resolveBack(level.flow, stateAt(state, level.frame), level.scope, registry);
-    if (to !== null) return behind(inner, to, root, state, registry, subFlows);
+    // `undefined` from `behind` is "nothing behind after all": every target
+    // back from here was an empty group, which reads as the first step does.
+    const landed = to === null ? undefined : behind(inner, to, root, state, registry, subFlows);
+    if (landed !== undefined) return landed;
     if (depth === 0) return null;
 
     const previous = previousItem(inner, root, state, registry, subFlows);
@@ -654,9 +657,10 @@ function behind(
   state: WizardState,
   registry?: Registry,
   subFlows?: SubFlows
-): Move | Refusal | null {
+): Move | Refusal | null | undefined {
   const level = levels[levels.length - 1];
-  for (let target: string | null = to, turn = 0; target !== null && turn <= MAX_DEPTH; turn++) {
+  let target: string | null = to;
+  for (let turn = 0; target !== null && turn <= MAX_DEPTH; turn++) {
     const group = level?.flow.steps[target];
     if (level === undefined || group === undefined || !isGroup(group)) {
       return settle(levels, target, state, registry, subFlows);
@@ -681,7 +685,7 @@ function behind(
       registry
     );
   }
-  return null;
+  return target === null ? undefined : null;
 }
 
 /**
