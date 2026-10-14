@@ -73,6 +73,8 @@ export type Move = {
   to: string | typeof END;
   flow: FlowDefinition;
   scope: Scope;
+  /** The move left a position that no longer exists: its item was removed. */
+  stale?: true;
 };
 
 /** The items of a `repeat` and the key each one is addressed by. */
@@ -654,16 +656,32 @@ function behind(
   subFlows?: SubFlows
 ): Move | Refusal | null {
   const level = levels[levels.length - 1];
-  const group = level?.flow.steps[to];
-  if (level !== undefined && group !== undefined && isGroup(group)) {
+  for (let target: string | null = to, turn = 0; target !== null && turn <= MAX_DEPTH; turn++) {
+    const group = level?.flow.steps[target];
+    if (level === undefined || group === undefined || !isGroup(group)) {
+      return settle(levels, target, state, registry, subFlows);
+    }
     const inside = startsWith([
       ...framesOf(levels.slice(0, -1)),
-      { flow: level.flow.id, step: to },
+      { flow: level.flow.id, step: target },
     ]);
     const recorded = fromHistory(root, state, inside, registry, subFlows);
     if (recorded) return recorded;
+
+    // Entered from its start. A group with no position in it - every item
+    // removed, every step hidden - would be walked straight through, forwards,
+    // and land where back() began; so the move keeps going back past it instead.
+    const copies = levels.map((l) => ({ ...l }));
+    const entered = settle(copies, target, state, registry, subFlows);
+    if (entered === null || 'ok' in entered || inside(entered.stack)) return entered;
+    target = resolveBack(
+      level.flow,
+      stateAt(state, { flow: level.flow.id, step: target }),
+      level.scope,
+      registry
+    );
   }
-  return settle(levels, to, state, registry, subFlows);
+  return null;
 }
 
 /**
@@ -703,11 +721,19 @@ export function step(
   subFlows?: SubFlows
 ): Move | Refusal | null {
   const levels = walk(root, state, registry, subFlows);
+  // `walk` hands back a frame it kept by identity, so any difference is a frame
+  // it pruned (4.9): the wizard stood on an item that has since been removed.
+  const stale =
+    levels.length !== state.stack.length || levels.some((l, i) => l.frame !== state.stack[i]);
   if (levels.length === 0) levels.push({ flow: root, scope: rootScope(state) });
 
-  if (intent.type === 'go') return jump(levels, state, intent.to, registry, subFlows);
-  if (intent.type === 'back') return retreat(levels, root, state, registry, subFlows);
-  return forward(levels, state, registry, subFlows);
+  const move =
+    intent.type === 'go'
+      ? jump(levels, state, intent.to, registry, subFlows)
+      : intent.type === 'back'
+        ? retreat(levels, root, state, registry, subFlows)
+        : forward(levels, state, registry, subFlows);
+  return stale && move !== null && !('ok' in move) ? { ...move, stale: true } : move;
 }
 
 /**

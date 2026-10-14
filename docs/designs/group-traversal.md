@@ -233,7 +233,9 @@ The history only says where to stand inside a group the move lands on. Where the
 nothing behind - the first step of an item - a repeat steps back onto the previous item, at the
 newest position the history holds inside it, or at its first step when nothing is recorded; the
 first item, or a group without a repeat, is left, and the parent resolves backwards from the group
-step. Recorded stacks whose top frame is dead by 4.2 are skipped.
+step. Recorded stacks whose top frame is dead by 4.2 are skipped, and a move that leaves such a
+frame records nothing (T-083). A group with no position left in it - every item removed, every
+step hidden - is passed over backwards rather than walked through forwards.
 
 Until T-082 the rule was history-driven below the root: `back()` restored the newest recorded
 stack, so a sub-flow's `on.back` was never read and an inner group that was jumped over was never

@@ -112,7 +112,8 @@ name keys of a list the next session may have changed.
 pick the step behind. From the first step of an item it lands where the previous item stopped, and
 from the first step of the first item it leaves the group. A group reached from behind - at the
 root or inside an item - is entered where its last item stopped, skipping items that have since
-been removed, or at its start when it was jumped over. `go()` to the group step starts it over at
+been removed, or at its start when it was jumped over; a group with no item left in it is passed
+over, backwards. `go()` to the group step starts it over at
 its first item.
 
 ## Where to go next
