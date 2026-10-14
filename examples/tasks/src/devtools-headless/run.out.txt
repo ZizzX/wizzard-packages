@@ -1,0 +1,4 @@
+frames: 5, outcomes: 3
+next (start): reached details
+next (call): invalid
+next (call): reached review
