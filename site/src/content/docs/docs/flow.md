@@ -148,6 +148,7 @@ step straight to it.
 Two methods write, and they differ in what they touch:
 
 ```ts
+// `wizard` is the engine `createWizard` returns, or `useWizard()` in a component.
 wizard.set('details.email', 'ada@example.com'); // replaces the value at that path
 wizard.patch({ plan: 'pro' }); // merges shallowly into the root of `data`
 ```

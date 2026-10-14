@@ -99,6 +99,7 @@ and how `assertFlow` differs.
 only what changed, and fields at the top level are replaced whole.
 
 ```ts
+// `wizard` is the running engine: what `createWizard` returned, or `useWizard()` in a component.
 wizard.patchFlow({ order: ['account', 'billing', 'invoice', 'done'], steps: { invoice: {} } });
 ```
 
