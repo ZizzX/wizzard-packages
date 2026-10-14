@@ -7,6 +7,10 @@ import type { StepDef } from '@wizzard-packages/core';
  */
 const later = <T>(value: () => T, signal?: AbortSignal): Promise<T> =>
   new Promise((settle, fail) => {
+    if (signal?.aborted) {
+      fail(signal.reason);
+      return;
+    }
     const timer = setTimeout(() => {
       try {
         settle(value());
@@ -14,10 +18,14 @@ const later = <T>(value: () => T, signal?: AbortSignal): Promise<T> =>
         fail(error);
       }
     }, 10);
-    signal?.addEventListener('abort', () => {
-      clearTimeout(timer);
-      fail(signal.reason);
-    });
+    signal?.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(timer);
+        fail(signal.reason);
+      },
+      { once: true }
+    );
   });
 
 export const fetchSeats = (plane: string, signal?: AbortSignal): Promise<string[]> =>

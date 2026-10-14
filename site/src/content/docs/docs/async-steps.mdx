@@ -20,7 +20,8 @@ The example on this page is a booking with one step of each kind: `seats` waits 
 `offer` waits on a plugin. Every block below is a file from `examples/tasks/src/async-steps` in
 the repository, and a test runs the script at the end and compares what it prints, so the output
 shown is what the engine does. The files sit side by side in one folder; `run.ts` is run with a
-TypeScript runner such as `npx tsx run.ts`.
+TypeScript runner such as `npx tsx run.ts`. It awaits at the top level, so it runs as an ES
+module, with `"type": "module"` in the folder's `package.json`.
 
 <Code code={flowSource} lang="ts" title="async-steps/flow.ts" />
 
