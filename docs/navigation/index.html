@@ -128,8 +128,9 @@ unstarted, and the next <code dir="auto">start()</code> tries again. A session r
 landed in this page yet: <code dir="auto">start()</code> enters that step again, in place, so its <code dir="auto">load</code> runs, and is
 idempotent once that entry or any other move has committed. A <code dir="auto">start()</code> called while a move is still on its way does not step over it: it waits for that move, then answers
 from wherever the move left the wizard, running the first move itself if it left it unstarted.</p>
-<p><code dir="auto">back()</code> resolves its target from the definition rather than from where the user has been. A step
-with <code dir="auto">on.back</code> goes there. Otherwise the resolver walks <code dir="auto">order</code> backwards and takes the first step
+<p><code dir="auto">back()</code> resolves its target from the definition rather than from where the user has been, in
+whichever flow the wizard stands - the root, or a sub-flow inside a group. A step with <code dir="auto">on.back</code>
+goes there. Otherwise the resolver walks <code dir="auto">order</code> backwards and takes the first step
 whose <code dir="auto">when</code> still holds, so a branch that closed behind the user is skipped rather than
 revisited. <code dir="auto">'auto'</code> is that same walk, written out.</p>
 <p>The history the wizard keeps is a different thing. It records the stack at each move, which is
