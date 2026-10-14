@@ -18,6 +18,10 @@ export interface Store {
  * `toSnapshot` keeps what survives a reload - where the user is, how they got
  * there, what they answered - and drops what describes a moment, such as a
  * move in flight. The returned function stops the saving.
+ *
+ * Every commit is a full write: a `next()` makes several, and typing makes
+ * one per keystroke. The `persist` plugin coalesces them and survives a store
+ * that refuses a write; this does neither, which is what keeps it short.
  */
 export const keepSaved = (wizard: Wizard, store: Store, key: string): (() => void) =>
   wizard.subscribe(() => {

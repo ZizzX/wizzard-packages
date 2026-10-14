@@ -36,7 +36,8 @@ const changed = readSaved({ ...signup, version: 2 }, store, 'signup');
 console.log(`after a version bump: ${changed?.restored === false ? changed.reason : 'restored'}`);
 
 // A payload in an envelope format this build does not read is refused, unless
-// `migrate` brings it forward one hop at a time.
+// `migrate` brings it forward one hop at a time. The format is `1` and has
+// never been anything else, so `v: 0` here is a stand-in for an older one.
 kept.set('old', JSON.stringify({ ...JSON.parse(kept.get('signup') ?? '{}'), v: 0 }));
 const unread = readSaved(signup, store, 'old');
 const migrated = readSaved(signup, store, 'old', {

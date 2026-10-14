@@ -16,7 +16,9 @@ file from `examples/tasks/src/persistence` in the repository, and a test runs th
 compares what it prints. The files sit side by side in one folder; `run.ts` awaits at the top
 level, so it runs as an ES module - `"type": "module"` in the folder's `package.json` - under a
 TypeScript runner such as `npx tsx run.ts`. Most applications let the [plugin](#letting-the-plugin-do-it)
-do this wiring; the functions underneath are what it calls.
+do this wiring; the functions underneath are what it calls. The plugin wraps the snapshot in an
+envelope of its own, with its `version` beside it, so a key written by hand and a key written by
+the plugin cannot be read by the other.
 
 <!-- example:persistence-flow -->
 
@@ -71,6 +73,10 @@ export interface Store {
  * `toSnapshot` keeps what survives a reload - where the user is, how they got
  * there, what they answered - and drops what describes a moment, such as a
  * move in flight. The returned function stops the saving.
+ *
+ * Every commit is a full write: a `next()` makes several, and typing makes
+ * one per keystroke. The `persist` plugin coalesces them and survives a store
+ * that refuses a write; this does neither, which is what keeps it short.
  */
 export const keepSaved = (wizard: Wizard, store: Store, key: string): (() => void) =>
   wizard.subscribe(() => {
@@ -152,7 +158,8 @@ const changed = readSaved({ ...signup, version: 2 }, store, 'signup');
 console.log(`after a version bump: ${changed?.restored === false ? changed.reason : 'restored'}`);
 
 // A payload in an envelope format this build does not read is refused, unless
-// `migrate` brings it forward one hop at a time.
+// `migrate` brings it forward one hop at a time. The format is `1` and has
+// never been anything else, so `v: 0` here is a stand-in for an older one.
 kept.set('old', JSON.stringify({ ...JSON.parse(kept.get('signup') ?? '{}'), v: 0 }));
 const unread = readSaved(signup, store, 'old');
 const migrated = readSaved(signup, store, 'old', {
