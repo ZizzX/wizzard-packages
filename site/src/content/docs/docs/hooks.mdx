@@ -126,7 +126,7 @@ const { current, progress, breadcrumbs } = useStep();
 </script>
 
 <template>
-  <progress :value="progress" max="1" />
+  <progress :value="progress" max="100" />
   <p>{{ current }}</p>
 </template>
 ```
@@ -146,14 +146,14 @@ buttons needs. Navigation is async and returns a result, not a boolean:
 
 ### Reading and writing a field
 
-`useField` addresses the same dot paths the flow does, so `data.trip.name` in an expression is
-`'trip.name'` here.
+`useField` addresses the same dot paths the flow does, so `data.details.name` in an expression is
+`'details.name'` here.
 
 <Tabs syncKey={FRAMEWORK_SYNC_KEY}>
   <TabItem label={FRAMEWORK_LABELS.react}>
 
 ```tsx
-const [name, setName] = useField<string>('trip.name');
+const [name, setName] = useField<string>('details.name');
 
 <input value={name ?? ''} onChange={(e) => setName(e.target.value)} />;
 ```
@@ -163,7 +163,7 @@ const [name, setName] = useField<string>('trip.name');
 
 ```vue
 <script setup lang="ts">
-const name = useField<string>('trip.name');
+const name = useField<string>('details.name');
 </script>
 
 <template>

@@ -1,12 +1,25 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import AppVue from './App.vue';
-import OwnedVue from './Owned.vue';
 import { App } from './App';
-import { Owned } from './Owned';
-import { wizard } from './wizard';
+import type { Wizard } from '@wizzard-packages/core';
+
+/**
+ * `wizard.ts` builds its engine at module scope, as an application would. Each
+ * test that owns one imports the module afresh, so a binding that failed to
+ * start the engine cannot pass on a start an earlier test made.
+ */
+let wizard: Wizard;
+beforeEach(async () => {
+  vi.resetModules();
+  ({ wizard } = await import('./wizard'));
+  expect(wizard.getSnapshot().current).toBeNull();
+});
+afterEach(() => {
+  wizard.destroy();
+});
 
 /**
  * The page's claims, checked on both bindings: the provider starts the engine,
@@ -37,6 +50,7 @@ describe('hooks, on React', () => {
   });
 
   it('starts an engine it was given and leaves it alive on unmount', async () => {
+    const { Owned } = await import('./Owned');
     const { unmount } = render(<Owned />);
     await screen.findByLabelText(/Trip name/);
     expect(wizard.getSnapshot().current).toBe('details');
@@ -66,11 +80,11 @@ describe('hooks, on Vue', () => {
   });
 
   it('starts an engine it was given and leaves it alive on unmount', async () => {
+    const OwnedVue = (await import('./Owned.vue')).default;
     const app = mount(OwnedVue);
     await flushPromises();
     expect(wizard.getSnapshot().current).toBe('details');
     app.unmount();
     expect(wizard.isDestroyed()).toBe(false);
-    wizard.destroy();
   });
 });

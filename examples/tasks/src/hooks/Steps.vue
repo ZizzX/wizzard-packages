@@ -7,7 +7,7 @@ import {
   useWizardSelector,
 } from '@wizzard-packages/vue';
 
-// Every composable the page describes. Each field is a `ComputedRef`, so
+// The five composables a form needs. Each field is a `ComputedRef`, so
 // destructuring keeps it reactive.
 const { current, progress, breadcrumbs } = useStep();
 const { next, back, canBack, isBusy } = useNavigation();
@@ -31,7 +31,7 @@ const length = useWizardSelector(
         {{ b.label }}
       </li>
     </ol>
-    <p>{{ Math.round(progress) }}% done</p>
+    <p>{{ progress }}% done</p>
 
     <label v-if="current === 'details'">
       Trip name

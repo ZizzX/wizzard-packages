@@ -30,9 +30,10 @@ navigates, so reading the picture cannot move the wizard someone is debugging.
 actually reach the wizard", which is a different question from "did I call `set`".
 
 **Activity** is the one that pays for the panel. It lists what the wizard did in order - commits
-it made, moves it refused, and the one in flight. A refusal is not a commit, so it does not reach
-a subscriber at all: without this view a refused `next()` is invisible, which is exactly the
-moment someone opens devtools. The rows come from the plugin, and the header says so when the
+it made, moves it refused, and the one in flight. A refused move leaves no record in state: one
+a guard or a plugin refuses commits nothing, and one a validator refuses commits only its errors.
+Without this view a refused `next()` is invisible as a move, which is exactly the moment someone
+opens devtools. The rows come from the plugin, and the header says so when the
 plugin is missing.
 
 The strip above the tabs answers without a tab change: where the wizard is, whether the panel is
@@ -104,7 +105,8 @@ prints with the output shown.
 
 <Code code={headlessOutput} lang="txt" title="Output" />
 
-The refused `next()` is in the outcomes and not among the frames: it committed nothing. Without
+The refused `next()` is an outcome with its reason. It is also a frame, because a validator's
+refusal commits the errors it produced, but that frame says nothing about the move. Without
 `plugin` in `recordSession` the frames are the same and the outcomes are empty.
 
 A bundle replays structure and data: the flow definition, every settled state, and the outcomes.

@@ -6,9 +6,9 @@ import {
   useWizardSelector,
 } from '@wizzard-packages/react';
 
-/** Every hook the page describes, in one component rendered inside the provider. */
+/** The five hooks a form needs, in one component rendered inside the provider. */
 export function Steps() {
-  // The stepper: where the wizard is and how far along.
+  // The stepper: where the wizard is, and how far along, from 0 to 100.
   const { current, progress, breadcrumbs } = useStep();
   // The moves, and the flags a set of buttons needs.
   const { next, back, canBack, isBusy } = useNavigation();
@@ -33,7 +33,7 @@ export function Steps() {
           </li>
         ))}
       </ol>
-      <p>{Math.round(progress)}% done</p>
+      <p>{progress}% done</p>
 
       {current === 'details' && (
         <label>

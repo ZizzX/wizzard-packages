@@ -13,7 +13,8 @@ const wizard = createWizard({ flow: trip, registry, plugins: [dt] });
 const recording = recordSession(wizard, { plugin: dt });
 
 await wizard.start();
-// Refused by the validator: a refusal writes nothing, so only the plugin sees it.
+// Refused by the validator. Its errors are committed, so they are a frame, but
+// which move was refused, and why, is only in what the plugin keeps.
 await wizard.next();
 wizard.set('details', { name: 'Lisbon' });
 await wizard.next();
