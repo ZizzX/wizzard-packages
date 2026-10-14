@@ -179,7 +179,6 @@ problems list and the state diff.
 | visited | `--st-visited` | `#7D93BD` | `#5A6B8D` | entered and left; history, not progress bar     |
 | blocked | `--st-blocked` | `#F2716F` | `#B3261E` | a validator refused the move                    |
 | skipped | `--st-skipped` | `#8A98B8` | `#5D6A84` | `when` evaluated false; drawn dashed            |
-| group   | `--st-group`   | `#C9B6FF` | `#5B46A8` | a repeat group or a sub-flow                    |
 | error   | `--st-error`   | `#F2716F` | `#B3261E` | a thrown error, distinct from a refusal in copy |
 
 ### One fill per viewport
@@ -200,15 +199,15 @@ in the accent colour on its own tint is the pairing most likely to fall under th
 the route, so it clears 4.5:1 against `--surface-raised` in both themes. It deliberately does
 not share `--fg-faint`'s value any more, which is the token that may never carry text.
 
-`--st-group` is the single violet on the page. It marks a different class of object —
-structure rather than position — and it is never used for emphasis, a button, or a link.
 `blocked` and `error` share a colour because they share an urgency; the wording, not the
 colour, says which one happened.
 
-There is deliberately no token for a repeat group or a ghost node, though both have their own
-shape below. Kind is carried by shape and state by colour; giving repeat a second cool hue
-would break the rule directly above, and a ghost node draws in `--st-skipped` because both
-mean the same thing — not on the route — with the struck-through outline saying which.
+There is deliberately no token for a group, a repeat group or a ghost node. State is carried by
+colour, and a group in a given state draws exactly as a step in that state does - a second,
+violet border inside the group read as a second highlight beside the active one, and was
+removed for that. A group is told apart by its height and its condition line; a ghost node
+draws in `--st-skipped` because both mean the same thing - not on the route - with the
+struck-through outline saying which.
 
 ## Interaction states
 
@@ -236,12 +235,12 @@ or its label, because a touch visitor never hovers anything.
 One border weight at rest (1px, `--line`), one at selection (2px, `--accent`). Radii, by
 what the thing is:
 
-| Radius             | Value   | On                                                                                            |
-| ------------------ | ------- | --------------------------------------------------------------------------------------------- |
-| `--radius-pill`    | full    | what a visitor presses: buttons, segments                                                     |
-| `--radius-control` | 10px    | what a visitor types into: fields, selects                                                    |
-| `NODE_RX`          | 8 units | a graph node, an SVG attribute set in `FlowGraph.tsx`; a group's inner border sits 3 in, at 5 |
-| `--radius-panel`   | 18px    | panels, code blocks, tables, the graph's frame                                                |
+| Radius             | Value   | On                                                    |
+| ------------------ | ------- | ----------------------------------------------------- |
+| `--radius-pill`    | full    | what a visitor presses: buttons, segments             |
+| `--radius-control` | 10px    | what a visitor types into: fields, selects            |
+| `NODE_RX`          | 8 units | a graph node, an SVG attribute set in `FlowGraph.tsx` |
+| `--radius-panel`   | 18px    | panels, code blocks, tables, the graph's frame        |
 
 The install line is a pill only while it is one line. Its radius is half the control height, so
 the command a phone wraps onto two or three lines becomes a rounded box rather than a lozenge
@@ -361,13 +360,12 @@ the line stops short of the thing it points at.
 
 Node shapes carry the node's kind, so shape survives greyscale and colour blindness:
 
-| Kind   | Shape                                        |
-| ------ | -------------------------------------------- |
-| step   | rounded rect, `NODE_RX`                      |
-| group  | rect with a second border inset 3px          |
-| repeat | rect with a second rect offset 4px behind it |
-| end    | filled circle, radius 11                     |
-| ghost  | rounded rect, dashed, struck through         |
+| Kind  | Shape                                  |
+| ----- | -------------------------------------- |
+| step  | rounded rect, `NODE_RX`                |
+| group | rounded rect, `NODE_RX`, 48 units tall |
+| end   | filled circle, radius 11               |
+| ghost | rounded rect, dashed, struck through   |
 
 Edges are 1.5px. An edge on the taken route uses `--st-active`; an edge that is not the one
 the flow would take next drops to `--opacity-dim`. A `back` edge is dashed and never lights,

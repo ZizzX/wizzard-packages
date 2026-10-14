@@ -194,7 +194,6 @@
   --st-blocked: #f2716f;
   --st-blocked-soft: rgba(242, 113, 111, 0.12);
   --st-skipped: #8a98b8;
-  --st-group: #c9b6ff;
   --st-error: #f2716f;
 }
 
@@ -225,7 +224,6 @@
     --st-blocked: #b3261e;
     --st-blocked-soft: rgba(179, 38, 30, 0.08);
     --st-skipped: #5d6a84;
-    --st-group: #5b46a8;
     --st-error: #b3261e;
   }
 }
@@ -256,7 +254,6 @@
   --st-blocked: #b3261e;
   --st-blocked-soft: rgba(179, 38, 30, 0.08);
   --st-skipped: #5d6a84;
-  --st-group: #5b46a8;
   --st-error: #b3261e;
 }
 
