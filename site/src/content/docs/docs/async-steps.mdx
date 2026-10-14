@@ -3,27 +3,39 @@ title: Loading a step
 description: A step that fetches before it is shown, what the loader receives, and what happens when a newer move overtakes it.
 ---
 
+import { Code } from '@astrojs/starlight/components';
+import apiSource from '@examples/tasks/src/async-steps/api.ts?raw';
+import flowSource from '@examples/tasks/src/async-steps/flow.ts?raw';
+import registrySource from '@examples/tasks/src/async-steps/registry.ts?raw';
+import offersSource from '@examples/tasks/src/async-steps/offers.ts?raw';
+import wizardSource from '@examples/tasks/src/async-steps/wizard.ts?raw';
+import runSource from '@examples/tasks/src/async-steps/run.ts?raw';
+import runOutput from '@examples/tasks/src/async-steps/run.out.txt?raw';
+
 Most steps are ready the moment the flow reaches them. A step that is not - one whose options
 come from an API, or whose body the server sends - says so, and the engine waits on entry
 instead of rendering something incomplete.
 
+The example on this page is a booking with one step of each kind: `seats` waits on a resolver,
+`offer` waits on a plugin. Every block below is a file from `examples/tasks/src/async-steps` in
+the repository, and a test runs the script at the end and compares what it prints, so the output
+shown is what the engine does. The files sit side by side in one folder; `run.ts` is run with a
+TypeScript runner such as `npx tsx run.ts`.
+
+<Code code={flowSource} lang="ts" title="async-steps/flow.ts" />
+
+`api.ts` stands in for the server, so the example runs without one. Its first request for the
+offer fails on purpose, which is how the run below shows a failed load.
+
+<Code code={apiSource} lang="ts" title="async-steps/api.ts" />
+
 ## `load`
 
-`load` is a resolver run as the step is entered:
+`load` names a resolver run as the step is entered - `seatMap` on `seats` above. The resolver
+lives in the registry, the object of named functions handed to `createWizard` as its `registry`
+option (`wizard.ts` below):
 
-```ts
-steps: {
-  seats: { label: 'Pick a seat', load: { $ref: 'seatMap', args: { plane: 'a320' } } },
-}
-```
-
-```ts
-registry: {
-  seatMap: async (args, scope, signal) => {
-    store.seats = await (await fetch(`/seats/${args.plane}`, { signal })).json();
-  },
-}
-```
+<Code code={registrySource} lang="ts" title="async-steps/registry.ts" />
 
 The resolver receives the `args` from the definition, the scope the target sits in, and the
 move's `AbortSignal`. `cancel()` aborts the latest move while it runs, and `destroy()` every move
@@ -51,19 +63,27 @@ a step again, in place, and runs its `load`; [Persistence](../persistence/) has 
 
 ## `deferred`
 
-`deferred: true` marks a step whose body arrives from the host rather than from the definition.
-Entering one calls `loadStep(stepId, signal)` on every plugin, in order, and waits for each.
-
-```ts
-steps: {
-  offer: { label: 'Your offer', deferred: true },
-}
-```
+`deferred: true` marks a step whose body arrives from the host rather than from the definition -
+`offer` above. Entering one calls `loadStep(stepId, signal)` on every plugin, in order, and waits
+for each.
 
 That is all `deferred` does: the engine awaits the plugins and continues. `loadStep` returns
 `Promise<void>`, and the engine reads nothing back from it - a plugin that fetches a step body
 installs it with [`patchFlow`](../server-driven/), which is also how a server-driven flow changes
 shape while it runs.
+
+`patchFlow` belongs to the wizard, not to the host a plugin's `init` receives, and a plugin is
+built before the wizard it is passed to. So the plugin takes a function that returns the wizard,
+and calls it only from `loadStep`, when the wizard exists:
+
+<Code code={offersSource} lang="ts" title="async-steps/offers.ts" />
+
+<Code code={wizardSource} lang="ts" title="async-steps/wizard.ts" />
+
+The installed body is the step from then on, with one exception: the move that installed it has
+already read the step, so the new body's `guards` and `load` do not run on that entry. They run
+on every later one. A body the server sends without `deferred` is not fetched again when the user
+comes back to the step; one that still says `deferred: true` is.
 
 ## While it loads
 
@@ -95,3 +115,12 @@ step it was on, and the promise from `next()` rejects with whatever the loader t
 to catch and retry. A move that was overtaken or cancelled by then answers `superseded` or `aborted`
 instead, and the failure, an `AbortError` included, is not rethrown. [API
 behaviour](../api-behaviour/) sets out that division.
+
+## The whole run
+
+The script drives the booking through both kinds of loading, including the failed first request
+for the offer and the retry that follows it:
+
+<Code code={runSource} lang="ts" title="async-steps/run.ts" />
+
+<Code code={runOutput} lang="txt" title="Output" />
