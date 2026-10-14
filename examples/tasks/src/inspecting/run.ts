@@ -19,12 +19,14 @@ console.log(
   `without subFlows: ${buildGraph(registration).nodes.find((n) => n.kind === 'group')?.group?.opaque}`
 );
 
-// A session to inspect: every state a running wizard settles in. `devtools`
-// records the same thing with `recordSession`; here `subscribe` is enough.
+// A session to inspect: every state a running wizard settles in. A move
+// commits more than once - taking its lock is a write - so a state that is
+// still `busy` is skipped, the same rule `recordSession` in devtools follows.
 const wizard = createWizard({ flow: registration, registry, groups, subFlows: { guest } });
 const frames: WizardState[] = [];
 wizard.subscribe(() => {
-  frames.push(wizard.getState());
+  const state = wizard.getState();
+  if (state.status !== 'busy') frames.push(state);
 });
 await wizard.start();
 wizard.set('attendee', { name: 'Ada', email: 'ada@example.com' });

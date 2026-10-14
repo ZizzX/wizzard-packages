@@ -51,13 +51,14 @@ describe('Steps, on Vue', () => {
   it('shows the refusal and moves once the name is filled in', async () => {
     const app = mount(Harness);
     await flushPromises();
+    const next = app.findAll('button').find((b) => b.text() === 'Next');
 
-    await app.findAll('button')[1]?.trigger('click');
+    await next?.trigger('click');
     await flushPromises();
     expect(app.find('[role="alert"]').text()).toBe('Give the trip a name.');
 
     await app.find('input').setValue('Lisbon');
-    await app.findAll('button')[1]?.trigger('click');
+    await next?.trigger('click');
     await flushPromises();
     expect(app.text()).toContain('Ready to book Lisbon.');
     app.unmount();

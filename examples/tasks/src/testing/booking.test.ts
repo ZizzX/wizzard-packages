@@ -5,11 +5,13 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { booking, withGroups } from './flow';
 import { registry } from './registry';
 
-// One wizard per test, built the way the application builds it, and destroyed
-// after: a plugin's teardown runs there, and no test inherits another's state.
-let wizard: Wizard;
+// One wizard per test that moves one, built the way the application builds
+// it, and destroyed after: a plugin's teardown runs there, and no test
+// inherits another's state.
+let wizard: Wizard | undefined;
 afterEach(() => {
-  wizard.destroy();
+  wizard?.destroy();
+  wizard = undefined;
 });
 
 describe('booking', () => {
@@ -38,13 +40,11 @@ describe('booking', () => {
   it('refuses to build a flow with a group and no traversal', () => {
     // Found before there is a wizard at all, so the assertion wraps the construction.
     expect(() => createWizard({ flow: withGroups })).toThrowError(/groups-not-installed/);
-    wizard = createWizard({ flow: booking, registry });
   });
 
   it('is a valid flow', () => {
     // The definition checked without walking it: every `$ref` resolves, every
     // transition names a step that exists.
     expect(validateFlow(booking, registry)).toEqual([]);
-    wizard = createWizard({ flow: booking, registry });
   });
 });
