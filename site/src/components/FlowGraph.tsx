@@ -20,8 +20,7 @@ import type { FlowGraph as Graph, GraphNode } from '@wizzard-packages/core/graph
 import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
 
 /** A node's corner radius, in user units: an SVG attribute, so it lives here
- *  rather than in tokens.css (DESIGN.md, Borders, radii, elevation). The group's inner
- *  border sits 3 units in, so its radius is 3 less. */
+ *  rather than in tokens.css (DESIGN.md, Borders, radii, elevation). */
 const NODE_RX = 8;
 
 export type NodeState = 'active' | 'error' | 'visited' | 'skipped' | 'done' | 'rest';
@@ -371,16 +370,6 @@ export function FlowGraph({
               {...pick}
               {...(Object.keys(plays).length > 0 && { style: plays as CSSProperties })}
             >
-              {kind === 'group' && (
-                <rect
-                  className="inner"
-                  x={placed.x + 3}
-                  y={placed.y + 3}
-                  width={placed.w - 6}
-                  height={placed.h - 6}
-                  rx={NODE_RX - 3}
-                />
-              )}
               {(walked !== undefined || glow !== undefined) && (
                 <rect
                   // Each decoration has its own name in the key: a halo and a
