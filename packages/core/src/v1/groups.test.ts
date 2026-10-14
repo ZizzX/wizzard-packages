@@ -735,6 +735,57 @@ describe('4.9 pruning of dead frames', () => {
   });
 });
 
+describe('T-083 history around a removed item', () => {
+  it('records nothing for a next() that leaves a position whose item was removed', async () => {
+    const wizard = await enterGroup(); // p1/seat
+    const recorded = wizard.getState().history.length;
+    wizard.set('passengers', [{ id: 'p2' }, { id: 'p3' }]);
+
+    await wizard.next();
+    expect(keyOf(wizard)).toBe('p2');
+    expect(wizard.getState().history).toHaveLength(recorded);
+  });
+
+  it('leaves an item whose first visible step follows an empty group', async () => {
+    const none: FlowDefinition = { id: 'none', order: ['x'], steps: { x: {} } };
+    const sub: FlowDefinition = {
+      id: 'sub',
+      order: ['g', 's2'],
+      steps: { g: { flow: none, repeat: { over: { $get: 'data.empty' }, keyBy: 'id' } }, s2: {} },
+    };
+    const flow: FlowDefinition = {
+      id: 'root',
+      order: ['a', 'each', 'z'],
+      steps: {
+        a: {},
+        each: { flow: sub, repeat: { over: { $get: 'data.items' }, keyBy: 'id' } },
+        z: {},
+      },
+    };
+    const wizard = build(flow, { items: [{ id: 'p1' }, { id: 'p2' }], empty: [] });
+    await wizard.start();
+    await wizard.next(); // p1/s2
+    await wizard.next(); // p2/s2
+    expect(keyOf(wizard)).toBe('p2');
+
+    expect(await wizard.back()).toMatchObject({ ok: true });
+    expect(keyOf(wizard)).toBe('p1');
+    expect(stepOf(wizard)).toBe('s2');
+    expect(await wizard.back()).toMatchObject({ ok: true, to: 'a' });
+  });
+
+  it('goes back past a group that has no item left, rather than through it', async () => {
+    const wizard = await enterGroup(booking(), { passengers: [{ id: 'p1' }] });
+    await wizard.next(); // p1/meal
+    await wizard.next(); // review
+    wizard.set('passengers', []);
+
+    const moved = await wizard.back();
+    expect(moved).toMatchObject({ ok: true, to: 'who' });
+    expect(at(wizard)).toEqual([{ flow: 'booking', step: 'who' }]);
+  });
+});
+
 describe('5.1 the active flow and scope', () => {
   it('gives a child validate, exit guard and enter guard the item', async () => {
     const seen: unknown[] = [];

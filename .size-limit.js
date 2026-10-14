@@ -247,7 +247,10 @@ export default [
   // from the sub-flow's definition like the root does, steps back onto the previous
   // item where it stopped - past items whose every step is hidden - and enters an
   // inner group from behind (T-082, D-035).
-  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '4.45 kB', gzip: true },
+  // 4.45 to 4.55 kB on 2026-10-15, measured 4516 B: a move off a removed item is
+  // marked so its dead position is not recorded, and back() goes on past a group
+  // with no position left in it instead of walking through it forwards (T-083).
+  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '4.55 kB', gzip: true },
 
   // The recorded-session checker. Its own entry because replay is a devtools and
   // documentation concern: an application that only runs a wizard never needs to

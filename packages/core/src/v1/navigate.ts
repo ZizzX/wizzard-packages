@@ -242,7 +242,14 @@ export interface Traversal {
     registry?: Registry,
     subFlows?: SubFlows
   ) =>
-    | { stack: readonly Frame[]; to: string | typeof END; flow: FlowDefinition; scope: Scope }
+    | {
+        stack: readonly Frame[];
+        to: string | typeof END;
+        flow: FlowDefinition;
+        scope: Scope;
+        /** Left a position that no longer exists, so there is nothing to record. */
+        stale?: true;
+      }
     | {
         ok: false;
         reason: 'invalid' | 'not-reachable';
@@ -624,7 +631,11 @@ async function pipeline(
           from === null || stay
             ? before.history
             : forward
-              ? [...before.history, before.stack]
+              ? // A position whose item was removed is not one to come back to:
+                // recording it is how a later back() lands where it stands (T-083).
+                move?.stale
+                ? before.history
+                : [...before.history, before.stack]
               : rewind(before.history, landed, target),
         visited: add(before.visited, target),
         completed:
