@@ -20,7 +20,7 @@
 - [tsup treeshake drops directives](tsup-treeshake-drops-directives.md) — why react builds on esbuild only, and where the RSC build proof lives.
 - [Nobody depends on these packages](zero-external-dependents.md) — measured, and it makes breaking changes cheap.
 - [Merging a pull request](merging-a-pull-request.md) — squash without --delete-branch merges clean; excluding a nested worktree from the root vitest run.
-- [Layout perf test flakes on CI](layout-perf-test-flakes-on-ci.md) — 3% over a 100 ms threshold; rerun the SHA before believing it.
+- [Layout perf test flakes on CI](layout-perf-test-flakes-on-ci.md) — a fixed ms budget measured the runner; now a growth ratio, proven by a quadratic mutation.
 - [Run tests from repo root](run-tests-from-repo-root.md) — package-scoped vitest breaks on the shared setup path.
 - [Stale dist fails local tests](stale-dist-fails-local-tests.md) — build before believing a local-only failure; a fresh worktree needs next-app built too.
 - [Panel is twice its budget estimate](devtools-panel-measured-twice-the-budget.md) — 13.4 kB, and why the number stands.

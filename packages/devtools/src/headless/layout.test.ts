@@ -256,22 +256,32 @@ describe('layoutGraph', () => {
     expect(layoutGraph(buildGraph(flowA))).not.toBe(layoutGraph(graph));
   });
 
-  it('lays out the dense fixture (about twenty thousand edges) under 100 ms', () => {
-    const graph = buildGraph(denseFlow(200));
-    expect(graph.edges.length).toBeGreaterThan(19_000);
-    const times: number[] = [];
-    for (let i = 0; i < 3; i++) {
-      const started = performance.now();
-      layoutGraph({ ...graph });
-      times.push(performance.now() - started);
-    }
-    // The fastest run, not the median. Noise on a shared runner only ever adds
-    // time - a scheduler steal inflates a sample and nothing deflates one - so
-    // the minimum is the closest this can get to what the algorithm costs, and
-    // the median is just a sample that happened to be interrupted less. The
-    // median read 452 ms during the 0.5.0 release on a runner that was also
-    // publishing; the same commit measured single digits on the next run.
-    expect(Math.min(...times)).toBeLessThan(100);
+  it('lays out the dense fixture (about twenty thousand edges) in time that grows with the edges', () => {
+    // The fastest of five runs. Noise on a shared runner only ever adds time -
+    // a scheduler steal inflates a sample and nothing deflates one - so the
+    // minimum is the closest this gets to what the algorithm costs.
+    const fastest = (nodes: number): number => {
+      const graph = buildGraph(denseFlow(nodes));
+      const times: number[] = [];
+      for (let i = 0; i < 5; i++) {
+        const started = performance.now();
+        layoutGraph({ ...graph });
+        times.push(performance.now() - started);
+      }
+      return Math.min(...times);
+    };
+    expect(buildGraph(denseFlow(200)).edges.length).toBeGreaterThan(19_000);
+
+    // A ratio, not a budget in milliseconds. The fixture lays out in about 8 ms
+    // on a laptop and took 114-170 ms on a loaded CI runner, so a fixed 100 ms
+    // measured the runner. Four times the edges cost about three times the
+    // time, and the bound leaves twice that; a layout gone quadratic in its
+    // edges costs about nine here, sixteen in the limit.
+    const small = fastest(100);
+    const dense = fastest(200);
+    expect(dense / Math.max(small, 0.5)).toBeLessThan(6);
+    // And a ceiling no runner should reach, for a regression that is slow at every size.
+    expect(dense).toBeLessThan(2_000);
   });
 
   it('ratchet: the reference flows draw no more crossings than today', () => {
