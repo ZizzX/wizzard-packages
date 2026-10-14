@@ -2,7 +2,7 @@ import { persist, type RestoreOutcome } from '@wizzard-packages/plugins/persist'
 import { WizardProvider, useField, useNavigation, useStep } from '@wizzard-packages/react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
-import { APP_VERSION, STORAGE_KEY, signup } from './flow';
+import { APP_VERSION, signup, storageKey } from './flow';
 import { describeRestore } from './outcome';
 
 export function App(): ReactNode {
@@ -19,7 +19,7 @@ export function App(): ReactNode {
         ? []
         : [
             persist({
-              key: STORAGE_KEY,
+              key: storageKey('react'),
               version: APP_VERSION,
               onRestore: (outcome) => {
                 restored.current = outcome;
