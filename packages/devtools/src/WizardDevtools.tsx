@@ -127,6 +127,27 @@ function inferTaken(graph: FlowGraph, from: string | null, to: string | null): T
   return candidates.length === 1 ? { from, to } : null;
 }
 
+/** The same keys holding the same values: what two `subFlows` literals built from the same definitions are. */
+const sameEntries = (a: SubFlows | undefined, b: SubFlows | undefined): boolean => {
+  if (a === b) return true;
+  if (a === undefined || b === undefined) return false;
+  const keys = Object.keys(a);
+  return keys.length === Object.keys(b).length && keys.every((k) => a[k] === b[k]);
+};
+
+/**
+ * `subFlows` by content rather than by identity. A parent that writes
+ * `subFlows={{ passenger }}` hands the panel a new object on every render, and
+ * everything derived from it - the drawn graph, so the zoom, and the recording -
+ * would start over each time. The object is replaced only when an entry is.
+ */
+function useSameEntries(subFlows: SubFlows | undefined): SubFlows | undefined {
+  const [kept, setKept] = useState(subFlows);
+  if (sameEntries(kept, subFlows)) return kept;
+  setKept(subFlows);
+  return subFlows;
+}
+
 /**
  * The devtools panel, a React component: the wizard's flow as a graph, its
  * committed state, and its navigation activity, with a recorder that exports
@@ -141,13 +162,14 @@ function inferTaken(graph: FlowGraph, from: string | null, to: string | null): T
 export function WizardDevtools({
   wizard: wizardProp,
   plugin,
-  subFlows,
+  subFlows: subFlowsProp,
   layout,
   redact,
   onRecord,
   defaultTab = 'graph',
   limits,
 }: WizardDevtoolsProps): ReactNode {
+  const subFlows = useSameEntries(subFlowsProp);
   const contextWizard = useOptionalWizard();
   const wizard = wizardProp ?? contextWizard;
   const activityCap = limits?.activity ?? 500;
