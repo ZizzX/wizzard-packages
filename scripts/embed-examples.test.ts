@@ -39,6 +39,7 @@ const COPIED = [
   'site/src/content/docs/docs/persistence.md',
   'examples/quickstart/src',
   'examples/quickstart/install',
+  'examples/tasks/src/persistence',
 ];
 
 let tree = '';
