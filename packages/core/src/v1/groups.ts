@@ -567,42 +567,44 @@ function previousItem(
 ): Move | Refusal | null {
   const parents = inner.slice(0, -1);
   const parent = parents[parents.length - 1];
-  const id = parent?.frame?.step;
-  const group = parent === undefined || id === undefined ? undefined : parent.flow.steps[id];
-  if (parent === undefined || id === undefined || group === undefined || !isGroup(group)) {
-    return null;
-  }
-  if (group.repeat === undefined) return null;
+  const frame = parent?.frame;
+  const group = frame && parent.flow.steps[frame.step];
+  if (!frame || !group || !isGroup(group) || !group.repeat) return null;
 
+  const id = frame.step;
   const items = itemsOf(id, group.repeat, parent.scope, registry);
-  if (items === null || typeof items === 'string') return null;
-  const key = parent.frame?.key;
-  const at = key === undefined ? -1 : items.keys.indexOf(key);
-  const before = at > 0 ? items.keys[at - 1] : undefined;
-  if (before === undefined) return null;
-
-  const item: Frame = { flow: parent.flow.id, step: id, key: before };
-  const recorded = fromHistory(
-    root,
-    state,
-    startsWith([...framesOf(parents.slice(0, -1)), item]),
-    registry,
-    subFlows
-  );
-  if (recorded) return recorded;
-
   const sub = subFlowOf(group, subFlows);
-  if (sub === undefined) return null;
-  parent.frame = item;
-  const scope = childScope(parent.scope, group, loopAt(items, before), registry);
-  const levels: Level[] = [...parents, { flow: sub, scope }];
-  return settle(
-    levels,
-    resolveNext(sub, stateAt(state, undefined), scope, registry),
-    state,
-    registry,
-    subFlows
-  );
+  if (items === null || typeof items === 'string' || !sub) return null;
+  const key = frame.key;
+  const outer = framesOf(parents.slice(0, -1));
+
+  // Nearest first. An item whose every step is hidden has no position to stand
+  // on - entering it would end it and advance straight back here - so it is
+  // stepped past, as `next()` steps past it.
+  for (let at = key === undefined ? -1 : items.keys.indexOf(key); at > 0; at--) {
+    const before = items.keys[at - 1] as string;
+    const item: Frame = { flow: parent.flow.id, step: id, key: before };
+    const inside = startsWith([...outer, item]);
+    const recorded = fromHistory(root, state, inside, registry, subFlows);
+    if (recorded) return recorded;
+
+    // Copies, so a candidate that leads nowhere leaves the levels as they were.
+    const scope = childScope(parent.scope, group, loopAt(items, before), registry);
+    const levels: Level[] = [
+      ...parents.slice(0, -1).map((l) => ({ ...l })),
+      { ...parent, frame: item },
+      { flow: sub, scope },
+    ];
+    const moved = settle(
+      levels,
+      resolveNext(sub, stateAt(state, undefined), scope, registry),
+      state,
+      registry,
+      subFlows
+    );
+    if (moved !== null && !('ok' in moved) && inside(moved.stack)) return moved;
+  }
+  return null;
 }
 
 /**

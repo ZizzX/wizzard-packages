@@ -464,6 +464,56 @@ describe('4.6 back() across a group boundary', () => {
     });
   });
 
+  it('steps past a previous item whose every step is hidden, and leaves the group when none is left', async () => {
+    const shown: FlowDefinition = {
+      id: 'p',
+      order: ['a', 'b'],
+      steps: {
+        a: { when: { $eq: [{ $get: 'loop.item.show' }, true] } },
+        b: { when: { $eq: [{ $get: 'loop.item.show' }, true] } },
+      },
+    };
+    const flow: FlowDefinition = {
+      id: 'root',
+      order: ['who', 'each', 'review'],
+      steps: {
+        who: {},
+        each: { flow: shown, repeat: { over: { $get: 'data.items' }, keyBy: 'id' } },
+        review: {},
+      },
+    };
+    const wizard = build(flow, {
+      items: [
+        { id: 'i1', show: false },
+        { id: 'i2', show: true },
+      ],
+    });
+    await wizard.start();
+    await wizard.next(); // i1 is empty, so i2/a
+    expect(keyOf(wizard)).toBe('i2');
+
+    const moved = await wizard.back();
+    expect(moved.ok).toBe(true);
+    expect(at(wizard)).toEqual([{ flow: 'root', step: 'who' }]);
+
+    const middle = build(flow, {
+      items: [
+        { id: 'i1', show: true },
+        { id: 'i2', show: false },
+        { id: 'i3', show: true },
+      ],
+    });
+    await middle.start();
+    await middle.next(); // i1/a
+    await middle.next(); // i1/b
+    await middle.next(); // i2 is empty, so i3/a
+    expect(keyOf(middle)).toBe('i3');
+
+    await middle.back();
+    expect(keyOf(middle)).toBe('i1');
+    expect(stepOf(middle)).toBe('b');
+  });
+
   it('still starts the group over on go(), whatever the history holds', async () => {
     const wizard = await enterGroup(booking(), { passengers: [{ id: 'p1' }, { id: 'p2' }] });
     await wizard.next(); // p1/meal
