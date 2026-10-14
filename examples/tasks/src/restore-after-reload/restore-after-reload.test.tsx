@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import AppVue from './App.vue';
 import { App } from './App';
-import { STORAGE_KEY } from './flow';
+import { storageKey } from './flow';
 import expectedOutput from './headless.out.txt?raw';
 
 /**
@@ -72,6 +72,23 @@ describe('restore after reload', () => {
     expect(second.text()).toContain('A colour');
   });
 
+  it('keeps the React and the Vue session apart', async () => {
+    // The page mounts both at once. Under one key the idle one restores, and
+    // later overwrites, the progress made in the other tab.
+    const react = render(<App />);
+    await type((await screen.findByRole('textbox')) as HTMLInputElement, 'Ada');
+    await click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByLabelText('A colour')).toBeDefined();
+    // Unmounting flushes the pending write, as leaving the page does.
+    react.unmount();
+
+    const vue = mount(AppVue);
+    await flushPromises();
+    expect(vue.get('[role="status"]').text()).toContain('Nothing saved yet');
+    expect(vue.text()).not.toContain('A colour');
+    vue.unmount();
+  });
+
   it('says nothing was stored on a first visit, and saves from then on', async () => {
     const first = render(<App />);
 
@@ -85,7 +102,7 @@ describe('restore after reload', () => {
     // run. Tearing the wizard down flushes what is pending, which is where the
     // answer stops depending on timing.
     first.unmount();
-    expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull();
+    expect(localStorage.getItem(storageKey('react'))).not.toBeNull();
   });
 
   it('prints what the headless page shows', async () => {
