@@ -319,6 +319,16 @@ describe('layoutGraph in row direction', () => {
     expect(laid.nodes.every((n) => n.w === NODE_W)).toBe(true);
   });
 
+  it('centres a short box on the taller repeat group beside it, so the line between them is level', () => {
+    const laid = layoutGraph(buildGraph(flowC, subFlowsC), { direction: 'row' });
+    const centres = new Set(laid.nodes.filter((n) => !n.ghost).map((n) => n.y + n.h / 2));
+    expect(centres).toEqual(new Set([REPEAT_H / 2]));
+
+    for (const edge of laid.edges.filter((e) => e.points.length === 2)) {
+      expect(edge.points[0]?.[1]).toBe(edge.points[1]?.[1]);
+    }
+  });
+
   it('lays out the same flow wide rather than tall', () => {
     const graph = buildGraph(flowA);
     const column = layoutGraph(graph);
