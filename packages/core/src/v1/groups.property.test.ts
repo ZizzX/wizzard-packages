@@ -318,3 +318,64 @@ describe('duplicate keys', () => {
     );
   });
 });
+
+describe('back() at any depth', () => {
+  // A flow with no `on.back` and no `when`: whatever `next()` walked through,
+  // `back()` walks through again in reverse, item by item and group by group,
+  // because the definition and the history agree on every step behind (D-035).
+  const bags: FlowDefinition = {
+    id: 'bags',
+    order: ['size', 'weight'],
+    steps: { size: {}, weight: {} },
+  };
+  const traveller: FlowDefinition = {
+    id: 'traveller',
+    order: ['seat', 'eachBag', 'meal'],
+    steps: {
+      seat: {},
+      eachBag: { flow: bags, repeat: { over: { $get: 'data.bags' }, keyBy: 'id' } },
+      meal: {},
+    },
+  };
+  const trip: FlowDefinition = {
+    id: 'trip',
+    order: ['who', 'each', 'review'],
+    steps: {
+      who: {},
+      each: { flow: traveller, repeat: { over: { $get: 'data.people' }, keyBy: 'id' } },
+      review: {},
+    },
+  };
+  const ids = (n: number, prefix: string): { id: string }[] =>
+    Array.from({ length: n }, (_, i) => ({ id: `${prefix}${i}` }));
+
+  it('retraces the positions next() passed through, in reverse', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.integer({ min: 1, max: 3 }),
+        fc.integer({ min: 1, max: 3 }),
+        fc.integer({ min: 1, max: 14 }),
+        async (people, bagCount, moves) => {
+          const wizard = createWizard({
+            flow: trip,
+            groups,
+            data: { people: ids(people, 'p'), bags: ids(bagCount, 'b') },
+          });
+          await wizard.start();
+          const trail: string[] = [JSON.stringify(wizard.getState().stack)];
+          for (let i = 0; i < moves; i++) {
+            const moved = await wizard.next();
+            if (!moved.ok || wizard.getState().status === 'done') break;
+            trail.push(JSON.stringify(wizard.getState().stack));
+          }
+          for (let i = trail.length - 2; i >= 0; i--) {
+            await wizard.back();
+            expect(JSON.stringify(wizard.getState().stack)).toBe(trail[i]);
+          }
+          wizard.destroy();
+        }
+      ),
+      { numRuns: 60 }
+    );
+  });
+});

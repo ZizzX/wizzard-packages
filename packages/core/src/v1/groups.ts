@@ -507,11 +507,28 @@ function forward(
 }
 
 /**
- * `back()`. History-driven once the stack is deeper than one frame, and when
- * it leads into a group from behind (4.6).
+ * Accepts a recorded stack that stands inside the position `prefix` names. A
+ * prefix frame without a key matches any item of its group.
+ */
+const startsWith =
+  (prefix: readonly Frame[]) =>
+  (recorded: readonly Frame[]): boolean =>
+    recorded.length > prefix.length &&
+    prefix.every((f, i) => {
+      const r = recorded[i];
+      return r?.flow === f.flow && r.step === f.step && (f.key === undefined || r.key === f.key);
+    });
+
+/**
+ * `back()`, at every depth the way it works at the root (D-035): the flow the
+ * wizard stands in resolves the target from its definition - `on.back`, then
+ * `order` - and the history only says where to stand inside a group the move
+ * lands on.
  *
- * `order` cannot answer this: the step before "passenger 3, seat" is
- * "passenger 2, meal", and `order` does not know which item you came from.
+ * At the first step of a sub-flow there is nothing behind in that flow. A
+ * repeat then steps back onto the previous item, where the history says it
+ * stopped; the first item, or a group without a repeat, is left, and the
+ * parent resolves backwards from the group step (4.6).
  */
 function retreat(
   levels: Level[],
@@ -520,24 +537,72 @@ function retreat(
   registry?: Registry,
   subFlows?: SubFlows
 ): Move | Refusal | null {
-  if (levels.length > 1 || state.stack.length > 1) {
-    const recorded = fromHistory(root, state, () => true, registry, subFlows);
-    if (recorded) return recorded;
+  for (let depth = levels.length - 1; depth >= 0; depth--) {
+    const inner = levels.slice(0, depth + 1);
+    const level = inner[depth];
+    if (level === undefined) return null;
 
-    // Nothing usable recorded — a restored snapshot, most likely. Leave the
-    // innermost sub-flow and resolve backwards from the group step in its
-    // parent, which is what 4.6 says happens at the first item's first step.
-    const out = levels.slice(0, -1);
-    const parent = out[out.length - 1];
-    if (parent === undefined) return null;
-    const to = resolveBack(parent.flow, stateAt(state, parent.frame), parent.scope, registry);
-    return to === null ? null : settle(out, to, state, registry, subFlows);
+    const to = resolveBack(level.flow, stateAt(state, level.frame), level.scope, registry);
+    if (to !== null) return behind(inner, to, root, state, registry, subFlows);
+    if (depth === 0) return null;
+
+    const previous = previousItem(inner, root, state, registry, subFlows);
+    if (previous !== null) return previous;
   }
+  return null;
+}
 
-  const level = levels[levels.length - 1];
-  if (level === undefined) return null;
-  const to = resolveBack(level.flow, stateAt(state, level.frame), level.scope, registry);
-  return to === null ? null : behind(levels, to, root, state, registry, subFlows);
+/**
+ * The item before the one whose first step the wizard stands on: the newest
+ * position the history holds inside it - the last step it reached, a branch
+ * inside the sub-flow included - or its first step when nothing was recorded.
+ * `null` when the group is not a repeat, or this is its first item.
+ */
+function previousItem(
+  inner: Level[],
+  root: FlowDefinition,
+  state: WizardState,
+  registry?: Registry,
+  subFlows?: SubFlows
+): Move | Refusal | null {
+  const parents = inner.slice(0, -1);
+  const parent = parents[parents.length - 1];
+  const id = parent?.frame?.step;
+  const group = parent === undefined || id === undefined ? undefined : parent.flow.steps[id];
+  if (parent === undefined || id === undefined || group === undefined || !isGroup(group)) {
+    return null;
+  }
+  if (group.repeat === undefined) return null;
+
+  const items = itemsOf(id, group.repeat, parent.scope, registry);
+  if (items === null || typeof items === 'string') return null;
+  const key = parent.frame?.key;
+  const at = key === undefined ? -1 : items.keys.indexOf(key);
+  const before = at > 0 ? items.keys[at - 1] : undefined;
+  if (before === undefined) return null;
+
+  const item: Frame = { flow: parent.flow.id, step: id, key: before };
+  const recorded = fromHistory(
+    root,
+    state,
+    startsWith([...framesOf(parents.slice(0, -1)), item]),
+    registry,
+    subFlows
+  );
+  if (recorded) return recorded;
+
+  const sub = subFlowOf(group, subFlows);
+  if (sub === undefined) return null;
+  parent.frame = item;
+  const scope = childScope(parent.scope, group, loopAt(items, before), registry);
+  const levels: Level[] = [...parents, { flow: sub, scope }];
+  return settle(
+    levels,
+    resolveNext(sub, stateAt(state, undefined), scope, registry),
+    state,
+    registry,
+    subFlows
+  );
 }
 
 /**
@@ -572,12 +637,11 @@ function fromHistory(
 }
 
 /**
- * Where `back()` lands at the root once it resolved to `to`. A group entered
- * from behind is the mirror of one left from its start: the newest position
- * the history holds inside it, which is where its last item stopped. Without
- * one - the group was jumped over - it is entered from the start, as `go()`
- * enters it. Deeper, `retreat` restores from the whole history before it gets
- * here, and an inner group it jumped over is not entered from behind (T-082).
+ * Where `back()` lands once the flow at the top of `levels` resolved to `to`.
+ * A group entered from behind is the mirror of one left from its start: the
+ * newest position the history holds inside it, which is where its last item
+ * stopped. Without one - the group was jumped over - it is entered from the
+ * start, as `go()` enters it. The same at every depth (D-035).
  */
 function behind(
   levels: Level[],
@@ -587,12 +651,13 @@ function behind(
   registry?: Registry,
   subFlows?: SubFlows
 ): Move | Refusal | null {
-  const group = root.steps[to];
-  if (group !== undefined && isGroup(group)) {
-    const inside = (recorded: readonly Frame[]): boolean => {
-      const entered = recorded[0] as Frame | undefined;
-      return recorded.length > 1 && entered?.flow === root.id && entered.step === to;
-    };
+  const level = levels[levels.length - 1];
+  const group = level?.flow.steps[to];
+  if (level !== undefined && group !== undefined && isGroup(group)) {
+    const inside = startsWith([
+      ...framesOf(levels.slice(0, -1)),
+      { flow: level.flow.id, step: to },
+    ]);
     const recorded = fromHistory(root, state, inside, registry, subFlows);
     if (recorded) return recorded;
   }

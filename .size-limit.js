@@ -243,7 +243,10 @@ export default [
   // 4.15 to 4.2 kB on 2026-10-05, measured 4182 B: `back()` into a group from the
   // step after it restores the newest recorded position inside the group, where
   // its last item stopped, instead of entering at the first item (T-075).
-  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '4.2 kB', gzip: true },
+  // 4.2 to 4.4 kB on 2026-10-15, measured 4380 B: `back()` below the root resolves
+  // from the sub-flow's definition like the root does, steps back onto the previous
+  // item where it stopped, and enters an inner group from behind (T-082, D-035).
+  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '4.4 kB', gzip: true },
 
   // The recorded-session checker. Its own entry because replay is a devtools and
   // documentation concern: an application that only runs a wizard never needs to
