@@ -73,16 +73,16 @@ broken" rather than "the panel is zero pixels tall".
 
 ## The props
 
-| Prop         | What it is                                                                   |
-| ------------ | ---------------------------------------------------------------------------- |
-| `wizard`     | The wizard to watch. Defaults to the one from `WizardProvider`.              |
-| `plugin`     | The object from `devtools()`. Without it there are no refusal rows.          |
-| `subFlows`   | Definitions a group step names, so nested flows can be drawn.                |
-| `layout`     | Your own positions. There is a built-in layout; this replaces it.            |
-| `redact`     | Runs once, at export, over a copy of the whole bundle.                       |
-| `onRecord`   | Receives a recorded session bundle.                                          |
-| `defaultTab` | `'graph'`, `'state'` or `'activity'`. Defaults to the graph.                 |
-| `limits`     | Ceilings on activity rows, frames and diff rows, for a long-running session. |
+| Prop         | What it is                                                                                                                       |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| `wizard`     | The wizard to watch. Defaults to the one from `WizardProvider`.                                                                  |
+| `plugin`     | The object from `devtools()`. Without it there are no refusal rows.                                                              |
+| `subFlows`   | Definitions a group step names, so nested flows can be drawn. Compared by its entries, so a literal written in a render is fine. |
+| `layout`     | Your own positions. There is a built-in layout; this replaces it.                                                                |
+| `redact`     | Runs once, at export, over a copy of the whole bundle.                                                                           |
+| `onRecord`   | Receives a recorded session bundle.                                                                                              |
+| `defaultTab` | `'graph'`, `'state'` or `'activity'`. Defaults to the graph.                                                                     |
+| `limits`     | Ceilings on activity rows, frames and diff rows, for a long-running session.                                                     |
 
 ## It is a React panel
 

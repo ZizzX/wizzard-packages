@@ -1,10 +1,21 @@
 import { StrictMode } from 'react';
 import { createWizard } from '@wizzard-packages/core';
+import { groups } from '@wizzard-packages/core/groups';
 import { WizardProvider } from '@wizzard-packages/react';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { dataA, dataB, flowA, flowB, registryA, registryB } from '../../../contract/fixtures';
+import {
+  dataA,
+  dataB,
+  dataC,
+  flowA,
+  flowB,
+  flowC,
+  registryA,
+  registryB,
+  subFlowsC,
+} from '../../../contract/fixtures';
 import { devtools } from './headless';
 import { renderFailed } from './messages';
 import { WizardDevtools } from './WizardDevtools';
@@ -252,6 +263,32 @@ describe('<WizardDevtools/>', () => {
     view.rerender(<WizardDevtools wizard={other} plugin={b} />);
     expect(screen.getByRole('button', { name: 'Record' })).toBeTruthy();
     expect(screen.getByRole('application').getAttribute('viewBox')).toBe(fit);
+  });
+
+  it('keeps its zoom and its recording when the parent passes subFlows as a new literal', async () => {
+    const plugin = devtools();
+    const wizard = createWizard({
+      flow: flowC,
+      data: dataC('p1', 'p2'),
+      groups,
+      subFlows: subFlowsC,
+      plugins: [plugin],
+    });
+    // `{ ...subFlowsC }` is what `subFlows={{ passenger }}` in a parent's render
+    // produces: the same definitions in a new object on every render.
+    const view = render(
+      <WizardDevtools wizard={wizard} plugin={plugin} subFlows={{ ...subFlowsC }} />
+    );
+    await act(async () => {
+      await wizard.start();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Record' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zoom in' }));
+    const zoomed = screen.getByRole('application').getAttribute('viewBox');
+
+    view.rerender(<WizardDevtools wizard={wizard} plugin={plugin} subFlows={{ ...subFlowsC }} />);
+    expect(screen.getByRole('application').getAttribute('viewBox')).toBe(zoomed);
+    expect(screen.getByRole('button', { name: /^Stop/ })).toBeTruthy();
   });
 
   it('records a session and previews the bundle without copying it', async () => {
