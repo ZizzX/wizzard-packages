@@ -156,9 +156,9 @@ describe('R-B reload, finished', () => {
     await settle(30);
     first.unmount();
 
-    // `toSnapshot` does not carry `status`, so a rendering that remembered
-    // "finished" itself would put the visitor back on Confirm. It is read from
-    // `completed`, which is in the snapshot.
+    // A rendering that remembered "finished" itself would put the visitor back
+    // on Confirm. It is read from `status`, which the snapshot carries for a
+    // finished wizard.
     render(<ReloadApp />);
     await act(async () => {});
     expect(heading()).toBe('Done');

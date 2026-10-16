@@ -10,7 +10,7 @@ import {
 import { persist, type RestoreOutcome } from '@wizzard-packages/plugins/persist';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
-import { APP_VERSION, LAST_STEP, STORAGE_KEY, reload } from './flow';
+import { APP_VERSION, STORAGE_KEY, reload } from './flow';
 import { describeRestore, simulateUpgrade } from './outcome';
 import { TAKEN, registry } from './registry';
 
@@ -76,12 +76,11 @@ function Reload(props: { restored: { current: RestoreOutcome | null } }): ReactN
   const [name, setName] = useField<string>('workspace.name');
   const status = useWizardSelector((s) => s.status);
 
-  // Whether the run is finished is read off the engine, not remembered here:
-  // `toSnapshot` does not carry `status`, so a wizard that reached the end and
-  // was reloaded comes back `idle`, and a flag in this component would come
-  // back `false` and send the visitor round the last step again. `completed`
-  // is in the snapshot, and the last step is in it only once the flow ended.
-  const ended = useWizardSelector((s) => s.completed.includes(LAST_STEP));
+  // Whether the run is finished is read off the engine, not remembered here: a
+  // flag in this component would come back `false` after a reload and send the
+  // visitor round the last step again. The snapshot marks a finished wizard, so
+  // `status` survives the reload this application exists for.
+  const ended = status === 'done';
 
   const [mounted, setMounted] = useState(false);
   const [outcome, setOutcome] = useState<RestoreOutcome | null>(null);

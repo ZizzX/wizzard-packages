@@ -227,9 +227,10 @@ step that loads - one with a `load`, or a `deferred` one - again, in place: the 
 The step is not being left, so nothing else runs: no plugin's `beforeNavigate` or `afterNavigate`,
 no exit guard, no `when`. If the load throws or the enter guard refuses, the step stays current and
 the next `start()` tries again. A step that loads nothing is simply current. A wizard passed in
-through `state` with `status: 'done'` is not entered again: it stays finished. A snapshot does not
-carry `status`, so a persisted wizard that finished comes back `idle` on its last step, and that
-step, if it loads, loads again like any other restored step.
+through `state` with `status: 'done'` is not entered again: it stays finished. A snapshot of a
+finished wizard carries `done: true`, and only that one, so a persisted wizard that finished comes
+back with `status: 'done'` on its last step, and that step's `load` does not run again. A snapshot
+written before `done` existed restores as unfinished: `idle` on its last step.
 
 | `reason`                | What was wrong                                                                                 |
 | ----------------------- | ---------------------------------------------------------------------------------------------- |

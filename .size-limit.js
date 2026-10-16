@@ -314,10 +314,16 @@ export default [
   // entry would have carried to print nothing - the decoder answers
   // `snapshot/unknown-step` and no new reason. What is left is the walk and the
   // flow registry, which is the whole of what a decoder needs.
+  //
+  // 1.4 to 1.45 kB on 2026-10-16 for T-084: a finished wizard is written with
+  // `done: true` and restored as `status: 'done'`, so a reload no longer brings
+  // it back idle on its last step and runs that step's `load` again. 1416 B
+  // measured, 16 B over: the spread that writes the mark, the ternary that
+  // reads it, and the shape check that refuses anything but `true`.
   {
     name: 'core-v1 snapshot',
     path: 'packages/core/src/v1/snapshot.ts',
-    limit: '1.4 kB',
+    limit: '1.45 kB',
     gzip: true,
   },
 

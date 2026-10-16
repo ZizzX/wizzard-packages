@@ -307,4 +307,37 @@ describe('persist', () => {
     // Neither tab is broken by the other; they simply disagree until reload.
     expect(tabOne.get('name.full')).toBe('Ada');
   });
+
+  it('brings a finished wizard back finished, without loading its last step again', async () => {
+    const load = vi.fn(() => undefined);
+    const loading: FlowDefinition = {
+      ...flow,
+      steps: { name: {}, review: { load: { $ref: 'review' } } },
+    };
+    const storage = fakeStorage();
+    const open = () =>
+      createWizard({
+        flow: loading,
+        registry: { review: load },
+        plugins: [persist({ key: 'signup', storage, onRestore })],
+      });
+
+    const first = open();
+    await first.start();
+    await first.next();
+    await first.next();
+    expect(first.getState().status).toBe('done');
+    settle();
+    load.mockClear();
+
+    const second = open();
+    const started = await second.start();
+
+    expect(second.getState().status).toBe('done');
+    expect(second.getSnapshot().current).toBe('review');
+    expect(started).toMatchObject({ ok: true, to: 'review' });
+    // The page a visitor sees as finished must not run its loader again: an
+    // offline one would log start-failed under a flow that already ended.
+    expect(load).not.toHaveBeenCalled();
+  });
 });
