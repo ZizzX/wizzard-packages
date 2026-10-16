@@ -207,7 +207,7 @@ export default [
   // `select` or `watch` that throws is logged as `listener-threw` and passed
   // over, instead of becoming the answer to the move whose write it heard and
   // keeping every listener after it - a binding's too - from hearing the change.
-  // 7.2 to 7.25 kB on 2026-10-16, measured 7231 B: `on.back` reads as `on.next`
+  // 7.2 to 7.25 kB on 2026-10-16, measured 7226 B: `on.back` reads as `on.next`
   // does - a list, the first entry whose `when` holds, `not-reachable` and
   // `no-target` - with `'auto'` as an entry. It took `{ to, when }` and ignored
   // the `when`, so a conditional way back fired always while the graph and
@@ -256,7 +256,7 @@ export default [
   // 4.45 to 4.55 kB on 2026-10-15, measured 4516 B: a move off a removed item is
   // marked so its dead position is not recorded, and back() goes on past a group
   // with no position left in it instead of walking through it forwards (T-083).
-  // 4.55 to 4.6 kB on 2026-10-16, measured 4572 B: the same `on.back` reader as
+  // 4.55 to 4.6 kB on 2026-10-16, measured 4571 B: the same `on.back` reader as
   // core-v1, which a group's sub-flow resolves its way back with (T-095).
   { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '4.6 kB', gzip: true },
 

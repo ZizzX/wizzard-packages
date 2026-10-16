@@ -121,6 +121,26 @@ describe('resolveNext', () => {
   });
 });
 
+describe("a step whose id is 'auto'", () => {
+  // 'auto' is a keyword of on.back only. In on.next it is a step id like any
+  // other, and the shared transition reader must not read it as the walk.
+  it('is a target of on.next, not the end of the flow', () => {
+    const f: FlowDefinition = {
+      id: 'f',
+      order: ['a', 'b'],
+      steps: { a: { on: { next: 'auto' } }, b: {}, auto: {} },
+    };
+    expect(resolveNext(f, at('a'), scopeFor('x'))).toBe('auto');
+    expect(
+      resolveNext(
+        { ...f, steps: { ...f.steps, a: { on: { next: ['auto'] } } } },
+        at('a'),
+        scopeFor('x')
+      )
+    ).toBe('auto');
+  });
+});
+
 describe('resolveBack', () => {
   it('skips backwards over steps that are no longer reachable', () => {
     expect(resolveBack(flow, at('payment'), scopeFor('private'))).toBe('trip');

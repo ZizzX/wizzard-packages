@@ -73,7 +73,7 @@ export function resolveNext(
 
   const explicit = step.on?.next;
   if (explicit !== undefined) {
-    return pick(flow, current, explicit, scope, registry, () => END);
+    return pick(flow, current, explicit, scope, registry);
   }
 
   const order = effectiveOrder(flow);
@@ -132,7 +132,8 @@ export function resolveBack(
 /**
  * The first entry of a transition list that applies - its `when` holds - and
  * leads to a step whose own `when` holds. `on.next` and `on.back` read the same
- * way; `'auto'` stands for the walk along `order` the caller supplies.
+ * way, except that `'auto'` is a keyword only where the caller supplies the
+ * walk along `order` it stands for - `on.back`. In `on.next` it is a step id.
  *
  * A transition that names only steps whose own `when` is false is a flow bug,
  * not a silent skip: the first one named is answered, and the move refuses it
@@ -146,12 +147,12 @@ function pick(
   list: Target | 'auto' | readonly (Target | 'auto')[],
   scope: Scope,
   registry: Registry | undefined,
-  auto: () => string | typeof END | null
+  auto?: () => string | null
 ): string | typeof END | null {
   let closed: string | undefined;
   for (const t of [list].flat() as (Target | 'auto')[]) {
     // Entries after it are never read; `'auto'` closes a list.
-    if (t === 'auto') return auto() ?? closed ?? null;
+    if (t === 'auto' && auto) return auto() ?? closed ?? null;
     const { to, when } = typeof t === 'string' ? { to: t, when: undefined } : t;
     if (!holds(flow, when, scope, registry, `the transition of step "${current}" to "${to}"`))
       continue;
