@@ -122,6 +122,15 @@ describe('explicit edges', () => {
     ]);
   });
 
+  it('draws nothing after `auto` in a back list, which the resolver never reads', () => {
+    const g = buildGraph({
+      id: 'f',
+      order: ['a', 'b'],
+      steps: { a: {}, b: { on: { back: ['auto', 'a'] } } },
+    });
+    expect(from(g, 'b').some((e) => e.kind === 'back')).toBe(false);
+  });
+
   it('adds one terminal node, only when something reaches it', () => {
     expect(node(buildGraph(flow), END)?.kind).toBe('end');
     expect(ids(buildGraph(flow)).filter((id) => id === END)).toHaveLength(1);

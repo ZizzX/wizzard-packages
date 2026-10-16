@@ -183,7 +183,11 @@ function explicitEdges(
     // be worse than drawing nothing.
     if (back !== undefined) {
       const targets = (Array.isArray(back) ? back : [back]) as readonly BackTarget[];
-      for (const t of targets) if (t !== 'auto') edges.push(toEdge(id, t, 'back', flow));
+      for (const t of targets) {
+        // The resolver stops at `auto`, so nothing after it is ever a way back.
+        if (t === 'auto') break;
+        edges.push(toEdge(id, t, 'back', flow));
+      }
     }
   }
   return edges;
