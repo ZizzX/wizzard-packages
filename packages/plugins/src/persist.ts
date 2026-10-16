@@ -28,11 +28,17 @@ export interface PersistOptions {
   /** Storage key. One per flow, or one per flow per user. */
   key: string;
   /**
-   * Where to put it. `localStorage` by default, `sessionStorage` for anything
-   * that should not outlive the tab - which is the right answer for a form with
-   * anything sensitive in it, since this stores whatever the flow collects.
+   * Where to put it: `'local'` (the default) or `'session'` for the browser's
+   * own, or a storage of your own. `'session'` is for anything that should not
+   * outlive the tab - which is the right answer for a form with anything
+   * sensitive in it, since this stores whatever the flow collects.
+   *
+   * A name rather than `globalThis.sessionStorage`, because a private window
+   * throws on reading that property, in the host's code and before the plugin
+   * can catch it. The plugin reads it instead; a browser that refuses it, or
+   * has none, gets `persist/unavailable` and never the other storage.
    */
-  storage?: SyncStorage;
+  storage?: 'local' | 'session' | SyncStorage;
   /**
    * The application's own version. Bumped when the meaning of the stored data
    * changes, which is different from the flow changing shape.
@@ -186,12 +192,13 @@ export function persist(options: PersistOptions): Hooks {
         return teardown;
       };
 
-      storage = options.storage ?? defaultStorage();
+      const chosen = options.storage ?? 'local';
+      storage = typeof chosen === 'string' ? browserStorage(chosen) : chosen;
       if (storage === undefined) {
         warn(
           'persist/unavailable',
           'The wizard cannot be saved',
-          'this browser did not allow storage, which private windows commonly do',
+          `this browser did not allow ${String(chosen)}Storage, which private windows commonly do`,
           'pass a storage of your own, or accept that this session will not survive a reload'
         );
         notifyRestore({ restored: false, reason: 'persist/unavailable' });
@@ -285,13 +292,15 @@ const describe = (error: unknown): string =>
   error instanceof Error ? `${error.name}: ${error.message}` : String(error);
 
 /**
- * `localStorage` unless the browser refuses to admit it exists. Private modes
- * throw on the property itself rather than on the call, which is why this is a
- * try and not a check.
+ * The browser's own storage of that name, or `undefined` when it has none or
+ * refuses to admit it exists. Private modes throw on the property itself
+ * rather than on the call, which is why this is a try and not a check. Never
+ * the other one: a host that asked for a store that dies with the tab must
+ * not be handed one that outlives it.
  */
-function defaultStorage(): SyncStorage | undefined {
+function browserStorage(name: 'local' | 'session'): SyncStorage | undefined {
   try {
-    return globalThis.localStorage;
+    return name === 'session' ? globalThis.sessionStorage : globalThis.localStorage;
   } catch {
     return undefined;
   }

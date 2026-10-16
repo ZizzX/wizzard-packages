@@ -551,10 +551,18 @@ export default [
   // callback, and one that threw inside `init` disabled the whole plugin, so the
   // session silently stopped being saved. It is now caught and reported once,
   // and so is an async one whose promise rejects.
+  //
+  // 1.35 to 1.4 kB on 2026-10-16 for T-091, measured 1357 B: `storage` takes
+  // `'local'` or `'session'` and the plugin reads that browser storage itself,
+  // inside a try. A host that read `globalThis.sessionStorage` threw in a
+  // private window before the plugin could catch it, and one that got
+  // `undefined` was handed `localStorage` instead - the opposite of why it
+  // asked for the session store. The bytes are the name lookup and naming the
+  // refused storage in the warning.
   {
     name: 'plugins persist',
     path: 'packages/plugins/src/persist.ts',
-    limit: '1.35 kB',
+    limit: '1.4 kB',
     gzip: true,
     ignore: ['@wizzard-packages/core', '@wizzard-packages/core/snapshot'],
   },

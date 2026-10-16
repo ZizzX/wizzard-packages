@@ -314,7 +314,7 @@ export const wizard = createWizard({
       key: 'signup',
       // sessionStorage for anything that should not outlive the tab. This
       // stores whatever the flow collects, so that choice is yours to make.
-      storage: globalThis.sessionStorage,
+      storage: 'session',
       onRestore: (outcome) => {
         if (!outcome.restored) console.info('starting fresh:', outcome.reason);
       },
@@ -335,7 +335,7 @@ A wizard passed in this way is the application's to `destroy()`; the binding lea
 | Option      | What it does                                                                                                                                                                                 |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `key`       | The storage key. One per flow, or one per flow per user.                                                                                                                                     |
-| `storage`   | Where to put it. `localStorage` by default; any synchronous store works.                                                                                                                     |
+| `storage`   | Where to put it: `'local'` (the default) or `'session'` for the browser's own, which the plugin reads itself, or any synchronous store of your own.                                          |
 | `version`   | Your application's version. Bump it when the meaning of the data changes: a session stored under another value, or none, is refused as `snapshot/other-flow`, and `migrate` does not see it. |
 | `migrate`   | Upgrades a snapshot written in an older format, one hop at a time.                                                                                                                           |
 | `onRestore` | Hears what happened at startup: `{ restored: true }` or the reason it was not.                                                                                                               |
@@ -358,9 +358,9 @@ think so. [Restore after reload](../restore-after-reload/) is that turned into a
 A callback that throws is caught: the plugin warns once and stays enabled, as
 [`persist-on-restore-threw`](../../errors/persist-on-restore-threw/) describes.
 
-**Storage is synchronous.** `storage` takes anything with `getItem` and `setItem` returning
-values rather than promises - `localStorage` and `sessionStorage` both qualify, and so
-does an object of your own over a `Map`. An asynchronous store such as IndexedDB does not, and
+**Storage is synchronous.** Besides `'local'` and `'session'`, `storage` takes anything with
+`getItem` and `setItem` returning values rather than promises - an object of your own over a
+`Map` qualifies. An asynchronous store such as IndexedDB does not, and
 1.0 does not wrap one: a write that resolves later cannot be flushed inside `pagehide`, which is
 the moment the last answer is most likely to be lost.
 
@@ -370,8 +370,9 @@ A persisted session is a file on someone's device that outlives the tab. Decide 
 it before you turn persistence on.
 
 For a flow carrying card numbers, health answers or anything else you would not put in a log,
-point `storage` at `sessionStorage`, which is cleared when the tab closes, or do not persist the
-flow at all. `clearOnLeave` is not the tool for this: it drops a value when the step is left, by
+set `storage: 'session'`, which is cleared when the tab closes, or do not persist the flow at
+all. If the browser refuses `sessionStorage`, the session is not saved and `onRestore` hears
+`persist/unavailable`; it never falls back to `localStorage`. `clearOnLeave` is not the tool for this: it drops a value when the step is left, by
 which time every edit has already been committed and written. Keep such a field out of the
 persisted state instead of clearing it afterwards.
 
