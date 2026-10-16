@@ -10,7 +10,7 @@ import {
 } from '@wizzard-packages/vue';
 import { computed, onMounted, ref, useTemplateRef, watch } from 'vue';
 
-import { LAST_STEP, STORAGE_KEY } from './flow';
+import { STORAGE_KEY } from './flow';
 import { describeRestore, simulateUpgrade } from './outcome';
 import { TAKEN } from './registry';
 
@@ -39,12 +39,11 @@ const email = useField<string>('account.email');
 const name = useField<string>('workspace.name');
 const status = useWizardSelector((s) => s.status);
 
-// Whether the run is finished is read off the engine, not remembered here:
-// `toSnapshot` does not carry `status`, so a wizard that reached the end and was
-// reloaded comes back `idle`, and a flag in this component would come back
-// false and send the visitor round the last step again. `completed` is in the
-// snapshot, and the last step is in it only once the flow ended.
-const ended = useWizardSelector((s) => s.completed.includes(LAST_STEP));
+// Whether the run is finished is read off the engine, not remembered here: a
+// flag in this component would come back false after a reload and send the
+// visitor round the last step again. The snapshot marks a finished wizard, so
+// `status` survives the reload this application exists for.
+const ended = computed(() => status.value === 'done');
 
 const mounted = ref(false);
 const outcome = ref<RestoreOutcome | null>(null);

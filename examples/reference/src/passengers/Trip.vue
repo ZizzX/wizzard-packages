@@ -43,9 +43,7 @@ const standing = computed(() => current.value ?? active.value[0] ?? 'party');
 //
 // `status` and not `completed`: a forward `go` marks the step it left as
 // completed, and Edit jumps away from Review, so `completed` would call the trip
-// booked the moment somebody went back to change a seat. Nothing here is
-// persisted, so `status` - which `toSnapshot` does not carry - is exactly right
-// for this application and wrong for the one that reloads.
+// booked the moment somebody went back to change a seat.
 const finished = useWizardSelector((s) => s.status === 'done');
 
 watch(current, (to) => {

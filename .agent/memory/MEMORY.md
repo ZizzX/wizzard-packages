@@ -31,7 +31,7 @@
 - [SVG graphs never scale up](svg-graphs-never-scale-up.md) — the 3.24x stretch that voided the whole design system, and the 0.79 floor below it.
 - [The worktree is shared by sessions](worktree-is-shared-by-sessions.md) — one HEAD between two sessions; stage by path, never by wildcard.
 - [Reference apps are the site's examples](reference-apps-are-the-sites-examples.md) — where R-A/B/C live, and the rules that keep a page honest.
-- [Two signals for a finished wizard](two-signals-for-a-finished-wizard.md) — `status` or `completed`, decided by whether the wizard is persisted.
+- [Two signals for a finished wizard](two-signals-for-a-finished-wizard.md) — `status === 'done'` everywhere since the snapshot carries `done` (T-084); why `completed` was the old workaround.
 - [Docs follow every change](docs-follow-every-change.md) — README section + docs page land in the same PR as the code.
 - [Docs are versioned from v1](docs-versioned-from-v1.md) — the switcher ships now, seeded with 1.0.0; 0.x is not archived.
 - [Post-1.0 product direction](post-1-0-product-direction.md) — step builder, SDUI, MCP, prompt-to-graph, and the UI-agnostic constraint over all of them.

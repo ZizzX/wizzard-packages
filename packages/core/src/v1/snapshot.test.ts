@@ -29,7 +29,7 @@ const live = () => ({
   nav: 3,
 });
 
-const roundTrip = (state = live()) =>
+const roundTrip = (state: WizardState = live()) =>
   decodeSnapshot(flow, JSON.parse(JSON.stringify(toSnapshot(state, flow))) as unknown);
 
 describe('toSnapshot', () => {
@@ -66,6 +66,36 @@ describe('toSnapshot', () => {
 
   it('omits the version when the flow carries none', () => {
     expect(toSnapshot(live(), { ...flow, version: undefined })).not.toHaveProperty('version');
+  });
+
+  it('marks a finished wizard, and only a finished one', () => {
+    expect(toSnapshot({ ...live(), status: 'done' }, flow).done).toBe(true);
+    expect(toSnapshot({ ...live(), status: 'idle' }, flow)).not.toHaveProperty('done');
+  });
+});
+
+describe('decodeSnapshot, a finished wizard', () => {
+  it('comes back finished, not idle on its last step', () => {
+    const result = roundTrip({ ...live(), status: 'done' });
+
+    expect(result.restored).toBe(true);
+    if (!result.restored) return;
+    expect(result.state.status).toBe('done');
+  });
+
+  it('reads a snapshot written before the mark existed as unfinished', () => {
+    const { done: _, ...older } = toSnapshot({ ...live(), status: 'done' }, flow);
+
+    const result = decodeSnapshot(flow, older);
+
+    expect(result.restored && result.state.status).toBe('idle');
+  });
+
+  it.each([false, 'yes', 1, null])('refuses a mark that is not true: %j', (done) => {
+    expect(decodeSnapshot(flow, { ...toSnapshot(live(), flow), done })).toEqual({
+      restored: false,
+      reason: 'snapshot/unreadable',
+    });
   });
 });
 

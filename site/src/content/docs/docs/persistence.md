@@ -206,13 +206,16 @@ interface Snapshot {
   completed: readonly string[];
   dirty: readonly string[];
   nav: number;
+  done?: true;
 }
 ```
 
 `v` is the format's own version and `flow`/`version` identify the definition it was taken
 against. `stack` is where the user is, including their position inside nested groups;
 `history` is how they got there, which is what makes `back()` land where they actually came
-from rather than where `order` says.
+from rather than where `order` says. `done` is present, and `true`, only when the flow had ended;
+a storage layer or a `migrate` that rebuilds the object has to keep it, or a finished wizard comes
+back unfinished.
 
 ## Restoring
 
@@ -227,9 +230,10 @@ step that loads - one with a `load`, or a `deferred` one - again, in place: the 
 The step is not being left, so nothing else runs: no plugin's `beforeNavigate` or `afterNavigate`,
 no exit guard, no `when`. If the load throws or the enter guard refuses, the step stays current and
 the next `start()` tries again. A step that loads nothing is simply current. A wizard passed in
-through `state` with `status: 'done'` is not entered again: it stays finished. A snapshot does not
-carry `status`, so a persisted wizard that finished comes back `idle` on its last step, and that
-step, if it loads, loads again like any other restored step.
+through `state` with `status: 'done'` is not entered again: it stays finished. A snapshot of a
+finished wizard carries `done: true`, and only that one, so a persisted wizard that finished comes
+back with `status: 'done'` on its last step, and that step's `load` does not run again. A snapshot
+written before `done` existed restores as unfinished: `idle` on its last step.
 
 | `reason`                | What was wrong                                                                                 |
 | ----------------------- | ---------------------------------------------------------------------------------------------- |

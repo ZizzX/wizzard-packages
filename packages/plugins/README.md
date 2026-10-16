@@ -54,6 +54,10 @@ What is read back is validated before it is installed: a snapshot from another f
 older version of it, or naming a step that no longer exists is refused with a reason. The
 plugin never throws; a storage failure warns once and the wizard carries on.
 
+A wizard that reached the end is stored with `done: true` and comes back finished, with
+`status: 'done'` on its last step: `start()` leaves it there and that step's `load` does not run
+again. A session stored before `done` existed comes back unfinished, `idle` on its last step.
+
 ## Supported
 
 Node 20.11+, TypeScript 5+. ESM and CJS, types for both. No peer dependencies.
