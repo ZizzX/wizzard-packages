@@ -402,6 +402,18 @@ describe('validateFlow, on a repeat group', () => {
     ]);
   });
 
+  it('checks every entry of a back list, and @end is not a way back', () => {
+    const flow: FlowDefinition = {
+      id: 'f',
+      order: ['a', 'b'],
+      steps: { a: {}, b: { on: { back: [{ to: 'ghost', when: true }, 'auto', '@end', 'a'] } } },
+    };
+    expect(problems(flow)).toEqual([
+      'steps.b.on.back: unknown target "ghost"',
+      'steps.b.on.back: unknown target "@end"',
+    ]);
+  });
+
   it('checks the order of an inline sub-flow, which next() walks on its own', () => {
     const flow: FlowDefinition = {
       id: 'booking',
@@ -501,13 +513,19 @@ describe('validateFlow, on an operator the evaluator does not have', () => {
           guards: { enter: bad, exit: bad },
           on: { next: [{ to: 'b', when: bad }, 'b'], back: { to: 'b', when: bad } },
         },
-        b: { flow: 'leg', repeat: { over: bad }, input: { who: bad } },
+        b: {
+          flow: 'leg',
+          repeat: { over: bad },
+          input: { who: bad },
+          on: { back: ['auto', { to: 'a', when: bad }] },
+        },
       })
     ).toEqual([
       'steps.a.guards.enter: "$regex" is not an operator',
       'steps.a.guards.exit: "$regex" is not an operator',
       'steps.a.on.next[0].when: "$regex" is not an operator',
       'steps.a.on.back.when: "$regex" is not an operator',
+      'steps.b.on.back[1].when: "$regex" is not an operator',
       'steps.b.repeat.over: "$regex" is not an operator',
       'steps.b.input.who: "$regex" is not an operator',
     ]);

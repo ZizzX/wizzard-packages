@@ -10,6 +10,7 @@ import {
   type FlowDefinition,
   type GroupStep,
   type StepDef,
+  type BackTarget,
   type Target,
 } from './flow';
 
@@ -180,7 +181,10 @@ function explicitEdges(
     // `auto` is the resolver walking `order` backwards at run time against the
     // state of the moment. There is no fixed target, and drawing a guess would
     // be worse than drawing nothing.
-    if (back !== undefined && back !== 'auto') edges.push(toEdge(id, back, 'back', flow));
+    if (back !== undefined) {
+      const targets = (Array.isArray(back) ? back : [back]) as readonly BackTarget[];
+      for (const t of targets) if (t !== 'auto') edges.push(toEdge(id, t, 'back', flow));
+    }
   }
   return edges;
 }

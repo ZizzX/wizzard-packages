@@ -1336,3 +1336,52 @@ describe('busy', () => {
     expect(w.getSnapshot().isBusy).toBe(false);
   });
 });
+
+describe('a conditional on.back', () => {
+  const promo = { $get: 'data.promo' };
+  const open = (back: NonNullable<NonNullable<FlowDefinition['steps'][string]['on']>['back']>) =>
+    createWizard({
+      flow: {
+        id: 'checkout',
+        order: ['cart', 'coupon', 'details', 'pay'],
+        steps: {
+          cart: {},
+          coupon: { when: promo },
+          details: {},
+          pay: { on: { back } },
+        },
+        policy: 'free',
+      },
+      data: { promo: false },
+    });
+
+  it('goes where its when holds, and nowhere when nothing applies', async () => {
+    const w = open([{ to: 'cart', when: promo }]);
+    await w.start();
+    await w.go('pay');
+
+    // Before, the transition fired whatever `when` said.
+    expect(await w.back()).toMatchObject({ ok: false, reason: 'no-target' });
+    expect(w.getSnapshot().current).toBe('pay');
+    expect(w.getSnapshot().canBack).toBe(false);
+
+    w.set('promo', true);
+    expect(await w.back()).toMatchObject({ ok: true, to: 'cart' });
+  });
+
+  it("falls through to the walk along order where 'auto' is listed", async () => {
+    const w = open([{ to: 'cart', when: promo }, 'auto']);
+    await w.start();
+    await w.go('pay');
+
+    expect(await w.back()).toMatchObject({ ok: true, to: 'details' });
+  });
+
+  it('refuses a target that applies but whose step is switched off', async () => {
+    const w = open(['coupon']);
+    await w.start();
+    await w.go('pay');
+
+    expect(await w.back()).toMatchObject({ ok: false, reason: 'not-reachable' });
+  });
+});

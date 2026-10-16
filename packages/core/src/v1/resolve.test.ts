@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { add, beginNav, commit, isCurrent, remove } from './commit';
-import type { Scope } from './expr';
-import { END, type FlowDefinition } from './flow';
+import type { Expr, Scope } from './expr';
+import { END, type BackTarget, type FlowDefinition } from './flow';
 import { allowedByPolicy, reachable, resolveBack, resolveNext } from './resolve';
 import { initialState, type WizardState } from './state';
 
@@ -138,6 +138,50 @@ describe('resolveBack', () => {
       steps: { a: {}, b: {}, c: { on: { back: 'a' } } },
     };
     expect(resolveBack(f, at('c'), scopeFor('x'))).toBe('a');
+  });
+
+  describe('a conditional target', () => {
+    const payer: Expr = { $eq: [{ $get: 'data.trip.payer' }, 'business'] };
+    const f = (back: BackTarget | readonly BackTarget[]): FlowDefinition => ({
+      id: 'booking',
+      order: ['trip', 'company', 'payment', 'review'],
+      steps: { trip: {}, company: {}, payment: {}, review: { on: { back } } },
+    });
+
+    it('is taken only while its when holds', () => {
+      const flow = f({ to: 'trip', when: payer });
+      expect(resolveBack(flow, at('review'), scopeFor('business'))).toBe('trip');
+      // Not a transition that always fires: with nothing else listed, there is
+      // nowhere to go, as with on.next.
+      expect(resolveBack(flow, at('review'), scopeFor('private'))).toBeNull();
+    });
+
+    it('takes the first entry of a list whose when holds', () => {
+      const flow = f([{ to: 'company', when: payer }, 'trip']);
+      expect(resolveBack(flow, at('review'), scopeFor('business'))).toBe('company');
+      expect(resolveBack(flow, at('review'), scopeFor('private'))).toBe('trip');
+    });
+
+    it("falls through to the order walk where 'auto' is listed", () => {
+      const flow = f([{ to: 'trip', when: payer }, 'auto']);
+      expect(resolveBack(flow, at('review'), scopeFor('business'))).toBe('trip');
+      expect(resolveBack(flow, at('review'), scopeFor('private'))).toBe('payment');
+    });
+
+    it('answers the first target that applies even when its step is switched off', () => {
+      // As with on.next: a transition naming only closed steps is a flow bug the
+      // move refuses as not-reachable, not a silent skip to somewhere else.
+      const flow: FlowDefinition = {
+        id: 'booking',
+        order: ['trip', 'company', 'payment'],
+        steps: {
+          trip: {},
+          company: { when: payer },
+          payment: { on: { back: ['company'] } },
+        },
+      };
+      expect(resolveBack(flow, at('payment'), scopeFor('private'))).toBe('company');
+    });
   });
 });
 

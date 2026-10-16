@@ -207,7 +207,13 @@ export default [
   // `select` or `watch` that throws is logged as `listener-threw` and passed
   // over, instead of becoming the answer to the move whose write it heard and
   // keeping every listener after it - a binding's too - from hearing the change.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '7.2 kB', gzip: true },
+  // 7.2 to 7.25 kB on 2026-10-16, measured 7231 B: `on.back` reads as `on.next`
+  // does - a list, the first entry whose `when` holds, `not-reachable` and
+  // `no-target` - with `'auto'` as an entry. It took `{ to, when }` and ignored
+  // the `when`, so a conditional way back fired always while the graph and
+  // `validateFlow` showed the condition (T-095, D-039). Both directions now go
+  // through one transition reader.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '7.25 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a
@@ -250,7 +256,9 @@ export default [
   // 4.45 to 4.55 kB on 2026-10-15, measured 4516 B: a move off a removed item is
   // marked so its dead position is not recorded, and back() goes on past a group
   // with no position left in it instead of walking through it forwards (T-083).
-  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '4.55 kB', gzip: true },
+  // 4.55 to 4.6 kB on 2026-10-16, measured 4572 B: the same `on.back` reader as
+  // core-v1, which a group's sub-flow resolves its way back with (T-095).
+  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '4.6 kB', gzip: true },
 
   // The recorded-session checker. Its own entry because replay is a devtools and
   // documentation concern: an application that only runs a wizard never needs to
