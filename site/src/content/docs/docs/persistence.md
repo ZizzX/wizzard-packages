@@ -206,13 +206,16 @@ interface Snapshot {
   completed: readonly string[];
   dirty: readonly string[];
   nav: number;
+  done?: true;
 }
 ```
 
 `v` is the format's own version and `flow`/`version` identify the definition it was taken
 against. `stack` is where the user is, including their position inside nested groups;
 `history` is how they got there, which is what makes `back()` land where they actually came
-from rather than where `order` says.
+from rather than where `order` says. `done` is present, and `true`, only when the flow had ended;
+a storage layer or a `migrate` that rebuilds the object has to keep it, or a finished wizard comes
+back unfinished.
 
 ## Restoring
 
