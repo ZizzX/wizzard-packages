@@ -67,6 +67,18 @@ Anything a flow cannot serialize â€” a validator, a predicate, an async guard â€
 in `registry`, so `JSON.stringify(flow)` always round-trips. What throws is a mistake in the
 program, never an outcome of the wizard: a `WizardError` whose `url` is the page for its code.
 
+Without transitions, `next()` and `back()` walk `order`, skipping steps whose `when` is false. A
+step's `on.next` and `on.back` name where it leads instead: a step id, `{ to, when }`, or a list
+of those, read in order - the first entry whose `when` holds and whose step is reachable is
+taken. `on.back` also takes `'auto'`, the walk along `order`, which as the last entry is where a
+conditional way back falls through to:
+
+```ts
+payment: { on: { back: [{ to: 'coupon', when: { $get: 'data.promo' } }, 'auto'] } },
+```
+
+[Flow](https://zizzx.github.io/wizzard-packages/docs/flow/#where-a-step-leads) has the rest.
+
 `/graph`, `/groups`, `/session`, `/snapshot`, `/expr` and `/validate-flow` are separate entry
 points, because they are separate budgets: a wizard that never draws itself does not carry the
 code that would.
