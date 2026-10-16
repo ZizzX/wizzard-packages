@@ -1,1 +1,0 @@
-import{a as e,d as t}from"./dist.CRRxDB1r.js";var n=e({id:`signup`,order:[`name`,`review`],steps:{name:t({label:`Your name`}),review:t({label:`Review`})}});export{n as t};
