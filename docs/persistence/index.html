@@ -269,8 +269,8 @@ and is now empty looks like a bug to the person who filled it, and silence is wh
 think so. <a href="../restore-after-reload/">Restore after reload</a> is that turned into a working page.
 A callback that throws is caught: the plugin warns once and stays enabled, as
 <a href="../../errors/persist-on-restore-threw/"><code dir="auto">persist-on-restore-threw</code></a> describes.</p>
-<p><strong>Storage is synchronous.</strong> <code dir="auto">storage</code> takes anything with <code dir="auto">getItem</code>, <code dir="auto">setItem</code> and <code dir="auto">removeItem</code>
-returning values rather than promises - <code dir="auto">localStorage</code> and <code dir="auto">sessionStorage</code> both qualify, and so
+<p><strong>Storage is synchronous.</strong> <code dir="auto">storage</code> takes anything with <code dir="auto">getItem</code> and <code dir="auto">setItem</code> returning
+values rather than promises - <code dir="auto">localStorage</code> and <code dir="auto">sessionStorage</code> both qualify, and so
 does an object of your own over a <code dir="auto">Map</code>. An asynchronous store such as IndexedDB does not, and
 1.0 does not wrap one: a write that resolves later cannot be flushed inside <code dir="auto">pagehide</code>, which is
 the moment the last answer is most likely to be lost.</p>
