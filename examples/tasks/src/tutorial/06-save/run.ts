@@ -2,16 +2,13 @@ import type { RestoreOutcome, SyncStorage } from '@wizzard-packages/plugins/pers
 
 import { openWizard } from './wizard';
 
-// A reload without a browser: the plugin needs three methods of storage, and
+// A reload without a browser: the plugin needs two methods of storage, and
 // a Map behind them is enough to show the round trip.
 const kept = new Map<string, string>();
 const storage: SyncStorage = {
   getItem: (key) => kept.get(key) ?? null,
   setItem: (key, value) => {
     kept.set(key, value);
-  },
-  removeItem: (key) => {
-    kept.delete(key);
   },
 };
 

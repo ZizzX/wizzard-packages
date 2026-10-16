@@ -53,8 +53,6 @@ export interface SyncStorage {
   getItem: (key: string) => string | null;
   /** A throw stops saving for the rest of the session, with one warning. */
   setItem: (key: string, value: string) => void;
-  /** Part of the interface, though `persist` does not call it. */
-  removeItem: (key: string) => void;
 }
 
 interface NotRestored {
