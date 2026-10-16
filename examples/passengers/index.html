@@ -261,9 +261,7 @@ function Trip(): ReactNode {
   // says `to: &#39;@end&#39;`. What changed is `status`.
   // `status` and not `completed`: a forward `go` marks the step it left as
   // completed, and Edit jumps away from Review, so `completed` would call the
-  // trip booked the moment somebody went back to change a seat. Nothing here is
-  // persisted, so `status` - which `toSnapshot` does not carry - is exactly
-  // right for this application and wrong for the one that reloads.
+  // trip booked the moment somebody went back to change a seat.
   const finished = useWizardSelector((s) =&gt; s.status === &#39;done&#39;);
 
   const answers = (id: string): { seat?: string; meal?: string } =&gt; answersOf(data)[id] ?? {};
