@@ -25,8 +25,7 @@ host can say that this session will not come back rather than leaving an empty f
 reload to look like a bug.
 
 The fix is a storage the environment allows. `sessionStorage` is sometimes allowed where
-`localStorage` is not, and anything with synchronous `getItem`, `setItem` and `removeItem`
-works, including an object over a `Map`:
+`localStorage` is not, and anything with synchronous `getItem` and `setItem` works, including an object over a `Map`:
 
 ```ts
 const memory = new Map<string, string>();
@@ -36,7 +35,6 @@ persist({
   storage: {
     getItem: (key) => memory.get(key) ?? null,
     setItem: (key, value) => void memory.set(key, value),
-    removeItem: (key) => void memory.delete(key),
   },
 });
 ```

@@ -29,7 +29,6 @@ function fakeStorage(initial: Record<string, string> = {}): SyncStorage & {
       this.writes += 1;
       items.set(key, value);
     },
-    removeItem: (key) => void items.delete(key),
   };
 }
 

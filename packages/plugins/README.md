@@ -50,6 +50,10 @@ export const wizard = createWizard({
 
 <!-- /example -->
 
+`storage` is `localStorage` when it is left out. Anything with synchronous `getItem` and
+`setItem` will do instead - `sessionStorage`, or an object of your own over a `Map` - and nothing
+else is called on it.
+
 What is read back is validated before it is installed: a snapshot from another flow, from an
 older version of it, or naming a step that no longer exists is refused with a reason. The
 plugin never throws; a storage failure warns once and the wizard carries on.

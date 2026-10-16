@@ -8,7 +8,7 @@ import { describeRestore } from './outcome';
  * A reload, without a browser to reload.
  *
  * The plugin writes to `localStorage` unless it is handed something else, and
- * what it needs is three methods. A `Map` behind them is enough to show the
+ * what it needs is two methods. A `Map` behind them is enough to show the
  * whole round trip: fill a session in, throw the wizard away, build another
  * one over the same storage, and read what came back.
  */
@@ -18,9 +18,6 @@ const storage: SyncStorage = {
   getItem: (key) => kept.get(key) ?? null,
   setItem: (key, value) => {
     kept.set(key, value);
-  },
-  removeItem: (key) => {
-    kept.delete(key);
   },
 };
 

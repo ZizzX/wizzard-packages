@@ -358,8 +358,8 @@ think so. [Restore after reload](../restore-after-reload/) is that turned into a
 A callback that throws is caught: the plugin warns once and stays enabled, as
 [`persist-on-restore-threw`](../../errors/persist-on-restore-threw/) describes.
 
-**Storage is synchronous.** `storage` takes anything with `getItem`, `setItem` and `removeItem`
-returning values rather than promises - `localStorage` and `sessionStorage` both qualify, and so
+**Storage is synchronous.** `storage` takes anything with `getItem` and `setItem` returning
+values rather than promises - `localStorage` and `sessionStorage` both qualify, and so
 does an object of your own over a `Map`. An asynchronous store such as IndexedDB does not, and
 1.0 does not wrap one: a write that resolves later cannot be flushed inside `pagehide`, which is
 the moment the last answer is most likely to be lost.
