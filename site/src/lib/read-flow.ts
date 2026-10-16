@@ -268,7 +268,7 @@ function weigh(flow: Record<string, unknown>): { steps: number; targets: number 
       const on = step.on;
       if (isPlainObject(on)) {
         targets += Array.isArray(on.next) ? on.next.length : on.next === undefined ? 0 : 1;
-        if (on.back !== undefined) targets += 1;
+        targets += Array.isArray(on.back) ? on.back.length : on.back === undefined ? 0 : 1;
       }
 
       if (isPlainObject(step.flow)) walk(step.flow, depth + 1);

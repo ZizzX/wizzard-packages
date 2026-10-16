@@ -147,8 +147,9 @@ export interface Wizard<F extends FlowDefinition = FlowDefinition> {
    */
   next: (opts?: { validate?: boolean }) => Promise<NavResult>;
   /**
-   * Moves to the previous step: the one `on.back` names, or the previous
-   * reachable step in `order`; inside a group it follows the recorded history.
+   * Moves to the previous step: where the first applicable entry of `on.back`
+   * leads, read as `on.next` is, or the previous reachable step in `order`;
+   * inside a group it follows the recorded history.
    * The step being left is never validated.
    * Resolves `no-target` when there is nowhere to go back to.
    */

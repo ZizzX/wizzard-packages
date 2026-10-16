@@ -45,9 +45,9 @@ from wherever the move left the wizard, running the first move itself if it left
 
 `back()` resolves its target from the definition rather than from where the user has been, in
 whichever flow the wizard stands - the root, or a sub-flow inside a group. A step with `on.back`
-goes there. Otherwise the resolver walks `order` backwards and takes the first step
+goes where its first applicable entry leads, read as `on.next` is. Otherwise the resolver walks `order` backwards and takes the first step
 whose `when` still holds, so a branch that closed behind the user is skipped rather than
-revisited. `'auto'` is that same walk, written out.
+revisited. `'auto'` is that same walk, written out, and can close a list of conditional entries.
 
 The history the wizard keeps is a different thing. It records the stack at each move, which is
 what restores a position inside nested groups on the way back - into a group from the step after

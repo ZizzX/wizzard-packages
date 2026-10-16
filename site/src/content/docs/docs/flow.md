@@ -47,17 +47,17 @@ steps: {
 
 Both kinds share the same base:
 
-| Field          | Type                                                     | Meaning                                               |
-| -------------- | -------------------------------------------------------- | ----------------------------------------------------- |
-| `label`        | `string`                                                 | What a breadcrumb or a stepper shows.                 |
-| `when`         | `Expr`                                                   | The step is part of the flow only while this holds.   |
-| `guards`       | `{ enter?: Expr; exit?: Expr }`                          | Refuse entry or exit without removing the step.       |
-| `on`           | `{ next?: Target \| Target[]; back?: Target \| 'auto' }` | Where this step leads.                                |
-| `slice`        | `string`                                                 | The subtree of `data` this step owns.                 |
-| `ui`           | `Json`                                                   | Passed untouched to your renderer, never evaluated.   |
-| `load`         | `{ $ref: string; args?: Json }`                          | A resolver run on entry.                              |
-| `deferred`     | `boolean`                                                | The body arrives later: entering waits on `loadStep`. |
-| `clearOnLeave` | `readonly string[] \| true`                              | Data to drop when the step is left.                   |
+| Field          | Type                                                               | Meaning                                               |
+| -------------- | ------------------------------------------------------------------ | ----------------------------------------------------- |
+| `label`        | `string`                                                           | What a breadcrumb or a stepper shows.                 |
+| `when`         | `Expr`                                                             | The step is part of the flow only while this holds.   |
+| `guards`       | `{ enter?: Expr; exit?: Expr }`                                    | Refuse entry or exit without removing the step.       |
+| `on`           | `{ next?: Target \| Target[]; back?: BackTarget \| BackTarget[] }` | Where this step leads.                                |
+| `slice`        | `string`                                                           | The subtree of `data` this step owns.                 |
+| `ui`           | `Json`                                                             | Passed untouched to your renderer, never evaluated.   |
+| `load`         | `{ $ref: string; args?: Json }`                                    | A resolver run on entry.                              |
+| `deferred`     | `boolean`                                                          | The body arrives later: entering waits on `loadStep`. |
+| `clearOnLeave` | `readonly string[] \| true`                                        | Data to drop when the step is left.                   |
 
 An atom step adds `view` (a name your renderer maps to a component) and `validate`, which is a
 `{ $ref }` naming the validator that guards `next()`. A group step adds `flow` (a nested
@@ -108,8 +108,12 @@ apply lead only to steps that are switched off, `next()` refuses with
 applies at all, with [`no-target`](../../errors/nav-no-target/). To finish the wizard in that
 case, end the array with `'@end'`; to fall through to the next step, name it.
 
-`on.back` accepts the same, plus the literal `'auto'`, which is the default written out: walk
-`order` backwards and take the first step that is still reachable.
+`on.back` reads the same way - the first entry whose `when` holds and whose step is reachable,
+`not-reachable` or `no-target` when none is - and accepts one more entry, the literal `'auto'`:
+walk `order` backwards and take the first step that is still reachable, which is also what a
+step without `on.back` does. Alone, `'auto'` is that default written out; last in a list, it is
+where a conditional way back falls through to, as `'@end'` is for `on.next`. `'@end'` is not a
+way back.
 
 A step does not have to be in `order` to be entered. One left out of it is a branch: an `on.next`
 that names it lands on it whenever its `when` holds, and so does a `go()` the navigation policy

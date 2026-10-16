@@ -109,6 +109,28 @@ describe('explicit edges', () => {
     expect(from(g, 'trip').some((e) => e.kind === 'back')).toBe(false);
   });
 
+  it('draws each entry of a back list, with its when, and skips `auto` among them', () => {
+    const when = { $get: 'data.promo' };
+    const g = buildGraph({
+      id: 'f',
+      order: ['a', 'b', 'c'],
+      steps: { a: {}, b: {}, c: { on: { back: [{ to: 'b', when }, 'a', 'auto'] } } },
+    });
+    expect(from(g, 'c').filter((e) => e.kind === 'back')).toEqual([
+      { from: 'c', to: 'b', kind: 'back', when },
+      { from: 'c', to: 'a', kind: 'back' },
+    ]);
+  });
+
+  it('draws nothing after `auto` in a back list, which the resolver never reads', () => {
+    const g = buildGraph({
+      id: 'f',
+      order: ['a', 'b'],
+      steps: { a: {}, b: { on: { back: ['auto', 'a'] } } },
+    });
+    expect(from(g, 'b').some((e) => e.kind === 'back')).toBe(false);
+  });
+
   it('adds one terminal node, only when something reaches it', () => {
     expect(node(buildGraph(flow), END)?.kind).toBe('end');
     expect(ids(buildGraph(flow)).filter((id) => id === END)).toHaveLength(1);
