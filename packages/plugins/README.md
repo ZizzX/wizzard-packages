@@ -39,7 +39,7 @@ export const wizard = createWizard({
       key: 'signup',
       // sessionStorage for anything that should not outlive the tab. This
       // stores whatever the flow collects, so that choice is yours to make.
-      storage: globalThis.sessionStorage,
+      storage: 'session',
       onRestore: (outcome) => {
         if (!outcome.restored) console.info('starting fresh:', outcome.reason);
       },
@@ -50,9 +50,11 @@ export const wizard = createWizard({
 
 <!-- /example -->
 
-`storage` is `localStorage` when it is left out. Anything with synchronous `getItem` and
-`setItem` will do instead - `sessionStorage`, or an object of your own over a `Map` - and nothing
-else is called on it.
+`storage` is `'local'` when it is left out, or `'session'`: the plugin reads the browser's
+storage itself, so a private window that refuses it cannot throw in your code, and a refused
+`'session'` means no saving rather than `localStorage`. Anything with synchronous `getItem` and
+`setItem` will do instead - an object of your own over a `Map`, say - and nothing else is called
+on it.
 
 What is read back is validated before it is installed: a snapshot from another flow, from an
 older version of it, or naming a step that no longer exists is refused with a reason. The

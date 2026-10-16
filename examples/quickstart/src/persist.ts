@@ -12,7 +12,7 @@ export const wizard = createWizard({
       key: 'signup',
       // sessionStorage for anything that should not outlive the tab. This
       // stores whatever the flow collects, so that choice is yours to make.
-      storage: globalThis.sessionStorage,
+      storage: 'session',
       onRestore: (outcome) => {
         if (!outcome.restored) console.info('starting fresh:', outcome.reason);
       },
