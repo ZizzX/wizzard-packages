@@ -21,7 +21,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, matchesGlob } from 'node:path';
+import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -158,6 +158,21 @@ describe('embed-examples --check', () => {
 // document and snippet it reads, so a case is dozens of processes. On a Windows
 // checkout that is 3-5 seconds, which the default 5-second timeout cannot hold
 // once the manifest grows; the time is process start-up, not a slow check.
+/**
+ * The glob forms the lint-staged keys use - `{a,b}`, `**` and `*` - as a
+ * pattern. Local rather than `path.matchesGlob`, which Node only has from 20.17
+ * while the repository supports 20.11.
+ */
+const globToRegExp = (glob: string): RegExp =>
+  new RegExp(
+    `^${glob
+      .replace(/[.+^$()|[\]\\]/g, '\\$&')
+      .replace(/\{([^}]+)\}/g, (_, list: string) => `(${list.split(',').join('|')})`)
+      .replace(/\*\*/g, '\0')
+      .replace(/\*/g, '[^/]*')
+      .replace(/\0/g, '.*')}$`
+  );
+
 describe('the pre-commit trigger', () => {
   // The hook runs --stage only for paths its lint-staged key matches. A source
   // outside that key can be edited and committed while every document that
@@ -174,7 +189,10 @@ describe('the pre-commit trigger', () => {
 
     expect(triggers).not.toEqual([]);
     expect(sources.length).toBeGreaterThan(10);
-    expect(sources.filter((file) => !triggers.some((glob) => matchesGlob(file, glob)))).toEqual([]);
+    const patterns = triggers.map(globToRegExp);
+    expect(patterns.some((re) => re.test('examples/quickstart/src/persist.ts'))).toBe(true);
+    expect(patterns.some((re) => re.test('examples/other/src/x.ts'))).toBe(false);
+    expect(sources.filter((file) => !patterns.some((re) => re.test(file)))).toEqual([]);
   });
 });
 
