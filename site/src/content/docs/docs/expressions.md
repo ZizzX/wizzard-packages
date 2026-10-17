@@ -74,16 +74,41 @@ Paths read from three roots and nothing else:
 ## Resolvers
 
 `$ref` names a function in the registry passed to `createWizard`. It is how a predicate reaches
-code: a validator, a permission check, a price lookup.
+code: a validator, a permission check, a price lookup. This is the registry of the flow
+[Getting started](../start/#the-flow) builds, with the one validator it names:
 
+<!-- example:branching-registry -->
+
+<!-- prettier-ignore -->
 ```ts
-const registry = {
-  needsEmail: (_args, { data }) => Boolean(data.email),
+import type { AsyncRegistry } from '@wizzard-packages/core';
+
+/**
+ * The code the flow names. A validator answers with the messages it found,
+ * keyed by field, or `null` when the step may be left.
+ *
+ * Not a boolean: `false` carries no message to show and does not stop the
+ * move. Only an object with at least one key refuses it.
+ */
+export const registry: AsyncRegistry = {
+  needsEmail: (_args, { data }) => {
+    const details = data['details'] as { email?: string } | undefined;
+    return details?.email ? null : { email: 'Enter an email address.' };
+  },
 };
 ```
 
+<!-- /example -->
+
+The registry is passed to `createWizard({ flow, registry })` beside the flow, and it is the only
+place a `$ref` is looked up.
+
 A resolver takes the `args` from the `$ref` and the scope, in that order:
 `(args: Json | undefined, scope: Scope, signal?: AbortSignal) => unknown`. Most ignore the first.
+What it should return depends on where it is named. In a `when` its answer is read as true or
+false. In a `validate` it is not: a validator returns the messages it found, keyed by field, or
+`null`, and a `false` there lets the step be left - see
+[Validation](../validation/#checking-the-answers).
 Only a step's `load` is handed the third, the signal of the move it runs in; see
 [Loading a step](../async-steps/).
 
