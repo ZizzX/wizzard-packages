@@ -897,6 +897,23 @@ describe('start after a failed start', () => {
 });
 
 describe('start under concurrency', () => {
+  // The lock commit of start()'s own first move notifies synchronously, before
+  // start() had recorded that it was starting; a listener calling start() there
+  // began a second move, and the first start() answered superseded (T-087).
+  it('answers a start() called from its own lock commit with the same attempt', async () => {
+    const w = make();
+    let inner: Promise<unknown> | undefined;
+    const unsubscribe = w.subscribe(() => {
+      if (inner === undefined && w.getState().status === 'busy') inner = w.start();
+    });
+    const outer = w.start();
+    unsubscribe();
+
+    expect(await outer).toMatchObject({ ok: true });
+    expect(inner).toBe(outer);
+    expect(w.getState().history).toHaveLength(0);
+  });
+
   // A move already under way owns the wizard; a start beside it would bump
   // the epoch and turn that move into `superseded`.
   it('leaves a next() that is already moving alone', async () => {
@@ -1317,5 +1334,54 @@ describe('busy', () => {
 
     await moving;
     expect(w.getSnapshot().isBusy).toBe(false);
+  });
+});
+
+describe('a conditional on.back', () => {
+  const promo = { $get: 'data.promo' };
+  const open = (back: NonNullable<NonNullable<FlowDefinition['steps'][string]['on']>['back']>) =>
+    createWizard({
+      flow: {
+        id: 'checkout',
+        order: ['cart', 'coupon', 'details', 'pay'],
+        steps: {
+          cart: {},
+          coupon: { when: promo },
+          details: {},
+          pay: { on: { back } },
+        },
+        policy: 'free',
+      },
+      data: { promo: false },
+    });
+
+  it('goes where its when holds, and nowhere when nothing applies', async () => {
+    const w = open([{ to: 'cart', when: promo }]);
+    await w.start();
+    await w.go('pay');
+
+    // Before, the transition fired whatever `when` said.
+    expect(await w.back()).toMatchObject({ ok: false, reason: 'no-target' });
+    expect(w.getSnapshot().current).toBe('pay');
+    expect(w.getSnapshot().canBack).toBe(false);
+
+    w.set('promo', true);
+    expect(await w.back()).toMatchObject({ ok: true, to: 'cart' });
+  });
+
+  it("falls through to the walk along order where 'auto' is listed", async () => {
+    const w = open([{ to: 'cart', when: promo }, 'auto']);
+    await w.start();
+    await w.go('pay');
+
+    expect(await w.back()).toMatchObject({ ok: true, to: 'details' });
+  });
+
+  it('refuses a target that applies but whose step is switched off', async () => {
+    const w = open(['coupon']);
+    await w.start();
+    await w.go('pay');
+
+    expect(await w.back()).toMatchObject({ ok: false, reason: 'not-reachable' });
   });
 });

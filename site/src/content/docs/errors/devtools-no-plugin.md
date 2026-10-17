@@ -15,9 +15,10 @@ createWizard({ plugins: [dt] }) and to <WizardDevtools plugin={dt}/>. …/errors
 Shown in the Activity tab's header and as `refusals: not captured` in the export preview. The
 panel still works: commits, the graph, the state and the diff need no plugin.
 
-A refusal is not a commit. `next()` that a validator blocks changes no state, so `subscribe`
-never fires and a panel built on state alone cannot see it - which is the case the plugin
-exists for. It sits in `createWizard({ plugins: [dt] })`, receives the engine's attempt hook,
+A refusal leaves nothing in state that says it happened. A move a guard, the policy or a plugin
+refuses commits nothing, so `subscribe` never fires; one a validator refuses commits the errors
+it produced, and nothing about the move. A panel built on state alone cannot tell which move was
+refused or why - which is the case the plugin exists for. It sits in `createWizard({ plugins: [dt] })`, receives the engine's attempt hook,
 and keeps the rings the panel reads.
 
 The second form fires when a plugin is passed but its `attached` is false, or its `lastRev`

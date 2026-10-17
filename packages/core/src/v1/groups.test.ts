@@ -385,6 +385,135 @@ describe('4.6 back() across a group boundary', () => {
     ]);
   });
 
+  // Inside an item the definition picks the target, as it does at the root:
+  // the history only says where to stand inside a group (D-035).
+  describe('below the root, the definition picks the target', () => {
+    const bags: FlowDefinition = { id: 'bags', order: ['size'], steps: { size: {} } };
+    const traveller: FlowDefinition = {
+      id: 'passenger',
+      order: ['seat', 'extras', 'eachBag', 'meal'],
+      steps: {
+        seat: {},
+        extras: {},
+        eachBag: { flow: bags, repeat: { over: { $get: 'data.bags' }, keyBy: 'id' } },
+        meal: { on: { back: 'seat' } },
+      },
+    };
+    const trip: FlowDefinition = {
+      ...booking(),
+      steps: { ...booking().steps, each: { ...booking().steps.each, flow: traveller } as never },
+    };
+    const data = { passengers: [{ id: 'p1' }], bags: [{ id: 'b1' }, { id: 'b2' }] };
+
+    it("reads an inner step's on.back rather than the newest recorded position", async () => {
+      const wizard = await enterGroup(trip, data); // p1/seat
+      await wizard.next(); // p1/extras
+      await wizard.go('meal', { force: true }); // p1/meal, the bags jumped over
+      expect(stepOf(wizard)).toBe('meal');
+
+      await wizard.back();
+      expect(stepOf(wizard)).toBe('seat');
+      expect(keyOf(wizard)).toBe('p1');
+    });
+
+    it('enters an inner group it jumped over from the start', async () => {
+      const flow: FlowDefinition = {
+        ...trip,
+        steps: {
+          ...trip.steps,
+          each: {
+            ...trip.steps.each,
+            flow: { ...traveller, steps: { ...traveller.steps, meal: {} } },
+          } as never,
+        },
+      };
+      const wizard = await enterGroup(flow, data); // p1/seat
+      await wizard.go('meal', { force: true });
+
+      await wizard.back();
+      expect(at(wizard)).toEqual([
+        { flow: 'booking', step: 'each', key: 'p1' },
+        { flow: 'passenger', step: 'eachBag', key: 'b1' },
+        { flow: 'bags', step: 'size' },
+      ]);
+    });
+
+    it('enters an inner group from behind where its last item stopped', async () => {
+      const flow: FlowDefinition = {
+        ...trip,
+        steps: {
+          ...trip.steps,
+          each: {
+            ...trip.steps.each,
+            flow: { ...traveller, steps: { ...traveller.steps, meal: {} } },
+          } as never,
+        },
+      };
+      const wizard = await enterGroup(flow, data); // p1/seat
+      await wizard.next(); // p1/extras
+      await wizard.next(); // p1/b1/size
+      await wizard.next(); // p1/b2/size
+      await wizard.next(); // p1/meal
+
+      await wizard.back();
+      expect(at(wizard)[1]).toEqual({ flow: 'passenger', step: 'eachBag', key: 'b2' });
+      await wizard.back();
+      expect(at(wizard)[1]).toEqual({ flow: 'passenger', step: 'eachBag', key: 'b1' });
+      await wizard.back();
+      expect(stepOf(wizard)).toBe('extras');
+    });
+  });
+
+  it('steps past a previous item whose every step is hidden, and leaves the group when none is left', async () => {
+    const shown: FlowDefinition = {
+      id: 'p',
+      order: ['a', 'b'],
+      steps: {
+        a: { when: { $eq: [{ $get: 'loop.item.show' }, true] } },
+        b: { when: { $eq: [{ $get: 'loop.item.show' }, true] } },
+      },
+    };
+    const flow: FlowDefinition = {
+      id: 'root',
+      order: ['who', 'each', 'review'],
+      steps: {
+        who: {},
+        each: { flow: shown, repeat: { over: { $get: 'data.items' }, keyBy: 'id' } },
+        review: {},
+      },
+    };
+    const wizard = build(flow, {
+      items: [
+        { id: 'i1', show: false },
+        { id: 'i2', show: true },
+      ],
+    });
+    await wizard.start();
+    await wizard.next(); // i1 is empty, so i2/a
+    expect(keyOf(wizard)).toBe('i2');
+
+    const moved = await wizard.back();
+    expect(moved.ok).toBe(true);
+    expect(at(wizard)).toEqual([{ flow: 'root', step: 'who' }]);
+
+    const middle = build(flow, {
+      items: [
+        { id: 'i1', show: true },
+        { id: 'i2', show: false },
+        { id: 'i3', show: true },
+      ],
+    });
+    await middle.start();
+    await middle.next(); // i1/a
+    await middle.next(); // i1/b
+    await middle.next(); // i2 is empty, so i3/a
+    expect(keyOf(middle)).toBe('i3');
+
+    await middle.back();
+    expect(keyOf(middle)).toBe('i1');
+    expect(stepOf(middle)).toBe('b');
+  });
+
   it('still starts the group over on go(), whatever the history holds', async () => {
     const wizard = await enterGroup(booking(), { passengers: [{ id: 'p1' }, { id: 'p2' }] });
     await wizard.next(); // p1/meal
@@ -595,8 +724,65 @@ describe('4.9 pruning of dead frames', () => {
         ],
       ],
     };
+    // The item before p3 is p1 now; nothing was recorded inside it, so it is
+    // entered at its start (D-035). The dead p2 is never restored.
     const move = step(booking(), state, { type: 'back' });
-    expect(move).toMatchObject({ to: 'who' });
+    expect(move).toMatchObject({ to: 'seat' });
+    expect((move as { stack: readonly Frame[] }).stack).toEqual([
+      { flow: 'booking', step: 'each', key: 'p1' },
+      { flow: 'passenger', step: 'seat' },
+    ]);
+  });
+});
+
+describe('T-083 history around a removed item', () => {
+  it('records nothing for a next() that leaves a position whose item was removed', async () => {
+    const wizard = await enterGroup(); // p1/seat
+    const recorded = wizard.getState().history.length;
+    wizard.set('passengers', [{ id: 'p2' }, { id: 'p3' }]);
+
+    await wizard.next();
+    expect(keyOf(wizard)).toBe('p2');
+    expect(wizard.getState().history).toHaveLength(recorded);
+  });
+
+  it('leaves an item whose first visible step follows an empty group', async () => {
+    const none: FlowDefinition = { id: 'none', order: ['x'], steps: { x: {} } };
+    const sub: FlowDefinition = {
+      id: 'sub',
+      order: ['g', 's2'],
+      steps: { g: { flow: none, repeat: { over: { $get: 'data.empty' }, keyBy: 'id' } }, s2: {} },
+    };
+    const flow: FlowDefinition = {
+      id: 'root',
+      order: ['a', 'each', 'z'],
+      steps: {
+        a: {},
+        each: { flow: sub, repeat: { over: { $get: 'data.items' }, keyBy: 'id' } },
+        z: {},
+      },
+    };
+    const wizard = build(flow, { items: [{ id: 'p1' }, { id: 'p2' }], empty: [] });
+    await wizard.start();
+    await wizard.next(); // p1/s2
+    await wizard.next(); // p2/s2
+    expect(keyOf(wizard)).toBe('p2');
+
+    expect(await wizard.back()).toMatchObject({ ok: true });
+    expect(keyOf(wizard)).toBe('p1');
+    expect(stepOf(wizard)).toBe('s2');
+    expect(await wizard.back()).toMatchObject({ ok: true, to: 'a' });
+  });
+
+  it('goes back past a group that has no item left, rather than through it', async () => {
+    const wizard = await enterGroup(booking(), { passengers: [{ id: 'p1' }] });
+    await wizard.next(); // p1/meal
+    await wizard.next(); // review
+    wizard.set('passengers', []);
+
+    const moved = await wizard.back();
+    expect(moved).toMatchObject({ ok: true, to: 'who' });
+    expect(at(wizard)).toEqual([{ flow: 'booking', step: 'who' }]);
   });
 });
 

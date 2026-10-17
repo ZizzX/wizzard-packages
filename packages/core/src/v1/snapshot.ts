@@ -20,7 +20,8 @@ import type { Frame, WizardState } from './state';
  * back stuck in `busy` with errors nobody can clear.
  *
  * So a snapshot is the session and nothing else, plus the identity needed to
- * tell whether it still belongs to the flow being restored, plus `v`: the
+ * tell whether it still belongs to the flow being restored, plus whether the
+ * flow already ended, plus `v`: the
  * format's own version, which is what lets a host migrate a snapshot written
  * by an older release instead of throwing it away.
  */
@@ -40,6 +41,13 @@ export interface Snapshot {
   dirty: readonly string[];
   /** The navigation epoch, so a restored wizard cannot be raced by an older one. */
   nav: number;
+  /**
+   * Present, and `true`, only when the flow had ended. A finished wizard stays
+   * on its last step, so without this a reload would bring it back `idle` there
+   * and `start()` would enter that step again and run its `load`. Absent in a
+   * snapshot written before it existed, which restores unfinished, as it did.
+   */
+  done?: true;
 }
 
 /** Why `decodeSnapshot` refused a snapshot, one value for each kind of refusal. */
@@ -123,6 +131,7 @@ export function toSnapshot(state: WizardState, flow: FlowDefinition): Snapshot {
     completed: [...state.completed],
     dirty: [...state.dirty],
     nav: state.nav,
+    ...(state.status === 'done' ? { done: true as const } : {}),
   };
 }
 
@@ -218,7 +227,9 @@ export function decodeSnapshot(
   return {
     restored: true,
     state: {
-      status: 'idle',
+      // A session that had ended stays ended; anything else had a step current
+      // and is waiting for the next move, whatever it was doing when saved.
+      status: snapshot.done === true ? 'done' : 'idle',
       stack: snapshot.stack,
       history: snapshot.history,
       data: snapshot.data,
@@ -264,7 +275,8 @@ function isSnapshotShaped(
     isStringArray(value.visited) &&
     isStringArray(value.completed) &&
     isStringArray(value.dirty) &&
-    typeof value.nav === 'number'
+    typeof value.nav === 'number' &&
+    (value.done === undefined || value.done === true)
   );
 }
 

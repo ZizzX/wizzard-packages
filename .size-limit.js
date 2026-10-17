@@ -207,7 +207,13 @@ export default [
   // `select` or `watch` that throws is logged as `listener-threw` and passed
   // over, instead of becoming the answer to the move whose write it heard and
   // keeping every listener after it - a binding's too - from hearing the change.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '7.2 kB', gzip: true },
+  // 7.2 to 7.25 kB on 2026-10-16, measured 7226 B: `on.back` reads as `on.next`
+  // does - a list, the first entry whose `when` holds, `not-reachable` and
+  // `no-target` - with `'auto'` as an entry. It took `{ to, when }` and ignored
+  // the `when`, so a conditional way back fired always while the graph and
+  // `validateFlow` showed the condition (T-095, D-039). Both directions now go
+  // through one transition reader.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '7.25 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a
@@ -243,7 +249,16 @@ export default [
   // 4.15 to 4.2 kB on 2026-10-05, measured 4182 B: `back()` into a group from the
   // step after it restores the newest recorded position inside the group, where
   // its last item stopped, instead of entering at the first item (T-075).
-  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '4.2 kB', gzip: true },
+  // 4.2 to 4.45 kB on 2026-10-15, measured 4418 B: `back()` below the root resolves
+  // from the sub-flow's definition like the root does, steps back onto the previous
+  // item where it stopped - past items whose every step is hidden - and enters an
+  // inner group from behind (T-082, D-035).
+  // 4.45 to 4.55 kB on 2026-10-15, measured 4516 B: a move off a removed item is
+  // marked so its dead position is not recorded, and back() goes on past a group
+  // with no position left in it instead of walking through it forwards (T-083).
+  // 4.55 to 4.6 kB on 2026-10-16, measured 4571 B: the same `on.back` reader as
+  // core-v1, which a group's sub-flow resolves its way back with (T-095).
+  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '4.6 kB', gzip: true },
 
   // The recorded-session checker. Its own entry because replay is a devtools and
   // documentation concern: an application that only runs a wizard never needs to
@@ -307,10 +322,16 @@ export default [
   // entry would have carried to print nothing - the decoder answers
   // `snapshot/unknown-step` and no new reason. What is left is the walk and the
   // flow registry, which is the whole of what a decoder needs.
+  //
+  // 1.4 to 1.45 kB on 2026-10-16 for T-084: a finished wizard is written with
+  // `done: true` and restored as `status: 'done'`, so a reload no longer brings
+  // it back idle on its last step and runs that step's `load` again. 1416 B
+  // measured, 16 B over: the spread that writes the mark, the ternary that
+  // reads it, and the shape check that refuses anything but `true`.
   {
     name: 'core-v1 snapshot',
     path: 'packages/core/src/v1/snapshot.ts',
-    limit: '1.4 kB',
+    limit: '1.45 kB',
     gzip: true,
   },
 
@@ -538,10 +559,18 @@ export default [
   // callback, and one that threw inside `init` disabled the whole plugin, so the
   // session silently stopped being saved. It is now caught and reported once,
   // and so is an async one whose promise rejects.
+  //
+  // 1.35 to 1.4 kB on 2026-10-16 for T-091, measured 1357 B: `storage` takes
+  // `'local'` or `'session'` and the plugin reads that browser storage itself,
+  // inside a try. A host that read `globalThis.sessionStorage` threw in a
+  // private window before the plugin could catch it, and one that got
+  // `undefined` was handed `localStorage` instead - the opposite of why it
+  // asked for the session store. The bytes are the name lookup and naming the
+  // refused storage in the warning.
   {
     name: 'plugins persist',
     path: 'packages/plugins/src/persist.ts',
-    limit: '1.35 kB',
+    limit: '1.4 kB',
     gzip: true,
     ignore: ['@wizzard-packages/core', '@wizzard-packages/core/snapshot'],
   },

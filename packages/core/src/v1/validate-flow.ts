@@ -16,7 +16,7 @@ import {
   WizardError,
   type Explained,
 } from './diagnostic';
-import { isGroup, type FlowDefinition, type StepDef, type Target } from './flow';
+import { isGroup, type BackTarget, type FlowDefinition, type StepDef, type Target } from './flow';
 
 /**
  * One problem `validateFlow` or `checkSession` found: where it is, the message
@@ -394,7 +394,14 @@ function collect(
     } else {
       targetWhen(next as Target | undefined, `${at}.on.next`);
     }
-    targetWhen(step_.on?.back, `${at}.on.back`);
+    const back = step_.on?.back;
+    if (Array.isArray(back)) {
+      back.forEach((target: BackTarget, i) => {
+        targetWhen(target, `${at}.on.back[${i}]`);
+      });
+    } else {
+      targetWhen(back as BackTarget | undefined, `${at}.on.back`);
+    }
     if (!isGroup(step_)) return;
     checkOperators(step_.repeat?.over, `${at}.repeat.over`);
     for (const [key, value] of Object.entries(step_.input ?? {})) {
@@ -420,8 +427,12 @@ function collect(
     }
 
     const back = step_.on?.back;
-    if (back !== undefined && back !== 'auto') {
-      const to = typeof back === 'string' ? back : back.to;
+    const backs = (
+      back === undefined ? [] : Array.isArray(back) ? back : [back]
+    ) as readonly BackTarget[];
+    for (const target of backs) {
+      if (target === 'auto') continue;
+      const to = typeof target === 'string' ? target : target.to;
       if (!(to in f.steps)) unknownTarget(to, `${at}.on.back`);
     }
 

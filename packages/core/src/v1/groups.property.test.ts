@@ -318,3 +318,123 @@ describe('duplicate keys', () => {
     );
   });
 });
+
+describe('back() at any depth', () => {
+  // A flow with no `on.back` and no `when`: whatever `next()` walked through,
+  // `back()` walks through again in reverse, item by item and group by group,
+  // because the definition and the history agree on every step behind (D-035).
+  const bags: FlowDefinition = {
+    id: 'bags',
+    order: ['size', 'weight'],
+    steps: { size: {}, weight: {} },
+  };
+  const traveller: FlowDefinition = {
+    id: 'traveller',
+    order: ['seat', 'eachBag', 'meal'],
+    steps: {
+      seat: {},
+      eachBag: { flow: bags, repeat: { over: { $get: 'data.bags' }, keyBy: 'id' } },
+      meal: {},
+    },
+  };
+  const trip: FlowDefinition = {
+    id: 'trip',
+    order: ['who', 'each', 'review'],
+    steps: {
+      who: {},
+      each: { flow: traveller, repeat: { over: { $get: 'data.people' }, keyBy: 'id' } },
+      review: {},
+    },
+  };
+  const ids = (n: number, prefix: string): { id: string }[] =>
+    Array.from({ length: n }, (_, i) => ({ id: `${prefix}${i}` }));
+
+  it('retraces the positions next() passed through, in reverse', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.integer({ min: 1, max: 3 }),
+        fc.integer({ min: 1, max: 3 }),
+        fc.integer({ min: 1, max: 14 }),
+        async (people, bagCount, moves) => {
+          const wizard = createWizard({
+            flow: trip,
+            groups,
+            data: { people: ids(people, 'p'), bags: ids(bagCount, 'b') },
+          });
+          await wizard.start();
+          const trail: string[] = [JSON.stringify(wizard.getState().stack)];
+          for (let i = 0; i < moves; i++) {
+            const moved = await wizard.next();
+            if (!moved.ok || wizard.getState().status === 'done') break;
+            trail.push(JSON.stringify(wizard.getState().stack));
+          }
+          for (let i = trail.length - 2; i >= 0; i--) {
+            await wizard.back();
+            expect(JSON.stringify(wizard.getState().stack)).toBe(trail[i]);
+          }
+          wizard.destroy();
+        }
+      ),
+      { numRuns: 60 }
+    );
+  });
+});
+
+describe('history under item removal', () => {
+  const sub: FlowDefinition = { id: 'sub', order: ['one', 'two'], steps: { one: {}, two: {} } };
+  const flow: FlowDefinition = {
+    id: 'root',
+    order: ['first', 'each', 'last'],
+    steps: {
+      first: {},
+      each: { flow: sub, repeat: { over: { $get: 'data.items' }, keyBy: 'id' } },
+      last: {},
+    },
+  };
+  type Op = { type: 'next' } | { type: 'back' } | { type: 'remove'; at: number };
+  const arbOp: fc.Arbitrary<Op> = fc.oneof(
+    fc.constant({ type: 'next' } as const),
+    fc.constant({ type: 'back' } as const),
+    fc.record({ type: fc.constant('remove' as const), at: fc.integer({ min: 0, max: 3 }) })
+  );
+
+  it('records only a live position, and a back() that answers ok always moves', async () => {
+    await fc.assert(
+      fc.asyncProperty(fc.array(arbOp, { minLength: 1, maxLength: 16 }), async (ops) => {
+        const wizard = createWizard({
+          flow,
+          groups,
+          data: { items: [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }] },
+        });
+        await wizard.start();
+        for (const op of ops) {
+          if (op.type === 'remove') {
+            const items = wizard.getState().data['items'] as { id: string }[];
+            wizard.set(
+              'items',
+              items.filter((_, i) => i !== op.at % Math.max(items.length, 1))
+            );
+            continue;
+          }
+          if (wizard.getState().status === 'done') break;
+          const before = JSON.stringify(wizard.getState().stack);
+          const length = wizard.getState().history.length;
+          const moved = op.type === 'next' ? await wizard.next() : await wizard.back();
+          if (op.type === 'back' && moved.ok) {
+            expect(JSON.stringify(wizard.getState().stack)).not.toBe(before);
+          }
+          // A position recorded by this move was alive when it was recorded. One
+          // that died later, when its item was removed, is 4.9's to skip.
+          const history = wizard.getState().history;
+          const added = history.length > length ? history[history.length - 1] : undefined;
+          if (added !== undefined) {
+            const alive = walk(flow, { ...wizard.getState(), stack: added }, undefined, { sub });
+            expect(alive.length).toBe(added.length);
+          }
+        }
+        wizard.destroy();
+      }),
+      { numRuns: 300 }
+    );
+  });
+});

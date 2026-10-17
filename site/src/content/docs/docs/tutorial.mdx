@@ -143,12 +143,12 @@ move.
 
 ## 6. Keep the session across a reload
 
-The `persist` plugin writes the session on every change and reads it back when the wizard starts.
+The `persist` plugin writes the session on every change and reads it back when the wizard is created.
 It ships in its own package, beside the engine:
 
 <Code code={installPlugins} lang="bash" />
 
-In a browser it uses `localStorage`; the script hands it a `Map` behind the same three methods, so
+In a browser it uses `localStorage`; the script hands it a `Map` behind the same two methods, so
 a reload can happen in one process.
 
 <TutorialFile step="06-save" file="wizard.ts" />
@@ -157,7 +157,7 @@ a reload can happen in one process.
 
 <TutorialFile step="06-save" file="run.out.txt" />
 
-`onRestore` is told once, at start, whether a session came back and, when one did not, why - here
+`onRestore` is told once, when the wizard is created, whether a session came back and, when one did not, why - here
 `persist/nothing-stored` on the first visit. Writes are coalesced, and `destroy()` flushes the
 last one, as closing the page does in a browser. [Restore after reload](../restore-after-reload/)
 is this step rendered, and [Persistence](../persistence/) is the format underneath.

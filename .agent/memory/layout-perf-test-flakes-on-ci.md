@@ -1,40 +1,26 @@
 ---
 name: layout-perf-test-flakes-on-ci
-description: The devtools dense-layout benchmark fails CI at roughly 3% over its 100 ms threshold on a shared runner; the same commit passes on rerun.
+description: The devtools dense-layout benchmark failed CI on a fixed 100 ms budget; it now asserts how time grows with edges, not milliseconds.
 metadata:
-  node_type: memory
   type: project
-  originSessionId: 831efeb7-7607-499c-8d8f-dcfa8600b9d8
-  modified: 2026-09-08T08:32:17.092Z
 ---
 
-`packages/devtools/src/headless/layout.test.ts` — "lays out the dense fixture
-(about twenty thousand edges) under 100 ms" — failed `build-test (22)` on
-2026-09-08 with `expected 102.82660800000008 to be less than 100`, on a commit
-whose identical content had already passed that job twice the same day. A
-`gh run rerun --failed` on the same SHA went green.
+`packages/devtools/src/headless/layout.test.ts` lays out `denseFlow(200)`, about twenty
+thousand edges. It used to assert the fastest of three runs under 100 ms. That measured the
+runner, not the layout: about 8 ms on a laptop, 114-170 ms on a loaded GitHub runner, and on
+2026-10-14 it failed three of four CI runs and blocked merges that never touched the layout.
 
-The test already averages away some noise: it runs the layout three times,
-sorts, and asserts on `times[1]` — the median.
+Since T-119 it asserts a ratio instead, and since T-121 the sizes are far apart: the fastest of
+five runs at 200 nodes against 50 stays under 40 - about 12 when linear in edges, 64 with one
+extra quadratic pass. The first version compared 200 with 100 against a bound of 6 (linear about
+3, quadratic about 9) and a CI run read 6.6 the same day: two sizes close together leave no room
+between noise and regression. A 2 s absolute ceiling stays for a regression slow at every size.
 
-**Why:** a median still absorbs scheduler preemption on a shared GitHub runner,
-and 100 ms leaves under 3% of headroom. Treat a single failure of this one test
-as noise, not as a regression to bisect — but confirm by rerunning the same SHA
-rather than by pushing a change.
+**Why:** an absolute budget on a shared runner is a test of the runner's load. A ratio taken
+in one process on one machine cancels the machine out, and still catches the regression that
+matters - a change in complexity.
 
-**How to apply:** rerun first. If it fails twice on one SHA, it is real. The
-standing fix, not yet applied, is to assert on `times[0]` (the minimum) instead
-of the median: noise can only add time, so the minimum is the stabler estimate
-of the true cost and a genuine regression still raises it. That is a one-line
-change to a devtools test and does not belong in an unrelated PR.
-
-**Fixed 2026-09-08 (PR #52).** It took the median of three runs; it takes the
-minimum now. Noise on a shared runner only ever adds time — a scheduler steal
-inflates a sample and nothing deflates one — so the median is a sample that was
-interrupted less and the minimum is the closest three samples get to the real
-cost. The 100 ms budget is unchanged.
-
-It stopped being a nuisance and became a release hazard first: it read **452 ms**
-during the 0.5.0 publish and blocked the tag push. See
-[[changeset-publish-reports-false-success]]. If it flakes again, the number to
-doubt is the budget, not the estimator.
+**How to apply:** for any timing assertion in this repository, compare two sizes measured in
+the same run rather than one size against a fixed number of milliseconds, and prove it with a
+mutation that changes the complexity. If this test fails again, rerun the SHA once; a second
+failure on one SHA is real.

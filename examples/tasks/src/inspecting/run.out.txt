@@ -1,0 +1,7 @@
+graph: 7 nodes, 9 edges
+group guests runs guest: 3 nodes inside
+without subFlows: unresolved
+replayed: on ticket, 25% done, can go back: true
+same object between commits: true
+session against its flow: 0 problems
+session against version 2: session-flow-mismatch

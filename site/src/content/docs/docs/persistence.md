@@ -5,11 +5,184 @@ description: Turning a session into JSON, and refusing to restore one that no lo
 
 A wizard that loses everything on a refresh is a wizard nobody finishes. Persistence here is
 two functions and a format: `toSnapshot` writes the session out, `decodeSnapshot` reads it back
-and tells you why it could not.
+and tells you why it could not. Both come from their own entry, so a flow that persists nothing
+carries neither.
 
+## A session, saved and read back
+
+The example below does the whole round by hand: it saves a signup as the user answers, reads it
+back in a second wizard as a reload would, and shows two sessions being refused. Every block is a
+file from `examples/tasks/src/persistence` in the repository, and a test runs the script and
+compares what it prints. The files sit side by side in one folder; `run.ts` awaits at the top
+level, so it runs as an ES module - `"type": "module"` in the folder's `package.json` - under a
+TypeScript runner such as `npx tsx run.ts`. Most applications let the [plugin](#letting-the-plugin-do-it)
+do this wiring; the functions underneath are what it calls. The plugin wraps the snapshot in an
+envelope of its own, with its `version` beside it, so a key written by hand and a key written by
+the plugin cannot be read by the other.
+
+<!-- example:persistence-flow -->
+
+<!-- prettier-ignore -->
 ```ts
-import { toSnapshot, decodeSnapshot } from '@wizzard-packages/core/snapshot';
+import { defineFlow, step } from '@wizzard-packages/core';
+
+/**
+ * A signup that remembers where the user was. `version` is the application's
+ * own: bump it when stored answers stop meaning what they did, and every
+ * session saved under the old value is refused instead of misread.
+ */
+export const signup = defineFlow({
+  id: 'signup',
+  version: 1,
+  order: ['name', 'plan', 'confirm'],
+  steps: {
+    name: step<{ first: string }>({ label: 'Your name' }),
+    plan: step<{ tier: 'free' | 'pro' }>({ label: 'Plan' }),
+    confirm: step({ label: 'Confirm' }),
+  },
+});
 ```
+
+<!-- /example -->
+
+`session.ts` is the part you would keep. `keepSaved` is the writing half and `readSaved` the
+reading half; `openWizard` is the moment they meet, because a restored session is handed to
+`createWizard` as its `state` and is read once, there.
+
+<!-- example:persistence-session -->
+
+<!-- prettier-ignore -->
+```ts
+import { createWizard, type FlowDefinition, type Wizard } from '@wizzard-packages/core';
+import {
+  decodeSnapshot,
+  toSnapshot,
+  type DecodeOptions,
+  type RestoreResult,
+} from '@wizzard-packages/core/snapshot';
+
+/** Anything with the two methods; `localStorage` and `sessionStorage` qualify. */
+export interface Store {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+}
+
+/**
+ * The writing half. Every commit replaces the state, and `subscribe` hears
+ * each one, so the stored session is never older than the last answer.
+ * `toSnapshot` keeps what survives a reload - where the user is, how they got
+ * there, what they answered - and drops what describes a moment, such as a
+ * move in flight. The returned function stops the saving.
+ *
+ * Every commit is a full write: a `next()` makes several, and typing makes
+ * one per keystroke. The `persist` plugin coalesces them and survives a store
+ * that refuses a write; this does neither, which is what keeps it short.
+ */
+export const keepSaved = (wizard: Wizard, store: Store, key: string): (() => void) =>
+  wizard.subscribe(() => {
+    store.setItem(key, JSON.stringify(toSnapshot(wizard.getState(), wizard.getFlow())));
+  });
+
+/**
+ * The reading half. Nothing stored is the first visit; anything else goes
+ * through `decodeSnapshot`, which never throws: it answers `restored: false`
+ * with a reason when the payload no longer fits `flow`.
+ */
+export const readSaved = (
+  flow: FlowDefinition,
+  store: Store,
+  key: string,
+  options?: DecodeOptions
+): RestoreResult | null => {
+  const stored = store.getItem(key);
+  if (stored === null) return null;
+  let payload: unknown;
+  try {
+    payload = JSON.parse(stored);
+  } catch {
+    // Corrupted in place. `decodeSnapshot` refuses it as `snapshot/unreadable`.
+    payload = undefined;
+  }
+  return decodeSnapshot(flow, payload, options);
+};
+
+/** A wizard over `flow`, restored from `store` when it holds a session that still fits. */
+export const openWizard = (flow: FlowDefinition, store: Store, key: string): Wizard => {
+  const result = readSaved(flow, store, key);
+  // `state` is read once, here; a refused session starts fresh rather than half-restored.
+  return createWizard({ flow, ...(result?.restored === true && { state: result.state }) });
+};
+```
+
+<!-- /example -->
+
+<!-- example:persistence-run -->
+
+<!-- prettier-ignore -->
+```ts
+import { signup } from './flow';
+import { keepSaved, openWizard, readSaved } from './session';
+
+// A `Map` behind the two methods stands in for `localStorage`.
+const kept = new Map<string, string>();
+const store = {
+  getItem: (key: string) => kept.get(key) ?? null,
+  setItem: (key: string, value: string) => {
+    kept.set(key, value);
+  },
+};
+
+// The first visit: nothing stored, so the wizard starts at the first step.
+const first = openWizard(signup, store, 'signup');
+const stop = keepSaved(first, store, 'signup');
+await first.start();
+first.set('name', { first: 'Ada' });
+await first.next();
+first.set('plan', { tier: 'pro' });
+stop();
+first.destroy();
+console.log(`saved on ${first.getSnapshot().current}`);
+
+// A reload is a new wizard over the same bytes. It stands on the saved step
+// with the saved answers before `start()` runs.
+const second = openWizard(signup, store, 'signup');
+console.log(
+  `restored on ${second.getSnapshot().current}: ${String(second.get('name.first'))}, ${String(second.get('plan.tier'))}`
+);
+// Still started, as a fresh wizard is: a restored step that loads is entered again here.
+await second.start();
+second.destroy();
+
+// The flow changed shape since, and its `version` says so: refused, not misread.
+const changed = readSaved({ ...signup, version: 2 }, store, 'signup');
+console.log(`after a version bump: ${changed?.restored === false ? changed.reason : 'restored'}`);
+
+// A payload in an envelope format this build does not read is refused, unless
+// `migrate` brings it forward one hop at a time. The format is `1` and has
+// never been anything else, so `v: 0` here is a stand-in for an older one.
+kept.set('old', JSON.stringify({ ...JSON.parse(kept.get('signup') ?? '{}'), v: 0 }));
+const unread = readSaved(signup, store, 'old');
+const migrated = readSaved(signup, store, 'old', {
+  migrate: (snapshot) => (snapshot.v === 0 ? { ...snapshot, v: 1 } : snapshot),
+});
+console.log(
+  `format 0: ${unread?.restored === false ? unread.reason : 'restored'}, with migrate: ${String(migrated?.restored)}`
+);
+```
+
+<!-- /example -->
+
+<!-- example:persistence-output -->
+
+<!-- prettier-ignore -->
+```txt
+saved on plan
+restored on plan: Ada, pro
+after a version bump: snapshot/other-flow
+format 0: snapshot/version, with migrate: true
+```
+
+<!-- /example -->
 
 ## Two things named Snapshot
 
@@ -33,25 +206,23 @@ interface Snapshot {
   completed: readonly string[];
   dirty: readonly string[];
   nav: number;
+  done?: true;
 }
 ```
 
 `v` is the format's own version and `flow`/`version` identify the definition it was taken
 against. `stack` is where the user is, including their position inside nested groups;
 `history` is how they got there, which is what makes `back()` land where they actually came
-from rather than where `order` says.
+from rather than where `order` says. `done` is present, and `true`, only when the flow had ended;
+a storage layer or a `migrate` that rebuilds the object has to keep it, or a finished wizard comes
+back unfinished.
 
 ## Restoring
 
 Restoring is the interesting half, because a stored session meets a definition that has
-changed since. `decodeSnapshot` never throws and never guesses:
-
-```ts
-const result = decodeSnapshot(signup, JSON.parse(stored));
-if (result.restored) {
-  createWizard({ flow: signup, state: result.state });
-}
-```
+changed since. `decodeSnapshot` never throws and never guesses: `openWizard` in `session.ts`
+above passes `result.state` to `createWizard` only when `result.restored` is true, and starts the
+user fresh otherwise.
 
 A restored wizard stands on its step without having entered it in this page. `start()` enters a
 step that loads - one with a `load`, or a `deferred` one - again, in place: the loader runs while
@@ -59,9 +230,10 @@ step that loads - one with a `load`, or a `deferred` one - again, in place: the 
 The step is not being left, so nothing else runs: no plugin's `beforeNavigate` or `afterNavigate`,
 no exit guard, no `when`. If the load throws or the enter guard refuses, the step stays current and
 the next `start()` tries again. A step that loads nothing is simply current. A wizard passed in
-through `state` with `status: 'done'` is not entered again: it stays finished. A snapshot does not
-carry `status`, so a persisted wizard that finished comes back `idle` on its last step, and that
-step, if it loads, loads again like any other restored step.
+through `state` with `status: 'done'` is not entered again: it stays finished. A snapshot of a
+finished wizard carries `done: true`, and only that one, so a persisted wizard that finished comes
+back with `status: 'done'` on its last step, and that step's `load` does not run again. A snapshot
+written before `done` existed restores as unfinished: `idle` on its last step.
 
 | `reason`                | What was wrong                                                                                 |
 | ----------------------- | ---------------------------------------------------------------------------------------------- |
@@ -95,13 +267,8 @@ is a decision about your data, taken before the payload ever reaches `decodeSnap
 
 `migrate` is for the envelope. It runs while `v` is behind the current format, once per hop, so
 a payload two formats old is two ordinary steps rather than one function that knows every past
-shape:
-
-```ts
-const result = decodeSnapshot(signup, JSON.parse(stored), {
-  migrate: (snapshot) => (snapshot.v === 0 ? { ...snapshot, v: 1 } : snapshot),
-});
-```
+shape. The last lines of `run.ts` above pass one as `readSaved`'s options, which go to
+`decodeSnapshot` unchanged: the same payload is refused without it and restored with it.
 
 It stops when the version is current, after sixteen hops, or as soon as a call makes no
 progress - returning the same object, or something that is not an object - and refuses with
@@ -116,8 +283,18 @@ snapshot would be, which is what makes a hand-written upgrade safe to run on inp
 ## Letting the plugin do it
 
 The two functions are the contract. `@wizzard-packages/plugins/persist` is the wiring most
-applications want instead: it reads on start, writes on every commit, coalesces those writes to
-one per frame, and flushes what is pending when the page hides or the wizard is destroyed.
+applications want instead: it reads storage when the wizard is created, writes on every commit,
+coalesces those writes to one per frame, and flushes what is pending when the page hides or the
+wizard is destroyed. It ships in its own package:
+
+<!-- example:install-plugins -->
+
+<!-- prettier-ignore -->
+```bash
+pnpm add @wizzard-packages/core@canary @wizzard-packages/plugins@canary
+```
+
+<!-- /example -->
 
 <!-- example:persist -->
 
@@ -137,7 +314,7 @@ export const wizard = createWizard({
       key: 'signup',
       // sessionStorage for anything that should not outlive the tab. This
       // stores whatever the flow collects, so that choice is yours to make.
-      storage: globalThis.sessionStorage,
+      storage: 'session',
       onRestore: (outcome) => {
         if (!outcome.restored) console.info('starting fresh:', outcome.reason);
       },
@@ -148,10 +325,17 @@ export const wizard = createWizard({
 
 <!-- /example -->
 
+The restore happens inside `createWizard`, in the plugin's `init`, so the exported `wizard` already
+stands on the saved step when the module has loaded. It still needs `start()`, which enters the
+first step on a first visit and re-enters a restored step that loads. In a component tree, pass it
+to the binding - `<WizardProvider wizard={wizard}>` in React, `provideWizard(wizard)` in Vue - and
+the binding calls `start()` when it mounts. Without one, call `await wizard.start()` yourself.
+A wizard passed in this way is the application's to `destroy()`; the binding leaves it alone.
+
 | Option      | What it does                                                                                                                                                                                 |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `key`       | The storage key. One per flow, or one per flow per user.                                                                                                                                     |
-| `storage`   | Where to put it. `localStorage` by default; any synchronous store works.                                                                                                                     |
+| `storage`   | Where to put it: `'local'` (the default) or `'session'` for the browser's own, which the plugin reads itself, or any synchronous store of your own.                                          |
 | `version`   | Your application's version. Bump it when the meaning of the data changes: a session stored under another value, or none, is refused as `snapshot/other-flow`, and `migrate` does not see it. |
 | `migrate`   | Upgrades a snapshot written in an older format, one hop at a time.                                                                                                                           |
 | `onRestore` | Hears what happened at startup: `{ restored: true }` or the reason it was not.                                                                                                               |
@@ -174,9 +358,9 @@ think so. [Restore after reload](../restore-after-reload/) is that turned into a
 A callback that throws is caught: the plugin warns once and stays enabled, as
 [`persist-on-restore-threw`](../../errors/persist-on-restore-threw/) describes.
 
-**Storage is synchronous.** `storage` takes anything with `getItem`, `setItem` and `removeItem`
-returning values rather than promises - `localStorage` and `sessionStorage` both qualify, and so
-does an object of your own over a `Map`. An asynchronous store such as IndexedDB does not, and
+**Storage is synchronous.** Besides `'local'` and `'session'`, `storage` takes anything with
+`getItem` and `setItem` returning values rather than promises - an object of your own over a
+`Map` qualifies. An asynchronous store such as IndexedDB does not, and
 1.0 does not wrap one: a write that resolves later cannot be flushed inside `pagehide`, which is
 the moment the last answer is most likely to be lost.
 
@@ -186,8 +370,9 @@ A persisted session is a file on someone's device that outlives the tab. Decide 
 it before you turn persistence on.
 
 For a flow carrying card numbers, health answers or anything else you would not put in a log,
-point `storage` at `sessionStorage`, which is cleared when the tab closes, or do not persist the
-flow at all. `clearOnLeave` is not the tool for this: it drops a value when the step is left, by
+set `storage: 'session'`, which is cleared when the tab closes, or do not persist the flow at
+all. If the browser refuses `sessionStorage`, the session is not saved and `onRestore` hears
+`persist/unavailable`; it never falls back to `localStorage`. `clearOnLeave` is not the tool for this: it drops a value when the step is left, by
 which time every edit has already been committed and written. Keep such a field out of the
 persisted state instead of clearing it afterwards.
 

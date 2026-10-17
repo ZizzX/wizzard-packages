@@ -51,6 +51,11 @@ const SNIPPETS = {
   'groups-trip': { file: 'examples/quickstart/src/groups/trip.ts', lang: 'ts' },
   'groups-run': { file: 'examples/quickstart/src/groups/run.ts', lang: 'ts' },
   'groups-output': { file: 'examples/quickstart/src/groups/run.out.txt', lang: 'txt' },
+  // The persistence page's round trip by hand, run by a test in examples/tasks.
+  'persistence-flow': { file: 'examples/tasks/src/persistence/flow.ts', lang: 'ts' },
+  'persistence-session': { file: 'examples/tasks/src/persistence/session.ts', lang: 'ts' },
+  'persistence-run': { file: 'examples/tasks/src/persistence/run.ts', lang: 'ts' },
+  'persistence-output': { file: 'examples/tasks/src/persistence/run.out.txt', lang: 'txt' },
   // The install commands are files for the same reason the code is: the site
   // reads them too (`?raw`), so the line a reader copies from npm and the line
   // they copy from the documentation cannot say different things. Before R0

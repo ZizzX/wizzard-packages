@@ -256,22 +256,33 @@ describe('layoutGraph', () => {
     expect(layoutGraph(buildGraph(flowA))).not.toBe(layoutGraph(graph));
   });
 
-  it('lays out the dense fixture (about twenty thousand edges) under 100 ms', () => {
-    const graph = buildGraph(denseFlow(200));
-    expect(graph.edges.length).toBeGreaterThan(19_000);
-    const times: number[] = [];
-    for (let i = 0; i < 3; i++) {
-      const started = performance.now();
-      layoutGraph({ ...graph });
-      times.push(performance.now() - started);
-    }
-    // The fastest run, not the median. Noise on a shared runner only ever adds
-    // time - a scheduler steal inflates a sample and nothing deflates one - so
-    // the minimum is the closest this can get to what the algorithm costs, and
-    // the median is just a sample that happened to be interrupted less. The
-    // median read 452 ms during the 0.5.0 release on a runner that was also
-    // publishing; the same commit measured single digits on the next run.
-    expect(Math.min(...times)).toBeLessThan(100);
+  it('lays out the dense fixture (about twenty thousand edges) in time that grows with the edges', () => {
+    // The fastest of five runs. Noise on a shared runner only ever adds time -
+    // a scheduler steal inflates a sample and nothing deflates one - so the
+    // minimum is the closest this gets to what the algorithm costs.
+    const fastest = (nodes: number): number => {
+      const graph = buildGraph(denseFlow(nodes));
+      const times: number[] = [];
+      for (let i = 0; i < 5; i++) {
+        const started = performance.now();
+        layoutGraph({ ...graph });
+        times.push(performance.now() - started);
+      }
+      return Math.min(...times);
+    };
+    expect(buildGraph(denseFlow(200)).edges.length).toBeGreaterThan(19_000);
+
+    // A ratio, not a budget in milliseconds. The fixture lays out in about 8 ms
+    // on a laptop and took 114-170 ms on a loaded CI runner, so a fixed 100 ms
+    // measured the runner. Sixteen times the edges cost about twelve times the
+    // time while the layout is linear in them; one extra pass quadratic in the
+    // edges measured 64. The bound of 40 sits clear of both: with sizes 100 and
+    // 200 a ratio of 6.6 against a bound of 6 failed a CI run.
+    const small = fastest(50);
+    const dense = fastest(200);
+    expect(dense / Math.max(small, 0.2)).toBeLessThan(40);
+    // And a ceiling no runner should reach, for a regression that is slow at every size.
+    expect(dense).toBeLessThan(2_000);
   });
 
   it('ratchet: the reference flows draw no more crossings than today', () => {
@@ -317,6 +328,16 @@ describe('layoutGraph in row direction', () => {
     expect(at('payment')?.x).toBe(2 * (NODE_W + 48));
     expect(new Set(laid.nodes.map((n) => n.y))).toEqual(new Set([0]));
     expect(laid.nodes.every((n) => n.w === NODE_W)).toBe(true);
+  });
+
+  it('centres a short box on the taller repeat group beside it, so the line between them is level', () => {
+    const laid = layoutGraph(buildGraph(flowC, subFlowsC), { direction: 'row' });
+    const centres = new Set(laid.nodes.filter((n) => !n.ghost).map((n) => n.y + n.h / 2));
+    expect(centres).toEqual(new Set([REPEAT_H / 2]));
+
+    for (const edge of laid.edges.filter((e) => e.points.length === 2)) {
+      expect(edge.points[0]?.[1]).toBe(edge.points[1]?.[1]);
+    }
   });
 
   it('lays out the same flow wide rather than tall', () => {

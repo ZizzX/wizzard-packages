@@ -73,24 +73,7 @@ export function resolveNext(
 
   const explicit = step.on?.next;
   if (explicit !== undefined) {
-    const targets: readonly Target[] = Array.isArray(explicit) ? explicit : [explicit as Target];
-    let closed: string | undefined;
-    for (const t of targets) {
-      const to = typeof t === 'string' ? t : t.to;
-      const guard = typeof t === 'string' ? undefined : t.when;
-      if (!holds(flow, guard, scope, registry, `the transition of step "${current}" to "${to}"`))
-        continue;
-      if (to === END) return END;
-      if (flow.steps[to] && holds(flow, flow.steps[to].when, scope, registry, `step "${to}"`))
-        return to;
-      closed ??= to;
-    }
-    // A transition that names only steps whose own `when` is false is a flow
-    // bug, not a silent skip: the first one named is answered, and the move
-    // refuses it as `not-reachable`. One where no entry applies at all has
-    // nowhere to go, `no-target`. Neither finishes the wizard past every step
-    // still ahead; finishing is `'@end'`, written out.
-    return closed ?? null;
+    return pick(flow, current, explicit, scope, registry);
   }
 
   const order = effectiveOrder(flow);
@@ -126,7 +109,10 @@ function effectiveOrder(flow: FlowDefinition): readonly string[] {
   return flow.order ?? Object.keys(flow.steps);
 }
 
-/** Walks `order` backward, so `back()` skips steps that are no longer reachable. */
+/**
+ * Where `back()` goes: what `on.back` names, read entry by entry as `on.next`
+ * is, or without one the walk along `order` backward.
+ */
 export function resolveBack(
   flow: FlowDefinition,
   state: WizardState,
@@ -135,11 +121,56 @@ export function resolveBack(
 ): string | null {
   const current = state.stack[state.stack.length - 1]?.step;
   const explicit = current ? flow.steps[current]?.on?.back : undefined;
-  if (explicit !== undefined && explicit !== 'auto') {
-    const to = typeof explicit === 'string' ? explicit : explicit.to;
-    return flow.steps[to] ? to : null;
-  }
+  const walk = (): string | null => walkBack(flow, current, scope, registry);
+  if (current === undefined || explicit === undefined) return walk();
+  // `'@end'` is not a way back; `validateFlow` reports it, and here it is a
+  // target that leads nowhere rather than one that finishes the wizard.
+  const to = pick(flow, current, explicit, scope, registry, walk);
+  return to === END ? null : to;
+}
 
+/**
+ * The first entry of a transition list that applies - its `when` holds - and
+ * leads to a step whose own `when` holds. `on.next` and `on.back` read the same
+ * way, except that `'auto'` is a keyword only where the caller supplies the
+ * walk along `order` it stands for - `on.back`. In `on.next` it is a step id.
+ *
+ * A transition that names only steps whose own `when` is false is a flow bug,
+ * not a silent skip: the first one named is answered, and the move refuses it
+ * as `not-reachable`. One where no entry applies at all has nowhere to go,
+ * `no-target`. Neither moves past the step it was written for; falling
+ * through is an entry of its own - `'@end'` forwards, `'auto'` backwards.
+ */
+function pick(
+  flow: FlowDefinition,
+  current: string,
+  list: Target | 'auto' | readonly (Target | 'auto')[],
+  scope: Scope,
+  registry: Registry | undefined,
+  auto?: () => string | null
+): string | typeof END | null {
+  let closed: string | undefined;
+  for (const t of [list].flat() as (Target | 'auto')[]) {
+    // Entries after it are never read; `'auto'` closes a list.
+    if (t === 'auto' && auto) return auto() ?? closed ?? null;
+    const { to, when } = typeof t === 'string' ? { to: t, when: undefined } : t;
+    if (!holds(flow, when, scope, registry, `the transition of step "${current}" to "${to}"`))
+      continue;
+    if (to === END) return END;
+    if (flow.steps[to] && holds(flow, flow.steps[to].when, scope, registry, `step "${to}"`))
+      return to;
+    closed ??= to;
+  }
+  return closed ?? null;
+}
+
+/** Walks `order` backward, so `back()` skips steps that are no longer reachable. */
+function walkBack(
+  flow: FlowDefinition,
+  current: string | undefined,
+  scope: Scope,
+  registry: Registry | undefined
+): string | null {
   const order = effectiveOrder(flow);
   const at = current ? order.indexOf(current) : order.length;
   for (let i = at - 1; i >= 0; i--) {

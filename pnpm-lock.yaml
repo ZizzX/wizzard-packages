@@ -275,6 +275,9 @@ importers:
       '@wizzard-packages/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@wizzard-packages/devtools':
+        specifier: workspace:*
+        version: link:../../packages/devtools
       '@wizzard-packages/plugins':
         specifier: workspace:*
         version: link:../../packages/plugins

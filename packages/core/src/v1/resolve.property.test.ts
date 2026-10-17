@@ -379,3 +379,36 @@ describe('beginNav', () => {
     );
   });
 });
+
+describe('on.back and on.next', () => {
+  // One transition reader serves both directions (D-039), so the same list of
+  // conditional targets, read from the same step, has to pick the same one -
+  // whatever the data, whichever entries hold, whichever steps are closed.
+  it('pick the same target from the same list', () => {
+    const arbCase = arbLinearFlow.chain(({ flow, scope }) => {
+      const ids = flow.order ?? [];
+      const arbTarget: fc.Arbitrary<Target> = fc.oneof(
+        fc.constantFrom(...ids),
+        fc.record({ to: fc.constantFrom(...ids), when: arbExpr })
+      );
+      return fc.record({
+        from: fc.constantFrom(...ids),
+        list: fc.array(arbTarget, { minLength: 1, maxLength: 4 }),
+        flow: fc.constant(flow),
+        scope: fc.constant(scope),
+      });
+    });
+
+    fc.assert(
+      fc.property(arbCase, ({ from, list, flow, scope }) => {
+        const withOn = (on: StepDef['on']): FlowDefinition => ({
+          ...flow,
+          steps: { ...flow.steps, [from]: { ...flow.steps[from], on } },
+        });
+        const back = resolveBack(withOn({ back: list }), stateAt(from), scope);
+        const next = resolveNext(withOn({ next: list }), stateAt(from), scope);
+        expect(back).toBe(next);
+      })
+    );
+  });
+});

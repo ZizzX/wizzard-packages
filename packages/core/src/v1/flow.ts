@@ -29,17 +29,29 @@ export interface FlowDefinition {
 export type NavigationPolicy = 'sequential' | 'visited' | 'free';
 
 /**
- * Where a transition leads: a step id, or `{ to, when }`. In `on.next` a target
- * whose `when` is false is passed over, and `to` may be `END`.
+ * Where a transition leads: a step id, or `{ to, when }`. A target whose `when`
+ * is false is passed over, in `on.next` and `on.back` alike; only in `on.next`
+ * may `to` be `END`.
  */
 export type Target = string | { to: string; when?: Expr };
+
+/** An entry of `on.back`: a `Target`, or `'auto'` for the walk along `order`. */
+export type BackTarget = Target | 'auto';
 
 interface StepBase {
   label?: string;
   /** Reachability. A step whose `when` is false is skipped, not shown disabled. */
   when?: Expr;
   guards?: { enter?: Expr; exit?: Expr };
-  on?: { next?: Target | readonly Target[]; back?: Target | 'auto' };
+  on?: {
+    next?: Target | readonly Target[];
+    /**
+     * Read as `next` is: the first entry whose `when` holds and whose step is
+     * reachable. `'auto'` - alone, or as an entry - walks `order` backward and
+     * takes the first step still reachable, which is also what no `back` does.
+     */
+    back?: BackTarget | readonly BackTarget[];
+  };
   /** Key of this step's slice of `data`. Defaults to the step id. */
   slice?: string;
   /** Field schema for the host to render. The engine never reads it. */

@@ -253,10 +253,13 @@ The enclosing groups are in `stack`, one frame each - `{ flow, step, key }` - wi
 step last. That is what `where()` above prints, what a snapshot stores, and why a repeat needs a
 `version`: the frames name keys of a list the next session may have changed.
 
-`back()` follows the history across a group's edges. From the first step of an item it lands where
-the previous item stopped, and from the first step of the first item it leaves the group. From the
-step after the group it goes back in where the last item stopped, skipping items that have since
-been removed. `go()` to the group step starts it over at its first item.
+`back()` inside an item works as it does at the root: the sub-flow's own `on.back` and `order`
+pick the step behind. From the first step of an item it lands where the previous item stopped, and
+from the first step of the first item it leaves the group. A group reached from behind - at the
+root or inside an item - is entered where its last item stopped, skipping items that have since
+been removed, or at its start when it was jumped over; a group with no item left in it is passed
+over, backwards. `go()` to the group step starts it over at
+its first item.
 
 ## Where to go next
 

@@ -8,9 +8,6 @@ const storage: SyncStorage = {
   setItem: (key, value) => {
     kept.set(key, value);
   },
-  removeItem: (key) => {
-    kept.delete(key);
-  },
 };
 
 const landed: string[] = [];

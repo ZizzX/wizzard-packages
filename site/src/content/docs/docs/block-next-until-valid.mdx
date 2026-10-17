@@ -64,7 +64,8 @@ Press Next below with the field empty.
 
 ## What happens
 
-`next()` does not throw when the validator refuses. It resolves to a value that says why:
+`next()` - the one `useNavigation()` returns in the component above - does not throw when the
+validator refuses. It resolves to a value that says why:
 
 ```ts
 const result = await next();
@@ -88,6 +89,6 @@ than applied to a step they have left.
 ## Where to read more
 
 [Validation](../validation/) separates checking a definition from checking a user's answers and
-covers `validate(step?)`, `validateAll()` and `setErrors`. [Navigation](../navigation/) has the
+covers `validate(step?)`, `setErrors`, and why there is no `validateAll()`. [Navigation](../navigation/) has the
 full table of refusal reasons. [Render field errors](../render-field-errors/) is the other half
 of this page: where the messages go once you have them.

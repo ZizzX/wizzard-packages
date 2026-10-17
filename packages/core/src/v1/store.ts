@@ -147,8 +147,9 @@ export interface Wizard<F extends FlowDefinition = FlowDefinition> {
    */
   next: (opts?: { validate?: boolean }) => Promise<NavResult>;
   /**
-   * Moves to the previous step: the one `on.back` names, or the previous
-   * reachable step in `order`; inside a group it follows the recorded history.
+   * Moves to the previous step: where the first applicable entry of `on.back`
+   * leads, read as `on.next` is, or the previous reachable step in `order`;
+   * inside a group it follows the recorded history.
    * The step being left is never validated.
    * Resolves `no-target` when there is nowhere to go back to.
    */
@@ -534,19 +535,27 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
       url: pageFor('nav-aborted'),
     };
     const pending = state.status === 'busy' ? moving : undefined;
-    starting = (
+    // `starting` is set before the move runs, not from what it returns: the
+    // move's lock commit notifies synchronously, and a listener that calls
+    // start() there has to find this attempt, not begin a second one (T-087).
+    let begin!: (run: Promise<NavResult> | NavResult) => void;
+    const own: Promise<NavResult> = new Promise<NavResult>((resolve) => {
+      begin = resolve;
+    }).finally(() => {
+      if (starting === own) starting = undefined;
+    });
+    starting = own;
+    begin(
       pending
         ? pending.catch(settled).then((): Promise<NavResult> | NavResult => {
             starting = undefined;
             return destroyed ? dead : start();
           })
         : destroyed
-          ? Promise.resolve(dead)
+          ? dead
           : navigate(first, { validate: false, stay: current !== null }, 'start')
-    ).finally(() => {
-      starting = undefined;
-    });
-    return starting;
+    );
+    return own;
   };
 
   // Plugins are initialised before the engine is handed out, so a restored

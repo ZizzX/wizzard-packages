@@ -29,7 +29,6 @@ function fakeStorage(initial: Record<string, string> = {}): SyncStorage & {
       this.writes += 1;
       items.set(key, value);
     },
-    removeItem: (key) => void items.delete(key),
   };
 }
 
@@ -306,5 +305,120 @@ describe('persist', () => {
     expect(storage.items.get('signup')).toContain('Grace');
     // Neither tab is broken by the other; they simply disagree until reload.
     expect(tabOne.get('name.full')).toBe('Ada');
+  });
+
+  describe('storage chosen by name', () => {
+    const descriptors = new Map<string, PropertyDescriptor | undefined>();
+    /** Replaces a browser global for one test; afterEach puts the original back. */
+    const replace = (name: 'localStorage' | 'sessionStorage', descriptor: PropertyDescriptor) => {
+      if (!descriptors.has(name)) {
+        descriptors.set(name, Object.getOwnPropertyDescriptor(globalThis, name));
+      }
+      Object.defineProperty(globalThis, name, { configurable: true, ...descriptor });
+    };
+
+    afterEach(() => {
+      for (const [name, descriptor] of descriptors) {
+        if (descriptor) Object.defineProperty(globalThis, name, descriptor);
+        else Reflect.deleteProperty(globalThis, name);
+      }
+      descriptors.clear();
+    });
+
+    const named = (storage: 'local' | 'session') =>
+      createWizard({ flow, plugins: [persist({ key: 'signup', storage, onRestore })] });
+
+    it("'session' saves to sessionStorage and nowhere else", async () => {
+      const session = fakeStorage();
+      const local = fakeStorage();
+      replace('sessionStorage', { value: session });
+      replace('localStorage', { value: local });
+
+      const w = named('session');
+      await w.start();
+      w.set('name.full', 'Ada');
+      settle();
+
+      expect(session.items.get('signup')).toContain('Ada');
+      expect(local.writes).toBe(0);
+    });
+
+    it("'local' saves to localStorage", async () => {
+      const local = fakeStorage();
+      replace('localStorage', { value: local });
+
+      const w = named('local');
+      await w.start();
+      w.set('name.full', 'Ada');
+      settle();
+
+      expect(local.items.get('signup')).toContain('Ada');
+    });
+
+    it.each([
+      [
+        'refuses to admit it exists',
+        {
+          get: (): never => {
+            throw new Error('SecurityError');
+          },
+        },
+      ],
+      ['is not there at all', { value: undefined }],
+    ])(
+      "'session' is unavailable, never localStorage, when the browser %s",
+      async (_label, descriptor) => {
+        const local = fakeStorage();
+        replace('sessionStorage', descriptor);
+        replace('localStorage', { value: local });
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+        // Building the wizard is the moment a host read used to throw.
+        const w = named('session');
+        await w.start();
+        w.set('name.full', 'Ada');
+        settle();
+
+        expect(outcomes).toEqual([{ restored: false, reason: 'persist/unavailable' }]);
+        // A host that asked for a store that dies with the tab must not get one
+        // that outlives it.
+        expect(local.writes).toBe(0);
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining('sessionStorage'));
+        warn.mockRestore();
+      }
+    );
+  });
+
+  it('brings a finished wizard back finished, without loading its last step again', async () => {
+    const load = vi.fn(() => undefined);
+    const loading: FlowDefinition = {
+      ...flow,
+      steps: { name: {}, review: { load: { $ref: 'review' } } },
+    };
+    const storage = fakeStorage();
+    const open = () =>
+      createWizard({
+        flow: loading,
+        registry: { review: load },
+        plugins: [persist({ key: 'signup', storage, onRestore })],
+      });
+
+    const first = open();
+    await first.start();
+    await first.next();
+    await first.next();
+    expect(first.getState().status).toBe('done');
+    settle();
+    load.mockClear();
+
+    const second = open();
+    const started = await second.start();
+
+    expect(second.getState().status).toBe('done');
+    expect(second.getSnapshot().current).toBe('review');
+    expect(started).toMatchObject({ ok: true, to: 'review' });
+    // The page a visitor sees as finished must not run its loader again: an
+    // offline one would log start-failed under a flow that already ended.
+    expect(load).not.toHaveBeenCalled();
   });
 });

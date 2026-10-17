@@ -14,6 +14,8 @@ returns every problem it can find without running it:
 ```ts
 import { validateFlow, assertFlow } from '@wizzard-packages/core/validate-flow';
 
+// `signup` is the definition and `registry` the resolvers it names - the two
+// things `createWizard` would be handed.
 const problems = validateFlow(signup, registry);
 // [{ code: 'target-unknown-step', path: 'steps.payment.on.next', message, fix, url }]
 ```
@@ -110,6 +112,7 @@ wherever it leads, unless the move is passed `validate: false`. If it refuses, t
 You can also run it directly, and set messages yourself:
 
 ```ts
+// `wizard` is the engine `createWizard` returns, or `useWizard()` in a component.
 await wizard.validate(); // the current step
 await wizard.validate('details'); // a named one
 wizard.setErrors('details', { email: 'Enter a work address' });
@@ -206,6 +209,8 @@ mention. A path that is absent hands the schema `undefined` rather than throwing
 that allows a missing value stays in charge of that decision.
 
 ```ts
+// `tripSchema` describes the trip alone, so it is handed `data.trip` rather than the whole
+// form; `booking` is a flow whose `trip` step says `validate: { $ref: 'tripRules' }`.
 createWizard({ flow: booking, registry: { tripRules: schema(tripSchema, { at: 'data.trip' }) } });
 ```
 

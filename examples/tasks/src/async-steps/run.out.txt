@@ -1,0 +1,5 @@
+on seats, seats: 1A, 1C, 2A
+next() rejected: network down
+on seats, busy: false
+on offer: Upgrade to business for 120 EUR
+offer requested 2 times

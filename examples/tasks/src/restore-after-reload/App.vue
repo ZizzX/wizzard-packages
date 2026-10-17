@@ -3,7 +3,7 @@ import { persist, type RestoreOutcome } from '@wizzard-packages/plugins/persist'
 import { provideWizard } from '@wizzard-packages/vue';
 
 import Wizard from './Wizard.vue';
-import { APP_VERSION, STORAGE_KEY, signup } from './flow';
+import { APP_VERSION, signup, storageKey } from './flow';
 
 /**
  * The plugin is installed in the browser only: on a server there is no storage
@@ -18,7 +18,7 @@ const plugins =
     ? []
     : [
         persist({
-          key: STORAGE_KEY,
+          key: storageKey('vue'),
           version: APP_VERSION,
           onRestore: (outcome) => {
             restored.outcome = outcome;

@@ -227,11 +227,19 @@ entry that costs a runtime bundle nothing (`validate-flow.ts`, 887 B of a 1 kB b
 
 ### 4.6 `back()` across a group boundary
 
-**Rule.** `back()` is history-driven once the stack is deeper than one frame: it pops `history`
-and restores the recorded stack, skipping any recorded stack whose top frame is dead by 4.2.
-Order-walking cannot answer this, because the step before "passenger 3, seat" is "passenger 2,
-meal", and `order` does not know which item you came from. Flat flows keep the order-driven path
-in `resolve.ts` unchanged.
+**Rule** (revised by T-082, decision D-035). `back()` resolves its target from the definition at
+every depth, as it does at the root: the flow the wizard stands in reads `on.back`, then `order`.
+The history only says where to stand inside a group the move lands on. Where the sub-flow has
+nothing behind - the first step of an item - a repeat steps back onto the previous item, at the
+newest position the history holds inside it, or at its first step when nothing is recorded; the
+first item, or a group without a repeat, is left, and the parent resolves backwards from the group
+step. Recorded stacks whose top frame is dead by 4.2 are skipped, and a move that leaves such a
+frame records nothing (T-083). A group with no position left in it - every item removed, every
+step hidden - is passed over backwards rather than walked through forwards.
+
+Until T-082 the rule was history-driven below the root: `back()` restored the newest recorded
+stack, so a sub-flow's `on.back` was never read and an inner group that was jumped over was never
+entered from behind.
 
 **Outcome.** From the first step of passenger 3, `back()` lands on the last step passenger 2
 actually reached -- including a branch inside the sub-flow -- not on the sub-flow's last

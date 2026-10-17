@@ -3,26 +3,38 @@ title: Hooks
 description: The provider and the hooks each binding exposes, what they return, and which one to reach for.
 ---
 
-import { TabItem, Tabs } from '@astrojs/starlight/components';
+import { Code, TabItem, Tabs } from '@astrojs/starlight/components';
 import { FRAMEWORK_LABELS, FRAMEWORK_SYNC_KEY } from '../../../lib/framework';
+import flowSource from '@examples/tasks/src/hooks/flow.ts?raw';
+import registrySource from '@examples/tasks/src/hooks/registry.ts?raw';
+import appSource from '@examples/tasks/src/hooks/App.tsx?raw';
+import appVueSource from '@examples/tasks/src/hooks/App.vue?raw';
+import stepsSource from '@examples/tasks/src/hooks/Steps.tsx?raw';
+import stepsVueSource from '@examples/tasks/src/hooks/Steps.vue?raw';
+import wizardSource from '@examples/tasks/src/hooks/wizard.ts?raw';
+import ownedSource from '@examples/tasks/src/hooks/Owned.tsx?raw';
+import ownedVueSource from '@examples/tasks/src/hooks/Owned.vue?raw';
 
 The engine is the same object in both bindings. A binding does one job: put that object where
 components can reach it, and turn its snapshot into something the framework re-renders on. The
 hook names are identical across React and Vue; what differs is what they hand back, because a
 React hook returns a value and a Vue composable returns a ref.
 
+The example on this page is a two-step trip: a name, then a review. Every file shown in full is
+from `examples/tasks/src/hooks` in the repository, and a test mounts it on both bindings and
+drives it - a refused Next, a typed name, the move to the review, and an engine passed in that
+the binding starts and leaves alive. The flow and its one validator are shared by both:
+
+<Code code={flowSource} lang="ts" title="hooks/flow.ts" />
+
+<Code code={registrySource} lang="ts" title="hooks/registry.ts" />
+
 ## Providing the wizard
 
 <Tabs syncKey={FRAMEWORK_SYNC_KEY}>
   <TabItem label={FRAMEWORK_LABELS.react}>
 
-```tsx
-import { WizardProvider } from '@wizzard-packages/react';
-
-<WizardProvider flow={signup} registry={registry}>
-  <Steps />
-</WizardProvider>;
-```
+<Code code={appSource} lang="tsx" title="hooks/App.tsx" />
 
 `WizardProvider` takes the options of `createWizard` - `flow`, `registry`, `plugins`, `data`,
 `ctx`, `state`, `groups`, `subFlows` - and builds the engine itself, or takes an engine you
@@ -33,13 +45,11 @@ built engine would be silently ignored.
   </TabItem>
   <TabItem label={FRAMEWORK_LABELS.vue}>
 
-```vue
-<script setup lang="ts">
-import { provideWizard } from '@wizzard-packages/vue';
+<Code code={appVueSource} lang="vue" title="hooks/App.vue" />
 
-provideWizard({ flow: signup, registry });
-</script>
-```
+The component that calls `provideWizard` cannot use the composables itself: Vue's `inject` reads
+the parent chain, not the component's own provides. The composables go in a child - here
+`Steps.vue` - and called in `App.vue` they throw `provider-missing`.
 
 `provideWizard` takes the options of `createWizard` - `flow`, `registry`, `plugins`, `data`,
 `ctx`, `state`, `groups`, `subFlows` - and builds the engine, or takes an engine you built and
@@ -78,6 +88,23 @@ whole snapshot re-renders on every commit.
 | `useWizard()`                     | the engine                                                                             | the engine                                              |
 | `useOptionalWizard()`             | the engine, or `null` outside a provider                                               | the same                                                |
 
+Every hook is a named import from `@wizzard-packages/react` or `@wizzard-packages/vue`. The
+`Steps` component the providers above render uses the five a form needs; the sections after it
+take them one at a time.
+
+<Tabs syncKey={FRAMEWORK_SYNC_KEY}>
+  <TabItem label={FRAMEWORK_LABELS.react}>
+
+<Code code={stepsSource} lang="tsx" title="hooks/Steps.tsx" />
+
+  </TabItem>
+  <TabItem label={FRAMEWORK_LABELS.vue}>
+
+<Code code={stepsVueSource} lang="vue" title="hooks/Steps.vue" />
+
+  </TabItem>
+</Tabs>
+
 ### Drawing a step
 
 `useStep` is what a stepper needs and nothing else. It compares its fields one by one, including
@@ -99,7 +126,7 @@ const { current, progress, breadcrumbs } = useStep();
 </script>
 
 <template>
-  <progress :value="progress" max="1" />
+  <progress :value="progress" max="100" />
   <p>{{ current }}</p>
 </template>
 ```
@@ -119,14 +146,14 @@ buttons needs. Navigation is async and returns a result, not a boolean:
 
 ### Reading and writing a field
 
-`useField` addresses the same dot paths the flow does, so `data.trip.name` in an expression is
-`'trip.name'` here.
+`useField` addresses the same dot paths the flow does, so `data.details.name` in an expression is
+`'details.name'` here.
 
 <Tabs syncKey={FRAMEWORK_SYNC_KEY}>
   <TabItem label={FRAMEWORK_LABELS.react}>
 
 ```tsx
-const [name, setName] = useField<string>('trip.name');
+const [name, setName] = useField<string>('details.name');
 
 <input value={name ?? ''} onChange={(e) => setName(e.target.value)} />;
 ```
@@ -136,7 +163,7 @@ const [name, setName] = useField<string>('trip.name');
 
 ```vue
 <script setup lang="ts">
-const name = useField<string>('trip.name');
+const name = useField<string>('details.name');
 </script>
 
 <template>
@@ -179,7 +206,7 @@ compare in the watcher.
 
 `useWizard()` is the engine: `set`, `get`, `validate`, `setErrors`, `watch`, `select`,
 `subscribe`, `batch`, `patchFlow` and the rest. Typing it against a flow -
-`useWizard<typeof signup>()` - types `go`, `get` and `set` against that flow's steps and data.
+`useWizard<typeof trip>()` - types `go`, `get` and `set` against that flow's steps and data.
 
 Outside a provider `useWizard()` and every hook built on it throw
 [`provider-missing`](../../errors/provider-missing/). `useOptionalWizard()` returns `null` there
@@ -193,26 +220,17 @@ The provider builds the engine by default, but it does not have to. Hand it one 
 the object is yours: it exists before the tree mounts, it survives the tree unmounting, and
 `destroy()` is never called for you - the binding disposes only an engine it created itself.
 
+<Code code={wizardSource} lang="ts" title="hooks/wizard.ts" />
+
 <Tabs syncKey={FRAMEWORK_SYNC_KEY}>
   <TabItem label={FRAMEWORK_LABELS.react}>
 
-```tsx
-const wizard = createWizard({ flow: signup, registry });
-
-<WizardProvider wizard={wizard}>
-  <Steps />
-</WizardProvider>;
-```
+<Code code={ownedSource} lang="tsx" title="hooks/Owned.tsx" />
 
   </TabItem>
   <TabItem label={FRAMEWORK_LABELS.vue}>
 
-```vue
-<script setup lang="ts">
-const wizard = createWizard({ flow: signup, registry });
-provideWizard(wizard);
-</script>
-```
+<Code code={ownedVueSource} lang="vue" title="hooks/Owned.vue" />
 
   </TabItem>
 </Tabs>
