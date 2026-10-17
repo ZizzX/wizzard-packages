@@ -1,1 +1,7 @@
 npx lint-staged --concurrent false
+# After lint-staged, never as one of its tasks: lint-staged stages what its
+# formatters wrote only once every task is done, so a task reading the index
+# would embed a source as it was before formatting. Run on every commit, it
+# also needs no list of which paths are sources; with nothing to change it
+# rewrites nothing.
+node scripts/embed-examples.mjs --stage
