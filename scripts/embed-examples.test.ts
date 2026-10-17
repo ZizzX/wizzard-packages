@@ -21,7 +21,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, matchesGlob } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -158,6 +158,26 @@ describe('embed-examples --check', () => {
 // document and snippet it reads, so a case is dozens of processes. On a Windows
 // checkout that is 3-5 seconds, which the default 5-second timeout cannot hold
 // once the manifest grows; the time is process start-up, not a slow check.
+describe('the pre-commit trigger', () => {
+  // The hook runs --stage only for paths its lint-staged key matches. A source
+  // outside that key can be edited and committed while every document that
+  // embeds it stays stale, which only CI's --check then catches.
+  it('matches every source the manifest names', () => {
+    const manifest = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as {
+      'lint-staged': Record<string, string | string[]>;
+    };
+    const triggers = Object.entries(manifest['lint-staged'])
+      .filter(([, run]) => [run].flat().some((cmd) => cmd.includes('embed-examples.mjs --stage')))
+      .map(([glob]) => glob);
+    const script = readFileSync(join(ROOT, 'scripts/embed-examples.mjs'), 'utf8');
+    const sources = [...script.matchAll(/file: '([^']+)'/g)].map((m) => m[1] as string);
+
+    expect(triggers).not.toEqual([]);
+    expect(sources.length).toBeGreaterThan(10);
+    expect(sources.filter((file) => !triggers.some((glob) => matchesGlob(file, glob)))).toEqual([]);
+  });
+});
+
 describe('embed-examples --stage', { timeout: 30_000 }, () => {
   // A git hook exports GIT_DIR and friends, and this suite runs inside one
   // (pre-push). Inherited, they point the scratch repository's commands at the

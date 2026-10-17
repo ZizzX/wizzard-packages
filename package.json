@@ -124,7 +124,7 @@
     "*.{js,mjs,cjs,jsx,json,md,mdx,yml,yaml}": [
       "prettier --write"
     ],
-    "examples/quickstart/{src,install}/*": [
+    "examples/{quickstart,tasks}/{src,install}/**": [
       "node scripts/embed-examples.mjs --stage"
     ]
   }
