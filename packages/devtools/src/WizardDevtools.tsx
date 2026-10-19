@@ -62,7 +62,7 @@ export interface WizardDevtoolsProps {
   redact?: (bundle: SessionBundle) => SessionBundle;
   /**
    * Receives the bundle, after `redact`, while the Copy JSON preview is open:
-   * once for each bundle it builds. An inline function is fine: a new one is
+   * once for each bundle it builds, Strict Mode included. An inline function is fine: a new one is
    * used for the next bundle and does not receive this one again. A throw in it
    * is caught and the preview still shows.
    */

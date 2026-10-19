@@ -16,7 +16,9 @@ else is written.
 TypeScript keeps a plugin to `NavDecision`, so this is usually a plugin written in plain
 JavaScript, or one cast past the type. The common slips are returning `true` to mean "allow"
 (return nothing instead), returning a step id as a string (return `{ redirect: id }`), and
-computing a `block` or `redirect` that turns out not to be a string.
+computing a `block` or `redirect` that turns out not to be a string. An object with neither key,
+such as `{}`, is refused too, rather than letting the move through as if the plugin had said
+nothing. A falsy answer other than `false` - `null`, `0`, `''` - is read as nothing.
 
 [Plugins](../../docs/plugins/#blocking-and-redirecting) has the table of answers and what each one
 does.

@@ -508,8 +508,8 @@ describe('runNav — plugins', () => {
     });
   });
 
-  it.each([true, 'next', 1, { redirect: 5 }, { block: null }])(
-    'refuses %j from beforeNavigate with a WizardError, not a TypeError',
+  it.each([true, 'next', 1, {}, [], { redirect: 5 }, { block: null }, { redirect: 1n }])(
+    'refuses %s from beforeNavigate with a WizardError, not a TypeError',
     async (answer) => {
       const host = makeHost(on('trip'));
       const hooks: Hooks[] = [{ name: 'p', beforeNavigate: () => answer as never }];

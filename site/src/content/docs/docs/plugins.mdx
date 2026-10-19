@@ -90,8 +90,8 @@ particular step reads `from`, or the state, rather than `to`.
 | `{ redirect: to }` | the move becomes a `go` to that step and continues             |
 
 A refusal also carries `code` and `url`, the kebab-case code and the page that explains it, as
-the `refused:` line of the output shows. Any other answer - `true`, a string, a `block` or
-`redirect` that is not a string - rejects the move with
+the `refused:` line of the output shows. Any other truthy answer - `true`, a string, an object
+with neither a string `block` nor a string `redirect` - rejects the move with
 [`before-navigate-invalid`](../../errors/before-navigate-invalid/).
 
 A redirect still needs the target's `when` to hold. The flow's `policy` is checked against it

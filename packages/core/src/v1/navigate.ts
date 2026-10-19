@@ -93,21 +93,32 @@ export type NavOptions = { validate?: boolean; stay?: boolean };
 export type NavDecision = void | false | { block: string } | { redirect: string };
 
 /**
- * Refuses an answer outside {@link NavDecision}: a plain-JavaScript plugin can
- * return `true` or a string, which would otherwise fail on `'block' in` with
- * a bare `TypeError`.
+ * Refuses a truthy answer outside {@link NavDecision}: a plain-JavaScript
+ * plugin can return `true`, a string or `{}`, which would otherwise fail on
+ * `'block' in` with a bare `TypeError`, or let the move through unnoticed.
+ * A falsy answer other than `false` is read as nothing.
  */
 function checkDecision(plugin: string, decision: unknown): void {
   const d = decision as { block?: unknown; redirect?: unknown };
   const ok =
     typeof decision === 'object' &&
+    !Array.isArray(decision) &&
+    (typeof d.block === 'string' || typeof d.redirect === 'string') &&
     (!('block' in d) || typeof d.block === 'string') &&
     (!('redirect' in d) || typeof d.redirect === 'string');
   if (ok) return;
+  let shown: string | undefined;
+  try {
+    // The answer is the plugin's, and a BigInt, a cycle or a throwing toJSON
+    // in it must not replace this error with its own.
+    shown = JSON.stringify(decision) as string | undefined;
+  } catch {
+    /* fall through to the type */
+  }
   throw new WizardError(
     'before-navigate-invalid',
     'navigate',
-    `plugin "${plugin}" answered beforeNavigate with ${(JSON.stringify(decision) as string | undefined) ?? typeof decision}`,
+    `plugin "${plugin}" answered beforeNavigate with ${shown ?? typeof decision}`,
     'Only false, { block: string }, { redirect: string } or nothing are answers the engine understands',
     'Return one of those, or nothing to let the move through'
   );

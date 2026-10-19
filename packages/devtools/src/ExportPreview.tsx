@@ -56,8 +56,13 @@ export function ExportPreview({
     record.current = onRecord;
   });
 
+  // The bundle last delivered. Strict Mode runs every effect twice on mount in
+  // development, and the bundle is the same object both times.
+  const delivered = useRef<SessionBundle | undefined>(undefined);
+
   useEffect(() => {
-    if ('error' in built) return;
+    if ('error' in built || delivered.current === built.bundle) return;
+    delivered.current = built.bundle;
     try {
       record.current?.(built.bundle);
     } catch {

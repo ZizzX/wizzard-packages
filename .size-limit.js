@@ -213,12 +213,13 @@ export default [
   // the `when`, so a conditional way back fired always while the graph and
   // `validateFlow` showed the condition (T-095, D-039). Both directions now go
   // through one transition reader.
-  // 7.25 to 7.4 kB on 2026-10-19 for T-096, measured 7396 B: an answer from
-  // `beforeNavigate` outside `NavDecision` - `true`, a string, a `redirect`
-  // that is not a string - rejects the move with `before-navigate-invalid`
-  // instead of a bare `TypeError` from `'block' in`. The bytes are the check
-  // and its three-part message.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '7.4 kB', gzip: true },
+  // 7.25 to 7.45 kB on 2026-10-19 for T-096, measured 7418 B: a truthy answer
+  // from `beforeNavigate` outside `NavDecision` - `true`, a string, `{}`, a
+  // `redirect` that is not a string - rejects the move with
+  // `before-navigate-invalid` instead of a bare `TypeError` from `'block' in`.
+  // The bytes are the check, a guarded `JSON.stringify` of the answer, and the
+  // three-part message.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '7.45 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a
