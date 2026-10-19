@@ -213,7 +213,12 @@ export default [
   // the `when`, so a conditional way back fired always while the graph and
   // `validateFlow` showed the condition (T-095, D-039). Both directions now go
   // through one transition reader.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '7.25 kB', gzip: true },
+  // 7.25 to 7.4 kB on 2026-10-19 for T-096, measured 7396 B: an answer from
+  // `beforeNavigate` outside `NavDecision` - `true`, a string, a `redirect`
+  // that is not a string - rejects the move with `before-navigate-invalid`
+  // instead of a bare `TypeError` from `'block' in`. The bytes are the check
+  // and its three-part message.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '7.4 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a
@@ -567,10 +572,16 @@ export default [
   // `undefined` was handed `localStorage` instead - the opposite of why it
   // asked for the session store. The bytes are the name lookup and naming the
   // refused storage in the warning.
+  //
+  // 1.4 to 1.55 kB on 2026-10-19 for T-096, measured 1528 B: a `migrate` that
+  // throws refuses the restore as `snapshot/version`, and data `JSON.stringify`
+  // cannot write skips that one save with a `persist/write-failed` warning.
+  // Both used to escape the hook, and the engine disabled the plugin for the
+  // session - against the plugin's promise that it never breaks the wizard.
   {
     name: 'plugins persist',
     path: 'packages/plugins/src/persist.ts',
-    limit: '1.4 kB',
+    limit: '1.55 kB',
     gzip: true,
     ignore: ['@wizzard-packages/core', '@wizzard-packages/core/snapshot'],
   },

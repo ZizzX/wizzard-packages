@@ -508,6 +508,44 @@ describe('runNav — plugins', () => {
     });
   });
 
+  it.each([true, 'next', 1, { redirect: 5 }, { block: null }])(
+    'refuses %j from beforeNavigate with a WizardError, not a TypeError',
+    async (answer) => {
+      const host = makeHost(on('trip'));
+      const hooks: Hooks[] = [{ name: 'p', beforeNavigate: () => answer as never }];
+
+      await expect(runNav({ flow, hooks }, host, { type: 'next' })).rejects.toMatchObject({
+        name: 'WizardError',
+        code: 'before-navigate-invalid',
+      });
+      expect(host.read().status).toBe('idle');
+    }
+  );
+
+  // The policy governs where a jump may land, so a redirect is held to it only
+  // when the move it replaces was an unforced go(); from next() or back() it is
+  // how a plugin sends someone to a step they have not reached yet.
+  it('holds a redirect to the policy only when the original move was a go', async () => {
+    const sequential: FlowDefinition = { ...flow, policy: 'sequential' };
+    const toPayment: Hooks[] = [{ name: 'p', beforeNavigate: () => ({ redirect: 'payment' }) }];
+    const far = (): TestHost => makeHost({ ...on('trip'), data: { payer: 'business' } });
+
+    expect(await runNav({ flow: sequential, hooks: toPayment }, far(), { type: 'next' })).toEqual({
+      ok: true,
+      from: 'trip',
+      to: 'payment',
+    });
+    expect(
+      await runNav({ flow: sequential, hooks: toPayment }, far(), { type: 'go', to: 'company' })
+    ).toEqual({
+      ok: false,
+      reason: 'blocked',
+      code: 'nav-blocked',
+      url: pageFor('nav-blocked'),
+      by: 'payment',
+    });
+  });
+
   it('runs plugins in registration order and stops at the first veto', async () => {
     const order: string[] = [];
     const hooks: Hooks[] = [

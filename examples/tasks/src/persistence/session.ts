@@ -30,8 +30,9 @@ export const keepSaved = (wizard: Wizard, store: Store, key: string): (() => voi
 
 /**
  * The reading half. Nothing stored is the first visit; anything else goes
- * through `decodeSnapshot`, which never throws: it answers `restored: false`
- * with a reason when the payload no longer fits `flow`.
+ * through `decodeSnapshot`, which does not throw on a bad payload: it answers
+ * `restored: false` with a reason when the payload no longer fits `flow`. Only
+ * a `migrate` of your own that throws escapes it.
  */
 export const readSaved = (
   flow: FlowDefinition,

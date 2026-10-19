@@ -62,9 +62,9 @@ export interface WizardDevtoolsProps {
   redact?: (bundle: SessionBundle) => SessionBundle;
   /**
    * Receives the bundle, after `redact`, while the Copy JSON preview is open:
-   * once for each bundle it builds, and again whenever this function changes
-   * identity, so keep it stable. A throw in it is caught and the preview still
-   * shows.
+   * once for each bundle it builds. An inline function is fine: a new one is
+   * used for the next bundle and does not receive this one again. A throw in it
+   * is caught and the preview still shows.
    */
   onRecord?: (bundle: SessionBundle) => void;
   defaultTab?: Tab;

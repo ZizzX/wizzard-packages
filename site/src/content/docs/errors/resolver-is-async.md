@@ -9,7 +9,8 @@ when, a transition guard or a repeat source - and cannot wait for it. Make <name
 move the asynchronous work into the step's validate or load. …/errors/resolver-is-async
 ```
 
-Thrown as a `WizardError` with `op: 'evaluate'`.
+Thrown as a `WizardError` with `op: 'evaluate'`. Any value with a `then` method counts as a
+promise here, so a promise from another library is refused the same way as a native one.
 
 Some expressions are read while the engine works out which steps exist and where a move leads:
 a step's `when`, the guards in `on.next`, a repeat group's `repeat.over` and its `ctx`. Those

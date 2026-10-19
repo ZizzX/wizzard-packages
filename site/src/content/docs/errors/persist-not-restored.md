@@ -18,7 +18,7 @@ produce a session this flow can continue.
 | `reason`                | What was wrong                                                                                                                                       |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `snapshot/unreadable`   | Not JSON, or JSON that is not an object, or not a snapshot at all.                                                                                   |
-| `snapshot/version`      | Written by a snapshot format this build does not know, and `migrate` did not upgrade it.                                                             |
+| `snapshot/version`      | Written by a snapshot format this build does not know, and `migrate` did not upgrade it, or threw - its error is logged beside the warning.          |
 | `snapshot/other-flow`   | Taken against a different flow `id`, or a different flow `version` when both carry one, or stored under a different `version` option, or under none. |
 | `snapshot/unknown-step` | Names a step this definition no longer has.                                                                                                          |
 | `snapshot/unstorable`   | Holds something that cannot survive the round trip.                                                                                                  |

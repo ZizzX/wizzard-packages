@@ -48,14 +48,22 @@ export function ExportPreview({
     }
   }, [recorder]);
 
+  // The latest callback, read when a bundle is built: an inline arrow in the
+  // host is a new function on every render, and must not deliver the same
+  // bundle again.
+  const record = useRef(onRecord);
   useEffect(() => {
-    if ('error' in built || !onRecord) return;
+    record.current = onRecord;
+  });
+
+  useEffect(() => {
+    if ('error' in built) return;
     try {
-      onRecord(built.bundle);
+      record.current?.(built.bundle);
     } catch {
       /* a host callback that throws is the host's bug; the preview still shows */
     }
-  }, [built, onRecord]);
+  }, [built]);
 
   useEffect(() => {
     if (copy !== 'copied') return;

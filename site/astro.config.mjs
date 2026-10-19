@@ -173,6 +173,7 @@ export default defineConfig({
             },
             { label: 'start-failed', link: '/errors/start-failed/' },
             { label: 'plugin-disabled', link: '/errors/plugin-disabled/' },
+            { label: 'before-navigate-invalid', link: '/errors/before-navigate-invalid/' },
             { label: 'after-navigate-threw', link: '/errors/after-navigate-threw/' },
             { label: 'plugin-teardown-failed', link: '/errors/plugin-teardown-failed/' },
             { label: 'listener-threw', link: '/errors/listener-threw/' },
