@@ -310,4 +310,44 @@ describe('<WizardDevtools/>', () => {
     expect(JSON.parse(json.value).version).toBe(1);
     expect(onRecord).toHaveBeenCalledTimes(1);
   });
+
+  it('delivers a bundle once under StrictMode', async () => {
+    const { plugin, wizard } = setup();
+    const onRecord = vi.fn();
+    render(
+      <StrictMode>
+        <WizardDevtools wizard={wizard} plugin={plugin} onRecord={onRecord} />
+      </StrictMode>
+    );
+    await act(async () => {
+      await wizard.start();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Record' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Stop/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy JSON' }));
+
+    expect(onRecord).toHaveBeenCalledTimes(1);
+  });
+
+  it('delivers a bundle once, however often the host passes a new onRecord', async () => {
+    const { plugin, wizard } = setup();
+    const first = vi.fn();
+    const view = render(<WizardDevtools wizard={wizard} plugin={plugin} onRecord={first} />);
+    await act(async () => {
+      await wizard.start();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Record' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Stop/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy JSON' }));
+    const second = vi.fn();
+    view.rerender(<WizardDevtools wizard={wizard} plugin={plugin} onRecord={second} />);
+    await act(async () => {
+      await wizard.set('email', 'a@b.c');
+    });
+
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(second).not.toHaveBeenCalled();
+  });
 });

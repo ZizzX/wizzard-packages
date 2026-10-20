@@ -20,9 +20,9 @@ import type { FlowDefinition, Hooks } from '@wizzard-packages/core';
  * Storage never makes the plugin throw. A browser that refuses storage, a
  * quota that fills up, a snapshot from a flow that has since changed: each of
  * them means this session is not coming back, and none of them is a reason to
- * break the wizard the person is filling in right now. What is not caught is
- * the application's own: a `migrate` that throws, or data `JSON.stringify`
- * cannot write.
+ * break the wizard the person is filling in right now. Neither is the
+ * application's own code: a `migrate` that throws refuses the restore as
+ * `snapshot/version`, and data `JSON.stringify` cannot write skips that save.
  */
 export interface PersistOptions {
   /** Storage key. One per flow, or one per flow per user. */
@@ -88,9 +88,10 @@ const DOCS = 'https://zizzx.github.io/wizzard-packages/errors';
  * plugin is torn down. Storage and snapshot failures are warnings, not
  * throws: a storage that refuses, a snapshot that does not decode, or an
  * `onRestore` that throws is reported with `console.warn`, and the outcome of
- * the restore reaches `onRestore`. A `migrate` that throws, or data that
- * `JSON.stringify` cannot write, escapes the hook instead, and the engine
- * disables the plugin.
+ * the restore reaches `onRestore`. A `migrate` that throws refuses the
+ * restore as `snapshot/version`, and its error is logged with the warning. A
+ * commit whose data `JSON.stringify` cannot write - a `BigInt`, a cycle - is
+ * not saved, with one warning, and the next commit that can be written is.
  */
 export function persist(options: PersistOptions): Hooks {
   const { key, version, migrate } = options;
@@ -181,12 +182,17 @@ export function persist(options: PersistOptions): Hooks {
        * filled in and is now empty looks like a bug to whoever is filling it,
        * and silence is why they would think so.
        */
-      const refuse = (reason: NotRestored['reason']): (() => void) => {
+      const refuse = (reason: NotRestored['reason'], error?: unknown): (() => void) => {
         warn(
           'persist/not-restored',
           'The saved wizard was not restored, so it starts fresh',
-          `the stored session was refused (${reason})`,
-          'this is expected after a flow or version change; clear the key to stop the warning'
+          error === undefined
+            ? `the stored session was refused (${reason})`
+            : `migrate threw, so the stored session was refused (${reason})`,
+          error === undefined
+            ? 'this is expected after a flow or version change; clear the key to stop the warning'
+            : 'fix the migrate passed to persist(); its error is logged beside this warning',
+          error
         );
         notifyRestore({ restored: false, reason });
         return teardown;
@@ -260,12 +266,26 @@ export function persist(options: PersistOptions): Hooks {
         return refuse('snapshot/other-flow');
       }
 
+      // The host's migration is the host's code, and a throw from it would
+      // escape `init` and disable the plugin. Handing back the snapshot it was
+      // given is how core already reads a migration that made no progress:
+      // `snapshot/version`.
+      let migrateError: unknown;
       const result = decodeSnapshot(host.getFlow(), stored.snapshot, {
-        migrate,
+        migrate:
+          migrate &&
+          ((snapshot) => {
+            try {
+              return migrate(snapshot);
+            } catch (error) {
+              migrateError = error;
+              return snapshot;
+            }
+          }),
         epoch: host.getState().nav,
       });
 
-      if (!result.restored) return refuse(result.reason);
+      if (!result.restored) return refuse(result.reason, migrateError);
 
       // Through `commit`, like every other write: the restore is a commit, the
       // epoch moves with it, and anything begun before it is superseded.
@@ -279,10 +299,22 @@ export function persist(options: PersistOptions): Hooks {
       // The flow comes from the host rather than the state, because identity is
       // the whole point of storing it: a snapshot has to know which flow it
       // belongs to, and `patchFlow` can change that flow under a running wizard.
-      pending = JSON.stringify({
-        ...(version === undefined ? {} : { appVersion: version }),
-        snapshot: toSnapshot(state, flowOf()),
-      });
+      try {
+        pending = JSON.stringify({
+          ...(version === undefined ? {} : { appVersion: version }),
+          snapshot: toSnapshot(state, flowOf()),
+        });
+      } catch (error) {
+        // The data, not the storage: a later commit without the value may well
+        // be writable, so this one is skipped and saving goes on.
+        warn(
+          'persist/write-failed',
+          'The wizard could not be saved',
+          `its data cannot be written as JSON (${describe(error)})`,
+          'keep BigInt values, cycles and class instances out of the data; the last state that could be written is the one kept'
+        );
+        return;
+      }
       timer ??= setTimeout(flush, WRITE_AFTER_MS);
     },
   };

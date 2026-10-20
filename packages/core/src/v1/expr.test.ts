@@ -105,6 +105,11 @@ describe('evaluate', () => {
     expect(() => evaluate({ $ref: 'later' }, scope, registry)).toThrow(/resolver-is-async$/);
   });
 
+  it('refuses a thenable that is not a native promise', () => {
+    const registry = { later: () => ({ then() {} }) };
+    expect(() => evaluate({ $ref: 'later' }, scope, registry)).toThrow(/resolver-is-async$/);
+  });
+
   it('refuses an unknown operator', () => {
     expect(() => evaluate({ $nope: 1 } as unknown as Expr, scope)).toThrow(
       /expr-unknown-operator$/

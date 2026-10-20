@@ -48,14 +48,27 @@ export function ExportPreview({
     }
   }, [recorder]);
 
+  // The latest callback, read when a bundle is built: an inline arrow in the
+  // host is a new function on every render, and must not deliver the same
+  // bundle again.
+  const record = useRef(onRecord);
   useEffect(() => {
-    if ('error' in built || !onRecord) return;
+    record.current = onRecord;
+  });
+
+  // The bundle last delivered. Strict Mode runs every effect twice on mount in
+  // development, and the bundle is the same object both times.
+  const delivered = useRef<SessionBundle | undefined>(undefined);
+
+  useEffect(() => {
+    if ('error' in built || delivered.current === built.bundle) return;
+    delivered.current = built.bundle;
     try {
-      onRecord(built.bundle);
+      record.current?.(built.bundle);
     } catch {
       /* a host callback that throws is the host's bug; the preview still shows */
     }
-  }, [built, onRecord]);
+  }, [built]);
 
   useEffect(() => {
     if (copy !== 'copied') return;

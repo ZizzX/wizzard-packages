@@ -85,8 +85,9 @@ export const keepSaved = (wizard: Wizard, store: Store, key: string): (() => voi
 
 /**
  * The reading half. Nothing stored is the first visit; anything else goes
- * through `decodeSnapshot`, which never throws: it answers `restored: false`
- * with a reason when the payload no longer fits `flow`.
+ * through `decodeSnapshot`, which does not throw on a bad payload: it answers
+ * `restored: false` with a reason when the payload no longer fits `flow`. Only
+ * a `migrate` of your own that throws escapes it.
  */
 export const readSaved = (
   flow: FlowDefinition,
@@ -347,7 +348,10 @@ wizard comes back stuck.
 The plugin never throws. A browser that refuses storage, a quota that fills up, a value that was
 corrupted in place: each means this session is not coming back, and none of them is a reason to
 break the wizard someone is filling in now. Each failure warns once per code, names its cause,
-and the ones met at startup reach `onRestore` as its reason.
+and the ones met at startup reach `onRestore` as its reason. The same holds for your own code
+inside it: a `migrate` that throws refuses the restore as `snapshot/version`, with its error
+logged beside the warning, and a commit whose data JSON cannot write, such as a `BigInt` or a
+cycle, is skipped with a `persist/write-failed` warning while later commits are saved.
 
 `onRestore` is how the outcome reaches your interface. It receives a `RestoreOutcome`, which is
 `{ restored: true }` or `{ restored: false, reason }` - the reasons above, plus

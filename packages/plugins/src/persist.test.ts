@@ -147,6 +147,61 @@ describe('persist', () => {
     expect(outcomes.at(-1)).toEqual({ restored: true });
   });
 
+  it('starts clean, with the error beside the warning, when migrate throws', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const storage = fakeStorage();
+    const first = make(storage);
+    await first.start();
+    settle();
+    const stored = JSON.parse(storage.items.get('signup') ?? '{}') as {
+      snapshot: Record<string, unknown>;
+    };
+    stored.snapshot.v = 0;
+    storage.items.set('signup', JSON.stringify(stored));
+    const boom = new Error('boom');
+
+    const w = make(storage, {
+      migrate: () => {
+        throw boom;
+      },
+    });
+
+    expect(outcomes.at(-1)).toEqual({ restored: false, reason: 'snapshot/version' });
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('migrate threw'), boom);
+    // Still enabled: the next commit is saved over the snapshot it could not read.
+    await w.start();
+    w.set('name.full', 'Ada');
+    settle();
+    expect(storage.items.get('signup')).toContain('Ada');
+    expect(error).not.toHaveBeenCalled();
+    warn.mockRestore();
+    error.mockRestore();
+  });
+
+  it('skips a commit JSON cannot write, warns once, and saves the next one', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const storage = fakeStorage();
+    const w = make(storage);
+    await w.start();
+
+    w.set('name.big', 10n);
+    settle();
+    expect(storage.items.get('signup') ?? '').not.toContain('big');
+    w.set('name.big', 10n);
+    settle();
+    w.set('name.big', '10');
+    settle();
+
+    expect(storage.items.get('signup')).toContain('"big":"10"');
+    expect(warn).toHaveBeenCalledOnce();
+    expect(String(warn.mock.calls[0]?.[0])).toContain('/errors/persist-write-failed');
+    expect(error).not.toHaveBeenCalled();
+    warn.mockRestore();
+    error.mockRestore();
+  });
+
   it('keeps working when the browser refuses to read', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const storage = fakeStorage();

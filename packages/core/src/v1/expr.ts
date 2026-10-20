@@ -66,7 +66,8 @@ export interface Scope {
  * A function an expression names with `$ref`. It is called with the `args`
  * written beside the `$ref` and the scope, and what it returns is the
  * expression's value. Here it must not return a promise: the synchronous
- * evaluator refuses a native `Promise` with `resolver-is-async`.
+ * evaluator refuses a promise, or any value with a `then` method, with
+ * `resolver-is-async`.
  */
 export type Resolver = (args: Json | undefined, scope: Scope) => unknown;
 /**
@@ -185,7 +186,7 @@ function run(e: Expr, scope: Scope, registry: Registry | undefined, depth: numbe
     const fn = registry?.[name];
     if (!fn) throw notRegistered(name, 'evaluate');
     const out = fn(e.args, scope);
-    if (out instanceof Promise) {
+    if (typeof (out as { then?: unknown } | null)?.then === 'function') {
       throw new WizardError(
         'resolver-is-async',
         'evaluate',
