@@ -1,4 +1,4 @@
-import { commit, restart } from './commit';
+import { commit, restart, without } from './commit';
 import { type SliceAt, type StepIdOf } from './define';
 import { explain, guard, notRegistered, pageFor, WizardError } from './diagnostic';
 import { END, isGroup, type FlowDefinition, type StepDef } from './flow';
@@ -213,7 +213,8 @@ export interface Wizard<F extends FlowDefinition = FlowDefinition> {
    * Sets a step's field errors, replacing any it had - errors a server
    * returned, say - or removes them with `null`. They stay until replaced, or
    * until `validate()`, a validated move away from the step, or `reset()`
-   * clears them.
+   * clears them. Inside a repeat group every item shares its steps' ids, so a
+   * move that leaves an item also drops the errors of that item's steps.
    */
   setErrors(stepId: StepIdOf<F>, errors: Readonly<Record<string, string>> | null): void;
 
@@ -675,9 +676,7 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
       const failed = errors !== null && Object.keys(errors).length > 0;
       write(
         commit(state, {
-          errors: failed
-            ? { ...state.errors, [target]: errors }
-            : Object.fromEntries(Object.entries(state.errors).filter(([k]) => k !== target)),
+          errors: failed ? { ...state.errors, [target]: errors } : without(state.errors, [target]),
         })
       );
       return !failed;
@@ -688,7 +687,7 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
         commit(state, {
           errors:
             errors === null
-              ? Object.fromEntries(Object.entries(state.errors).filter(([k]) => k !== stepId))
+              ? without(state.errors, [stepId])
               : { ...state.errors, [stepId]: errors },
         })
       );
