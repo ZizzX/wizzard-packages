@@ -1109,3 +1109,192 @@ describe('itemsOf', () => {
     expect(itemsOf('g', { over: { $ref: 'missing' } }, { data: {}, ctx: {} })).toBeNull();
   });
 });
+
+// A deferred placeholder is an atom until its loadStep installs the body, and
+// the body may be a group. The move was resolved on the placeholder, so once
+// the body is a group it is resolved again on the flow as the loader left it:
+// the wizard enters the group, as a move onto a group always does, instead of
+// standing on the group itself with nothing to render.
+describe('a deferred step whose body is a group', () => {
+  const placeholder: FlowDefinition = {
+    id: 'booking',
+    order: ['who', 'each', 'review'],
+    steps: { who: {}, each: { deferred: true }, review: {} },
+  };
+
+  const installing = (
+    body: FlowDefinition['steps'][string],
+    data: Record<string, unknown> = { passengers },
+    extra: { registry?: AsyncRegistry; write?: Record<string, unknown> } = {}
+  ) => {
+    const loaded: string[] = [];
+    const wizard = createWizard({
+      flow: placeholder,
+      groups,
+      data,
+      registry: extra.registry,
+      plugins: [
+        {
+          name: 'server',
+          loadStep: (id) => {
+            loaded.push(id);
+            for (const [path, value] of Object.entries(extra.write ?? {})) wizard.set(path, value);
+            wizard.patchFlow({ steps: { [id]: body } });
+            return Promise.resolve();
+          },
+        },
+      ],
+    });
+    return { wizard, loaded };
+  };
+
+  it('enters the first step of the group', async () => {
+    const { wizard } = installing({ flow: passenger });
+    await wizard.start();
+
+    expect(await wizard.next()).toMatchObject({ ok: true, from: 'who', to: 'seat' });
+    expect(at(wizard)).toEqual([
+      { flow: 'booking', step: 'each' },
+      { flow: 'passenger', step: 'seat' },
+    ]);
+    expect(wizard.getState().busy).toEqual([]);
+    expect(wizard.getState().history).toEqual([[{ flow: 'booking', step: 'who' }]]);
+  });
+
+  it('enters the first item of a repeat over what the loader wrote', async () => {
+    const { wizard } = installing(
+      { flow: passenger, repeat: { over: { $get: 'data.passengers' }, keyBy: 'id' } },
+      {},
+      { write: { passengers } }
+    );
+    await wizard.start();
+
+    expect(await wizard.next()).toMatchObject({ ok: true, to: 'seat' });
+    expect(at(wizard)).toEqual([
+      { flow: 'booking', step: 'each', key: 'p1' },
+      { flow: 'passenger', step: 'seat' },
+    ]);
+  });
+
+  it('walks past a repeat with no items to the step after it', async () => {
+    const { wizard } = installing(
+      { flow: passenger, repeat: { over: { $get: 'data.passengers' } } },
+      {
+        passengers: [],
+      }
+    );
+    await wizard.start();
+
+    expect(await wizard.next()).toMatchObject({ ok: true, to: 'review' });
+    expect(at(wizard)).toEqual([{ flow: 'booking', step: 'review' }]);
+    expect(wizard.getState().busy).toEqual([]);
+  });
+
+  it('runs the load of the step it enters', async () => {
+    const seen: unknown[] = [];
+    const { wizard } = installing(
+      {
+        flow: { ...passenger, steps: { ...passenger.steps, seat: { load: { $ref: 'seats' } } } },
+      },
+      { passengers },
+      { registry: { seats: (_args, scope) => void seen.push(scope.data) } }
+    );
+    await wizard.start();
+
+    expect(await wizard.next()).toMatchObject({ ok: true, to: 'seat' });
+    expect(seen).toHaveLength(1);
+  });
+
+  it('refuses the move when the entered step’s enter guard does', async () => {
+    const { wizard } = installing(
+      {
+        flow: {
+          ...passenger,
+          steps: { ...passenger.steps, seat: { guards: { enter: { $ref: 'nope' } } } },
+        },
+      },
+      { passengers },
+      { registry: { nope: () => false } }
+    );
+    await wizard.start();
+
+    expect(await wizard.next()).toMatchObject({ ok: false, reason: 'blocked', by: 'seat' });
+    expect(at(wizard)).toEqual([{ flow: 'booking', step: 'who' }]);
+    expect(wizard.getState().busy).toEqual([]);
+  });
+
+  // start() on a restored placeholder enters it in place: the group is
+  // entered the same way, and nothing is recorded.
+  it('enters the group when start() enters a restored placeholder', async () => {
+    const loaded: string[] = [];
+    const wizard = createWizard({
+      flow: placeholder,
+      groups,
+      data: { passengers },
+      state: {
+        ...initialState({ passengers }),
+        stack: [{ flow: 'booking', step: 'each' }],
+        history: [[{ flow: 'booking', step: 'who' }]],
+        status: 'idle',
+      },
+      plugins: [
+        {
+          name: 'server',
+          loadStep: (id) => {
+            loaded.push(id);
+            wizard.patchFlow({ steps: { [id]: { flow: passenger } } });
+            return Promise.resolve();
+          },
+        },
+      ],
+    });
+
+    expect(await wizard.start()).toMatchObject({ ok: true, to: 'seat' });
+    expect(loaded).toEqual(['each']);
+    expect(at(wizard)).toEqual([
+      { flow: 'booking', step: 'each' },
+      { flow: 'passenger', step: 'seat' },
+    ]);
+    expect(wizard.getState().history).toEqual([[{ flow: 'booking', step: 'who' }]]);
+    expect(wizard.getState().busy).toEqual([]);
+  });
+
+  // The group's id leaves `busy` before the move is resolved again, and a
+  // subscriber may start a move of its own on that write. The overtaken move
+  // stops there, and marks nothing busy that nobody will clear.
+  it('stops when a move started on its busy write overtakes it', async () => {
+    const { wizard } = installing(
+      { flow: { ...passenger, steps: { ...passenger.steps, seat: { load: { $ref: 'seats' } } } } },
+      { passengers },
+      { registry: { seats: () => undefined } }
+    );
+    await wizard.start();
+    let fired = false;
+    let overtaking: Promise<unknown> | undefined;
+    wizard.subscribe(() => {
+      const s = wizard.getState();
+      const each = wizard.getFlow().steps.each;
+      if (!fired && each && isGroup(each) && s.status === 'busy' && s.busy.length === 0) {
+        // Set before the call: the move's own lock write notifies synchronously.
+        fired = true;
+        overtaking = wizard.go('review', { force: true });
+      }
+    });
+
+    expect(await wizard.next()).toMatchObject({ ok: false, reason: 'superseded' });
+    expect(await overtaking).toMatchObject({ ok: true, to: 'review' });
+    expect(wizard.getState().busy).toEqual([]);
+    expect(wizard.getState().status).toBe('idle');
+  });
+
+  it('enters the group on a go() to the placeholder too', async () => {
+    const { wizard } = installing({ flow: passenger });
+    await wizard.start();
+
+    expect(await wizard.go('each', { force: true })).toMatchObject({ ok: true, to: 'seat' });
+    expect(at(wizard)).toEqual([
+      { flow: 'booking', step: 'each' },
+      { flow: 'passenger', step: 'seat' },
+    ]);
+  });
+});

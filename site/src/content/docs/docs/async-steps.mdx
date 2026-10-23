@@ -88,6 +88,12 @@ fetched first - is refused as `not-reachable`; otherwise its `load` runs next, a
 decides the entry, both reading that same data. A body the server sends without `deferred` is not
 fetched again when the user comes back to the step; one that still says `deferred: true` is.
 
+The body can be a group, when the wizard has [`groups`](../groups/) installed. The move is then
+resolved again on the flow as the loaders left it, so the wizard enters the group as it would one
+that was there from the start: its first step, or the first item of a repeat, which goes through
+its own `when`, `load` and enter guard before the move commits. A repeat with no items is walked
+past to the step after it. The group's own `when` is checked first, and refuses the move as above.
+
 This applies to a step of the root flow. `patchFlow` replaces root steps only, so a `deferred`
 step inside a group is entered as the move found it.
 
