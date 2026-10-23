@@ -241,3 +241,101 @@ describe('a deferred step, once its body is installed', () => {
     );
   });
 });
+
+describe('a deferred step whose body is a group', () => {
+  const arbCase = fc.record({
+    /** `data.open` before the move, and as the loader leaves it. */
+    before: fc.boolean(),
+    written: fc.option(fc.boolean(), { nil: undefined }),
+    /** Whether the group's `when` reads `data.open`. */
+    gated: fc.boolean(),
+    /** How many items a repeat runs over before the move, and as the loader leaves them; `null` is no repeat. */
+    items: fc.option(fc.nat({ max: 2 }), { nil: null }),
+    writtenItems: fc.option(fc.nat({ max: 2 }), { nil: undefined }),
+    /** The enter guard and `load` of the group's first step. */
+    blocks: fc.boolean(),
+    loads: fc.boolean(),
+    jump: fc.boolean(),
+  });
+
+  const list = (n: number): { id: string }[] =>
+    Array.from({ length: n }, (_, i) => ({ id: `i${i}` }));
+
+  it('enters the group, walks past it, or refuses, as a group placed there would', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        arbCase,
+        async ({ before, written, gated, items, writtenItems, blocks, loads, jump }) => {
+          const ran: string[] = [];
+          const body: StepDef = {
+            ...(gated ? { when: { $get: 'data.open' } } : {}),
+            ...(items === null ? {} : { repeat: { over: { $get: 'data.list' }, keyBy: 'id' } }),
+            flow: {
+              id: 'sub',
+              order: ['seat', 'meal'],
+              steps: {
+                seat: {
+                  ...(blocks ? { guards: { enter: { $ref: 'no' } } } : {}),
+                  ...(loads ? { load: { $ref: 'fetch' } } : {}),
+                },
+                meal: {},
+              },
+            },
+          };
+          const w = createWizard({
+            flow: {
+              id: 'deferred',
+              order: ['intro', 'offer', 'done'],
+              steps: { intro: {}, offer: { deferred: true }, done: {} },
+            },
+            data: { open: before, list: list(items ?? 0) },
+            groups,
+            registry: {
+              no: () => false,
+              fetch: () => {
+                ran.push('load');
+              },
+            },
+            plugins: [
+              {
+                name: 'server',
+                loadStep: (id) => {
+                  if (written !== undefined) w.set('open', written);
+                  if (writtenItems !== undefined) w.set('list', list(writtenItems));
+                  w.patchFlow({ steps: { [id]: body } });
+                  return Promise.resolve();
+                },
+              },
+            ],
+          });
+          await w.start();
+          const result = await (jump ? w.go('offer', { force: true }) : w.next());
+
+          const reachable = !gated || (written ?? before);
+          const count = items === null ? 1 : (writtenItems ?? items);
+          const past = reachable && count === 0;
+          const inside = reachable && count > 0;
+          const entered = past || (inside && !blocks);
+
+          if (!reachable) {
+            expect(result).toMatchObject({ ok: false, reason: 'not-reachable', by: 'offer' });
+          } else if (past) {
+            expect(result).toEqual({ ok: true, from: 'intro', to: 'done' });
+          } else if (blocks) {
+            expect(result).toMatchObject({ ok: false, reason: 'blocked', by: 'seat' });
+          } else {
+            expect(result).toEqual({ ok: true, from: 'intro', to: 'seat' });
+          }
+          expect(w.getState().stack.map((f) => f.step)).toEqual(
+            !entered ? ['intro'] : past ? ['done'] : ['offer', 'seat']
+          );
+          if (inside && !blocks && items !== null) expect(w.getState().stack[0]?.key).toBe('i0');
+          expect(ran).toEqual(inside && loads ? ['load'] : []);
+          expect(w.getState().busy).toEqual([]);
+          expect(w.getState().status).toBe('idle');
+        }
+      ),
+      { numRuns: 300 }
+    );
+  });
+});

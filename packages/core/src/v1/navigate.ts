@@ -1,7 +1,7 @@
 import { add, beginNav, commit, isCurrent } from './commit';
 import { explain, guard, pageFor, WizardError } from './diagnostic';
 import { testAsync, type AsyncRegistry, type Registry, type Scope } from './expr';
-import { END, type FlowDefinition } from './flow';
+import { END, isGroup, type FlowDefinition } from './flow';
 import { unsetPath } from './path';
 import { allowedByPolicy, enterable, reachableOnPath, resolveBack, resolveNext } from './resolve';
 
@@ -213,7 +213,9 @@ export interface Hooks {
    * changes shape only through `patchFlow`, so the body is installed there.
    * The step is read again once every loader has finished, so the body's
    * `when`, `load` and enter guard are the ones the move checks; a step inside
-   * a group is not, since `patchFlow` replaces root steps only.
+   * a group is not, since `patchFlow` replaces root steps only. A body that is
+   * a group is entered, not stood on: the move is resolved again on the flow
+   * the loaders left, and lands on the group's first step.
    */
   loadStep?: (stepId: string, signal: AbortSignal) => Promise<void>;
 }
@@ -536,181 +538,198 @@ async function pipeline(
       if (!allowed) return fail({ ok: false, reason: 'blocked', by: from });
     }
 
-    // 4. Resolve the target. Pure, and therefore testable on its own.
-    const state = host.read();
-    const move = traversal?.step(flow, state, want, registry, subFlows);
-    if (move && 'ok' in move) return fail(move);
+    // Phases 4 to 9 run again when a deferred root step's body turns out to
+    // be a group: the move was resolved on the atom it replaced, and would
+    // commit a stack that stands on the group with nothing to render. `base`
+    // is the flow the move is resolved on, so phase 8 recomputes on it too.
+    let base = flow;
+    resolve: for (;;) {
+      // 4. Resolve the target. Pure, and therefore testable on its own.
+      const state = host.read();
+      const move = traversal?.step(base, state, want, registry, subFlows);
+      if (move && 'ok' in move) return fail(move);
 
-    const target = move
-      ? move.to
-      : want.type === 'go'
-        ? want.to
-        : want.type === 'back'
-          ? resolveBack(at.flow, state, at.scope, registry)
-          : resolveNext(at.flow, state, at.scope, registry);
+      const target = move
+        ? move.to
+        : want.type === 'go'
+          ? want.to
+          : want.type === 'back'
+            ? resolveBack(at.flow, state, at.scope, registry)
+            : resolveNext(at.flow, state, at.scope, registry);
 
-    if (target === null || move === null) return fail({ ok: false, reason: 'no-target' });
+      if (target === null || move === null) return fail({ ok: false, reason: 'no-target' });
 
-    if (target === END) {
-      committed = true;
-      host.write(
-        commit(state, {
-          status: 'done',
-          completed: from ? add(state.completed, from) : state.completed,
-        })
-      );
-      after(END);
-      return { ok: true, from, to: END };
-    }
+      if (target === END) {
+        committed = true;
+        host.write(
+          commit(state, {
+            status: 'done',
+            completed: from ? add(state.completed, from) : state.completed,
+          })
+        );
+        after(END);
+        return { ok: true, from, to: END };
+      }
 
-    // 5. Reachability, then policy. Inside a group both are the sub-flow's
-    // question: the root does not contain a child step at all. Reachable means
-    // the target's `when` holds, not that it is in `order`: a step outside
-    // `order` is a branch, entered by `on.next` or `go()`.
-    const where = move ?? at;
-    let step = where.flow.steps[target];
-    if (!step) return fail({ ok: false, reason: 'no-target' });
+      // 5. Reachability, then policy. Inside a group both are the sub-flow's
+      // question: the root does not contain a child step at all. Reachable means
+      // the target's `when` holds, not that it is in `order`: a step outside
+      // `order` is a branch, entered by `on.next` or `go()`.
+      const where = move ?? at;
+      let step = where.flow.steps[target];
+      if (!step) return fail({ ok: false, reason: 'no-target' });
 
-    if (!stay && !enterable(where.flow, target, where.scope, registry)) {
-      return fail({ ok: false, reason: 'not-reachable', by: target });
-    }
-    const active = reachableOnPath(where.flow, state, where.scope, registry);
+      if (!stay && !enterable(where.flow, target, where.scope, registry)) {
+        return fail({ ok: false, reason: 'not-reachable', by: target });
+      }
+      const active = reachableOnPath(where.flow, state, where.scope, registry);
 
-    if (
-      intent.type === 'go' &&
-      !intent.force &&
-      !allowedByPolicy(where.flow, state, target, active)
-    ) {
-      return fail({ ok: false, reason: 'blocked', by: target });
-    }
+      if (
+        intent.type === 'go' &&
+        !intent.force &&
+        !allowedByPolicy(where.flow, state, target, active)
+      ) {
+        return fail({ ok: false, reason: 'blocked', by: target });
+      }
 
-    // A root target's scope is `{ data, ctx }`, read again after each await
-    // below; only a target inside a group needs the one its move computed.
-    const root = where.flow === flow;
+      // A root target's scope is `{ data, ctx }`, read again after each await
+      // below; only a target inside a group needs the one its move computed.
+      const root = where.flow === base;
 
-    // 6. Load. The only phase that may take real time.
-    let scope = where.scope;
-    if (step.deferred === true || step.load !== undefined) {
-      const busyAt = host.read();
-      host.write(commit(busyAt, { busy: add(busyAt.busy, target) }));
+      // 6. Load. The only phase that may take real time.
+      let scope = where.scope;
+      if (step.deferred === true || step.load !== undefined) {
+        const busyAt = host.read();
+        host.write(commit(busyAt, { busy: add(busyAt.busy, target) }));
 
-      const controller = new AbortController();
-      const onAbort = (): void => {
-        controller.abort();
-      };
-      ctx.signal?.addEventListener('abort', onAbort, { once: true });
-      try {
-        // Asked before each loader starts, not once before them all. The
-        // listener never hears an abort that came before it was added - even
-        // one a listener of the busy write above made - so a loader would run
-        // holding a signal that never aborts; and an abort while one loader
-        // runs must not start the next. Overtaken is asked first, as after
-        // every await: a newer move owns the lock, and this one writes nothing.
-        if (step.deferred === true) {
-          for (const h of ctx.hooks ?? []) {
+        const controller = new AbortController();
+        const onAbort = (): void => {
+          controller.abort();
+        };
+        ctx.signal?.addEventListener('abort', onAbort, { once: true });
+        try {
+          // Asked before each loader starts, not once before them all. The
+          // listener never hears an abort that came before it was added - even
+          // one a listener of the busy write above made - so a loader would run
+          // holding a signal that never aborts; and an abort while one loader
+          // runs must not start the next. Overtaken is asked first, as after
+          // every await: a newer move owns the lock, and this one writes nothing.
+          if (step.deferred === true) {
+            for (const h of ctx.hooks ?? []) {
+              if (stale()) return superseded;
+              if (calledOff()) return fail(aborted);
+              if (h.loadStep && live(h)) await h.loadStep(target, controller.signal);
+            }
+            // The step is read again: what was read above is the placeholder,
+            // and the body a loader installed through `patchFlow` brings its own
+            // `when`, `load` and enter guard. Its `when` and `load` read the data
+            // as the loader left it, since a loader often writes what it
+            // fetched. Only a root step is patched, so a step inside a sub-flow
+            // stays as the move found it, and so does its scope.
             if (stale()) return superseded;
             if (calledOff()) return fail(aborted);
-            if (h.loadStep && live(h)) await h.loadStep(target, controller.signal);
+            const owner = root ? ctx.flow : where.flow;
+            if (root) scope = scopeOf(host.read());
+            step = owner.steps[target];
+            if (!step) return fail({ ok: false, reason: 'no-target' });
+            if (!stay && !enterable(owner, target, scope, registry)) {
+              return fail({ ok: false, reason: 'not-reachable', by: target });
+            }
+            // A body that is a group is not stood on but entered, so the move
+            // is resolved again on the flow as the loader left it. What that
+            // reaches - the group's first step, or the step past a group with
+            // nothing to enter - goes through phases 5 to 7 as any target does.
+            if (root && traversal && isGroup(step)) {
+              const now = host.read();
+              host.write(commit(now, { busy: now.busy.filter((id) => id !== target) }));
+              base = ctx.flow;
+              continue resolve;
+            }
           }
-          // The step is read again: what was read above is the placeholder,
-          // and the body a loader installed through `patchFlow` brings its own
-          // `when`, `load` and enter guard. Its `when` and `load` read the data
-          // as the loader left it, since a loader often writes what it
-          // fetched. Only a root step is patched, so a step inside a sub-flow
-          // stays as the move found it, and so does its scope.
           if (stale()) return superseded;
           if (calledOff()) return fail(aborted);
-          const owner = root ? ctx.flow : where.flow;
-          if (root) scope = scopeOf(host.read());
-          step = owner.steps[target];
-          if (!step) return fail({ ok: false, reason: 'no-target' });
-          if (!stay && !enterable(owner, target, scope, registry)) {
-            return fail({ ok: false, reason: 'not-reachable', by: target });
+          if (step.load !== undefined && ctx.load) {
+            await ctx.load(target, step.load, scope, controller.signal);
           }
+        } finally {
+          ctx.signal?.removeEventListener('abort', onAbort);
         }
+
         if (stale()) return superseded;
         if (calledOff()) return fail(aborted);
-        if (step.load !== undefined && ctx.load) {
-          await ctx.load(target, step.load, scope, controller.signal);
-        }
-      } finally {
-        ctx.signal?.removeEventListener('abort', onAbort);
       }
 
+      // 7. Enter guard. A group move into a sub-flow brings its own scope,
+      // because the target's `loop` does not exist anywhere until the move that
+      // creates it. A root target reads the state as the loaders left it, with
+      // `groups` installed or not.
+      const canEnter = await testAsync(
+        step.guards?.enter,
+        move && !root ? move.scope : scopeOf(host.read()),
+        registry
+      );
       if (stale()) return superseded;
+      // 8. Called off: answered before the guard's verdict, as after every
+      // await. Nothing below awaits, so it is also the last check before
+      // anything is written.
       if (calledOff()) return fail(aborted);
-    }
+      if (!canEnter) return fail({ ok: false, reason: 'blocked', by: target });
 
-    // 7. Enter guard. A group move into a sub-flow brings its own scope,
-    // because the target's `loop` does not exist anywhere until the move that
-    // creates it. A root target reads the state as the loaders left it, with
-    // `groups` installed or not.
-    const canEnter = await testAsync(
-      step.guards?.enter,
-      move && !root ? move.scope : scopeOf(host.read()),
-      registry
-    );
-    if (stale()) return superseded;
-    // 8. Called off: answered before the guard's verdict, as after every
-    // await. Nothing below awaits, so it is also the last check before
-    // anything is written.
-    if (calledOff()) return fail(aborted);
-    if (!canEnter) return fail({ ok: false, reason: 'blocked', by: target });
+      // The state phase 9 commits from, read here because phase 8 needs it too
+      // and the recheck between them is pure.
+      const before = host.read();
 
-    // The state phase 9 commits from, read here because phase 8 needs it too
-    // and the recheck between them is pure.
-    const before = host.read();
-
-    // `store.set` during phases 6 and 7 bumps `rev` and not `nav`, so the stale
-    // check above does not see it. A flat target is a step id and no write can
-    // move it; a group move is a stack computed from a list that may no longer
-    // exist, so it is recomputed and superseded when the answer changed.
-    if (move && before.rev !== state.rev) {
-      const again = traversal?.step(flow, before, want, registry, subFlows);
-      // The stacks are serialized rather than walked frame by frame: both come
-      // out of the same `step()`, which builds every frame from one of two
-      // literals, so the key order is fixed. A false difference would only
-      // supersede, which is the safe direction.
-      if (!again || 'ok' in again || JSON.stringify(again.stack) !== JSON.stringify(move.stack)) {
-        return fail(superseded);
+      // `store.set` during phases 6 and 7 bumps `rev` and not `nav`, so the stale
+      // check above does not see it. A flat target is a step id and no write can
+      // move it; a group move is a stack computed from a list that may no longer
+      // exist, so it is recomputed and superseded when the answer changed.
+      if (move && before.rev !== state.rev) {
+        const again = traversal?.step(base, before, want, registry, subFlows);
+        // The stacks are serialized rather than walked frame by frame: both come
+        // out of the same `step()`, which builds every frame from one of two
+        // literals, so the key order is fixed. A false difference would only
+        // supersede, which is the safe direction.
+        if (!again || 'ok' in again || JSON.stringify(again.stack) !== JSON.stringify(move.stack)) {
+          return fail(superseded);
+        }
       }
+
+      // 9. Commit. One write, one notification.
+      const landed = move
+        ? move.stack
+        : [...before.stack.slice(0, -1), { flow: at.flow.id, step: target }];
+      committed = true;
+      host.write(
+        commit(before, {
+          status: 'idle',
+          stack: landed,
+          // A back stack only grows going forward. Appending on a backward move
+          // too left `canBack` true at the first step while `back()` answered
+          // `no-target`, and would make a history-driven `back()` inside a repeat
+          // oscillate between two items.
+          history:
+            from === null || stay
+              ? before.history
+              : forward
+                ? // A position whose item was removed is not one to come back to:
+                  // recording it is how a later back() lands where it stands (T-083).
+                  move?.stale
+                  ? before.history
+                  : [...before.history, before.stack]
+                : rewind(before.history, landed, target),
+          visited: add(before.visited, target),
+          completed:
+            forward && from !== null && !stay ? add(before.completed, from) : before.completed,
+          busy: before.busy.filter((id) => id !== target),
+          data: from === null || stay ? before.data : leave(at.flow, from, before.data),
+        })
+      );
+
+      // 10. afterNavigate. Cannot fail the navigation that already happened.
+      if (!stay) after(target);
+
+      return { ok: true, from, to: target };
     }
-
-    // 9. Commit. One write, one notification.
-    const landed = move
-      ? move.stack
-      : [...before.stack.slice(0, -1), { flow: at.flow.id, step: target }];
-    committed = true;
-    host.write(
-      commit(before, {
-        status: 'idle',
-        stack: landed,
-        // A back stack only grows going forward. Appending on a backward move
-        // too left `canBack` true at the first step while `back()` answered
-        // `no-target`, and would make a history-driven `back()` inside a repeat
-        // oscillate between two items.
-        history:
-          from === null || stay
-            ? before.history
-            : forward
-              ? // A position whose item was removed is not one to come back to:
-                // recording it is how a later back() lands where it stands (T-083).
-                move?.stale
-                ? before.history
-                : [...before.history, before.stack]
-              : rewind(before.history, landed, target),
-        visited: add(before.visited, target),
-        completed:
-          forward && from !== null && !stay ? add(before.completed, from) : before.completed,
-        busy: before.busy.filter((id) => id !== target),
-        data: from === null || stay ? before.data : leave(at.flow, from, before.data),
-      })
-    );
-
-    // 10. afterNavigate. Cannot fail the navigation that already happened.
-    if (!stay) after(target);
-
-    return { ok: true, from, to: target };
   } catch (error) {
     // A step that threw after the move was overtaken or called off answers
     // like one that resolved: those win over what it said. A loader that
