@@ -609,14 +609,20 @@ async function pipeline(
           }
           // The step is read again: what was read above is the placeholder,
           // and the body a loader installed through `patchFlow` brings its own
-          // `when`, `load` and enter guard. Only a root step is patched, so a
-          // step inside a sub-flow stays as the move found it.
+          // `when`, `load` and enter guard. Its `when` reads the data as the
+          // loader left it, since a loader often writes what it fetched. Only
+          // a root step is patched, so a step inside a sub-flow stays as the
+          // move found it.
           if (stale()) return superseded;
           if (calledOff()) return fail(aborted);
-          const owner = where.flow === flow ? ctx.flow : where.flow;
+          const root = where.flow === flow;
+          const owner = root ? ctx.flow : where.flow;
           step = owner.steps[target];
           if (!step) return fail({ ok: false, reason: 'no-target' });
-          if (!stay && !enterable(owner, target, where.scope, registry)) {
+          if (
+            !stay &&
+            !enterable(owner, target, root ? scopeOf(host.read()) : where.scope, registry)
+          ) {
             return fail({ ok: false, reason: 'not-reachable', by: target });
           }
         }

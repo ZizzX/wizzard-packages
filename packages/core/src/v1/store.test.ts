@@ -648,6 +648,28 @@ describe('a body loadStep installs', () => {
     expect(w.getState().busy).toEqual([]);
   });
 
+  // The loader often writes what it fetched before installing the body, and
+  // the body's `when` may read exactly that: the scope is the one after the load.
+  it('checks the body’s when against the data the loader wrote', async () => {
+    const w = createWizard({
+      flow: placeholder,
+      data: { open: false },
+      plugins: [
+        {
+          name: 'server',
+          loadStep: (id) => {
+            w.set('open', true);
+            w.patchFlow({ steps: { [id]: { when: { $get: 'data.open' } } } });
+            return Promise.resolve();
+          },
+        },
+      ],
+    });
+    await w.start();
+
+    expect(await w.next()).toMatchObject({ ok: true, to: 'offer' });
+  });
+
   it('runs the body’s load before entering it', async () => {
     const { w, loaded } = installing({ load: { $ref: 'offerData' } });
     await w.start();
