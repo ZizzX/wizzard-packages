@@ -81,6 +81,9 @@ current data - or it threw and was read as false, which the console line
 anyway is refused. <code dir="auto">force: true</code> does not change that: <code dir="auto">force</code> skips the navigation policy, and a
 step the flow says is not there is not a matter of policy. A group whose own <code dir="auto">when</code> is false is
 refused the same way.</p>
+<p>A <code dir="auto">deferred</code> step is asked twice: once as the placeholder, and again once its <code dir="auto">loadStep</code> has
+installed the body, whose own <code dir="auto">when</code> then decides. A body the server sends with a <code dir="auto">when</code> that is
+false for the current data is refused here, after the load, and its <code dir="auto">load</code> does not run.</p>
 <p>From <code dir="auto">next()</code> it means the current step’s <code dir="auto">on.next</code> names this step and no open one: every entry
 it could take leads to a step whose <code dir="auto">when</code> is false, and <code dir="auto">by</code> is the first of them. The move is
 refused rather than skipped past, because the transition names where to go. Open the condition,

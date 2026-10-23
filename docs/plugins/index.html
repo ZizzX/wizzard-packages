@@ -215,7 +215,8 @@ one entry per navigation, belongs in <code dir="auto">onAttempt</code> or <code 
 <li>the leaving step’s <code dir="auto">validate</code>, going forward</li>
 <li>the leaving step’s exit guard</li>
 <li>the target is resolved, then checked for reachability and policy</li>
-<li><code dir="auto">loadStep</code> for a <code dir="auto">deferred</code> step, then the step’s <code dir="auto">load</code></li>
+<li><code dir="auto">loadStep</code> for a <code dir="auto">deferred</code> step, then the step - read again, so the body a <code dir="auto">loadStep</code>
+installed - is checked for reachability and its <code dir="auto">load</code> runs</li>
 <li>the target’s enter guard</li>
 <li>the commit</li>
 <li><code dir="auto">afterNavigate</code> on every plugin</li>
