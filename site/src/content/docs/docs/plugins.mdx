@@ -114,7 +114,8 @@ one entry per navigation, belongs in `onAttempt` or `afterNavigate` rather than 
 2. the leaving step's `validate`, going forward
 3. the leaving step's exit guard
 4. the target is resolved, then checked for reachability and policy
-5. `loadStep` for a `deferred` step, then the step's `load`
+5. `loadStep` for a `deferred` step, then the step - read again, so the body a `loadStep`
+   installed - is checked for reachability and its `load` runs
 6. the target's enter guard
 7. the commit
 8. `afterNavigate` on every plugin

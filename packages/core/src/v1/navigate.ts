@@ -211,6 +211,9 @@ export interface Hooks {
    * Work to finish before a deferred step is entered, typically fetching its
    * body over the network. The engine awaits it and reads nothing back: a flow
    * changes shape only through `patchFlow`, so the body is installed there.
+   * The step is read again once every loader has finished, so the body's
+   * `when`, `load` and enter guard are the ones the move checks; a step inside
+   * a group is not, since `patchFlow` replaces root steps only.
    */
   loadStep?: (stepId: string, signal: AbortSignal) => Promise<void>;
 }
@@ -298,6 +301,10 @@ export interface Traversal {
  * @internal
  */
 export interface NavContext {
+  /**
+   * The flow the move runs on. Read once when the move begins, and again after
+   * a deferred step's `loadStep`, which installs its body through `patchFlow`.
+   */
   flow: FlowDefinition;
   registry?: AsyncRegistry;
   /**
@@ -561,7 +568,7 @@ async function pipeline(
     // the target's `when` holds, not that it is in `order`: a step outside
     // `order` is a branch, entered by `on.next` or `go()`.
     const where = move ?? at;
-    const step = where.flow.steps[target];
+    let step = where.flow.steps[target];
     if (!step) return fail({ ok: false, reason: 'no-target' });
 
     if (!stay && !enterable(where.flow, target, where.scope, registry)) {
@@ -577,7 +584,12 @@ async function pipeline(
       return fail({ ok: false, reason: 'blocked', by: target });
     }
 
+    // A root target's scope is `{ data, ctx }`, read again after each await
+    // below; only a target inside a group needs the one its move computed.
+    const root = where.flow === flow;
+
     // 6. Load. The only phase that may take real time.
+    let scope = where.scope;
     if (step.deferred === true || step.load !== undefined) {
       const busyAt = host.read();
       host.write(commit(busyAt, { busy: add(busyAt.busy, target) }));
@@ -600,11 +612,26 @@ async function pipeline(
             if (calledOff()) return fail(aborted);
             if (h.loadStep && live(h)) await h.loadStep(target, controller.signal);
           }
+          // The step is read again: what was read above is the placeholder,
+          // and the body a loader installed through `patchFlow` brings its own
+          // `when`, `load` and enter guard. Its `when` and `load` read the data
+          // as the loader left it, since a loader often writes what it
+          // fetched. Only a root step is patched, so a step inside a sub-flow
+          // stays as the move found it, and so does its scope.
+          if (stale()) return superseded;
+          if (calledOff()) return fail(aborted);
+          const owner = root ? ctx.flow : where.flow;
+          if (root) scope = scopeOf(host.read());
+          step = owner.steps[target];
+          if (!step) return fail({ ok: false, reason: 'no-target' });
+          if (!stay && !enterable(owner, target, scope, registry)) {
+            return fail({ ok: false, reason: 'not-reachable', by: target });
+          }
         }
         if (stale()) return superseded;
         if (calledOff()) return fail(aborted);
         if (step.load !== undefined && ctx.load) {
-          await ctx.load(target, step.load, where.scope, controller.signal);
+          await ctx.load(target, step.load, scope, controller.signal);
         }
       } finally {
         ctx.signal?.removeEventListener('abort', onAbort);
@@ -614,11 +641,13 @@ async function pipeline(
       if (calledOff()) return fail(aborted);
     }
 
-    // 7. Enter guard. A group move brings its own scope, because the target's
-    // `loop` does not exist anywhere until the move that creates it.
+    // 7. Enter guard. A group move into a sub-flow brings its own scope,
+    // because the target's `loop` does not exist anywhere until the move that
+    // creates it. A root target reads the state as the loaders left it, with
+    // `groups` installed or not.
     const canEnter = await testAsync(
       step.guards?.enter,
-      move ? move.scope : scopeOf(host.read()),
+      move && !root ? move.scope : scopeOf(host.read()),
       registry
     );
     if (stale()) return superseded;

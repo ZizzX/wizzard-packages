@@ -6,6 +6,8 @@ import type { FlowDefinition, StepDef } from './flow';
 import { runNav, type NavContext } from './navigate';
 import { createSelector } from './select';
 import { initialState, type WizardState } from './state';
+import { groups } from './groups';
+import { createWizard } from './store';
 
 /**
  * `canBack` and `back()` are two answers to the same question, and they used to
@@ -143,6 +145,97 @@ describe('canBack', () => {
           const expected = currentOf(state) !== null && (await backWouldMove({ flow }, state));
           expect(select(state).canBack).toBe(expected);
         });
+      }),
+      { numRuns: 300 }
+    );
+  });
+});
+
+/**
+ * A `deferred` step is a placeholder until its `loadStep` installs the body,
+ * and the move that loaded it is decided by that body: its `when` against the
+ * data as the loader left it, then its `load`, then its enter guard. Generated
+ * rather than listed, because the bug this pins was one combination - a body
+ * whose guard refuses - that no example happened to cover.
+ */
+describe('a deferred step, once its body is installed', () => {
+  const arbCase = fc.record({
+    /** `data.open` before the move. */
+    before: fc.boolean(),
+    /** `data.open` as the loader leaves it; `undefined` writes nothing. */
+    written: fc.option(fc.boolean(), { nil: undefined }),
+    /** Whether the body's `when` reads `data.open`. */
+    gated: fc.boolean(),
+    /** The body's enter guard: always, never, or `data.open`; `undefined` has none. */
+    guard: fc.option(fc.constantFrom('yes', 'no', 'open'), { nil: undefined }),
+    /** Whether the body names a `load`. */
+    loads: fc.boolean(),
+    /**
+     * Whether `groups` is installed. With it every move, a flat one too, is
+     * resolved by the traversal and carries its own scope.
+     */
+    grouped: fc.boolean(),
+  });
+
+  it('enters, or refuses, exactly as the body says', async () => {
+    await fc.assert(
+      fc.asyncProperty(arbCase, async ({ before, written, gated, guard, loads, grouped }) => {
+        const ran: string[] = [];
+        const body: StepDef = {
+          ...(gated ? { when: { $get: 'data.open' } } : {}),
+          ...(guard === undefined ? {} : { guards: { enter: { $ref: guard } } }),
+          ...(loads ? { load: { $ref: 'fetch' } } : {}),
+        };
+        const w = createWizard({
+          flow: {
+            id: 'deferred',
+            order: ['intro', 'offer', 'done'],
+            steps: { intro: {}, offer: { deferred: true }, done: {} },
+          },
+          data: { open: before },
+          ...(grouped ? { groups } : {}),
+          registry: {
+            yes: () => true,
+            no: () => false,
+            open: (_args: unknown, scope: { data: Record<string, unknown> }) =>
+              scope.data.open === true,
+            // Records what it saw: the body's load reads the data as the
+            // loader left it, as its `when` and enter guard do.
+            fetch: (_args: unknown, scope: { data: Record<string, unknown> }) => {
+              ran.push(`load:${String(scope.data.open)}`);
+            },
+          },
+          plugins: [
+            {
+              name: 'server',
+              loadStep: (id) => {
+                if (written !== undefined) w.set('open', written);
+                w.patchFlow({ steps: { [id]: body } });
+                return Promise.resolve();
+              },
+            },
+          ],
+        });
+        await w.start();
+        const result = await w.next();
+
+        const reachable = !gated || (written ?? before);
+        const now = written ?? before;
+        const entered = reachable && guard !== 'no' && (guard !== 'open' || now);
+        if (entered) expect(result).toEqual({ ok: true, from: 'intro', to: 'offer' });
+        else {
+          expect(result).toMatchObject({
+            ok: false,
+            reason: reachable ? 'blocked' : 'not-reachable',
+            by: 'offer',
+          });
+        }
+        expect(w.getSnapshot().current).toBe(entered ? 'offer' : 'intro');
+        // The body's load runs whenever the body is reachable, before its
+        // guard, and sees what the loader wrote.
+        expect(ran).toEqual(reachable && loads ? [`load:${String(now)}`] : []);
+        expect(w.getState().busy).toEqual([]);
+        expect(w.getState().status).toBe('idle');
       }),
       { numRuns: 300 }
     );

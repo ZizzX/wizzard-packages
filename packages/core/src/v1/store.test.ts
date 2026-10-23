@@ -605,6 +605,98 @@ describe('patchFlow', () => {
   });
 });
 
+// A deferred step is a placeholder until its loadStep installs the body through
+// patchFlow. What the move then enters is the body: the placeholder has no
+// guards or load of its own to stand in for it.
+describe('a body loadStep installs', () => {
+  const placeholder: FlowDefinition = {
+    id: 'offer',
+    order: ['intro', 'offer', 'done'],
+    steps: { intro: {}, offer: { deferred: true }, done: {} },
+  };
+
+  const installing = (body: FlowDefinition['steps'][string], registry = {}) => {
+    const loaded: string[] = [];
+    const w = createWizard({
+      flow: placeholder,
+      registry: {
+        ...registry,
+        offerData: () => {
+          loaded.push('load');
+        },
+      },
+      plugins: [
+        {
+          name: 'server',
+          loadStep: (id) => {
+            loaded.push(id);
+            w.patchFlow({ steps: { [id]: body } });
+            return Promise.resolve();
+          },
+        },
+      ],
+    });
+    return { w, loaded };
+  };
+
+  it('refuses the move when the body’s enter guard does', async () => {
+    const { w } = installing({ guards: { enter: { $ref: 'nope' } } }, { nope: () => false });
+    await w.start();
+
+    expect(await w.next()).toMatchObject({ ok: false, reason: 'blocked', by: 'offer' });
+    expect(w.getSnapshot().current).toBe('intro');
+    expect(w.getState().busy).toEqual([]);
+  });
+
+  // The loader often writes what it fetched before installing the body, and
+  // the body's `when` may read exactly that: the scope is the one after the load.
+  it('checks the body’s when against the data the loader wrote', async () => {
+    const w = createWizard({
+      flow: placeholder,
+      data: { open: false },
+      plugins: [
+        {
+          name: 'server',
+          loadStep: (id) => {
+            w.set('open', true);
+            w.patchFlow({ steps: { [id]: { when: { $get: 'data.open' } } } });
+            return Promise.resolve();
+          },
+        },
+      ],
+    });
+    await w.start();
+
+    expect(await w.next()).toMatchObject({ ok: true, to: 'offer' });
+  });
+
+  it('runs the body’s load before entering it', async () => {
+    const { w, loaded } = installing({ load: { $ref: 'offerData' } });
+    await w.start();
+
+    expect(await w.next()).toMatchObject({ ok: true, to: 'offer' });
+    expect(loaded).toEqual(['offer', 'load']);
+  });
+
+  it('refuses a body whose when no longer holds as not reachable', async () => {
+    const { w, loaded } = installing({ when: false, load: { $ref: 'offerData' } });
+    await w.start();
+
+    expect(await w.next()).toMatchObject({ ok: false, reason: 'not-reachable', by: 'offer' });
+    expect(w.getSnapshot().current).toBe('intro');
+    // Refused before its load: a step that cannot be entered has nothing to fetch.
+    expect(loaded).toEqual(['offer']);
+  });
+
+  it('enters a body without guards as before', async () => {
+    const { w } = installing({ label: 'Offer' });
+    await w.start();
+
+    expect(await w.next()).toMatchObject({ ok: true, to: 'offer' });
+    expect(w.getSnapshot().breadcrumbs[1]).toMatchObject({ id: 'offer', label: 'Offer' });
+  });
+});
+
 describe('start', () => {
   // persist restores in a plugin's init, before start(); the restored step was
   // never entered in this engine's life.

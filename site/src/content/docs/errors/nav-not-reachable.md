@@ -17,6 +17,10 @@ anyway is refused. `force: true` does not change that: `force` skips the navigat
 step the flow says is not there is not a matter of policy. A group whose own `when` is false is
 refused the same way.
 
+A `deferred` step is asked twice: once as the placeholder, and again once its `loadStep` has
+installed the body, whose own `when` then decides. A body the server sends with a `when` that is
+false for the current data is refused here, after the load, and its `load` does not run.
+
 From `next()` it means the current step's `on.next` names this step and no open one: every entry
 it could take leads to a step whose `when` is false, and `by` is the first of them. The move is
 refused rather than skipped past, because the transition names where to go. Open the condition,
