@@ -84,8 +84,8 @@ and calls it only from `loadStep`, when the wizard exists:
 The installed body is the step from then on, the move that installed it included: once every
 `loadStep` has finished, the engine reads the step again and checks the body, not the placeholder.
 A body whose `when` does not hold for the data as the loaders left it - a loader may `set` what it
-fetched first - is refused as `not-reachable`; otherwise its `load` runs next, and its enter guard
-decides the entry. A body the server sends without `deferred` is not fetched again
+fetched first - is refused as `not-reachable`; otherwise its `load` runs next, reading that same
+data, and its enter guard decides the entry. A body the server sends without `deferred` is not fetched again
 when the user comes back to the step; one that still says `deferred: true` is.
 
 This applies to a step of the root flow. `patchFlow` replaces root steps only, so a `deferred`

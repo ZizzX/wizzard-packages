@@ -190,8 +190,10 @@ describe('a deferred step, once its body is installed', () => {
           registry: {
             yes: () => true,
             no: () => false,
-            fetch: () => {
-              ran.push('load');
+            // Records what it saw: the body's load reads the data as the
+            // loader left it, as its `when` and enter guard do.
+            fetch: (_args: unknown, scope: { data: Record<string, unknown> }) => {
+              ran.push(`load:${String(scope.data.open)}`);
             },
           },
           plugins: [
@@ -219,8 +221,9 @@ describe('a deferred step, once its body is installed', () => {
           });
         }
         expect(w.getSnapshot().current).toBe(entered ? 'offer' : 'intro');
-        // The body's load runs whenever the body is reachable, before its guard.
-        expect(ran).toEqual(reachable && loads ? ['load'] : []);
+        // The body's load runs whenever the body is reachable, before its
+        // guard, and sees what the loader wrote.
+        expect(ran).toEqual(reachable && loads ? [`load:${String(written ?? before)}`] : []);
         expect(w.getState().busy).toEqual([]);
         expect(w.getState().status).toBe('idle');
       }),

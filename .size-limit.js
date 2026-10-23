@@ -219,12 +219,12 @@ export default [
   // `before-navigate-invalid` instead of a bare `TypeError` from `'block' in`.
   // The bytes are the check, a guarded `JSON.stringify` of the answer, and the
   // three-part message.
-  // 7.45 to 7.46 kB on 2026-10-23 for T-116, measured 7455 B: a `deferred` step
+  // 7.45 to 7.47 kB on 2026-10-23 for T-116, measured 7467 B: a `deferred` step
   // is read again once its `loadStep` has installed the body, so the body's
-  // `when` - against the data the loader wrote - its `load` and its enter guard
-  // decide the move that loaded it. The placeholder's were checked instead,
-  // and a body whose guard refused was entered anyway.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '7.46 kB', gzip: true },
+  // `when`, its `load` - both reading the data the loader wrote - and its enter
+  // guard decide the move that loaded it. The placeholder's were checked
+  // instead, and a body whose guard refused was entered anyway.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '7.47 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a

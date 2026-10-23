@@ -585,6 +585,7 @@ async function pipeline(
     }
 
     // 6. Load. The only phase that may take real time.
+    let scope = where.scope;
     if (step.deferred === true || step.load !== undefined) {
       const busyAt = host.read();
       host.write(commit(busyAt, { busy: add(busyAt.busy, target) }));
@@ -609,27 +610,25 @@ async function pipeline(
           }
           // The step is read again: what was read above is the placeholder,
           // and the body a loader installed through `patchFlow` brings its own
-          // `when`, `load` and enter guard. Its `when` reads the data as the
-          // loader left it, since a loader often writes what it fetched. Only
-          // a root step is patched, so a step inside a sub-flow stays as the
-          // move found it.
+          // `when`, `load` and enter guard. Its `when` and `load` read the data
+          // as the loader left it, since a loader often writes what it
+          // fetched. Only a root step is patched, so a step inside a sub-flow
+          // stays as the move found it, and so does its scope.
           if (stale()) return superseded;
           if (calledOff()) return fail(aborted);
           const root = where.flow === flow;
           const owner = root ? ctx.flow : where.flow;
+          if (root) scope = scopeOf(host.read());
           step = owner.steps[target];
           if (!step) return fail({ ok: false, reason: 'no-target' });
-          if (
-            !stay &&
-            !enterable(owner, target, root ? scopeOf(host.read()) : where.scope, registry)
-          ) {
+          if (!stay && !enterable(owner, target, scope, registry)) {
             return fail({ ok: false, reason: 'not-reachable', by: target });
           }
         }
         if (stale()) return superseded;
         if (calledOff()) return fail(aborted);
         if (step.load !== undefined && ctx.load) {
-          await ctx.load(target, step.load, where.scope, controller.signal);
+          await ctx.load(target, step.load, scope, controller.signal);
         }
       } finally {
         ctx.signal?.removeEventListener('abort', onAbort);
