@@ -234,13 +234,7 @@ function Stage({ code }: { code: ReactNode }): ReactNode {
           >
             <Form
               log={log}
-              onBack={() => {
-                // A refusal is about the step being left, and the engine keys it
-                // by step, not by passenger: kept, it would follow Back onto the
-                // passenger before, under a passport that is filled in.
-                if (snapshot.current !== null) wizard.setErrors(snapshot.current, null);
-                void move('back()', wizard.back());
-              }}
+              onBack={() => void move('back()', wizard.back())}
               onAgain={(play) => void again(play)}
             />
           </form>
