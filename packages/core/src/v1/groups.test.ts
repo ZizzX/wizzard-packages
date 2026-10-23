@@ -1223,6 +1223,42 @@ describe('a deferred step whose body is a group', () => {
     expect(wizard.getState().busy).toEqual([]);
   });
 
+  // start() on a restored placeholder enters it in place: the group is
+  // entered the same way, and nothing is recorded.
+  it('enters the group when start() enters a restored placeholder', async () => {
+    const loaded: string[] = [];
+    const wizard = createWizard({
+      flow: placeholder,
+      groups,
+      data: { passengers },
+      state: {
+        ...initialState({ passengers }),
+        stack: [{ flow: 'booking', step: 'each' }],
+        history: [[{ flow: 'booking', step: 'who' }]],
+        status: 'idle',
+      },
+      plugins: [
+        {
+          name: 'server',
+          loadStep: (id) => {
+            loaded.push(id);
+            wizard.patchFlow({ steps: { [id]: { flow: passenger } } });
+            return Promise.resolve();
+          },
+        },
+      ],
+    });
+
+    expect(await wizard.start()).toMatchObject({ ok: true, to: 'seat' });
+    expect(loaded).toEqual(['each']);
+    expect(at(wizard)).toEqual([
+      { flow: 'booking', step: 'each' },
+      { flow: 'passenger', step: 'seat' },
+    ]);
+    expect(wizard.getState().history).toEqual([[{ flow: 'booking', step: 'who' }]]);
+    expect(wizard.getState().busy).toEqual([]);
+  });
+
   it('enters the group on a go() to the placeholder too', async () => {
     const { wizard } = installing({ flow: passenger });
     await wizard.start();
