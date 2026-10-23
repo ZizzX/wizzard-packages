@@ -1259,6 +1259,34 @@ describe('a deferred step whose body is a group', () => {
     expect(wizard.getState().busy).toEqual([]);
   });
 
+  // The group's id leaves `busy` before the move is resolved again, and a
+  // subscriber may start a move of its own on that write. The overtaken move
+  // stops there, and marks nothing busy that nobody will clear.
+  it('stops when a move started on its busy write overtakes it', async () => {
+    const { wizard } = installing(
+      { flow: { ...passenger, steps: { ...passenger.steps, seat: { load: { $ref: 'seats' } } } } },
+      { passengers },
+      { registry: { seats: () => undefined } }
+    );
+    await wizard.start();
+    let fired = false;
+    let overtaking: Promise<unknown> | undefined;
+    wizard.subscribe(() => {
+      const s = wizard.getState();
+      const each = wizard.getFlow().steps.each;
+      if (!fired && each && isGroup(each) && s.status === 'busy' && s.busy.length === 0) {
+        // Set before the call: the move's own lock write notifies synchronously.
+        fired = true;
+        overtaking = wizard.go('review', { force: true });
+      }
+    });
+
+    expect(await wizard.next()).toMatchObject({ ok: false, reason: 'superseded' });
+    expect(await overtaking).toMatchObject({ ok: true, to: 'review' });
+    expect(wizard.getState().busy).toEqual([]);
+    expect(wizard.getState().status).toBe('idle');
+  });
+
   it('enters the group on a go() to the placeholder too', async () => {
     const { wizard } = installing({ flow: passenger });
     await wizard.start();

@@ -224,7 +224,7 @@ export default [
   // `when`, its `load` - both reading the data the loader wrote - and its enter
   // guard decide the move that loaded it. The placeholder's were checked
   // instead, and a body whose guard refused was entered anyway.
-  // 7.47 to 7.51 kB on 2026-10-23 for T-122, measured 7505 B: a `deferred` root
+  // 7.47 to 7.51 kB on 2026-10-23 for T-122, measured 7509 B: a `deferred` root
   // step whose body is a group is entered rather than stood on. The move was
   // resolved on the placeholder atom, so it committed a stack ending on the
   // group itself, with no step to render; phases 4 to 9 now run again on the

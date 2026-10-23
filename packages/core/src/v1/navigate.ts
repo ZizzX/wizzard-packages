@@ -642,6 +642,9 @@ async function pipeline(
             if (root && traversal && isGroup(step)) {
               const now = host.read();
               host.write(commit(now, { busy: now.busy.filter((id) => id !== target) }));
+              // A listener of that write may have started a move of its own,
+              // and this one must not go on to mark the next target busy.
+              if (stale()) return superseded;
               base = ctx.flow;
               continue resolve;
             }
