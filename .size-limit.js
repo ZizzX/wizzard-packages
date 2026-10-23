@@ -219,7 +219,7 @@ export default [
   // `before-navigate-invalid` instead of a bare `TypeError` from `'block' in`.
   // The bytes are the check, a guarded `JSON.stringify` of the answer, and the
   // three-part message.
-  // 7.45 to 7.47 kB on 2026-10-23 for T-116, measured 7467 B: a `deferred` step
+  // 7.45 to 7.47 kB on 2026-10-23 for T-116, measured 7463 B: a `deferred` step
   // is read again once its `loadStep` has installed the body, so the body's
   // `when`, its `load` - both reading the data the loader wrote - and its enter
   // guard decide the move that loaded it. The placeholder's were checked

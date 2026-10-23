@@ -6,6 +6,7 @@ import type { FlowDefinition, StepDef } from './flow';
 import { runNav, type NavContext } from './navigate';
 import { createSelector } from './select';
 import { initialState, type WizardState } from './state';
+import { groups } from './groups';
 import { createWizard } from './store';
 
 /**
@@ -165,19 +166,24 @@ describe('a deferred step, once its body is installed', () => {
     written: fc.option(fc.boolean(), { nil: undefined }),
     /** Whether the body's `when` reads `data.open`. */
     gated: fc.boolean(),
-    /** The body's enter guard; `undefined` has none. */
-    guard: fc.option(fc.boolean(), { nil: undefined }),
+    /** The body's enter guard: always, never, or `data.open`; `undefined` has none. */
+    guard: fc.option(fc.constantFrom('yes', 'no', 'open'), { nil: undefined }),
     /** Whether the body names a `load`. */
     loads: fc.boolean(),
+    /**
+     * Whether `groups` is installed. With it every move, a flat one too, is
+     * resolved by the traversal and carries its own scope.
+     */
+    grouped: fc.boolean(),
   });
 
   it('enters, or refuses, exactly as the body says', async () => {
     await fc.assert(
-      fc.asyncProperty(arbCase, async ({ before, written, gated, guard, loads }) => {
+      fc.asyncProperty(arbCase, async ({ before, written, gated, guard, loads, grouped }) => {
         const ran: string[] = [];
         const body: StepDef = {
           ...(gated ? { when: { $get: 'data.open' } } : {}),
-          ...(guard === undefined ? {} : { guards: { enter: { $ref: guard ? 'yes' : 'no' } } }),
+          ...(guard === undefined ? {} : { guards: { enter: { $ref: guard } } }),
           ...(loads ? { load: { $ref: 'fetch' } } : {}),
         };
         const w = createWizard({
@@ -187,9 +193,12 @@ describe('a deferred step, once its body is installed', () => {
             steps: { intro: {}, offer: { deferred: true }, done: {} },
           },
           data: { open: before },
+          ...(grouped ? { groups } : {}),
           registry: {
             yes: () => true,
             no: () => false,
+            open: (_args: unknown, scope: { data: Record<string, unknown> }) =>
+              scope.data.open === true,
             // Records what it saw: the body's load reads the data as the
             // loader left it, as its `when` and enter guard do.
             fetch: (_args: unknown, scope: { data: Record<string, unknown> }) => {
@@ -211,7 +220,8 @@ describe('a deferred step, once its body is installed', () => {
         const result = await w.next();
 
         const reachable = !gated || (written ?? before);
-        const entered = reachable && guard !== false;
+        const now = written ?? before;
+        const entered = reachable && guard !== 'no' && (guard !== 'open' || now);
         if (entered) expect(result).toEqual({ ok: true, from: 'intro', to: 'offer' });
         else {
           expect(result).toMatchObject({
@@ -223,11 +233,11 @@ describe('a deferred step, once its body is installed', () => {
         expect(w.getSnapshot().current).toBe(entered ? 'offer' : 'intro');
         // The body's load runs whenever the body is reachable, before its
         // guard, and sees what the loader wrote.
-        expect(ran).toEqual(reachable && loads ? [`load:${String(written ?? before)}`] : []);
+        expect(ran).toEqual(reachable && loads ? [`load:${String(now)}`] : []);
         expect(w.getState().busy).toEqual([]);
         expect(w.getState().status).toBe('idle');
       }),
-      { numRuns: 200 }
+      { numRuns: 300 }
     );
   });
 });

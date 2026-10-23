@@ -584,6 +584,10 @@ async function pipeline(
       return fail({ ok: false, reason: 'blocked', by: target });
     }
 
+    // A root target's scope is `{ data, ctx }`, read again after each await
+    // below; only a target inside a group needs the one its move computed.
+    const root = where.flow === flow;
+
     // 6. Load. The only phase that may take real time.
     let scope = where.scope;
     if (step.deferred === true || step.load !== undefined) {
@@ -616,7 +620,6 @@ async function pipeline(
           // stays as the move found it, and so does its scope.
           if (stale()) return superseded;
           if (calledOff()) return fail(aborted);
-          const root = where.flow === flow;
           const owner = root ? ctx.flow : where.flow;
           if (root) scope = scopeOf(host.read());
           step = owner.steps[target];
@@ -638,11 +641,13 @@ async function pipeline(
       if (calledOff()) return fail(aborted);
     }
 
-    // 7. Enter guard. A group move brings its own scope, because the target's
-    // `loop` does not exist anywhere until the move that creates it.
+    // 7. Enter guard. A group move into a sub-flow brings its own scope,
+    // because the target's `loop` does not exist anywhere until the move that
+    // creates it. A root target reads the state as the loaders left it, with
+    // `groups` installed or not.
     const canEnter = await testAsync(
       step.guards?.enter,
-      move ? move.scope : scopeOf(host.read()),
+      move && !root ? move.scope : scopeOf(host.read()),
       registry
     );
     if (stale()) return superseded;
