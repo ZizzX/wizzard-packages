@@ -211,6 +211,9 @@ export interface Hooks {
    * Work to finish before a deferred step is entered, typically fetching its
    * body over the network. The engine awaits it and reads nothing back: a flow
    * changes shape only through `patchFlow`, so the body is installed there.
+   * The step is read again once every loader has finished, so the body's
+   * `when`, `load` and enter guard are the ones the move checks; a step inside
+   * a group is not, since `patchFlow` replaces root steps only.
    */
   loadStep?: (stepId: string, signal: AbortSignal) => Promise<void>;
 }
@@ -298,6 +301,10 @@ export interface Traversal {
  * @internal
  */
 export interface NavContext {
+  /**
+   * The flow the move runs on. Read once when the move begins, and again after
+   * a deferred step's `loadStep`, which installs its body through `patchFlow`.
+   */
   flow: FlowDefinition;
   registry?: AsyncRegistry;
   /**
@@ -561,7 +568,7 @@ async function pipeline(
     // the target's `when` holds, not that it is in `order`: a step outside
     // `order` is a branch, entered by `on.next` or `go()`.
     const where = move ?? at;
-    const step = where.flow.steps[target];
+    let step = where.flow.steps[target];
     if (!step) return fail({ ok: false, reason: 'no-target' });
 
     if (!stay && !enterable(where.flow, target, where.scope, registry)) {
@@ -599,6 +606,18 @@ async function pipeline(
             if (stale()) return superseded;
             if (calledOff()) return fail(aborted);
             if (h.loadStep && live(h)) await h.loadStep(target, controller.signal);
+          }
+          // The step is read again: what was read above is the placeholder,
+          // and the body a loader installed through `patchFlow` brings its own
+          // `when`, `load` and enter guard. Only a root step is patched, so a
+          // step inside a sub-flow stays as the move found it.
+          if (stale()) return superseded;
+          if (calledOff()) return fail(aborted);
+          const owner = where.flow === flow ? ctx.flow : where.flow;
+          step = owner.steps[target];
+          if (!step) return fail({ ok: false, reason: 'no-target' });
+          if (!stay && !enterable(owner, target, where.scope, registry)) {
+            return fail({ ok: false, reason: 'not-reachable', by: target });
           }
         }
         if (stale()) return superseded;

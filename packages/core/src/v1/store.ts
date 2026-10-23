@@ -426,7 +426,11 @@ export function createWizard<F extends FlowDefinition>(options: WizardOptions<F>
   };
 
   const navContext = (): NavContext => ({
-    flow,
+    // A getter, like `hooks`: a deferred step's body arrives by `patchFlow`
+    // in the middle of the move, and the pipeline reads the flow again for it.
+    get flow() {
+      return flow;
+    },
     registry,
     groups: traversal,
     subFlows,
