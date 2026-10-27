@@ -277,7 +277,7 @@ export default [
   // with no position left in it instead of walking through it forwards (T-083).
   // 4.55 to 4.6 kB on 2026-10-16, measured 4571 B: the same `on.back` reader as
   // core-v1, which a group's sub-flow resolves its way back with (T-095).
-  // 4.6 to 4.75 kB on 2026-10-23, measured 4735 B: a move that leaves a repeat item
+  // 4.6 to 4.75 kB on 2026-10-23, measured 4747 B: a move that leaves a repeat item
   // names that item's step ids, nested groups included, so their errors are dropped
   // instead of showing on the next item that stands on the same step (T-101).
   { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '4.75 kB', gzip: true },

@@ -1227,6 +1227,43 @@ describe('T-101 the errors of an item', () => {
     expect(wizard.getState().errors).toEqual({});
   });
 
+  // The item left sits inside a group that is not a repeat, and the move walks
+  // out of both: the traversal pops the levels as it goes, so the item's flow
+  // is looked up where the move began, not in what is left of them.
+  it('drops them when next() leaves an item inside a plain group for the root', async () => {
+    const wizard = build(
+      {
+        id: 'trip',
+        order: ['start', 'section', 'end'],
+        steps: {
+          start: {},
+          section: {
+            flow: {
+              id: 'section',
+              order: ['each'],
+              steps: {
+                each: {
+                  flow: passenger,
+                  repeat: { over: { $get: 'data.passengers' }, keyBy: 'id' },
+                },
+              },
+            },
+          },
+          end: {},
+        },
+      },
+      { passengers: [{ id: 'p1' }] }
+    );
+    await wizard.start();
+    await wizard.next(); // p1 seat
+    await wizard.next(); // p1 meal
+    expect(wizard.getState().stack.map((f) => f.step)).toEqual(['section', 'each', 'meal']);
+    wizard.setErrors('meal', { meal: 'required' });
+
+    expect(await wizard.next({ validate: false })).toMatchObject({ ok: true, to: 'end' });
+    expect(wizard.getState().errors).toEqual({});
+  });
+
   it('keeps them for a back() inside one item', async () => {
     const wizard = checked();
     await wizard.start();
