@@ -224,7 +224,15 @@ export default [
   // `when`, its `load` - both reading the data the loader wrote - and its enter
   // guard decide the move that loaded it. The placeholder's were checked
   // instead, and a body whose guard refused was entered anyway.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '7.47 kB', gzip: true },
+  // 7.47 to 7.51 kB on 2026-10-23 for T-122, measured 7509 B: a `deferred` root
+  // step whose body is a group is entered rather than stood on. The move was
+  // resolved on the placeholder atom, so it committed a stack ending on the
+  // group itself, with no step to render; phases 4 to 9 now run again on the
+  // flow the loaders left, and whatever that reaches is loaded and guarded.
+  // 7.51 to 7.53 kB on 2026-10-27 for T-101, measured 7521 B: phase 9 drops the
+  // errors of the repeat item a move leaves, by the step ids the traversal names,
+  // so the next item standing on the same step does not show them.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '7.53 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a
