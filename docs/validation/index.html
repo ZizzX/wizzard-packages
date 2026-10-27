@@ -128,6 +128,11 @@ wherever it leads, unless the move is passed <code dir="auto">validate: false</c
 <p><code dir="auto">validate</code> resolves to a boolean. The messages it produced live in the wizard’s state and are
 read through <code dir="auto">useErrors()</code>, so a field component does not need the result of the call that
 created them.</p>
+<p>Messages stay until they are replaced, the step passes a check, or <code dir="auto">reset()</code> runs. <code dir="auto">back()</code>
+keeps them, so a step that refused still says why when it is reached again. The exception is a
+repeat group: every item shares its steps’ ids, so a move that leaves an item drops the messages
+of that item’s steps - what the second passenger was refused for is not shown on the first one
+after Back. <a href="../groups/">Groups</a> has the rest of what a repeat changes.</p>
 <p>There is no <code dir="auto">validateAll()</code>. The engine checks a step as it is left, so a whole-flow check is a
 question about steps nobody has reached yet, and its answer goes stale as soon as anything is
 typed. Checking several steps on purpose is a loop over <code dir="auto">validate(step)</code>, which also says which

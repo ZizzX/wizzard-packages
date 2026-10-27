@@ -191,6 +191,11 @@ that fails leaves its name <code dir="auto">undefined</code> rather than refusin
 reads “step 2 of 3” for this passenger rather than “step 2 of 3” for the trip - the counts in the
 output above. <code dir="auto">canBack</code> and <code dir="auto">isLast</code> come from the traversal too: the last step of the third
 passenger is not the last step of the trip.</p>
+<p>Errors are kept by step id, as at the root, and every item of a repeat shares its steps’ ids. So
+a move that leaves an item - forward to the next one, back to the one before, out of the group,
+or off an item that was removed - drops the errors of that item’s steps, the ones of groups
+nested in it included. Without that, the second passenger’s refusal would follow Back onto the
+first. Inside one item they stay as they do at the root.</p>
 <p>The enclosing groups are in <code dir="auto">stack</code>, one frame each - <code dir="auto">{ flow, step, key }</code> - with the current
 step last. That is what <code dir="auto">where()</code> above prints, what a snapshot stores, and why a repeat needs a
 <code dir="auto">version</code>: the frames name keys of a list the next session may have changed.</p>
