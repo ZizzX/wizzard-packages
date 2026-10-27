@@ -123,6 +123,12 @@ wizard.setErrors('details', null); // clear
 read through `useErrors()`, so a field component does not need the result of the call that
 created them.
 
+Messages stay until they are replaced, the step passes a check, or `reset()` runs. `back()`
+keeps them, so a step that refused still says why when it is reached again. The exception is a
+repeat group: every item shares its steps' ids, so a move that leaves an item drops the messages
+of that item's steps - what the second passenger was refused for is not shown on the first one
+after Back. [Groups](../groups/) has the rest of what a repeat changes.
+
 There is no `validateAll()`. The engine checks a step as it is left, so a whole-flow check is a
 question about steps nobody has reached yet, and its answer goes stale as soon as anything is
 typed. Checking several steps on purpose is a loop over `validate(step)`, which also says which

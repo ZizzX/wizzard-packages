@@ -1095,6 +1095,210 @@ describe('the frame a binding is asked to render', () => {
   });
 });
 
+describe('T-101 the errors of an item', () => {
+  /** Every item shares the step ids `seat` and `meal`; p2's seat and an unanswered meal refuse. */
+  const checked = (): ReturnType<typeof createWizard> =>
+    build(
+      {
+        ...booking(),
+        steps: {
+          ...booking().steps,
+          each: {
+            flow: {
+              ...passenger,
+              steps: {
+                seat: { label: 'Seat', validate: { $ref: 'seatRule' } },
+                meal: { label: 'Meal', validate: { $ref: 'mealRule' } },
+              },
+            },
+            repeat: { over: { $get: 'data.passengers' }, keyBy: 'id' },
+          },
+        },
+      },
+      { passengers },
+      {
+        registry: {
+          seatRule: (_args, { loop }) => (loop?.key === 'p2' ? { seat: 'taken' } : null),
+          mealRule: (_args, { data, loop }) =>
+            (data.meals as Record<string, unknown> | undefined)?.[String(loop?.key)]
+              ? null
+              : { meal: 'required' },
+        },
+      }
+    );
+
+  /** Starts, and walks to p2's seat with p1's meal answered. */
+  async function atSecondSeat(): Promise<ReturnType<typeof createWizard>> {
+    const wizard = checked();
+    await wizard.start();
+    wizard.set('meals', { p1: 'veg' });
+    await wizard.next(); // p1 seat
+    await wizard.next(); // p1 meal
+    await wizard.next(); // p2 seat
+    expect([keyOf(wizard), stepOf(wizard)]).toEqual(['p2', 'seat']);
+    return wizard;
+  }
+
+  it('does not show p2 refused on p1 after back()', async () => {
+    const wizard = await atSecondSeat();
+    expect(await wizard.next()).toMatchObject({ ok: false, reason: 'invalid', by: 'seat' });
+    expect(wizard.getState().errors).toEqual({ seat: { seat: 'taken' } });
+
+    await wizard.back();
+    expect([keyOf(wizard), stepOf(wizard)]).toEqual(['p1', 'meal']);
+    expect(wizard.getState().errors).toEqual({});
+    await wizard.back();
+    expect([keyOf(wizard), stepOf(wizard)]).toEqual(['p1', 'seat']);
+    expect(wizard.getState().errors).toEqual({});
+  });
+
+  it('drops what was set on an item when a move goes on to the next one', async () => {
+    const wizard = checked();
+    await wizard.start();
+    wizard.set('meals', { p1: 'veg' });
+    await wizard.next(); // p1 seat
+    await wizard.next(); // p1 meal
+    // A server's answer about p1's seat, which validation on leaving meal does not touch.
+    wizard.setErrors('seat', { seat: 'sold out' });
+
+    expect(await wizard.next()).toMatchObject({ ok: true, to: 'seat' });
+    expect(keyOf(wizard)).toBe('p2');
+    expect(wizard.getState().errors).toEqual({});
+  });
+
+  it('drops them when go() leaves the item', async () => {
+    const wizard = await atSecondSeat();
+    await wizard.next();
+    expect(await wizard.go('who', { validate: false })).toMatchObject({ ok: true, to: 'who' });
+    expect(wizard.getState().errors).toEqual({});
+
+    const forced = await atSecondSeat();
+    await forced.next();
+    expect(await forced.go('review', { validate: false, force: true })).toMatchObject({
+      ok: true,
+      to: 'review',
+    });
+    expect(forced.getState().errors).toEqual({});
+  });
+
+  it('drops them when the item stood on is removed', async () => {
+    const wizard = await atSecondSeat();
+    await wizard.next();
+    wizard.set('passengers', [{ id: 'p1' }, { id: 'p3' }]);
+    await wizard.back();
+    expect(wizard.getState().errors).toEqual({});
+  });
+
+  it('drops an inner item alone, and an outer one with everything nested in it', async () => {
+    // Two steps per bag, so the errors checked are never on the step a validated
+    // move leaves, which clears its own whatever the item.
+    const bags: FlowDefinition = {
+      id: 'bags',
+      order: ['size', 'tag'],
+      steps: { size: {}, tag: {} },
+    };
+    const nested: FlowDefinition = {
+      id: 'passenger',
+      order: ['seat', 'eachBag'],
+      steps: {
+        seat: {},
+        eachBag: { flow: bags, repeat: { over: { $get: 'data.bags' }, keyBy: 'id' } },
+      },
+    };
+    const flow: FlowDefinition = {
+      ...booking(),
+      steps: { ...booking().steps, each: { ...booking().steps.each, flow: nested } as never },
+    };
+    const wizard = build(flow, { passengers, bags: [{ id: 'b1' }, { id: 'b2' }] });
+    await wizard.start();
+    await wizard.next(); // p1/seat
+    await wizard.next(); // p1/b1/size
+    await wizard.next(); // p1/b1/tag
+    wizard.setErrors('seat', { seat: 'p1' });
+    wizard.setErrors('size', { size: 'b1' });
+
+    await wizard.next(); // p1/b2/size: b1 is left, p1 is not
+    expect(wizard.getState().errors).toEqual({ seat: { seat: 'p1' } });
+
+    await wizard.next(); // p1/b2/tag
+    wizard.setErrors('size', { size: 'b2' });
+    await wizard.next(); // p2/seat: p1 is left, and b2 inside it
+    expect(at(wizard)[0]?.key).toBe('p2');
+    expect(wizard.getState().errors).toEqual({});
+  });
+
+  // The item left sits inside a group that is not a repeat, and the move walks
+  // out of both: the traversal pops the levels as it goes, so the item's flow
+  // is looked up where the move began, not in what is left of them.
+  it('drops them when next() leaves an item inside a plain group for the root', async () => {
+    const wizard = build(
+      {
+        id: 'trip',
+        order: ['start', 'section', 'end'],
+        steps: {
+          start: {},
+          section: {
+            flow: {
+              id: 'section',
+              order: ['each'],
+              steps: {
+                each: {
+                  flow: passenger,
+                  repeat: { over: { $get: 'data.passengers' }, keyBy: 'id' },
+                },
+              },
+            },
+          },
+          end: {},
+        },
+      },
+      { passengers: [{ id: 'p1' }] }
+    );
+    await wizard.start();
+    await wizard.next(); // p1 seat
+    await wizard.next(); // p1 meal
+    expect(wizard.getState().stack.map((f) => f.step)).toEqual(['section', 'each', 'meal']);
+    wizard.setErrors('meal', { meal: 'required' });
+
+    expect(await wizard.next({ validate: false })).toMatchObject({ ok: true, to: 'end' });
+    expect(wizard.getState().errors).toEqual({});
+  });
+
+  it('keeps them for a back() inside one item', async () => {
+    const wizard = checked();
+    await wizard.start();
+    await wizard.next(); // p1 seat
+    await wizard.next(); // p1 meal
+    expect(await wizard.next()).toMatchObject({ ok: false, by: 'meal' });
+
+    await wizard.back();
+    expect([keyOf(wizard), stepOf(wizard)]).toEqual(['p1', 'seat']);
+    expect(wizard.getState().errors).toEqual({ meal: { meal: 'required' } });
+  });
+
+  it('keeps them for a back() in a flat flow, and for entering a group', async () => {
+    const flat = createWizard({
+      flow: {
+        id: 'flat',
+        order: ['a', 'b', 'c'],
+        steps: { a: {}, b: { validate: { $ref: 'no' } }, c: {} },
+      },
+      registry: { no: () => ({ b: 'no' }) },
+    });
+    await flat.start();
+    await flat.next();
+    expect(await flat.next()).toMatchObject({ ok: false, by: 'b' });
+    await flat.back();
+    expect(flat.getState().errors).toEqual({ b: { b: 'no' } });
+
+    const wizard = checked();
+    await wizard.start();
+    wizard.setErrors('review', { review: 'server' });
+    await wizard.next(); // into p1
+    expect(wizard.getState().errors).toEqual({ review: { review: 'server' } });
+  });
+});
+
 describe('itemsOf', () => {
   it('keys by position without `keyBy`, which can neither collide nor be empty', () => {
     const result = itemsOf(

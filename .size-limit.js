@@ -229,7 +229,10 @@ export default [
   // resolved on the placeholder atom, so it committed a stack ending on the
   // group itself, with no step to render; phases 4 to 9 now run again on the
   // flow the loaders left, and whatever that reaches is loaded and guarded.
-  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '7.51 kB', gzip: true },
+  // 7.51 to 7.53 kB on 2026-10-27 for T-101, measured 7521 B: phase 9 drops the
+  // errors of the repeat item a move leaves, by the step ids the traversal names,
+  // so the next item standing on the same step does not show them.
+  { name: 'core-v1', path: 'packages/core/src/v1/index.ts', limit: '7.53 kB', gzip: true },
 
   // The graph builder. Its own entry for the same reason validate-flow is:
   // structure-only drawing is a development and inspection concern, and a
@@ -274,7 +277,10 @@ export default [
   // with no position left in it instead of walking through it forwards (T-083).
   // 4.55 to 4.6 kB on 2026-10-16, measured 4571 B: the same `on.back` reader as
   // core-v1, which a group's sub-flow resolves its way back with (T-095).
-  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '4.6 kB', gzip: true },
+  // 4.6 to 4.75 kB on 2026-10-23, measured 4747 B: a move that leaves a repeat item
+  // names that item's step ids, nested groups included, so their errors are dropped
+  // instead of showing on the next item that stands on the same step (T-101).
+  { name: 'core-v1 groups', path: 'packages/core/src/v1/groups.ts', limit: '4.75 kB', gzip: true },
 
   // The recorded-session checker. Its own entry because replay is a devtools and
   // documentation concern: an application that only runs a wizard never needs to

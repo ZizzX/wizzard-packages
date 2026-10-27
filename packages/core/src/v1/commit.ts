@@ -73,3 +73,16 @@ export function add(list: readonly string[], id: string): readonly string[] {
 export function remove(list: readonly string[], id: string): readonly string[] {
   return list.includes(id) ? list.filter((x) => x !== id) : list;
 }
+
+/**
+ * Drops the errors of the given steps. Errors are kept by step id, which is why
+ * a step that passes, and the steps of a repeat item a move leaves, are removed
+ * this way.
+ *
+ * @internal
+ */
+export const without = (
+  errors: WizardState['errors'],
+  ids: readonly string[]
+): WizardState['errors'] =>
+  Object.fromEntries(Object.entries(errors).filter(([id]) => !ids.includes(id)));

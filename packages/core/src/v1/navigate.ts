@@ -1,4 +1,4 @@
-import { add, beginNav, commit, isCurrent } from './commit';
+import { add, beginNav, commit, isCurrent, without } from './commit';
 import { explain, guard, pageFor, WizardError } from './diagnostic';
 import { testAsync, type AsyncRegistry, type Registry, type Scope } from './expr';
 import { END, isGroup, type FlowDefinition } from './flow';
@@ -286,6 +286,8 @@ export interface Traversal {
         scope: Scope;
         /** Left a position that no longer exists, so there is nothing to record. */
         stale?: true;
+        /** Left a repeat item: its step ids, whose errors are that item's. */
+        left?: readonly string[];
       }
     | {
         ok: false;
@@ -514,7 +516,7 @@ async function pipeline(
       if (now.errors[from] !== undefined) {
         host.write(
           commit(now, {
-            errors: Object.fromEntries(Object.entries(now.errors).filter(([id]) => id !== from)),
+            errors: without(now.errors, [from]),
           })
         );
       }
@@ -724,6 +726,9 @@ async function pipeline(
           completed:
             forward && from !== null && !stay ? add(before.completed, from) : before.completed,
           busy: before.busy.filter((id) => id !== target),
+          // Every item shares its steps' ids, so what the item left was refused for
+          // would be shown on the next one to stand there (T-101).
+          errors: move?.left ? without(before.errors, move.left) : before.errors,
           data: from === null || stay ? before.data : leave(at.flow, from, before.data),
         })
       );

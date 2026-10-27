@@ -249,6 +249,12 @@ reads "step 2 of 3" for this passenger rather than "step 2 of 3" for the trip - 
 output above. `canBack` and `isLast` come from the traversal too: the last step of the third
 passenger is not the last step of the trip.
 
+Errors are kept by step id, as at the root, and every item of a repeat shares its steps' ids. So
+a move that leaves an item - forward to the next one, back to the one before, out of the group,
+or off an item that was removed - drops the errors of that item's steps, the ones of groups
+nested in it included. Without that, the second passenger's refusal would follow Back onto the
+first. Inside one item they stay as they do at the root.
+
 The enclosing groups are in `stack`, one frame each - `{ flow, step, key }` - with the current
 step last. That is what `where()` above prints, what a snapshot stores, and why a repeat needs a
 `version`: the frames name keys of a list the next session may have changed.

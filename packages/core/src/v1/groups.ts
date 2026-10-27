@@ -75,6 +75,8 @@ export type Move = {
   scope: Scope;
   /** The move left a position that no longer exists: its item was removed. */
   stale?: true;
+  /** The move left a repeat item: the step ids of that item's flow, nested ones included. */
+  left?: readonly string[];
 };
 
 /** The items of a `repeat` and the key each one is addressed by. */
@@ -730,6 +732,9 @@ export function step(
   const stale =
     levels.length !== state.stack.length || levels.some((l, i) => l.frame !== state.stack[i]);
   if (levels.length === 0) levels.push({ flow: root, scope: rootScope(state) });
+  // Taken before the move, which pops and pushes `levels` as it goes: the item
+  // a move leaves is looked up in the flows it stood in, not in what is left.
+  const flows = levels.map((l) => l.flow);
 
   const move =
     intent.type === 'go'
@@ -737,7 +742,43 @@ export function step(
       : intent.type === 'back'
         ? retreat(levels, root, state, registry, subFlows)
         : forward(levels, state, registry, subFlows);
-  return stale && move !== null && !('ok' in move) ? { ...move, stale: true } : move;
+  if (move === null || 'ok' in move) return move;
+  const left = leftItem(flows, state.stack, move.stack, subFlows);
+  return stale || left ? { ...move, ...(stale && { stale }), ...(left && { left }) } : move;
+}
+
+/**
+ * The step ids of the repeat item a move leaves, or `undefined` when it stays
+ * in the item it stood in.
+ *
+ * Errors are kept by step id, and every item of a repeat shares its steps' ids,
+ * so what one item was refused for would otherwise be shown on the next item to
+ * stand on that step (T-101). The outermost item left is the one that counts,
+ * and its ids include those of every group nested in it; a flow seen once is
+ * not walked again, so a sub-flow that encloses itself ends. `flows` are the
+ * flows of the stack the move began on, walked from that stack, so a frame
+ * whose item was removed is still found there as its group step.
+ */
+function leftItem(
+  flows: readonly FlowDefinition[],
+  from: readonly Frame[],
+  to: readonly Frame[],
+  subFlows?: SubFlows
+): string[] | undefined {
+  const seen = new Set<FlowDefinition>();
+  const ids = (flow: FlowDefinition | undefined): string[] => {
+    if (!flow || seen.has(flow)) return [];
+    seen.add(flow);
+    return Object.entries(flow.steps).flatMap(([id, step]) => [
+      id,
+      ...(isGroup(step) ? ids(subFlowOf(step, subFlows)) : []),
+    ]);
+  };
+  const depth = from.findIndex(
+    (frame, i) => frame.key !== undefined && (to[i]?.step !== frame.step || to[i].key !== frame.key)
+  );
+  const group = flows[depth]?.steps[from[depth]?.step ?? ''];
+  return group && isGroup(group) ? ids(subFlowOf(group, subFlows)) : undefined;
 }
 
 /**
