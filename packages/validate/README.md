@@ -3,9 +3,10 @@
 ![npm](https://img.shields.io/npm/v/@wizzard-packages/validate)
 ![license](https://img.shields.io/npm/l/@wizzard-packages/validate)
 
-One validation adapter for every schema library. Zod 3.24+, Zod 4, Valibot, ArkType, Effect and
-Yup 1.5+ all speak [Standard Schema](https://standardschema.dev), so one function covers each of
-them, and every library that adopts the spec later, without a release here. The schema library
+One validation adapter for every schema library. Zod 3.24+, Zod 4, Valibot, ArkType and Yup 1.5+
+speak [Standard Schema](https://standardschema.dev) as they are, and an Effect schema does once
+wrapped, so one function covers each of them, and every library that adopts the spec later,
+without a release here. The schema library
 is yours: this package never bundles one.
 
 ## Install
@@ -71,7 +72,9 @@ holds one message per field, and `code` and `url` name the page that explains it
 
 <!-- /example -->
 
-Swap the Zod schema for a Valibot, ArkType, Effect or Yup one and nothing else changes.
+Swap the Zod schema for a Valibot, ArkType or Yup one and nothing else changes. An Effect
+schema does not carry Standard Schema itself; wrap it first, with
+`Schema.toStandardSchemaV1(s)` in Effect 4 or `Schema.standardSchemaV1(s)` in Effect 3.13+.
 `schema(s, { at: 'data.trip' })` validates one part of the form instead of all of it; errors
 come back keyed by dot-path, one message per path.
 
