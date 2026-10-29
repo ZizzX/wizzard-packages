@@ -1,3 +1,6 @@
+import { type } from 'arktype';
+import { Schema } from 'effect';
+import * as v from 'valibot';
 import { describe, expect, it } from 'vitest';
 import * as yup from 'yup';
 import { z } from 'zod';
@@ -17,9 +20,29 @@ const fake = (issues: readonly { message: string; path?: PropertyKey[] }[]): Sta
 });
 
 describe('one adapter, every vendor', () => {
+  // Every library the README names, with the schema exactly as its own docs
+  // write it. Effect is the one that needs a call: its schemas do not carry
+  // `~standard` themselves, `Schema.toStandardSchemaV1` adds it.
   const cases = [
     ['zod', z.object({ name: z.string().min(1), age: z.number().min(18) })],
     ['yup', yup.object({ name: yup.string().required(), age: yup.number().min(18) })],
+    [
+      'valibot',
+      v.object({
+        name: v.pipe(v.string(), v.minLength(1)),
+        age: v.pipe(v.number(), v.minValue(18)),
+      }),
+    ],
+    ['arktype', type({ name: 'string > 0', age: 'number >= 18' })],
+    [
+      'effect',
+      Schema.toStandardSchemaV1(
+        Schema.Struct({
+          name: Schema.NonEmptyString,
+          age: Schema.Finite.check(Schema.isGreaterThanOrEqualTo(18)),
+        })
+      ),
+    ],
   ] as const;
 
   for (const [vendor, s] of cases) {

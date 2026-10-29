@@ -138,8 +138,8 @@ one failed. [API behaviour](../api-behaviour/) collects that rule beside the oth
 
 A validator is a resolver, so a schema library is one adapter away.
 `@wizzard-packages/validate` is that adapter - one for every library, not one per library,
-because Zod 3.24+, Zod 4, Valibot, ArkType, Effect and Yup 1.5+ all speak
-[Standard Schema](https://standardschema.dev):
+because Zod 3.24+, Zod 4, Valibot, ArkType and Yup 1.5+ all speak
+[Standard Schema](https://standardschema.dev), and Effect does through one wrapper:
 
 <!-- example:install-validate -->
 
@@ -198,8 +198,18 @@ holds one message per field, and `code` and `url` name the page that explains it
 
 <!-- /example -->
 
-Swapping the Zod schema for a Valibot, ArkType, Effect or Yup one changes nothing else. The
-package never bundles a schema library; the one you use is yours.
+Swapping the Zod schema for a Valibot, ArkType or Yup one changes nothing else. An Effect schema
+does not carry Standard Schema on its own, so it is wrapped before it is passed:
+
+```ts
+import { Schema } from 'effect';
+
+schema(Schema.toStandardSchemaV1(Trip)); // Effect 4
+schema(Schema.standardSchemaV1(Trip)); // Effect 3.13+
+```
+
+The package never bundles a schema library; the one you use is yours. All five are in its
+test suite.
 
 `schema(s, opts?)` returns an async resolver:
 `(args, scope) => Promise<Record<string, string> | null>`. Keys are dot-paths, values the first message reported for that path, and `null` means the value is good.

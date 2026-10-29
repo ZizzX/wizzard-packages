@@ -3,9 +3,11 @@
  *
  * 0.x shipped `adapter-zod` and `adapter-yup`, two packages that differed only
  * in how they spelled "list the failures". Standard Schema makes that
- * difference disappear: Zod 3.24+, Zod 4, Valibot, ArkType, Effect and Yup 1.5+
- * all expose the same `~standard` property, so one function covers every one of
- * them and every library that adopts the spec later, without a release here.
+ * difference disappear: Zod 3.24+, Zod 4, Valibot, ArkType and Yup 1.5+ all
+ * expose the same `~standard` property, and an Effect schema does once wrapped
+ * with `Schema.toStandardSchemaV1` (`Schema.standardSchemaV1` in Effect 3), so
+ * one function covers every one of them and every library that adopts the spec
+ * later, without a release here.
  *
  * The output is what the engine's validator contract asks for: a flat map from
  * dot-path to message, or `null` when the value is good.
@@ -44,6 +46,8 @@ export function issuesToErrors(issues: readonly StandardIssue[]): FieldErrors {
 /**
  * Turns a Standard Schema into a resolver, for the registry a flow's
  * `validate: { $ref }` looks names up in.
+ *
+ * An Effect schema is wrapped first: `schema(Schema.toStandardSchemaV1(s))`.
  *
  * ```ts
  * createWizard({
