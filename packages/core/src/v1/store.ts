@@ -34,7 +34,8 @@ import type { AsyncRegistry, Json, Scope } from './expr';
  *
  * One hook fires from outside `write`: `onAttempt`, reported by the navigation
  * wrapper when an attempt starts and when it ends or throws, so a plugin can
- * explain a refused move that never committed. Both go through the same
+ * explain a refused move: what it wrote reaches listeners, but why it was
+ * refused is in the `NavResult` alone. Both go through the same
  * dispatch, so a plugin disabled in one hook is silent in the other.
  */
 
