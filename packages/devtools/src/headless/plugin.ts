@@ -9,9 +9,11 @@ import type {
 
 /**
  * The devtools plugin: the one piece of devtools the engine has to be told
- * about. It listens to `onAttempt`, so a refused `next()` - which never
- * commits and therefore never reaches `subscribe` - is recorded with its
- * reason; the panel and the recorder read the rings it keeps.
+ * about. It listens to `onAttempt`, so a refused `next()` is recorded with its
+ * reason. `subscribe` sees what the refusal wrote - the lock released, and for
+ * `invalid` the step's field errors - but no state says why the move was
+ * refused; that lives only in the `NavResult`. The panel and the recorder read
+ * the rings this plugin keeps.
  *
  * It observes and never writes. Every hook body catches its own errors, so a
  * devtools bug is reported in the panel rather than disabling the plugin
@@ -87,7 +89,7 @@ export const toOutcomeError = (value: unknown): OutcomeError =>
  * the same object to `WizardDevtools` or `recordSession`.
  *
  * It records every navigation attempt as it starts and ends, including the
- * refusals that never commit, and keeps the last `outcomes` of them (500 by
+ * refusals, whose reason no state carries, and keeps the last `outcomes` of them (500 by
  * default). It only observes: it has no `beforeNavigate`, writes no state, and
  * an error inside one of its hooks or subscribers is kept in `failure` rather
  * than thrown.

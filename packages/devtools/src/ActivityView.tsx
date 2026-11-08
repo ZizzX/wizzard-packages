@@ -12,8 +12,10 @@ import type { NavIntent, NavResult } from '@wizzard-packages/core';
  * actions; a refusal dispatches nothing, so the tab that was supposed to
  * explain a stuck wizard was silent exactly when it mattered.
  *
- * A refusal is not a commit, so it cannot come from `subscribe`: the rows
- * marked `refusal` come from the plugin, and without it the header says so.
+ * A refusal still writes state - it releases the lock, and an `invalid` one
+ * commits the step's field errors - but its reason is in the `NavResult`
+ * alone, so it cannot come from `subscribe`: the rows marked `refusal` come
+ * from the plugin, and without it the header says so.
  */
 
 export type ActivityRow =
